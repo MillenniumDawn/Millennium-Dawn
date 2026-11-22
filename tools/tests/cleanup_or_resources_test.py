@@ -40,6 +40,20 @@ def test_resources_directory_not_walked(tmp_path):
     assert f.read_text(encoding="utf-8") == _REWRITABLE
 
 
+def test_directory_walk_prunes_a_nested_resources_folder(tmp_path, capsys):
+    normal = tmp_path / "normal.txt"
+    excluded = tmp_path / "resources" / "reference.txt"
+    excluded.parent.mkdir()
+    normal.write_text(_REWRITABLE, encoding="utf-8")
+    excluded.write_text(_REWRITABLE, encoding="utf-8")
+
+    cleanup_or.main([str(tmp_path)])
+
+    assert normal.read_text(encoding="utf-8") == _SIMPLIFIED
+    assert excluded.read_text(encoding="utf-8") == _REWRITABLE
+    assert "Simplified OR blocks" in capsys.readouterr().out
+
+
 def test_ancestor_resources_outside_repo_not_excluded(tmp_path):
     # A checkout nested under an ancestor dir literally named "resources" must
     # NOT exclude the whole repo: relative to its own root the file carries no

@@ -10,6 +10,7 @@ ERROR-level checks (fail the run):
   - Orphaned `newline = yes` with no visible effect left after it
 
 WARNING-level checks (reported, do not fail):
+  - Line indented off its brace depth (one finding per run of lines)
   - Missing space around open/close braces
   - Missing or doubled space around '='
   - Odd number of quotation marks on a line
@@ -25,7 +26,13 @@ from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import strip_inline_comment, validation_config
+from shared_utils import OPTION_OPEN_RE as _RE_OPTION
+from shared_utils import (
+    blank_quoted_strings,
+    count_braces,
+    strip_inline_comment,
+    validation_config,
+)
 from validator_common import BaseValidator, Severity, run_validator_main
 
 _SCAN_PATTERNS = [
@@ -35,13 +42,10 @@ _SCAN_PATTERNS = [
     "music/**/*.txt",
 ]
 
-_RE_COMMENT_QUOTE = re.compile(r'#.*["]+', re.M | re.I)
 _RE_NO_SP_OPEN = re.compile(r"([^\s]+)\{|\{([^\s]+)", re.M | re.I)
 _RE_NO_SP_CLOSE = re.compile(r"([^\s]+)\}|\}([^\s]+)", re.M | re.I)
-_RE_TAG_LINE = re.compile(r"^[A-Z]{3}", re.M | re.I)
 _RE_FOCUS_FORMAT = re.compile(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", re.M | re.U)
 _RE_NEWS_EVENT = re.compile(r"news_event\s*=\s*\{")
-_RE_OPTION = re.compile(r"\boption\s*=\s*\{")
 _RE_OPTION_TRIGGER = re.compile(r"trigger\s*=\s*\{")
 
 _RE_EFFECT_BLOCK = re.compile(
@@ -84,20 +88,6 @@ def _is_escaped(text: str, index: int) -> bool:
         backslashes += 1
         index -= 1
     return backslashes % 2 == 1
-
-
-def _code_outside_strings(code: str) -> str:
-    output = []
-    in_string = False
-    for index, char in enumerate(code):
-        if char == '"' and not _is_escaped(code, index):
-            in_string = not in_string
-            output.append('"')
-        elif in_string:
-            output.append(" ")
-        else:
-            output.append(char)
-    return "".join(output)
 
 
 def _quote_count(code: str) -> int:
@@ -215,11 +205,47 @@ def _check_indent_and_brackets(text: str, path: str):
     return errors
 
 
+_INDENT_DEPTH_PREFIX = "Indented "
+
+
+def _indent_depth_message(indent: str, expected: int) -> str:
+    if " " in indent:
+        return f"{_INDENT_DEPTH_PREFIX}with spaces; use {expected} tab(s)"
+    offset = len(indent) - expected
+    if not offset:
+        return ""
+    direction = "deeper" if offset > 0 else "shallower"
+    return f"{_INDENT_DEPTH_PREFIX}{abs(offset)} tab(s) {direction} than its braces"
+
+
+def _check_indent_depth(text: str, path: str):
+    """Lines whose leading tabs differ from their brace depth, reported once per
+    run of lines off by the same amount. The depth rule is the one
+    reindent_by_brace_depth uses, so a standardizer run clears these."""
+    warnings = []
+    depth = 0
+    previous = ""
+    for line_num, line in enumerate(text.splitlines(), 1):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        expected = max(0, depth - 1) if stripped.startswith("}") else depth
+        opens, closes = count_braces(stripped)
+        depth = max(0, depth + opens - closes)
+        indent = line[: len(line) - len(line.lstrip())]
+        # Four leading spaces are already an ERROR.
+        message = "" if "    " in indent else _indent_depth_message(indent, expected)
+        if message and message != previous:
+            warnings.append((message, line_num))
+        previous = message
+    return warnings
+
+
 def line_spacing_warnings(line: str) -> List[str]:
     """Return spacing and quote warnings for one line."""
     warnings: List[str] = []
     code, _comment = split_code_and_comment(line)
-    code_only = _code_outside_strings(code)
+    code_only = blank_quoted_strings(code)
     spacing_line = re.sub(r"\{\s*\}", "", code_only)
 
     if "{" in code_only:
@@ -269,7 +295,7 @@ def _check_spacing_and_quotes(text: str, path: str):
 
         warnings.extend((message, line_num) for message in line_spacing_warnings(line))
 
-        code_only = _code_outside_strings(code)
+        code_only = blank_quoted_strings(code)
         brace_depth += code_only.count("{")
         brace_depth -= code_only.count("}")
 
@@ -508,6 +534,8 @@ def _scan_file(text: str, path: str):
     findings.extend(_check_brace_matching(text, rel))
     # ERROR-level: indent and bracket balance
     findings.extend(_check_indent_and_brackets(text, rel))
+    # ERROR-level: indentation off brace depth
+    findings.extend(_check_indent_depth(text, rel))
     # WARNING-level: spacing and quotes
     findings.extend(_check_spacing_and_quotes(text, rel))
     # ERROR-level: orphaned tooltip separators
@@ -534,10 +562,14 @@ class Validator(BaseValidator):
 
         error_results = []
         warning_results = []
+        indent_depth_results = []
 
         for path, findings in parsed.items():
             rel = os.path.relpath(path, self.mod_path)
             for message, line in findings:
+                if message.startswith(_INDENT_DEPTH_PREFIX):
+                    indent_depth_results.append((message, rel, line))
+                    continue
                 # Brace matching and indent errors are ERROR; everything else WARNING
                 is_error = any(
                     kw in message
@@ -588,6 +620,15 @@ class Validator(BaseValidator):
             "Orphaned newline = yes (blank line at end of tooltip):",
             severity=Severity.ERROR,
             category="orphan-newline",
+        )
+
+        self._log_section("Indentation Depth (ERROR)")
+        self._report(
+            indent_depth_results,
+            "Indentation follows brace depth",
+            "Lines indented off their brace depth (fix_styling.py --fix-indent):",
+            severity=Severity.ERROR,
+            category="indent-depth",
         )
 
         self._log_section("Spacing & Quotes (WARNING)")

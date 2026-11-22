@@ -5,6 +5,8 @@ import sys
 
 import pytest
 import validate_factions
+from shared.suite import broken_symlink
+from shared.suite import write_text as _write_text
 from validate_factions import (
     Validator,
     extract_default_rules_block,
@@ -49,11 +51,6 @@ upgrade_group = {
 
     assert extract_group_rule_ids(content) == {"rule_group": ["rule_one", "rule_two"]}
     assert extract_upgrade_group_ids(content) == {"upgrade_group": ["upgrade_one"]}
-
-
-def _write_text(path, content):
-    with path.open("w", encoding="utf-8", newline="") as file:
-        file.write(content)
 
 
 def _write_faction_fixture(tmp_path, manifest="manifest_one"):
@@ -134,7 +131,7 @@ def test_template_goal_category_limit_is_reported(tmp_path):
     goal_ids = [
         f"{category}_{index}"
         for category in ("short_term", "medium_term", "long_term")
-        for index in range(3)
+        for index in range(2)
     ]
     _write_text(
         faction_root / "templates" / "templates.txt",
@@ -153,7 +150,7 @@ def test_template_goal_category_limit_is_reported(tmp_path):
     validator._validate_template_goal_limits()
 
     assert len(validator._issues) == 3
-    assert all("maximum 2" in issue.message for issue in validator._issues)
+    assert all("maximum 1" in issue.message for issue in validator._issues)
     assert {issue.message.split()[3] for issue in validator._issues} == {
         "short_term",
         "medium_term",
@@ -161,17 +158,17 @@ def test_template_goal_category_limit_is_reported(tmp_path):
     }
 
 
-def test_template_with_two_goals_per_category_passes_limit(tmp_path):
+def test_template_with_one_goal_per_category_passes_limit(tmp_path):
     _write_faction_fixture(tmp_path)
     faction_root = tmp_path / "common" / "factions"
     _write_text(
         faction_root / "templates" / "templates.txt",
-        "template_alpha = {\n\tgoals = { short_one short_two }\n}\n",
+        "template_alpha = {\n\tgoals = { short_one medium_one }\n}\n",
     )
     _write_text(
         faction_root / "goals" / "goals.txt",
         "short_one = { category = short_term }\n"
-        "short_two = { category = short_term }\n",
+        "medium_one = { category = medium_term }\n",
     )
     validator = Validator(str(tmp_path), use_colors=False, workers=1)
     validator._collect_definitions()
@@ -354,9 +351,7 @@ def test_unreadable_interface_file_is_named_in_the_icon_report(tmp_path):
         "template_alpha = {\n\ticon = GFX_faction_alpha\n}\n",
     )
     _write_text(root / "icons" / "pool.txt", "GFX_faction_alpha\n")
-    # A directory named *.gfx makes the read raise instead of returning text.
-    unreadable = tmp_path / "interface" / "factions.gfx"
-    unreadable.mkdir()
+    unreadable = broken_symlink(tmp_path / "interface" / "factions.gfx")
     validator = Validator(str(tmp_path), use_colors=False, workers=1)
     validator._collect_definitions()
 

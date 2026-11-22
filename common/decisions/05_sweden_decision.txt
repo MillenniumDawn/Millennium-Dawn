@@ -23,11 +23,14 @@ SWE_decision_Forsvarsmarkten_category = {
 						regiments = {
 							Mot_Militia_Bat = { x = 0 y = 0 }
 							Mot_Militia_Bat = { x = 0 y = 1 }
-							mech_Inf_Bat = { x = 1 y = 1 }
+							Mech_Inf_Bat = { x = 1 y = 0 }
+						}
+						regimental_support = {
+							Militia_Recce_Comp = { x = 0 y = 0 }
+							Mech_Recce_Comp = { x = 1 y = 0 }
 						}
 						support = {
 							L_Engi_Comp = { x = 0 y = 0 }
-							L_Recce_Comp = { x = 0 y = 1 }
 						}
 						priority = 0
 					}
@@ -87,6 +90,7 @@ SWE_decision_Forsvarsmarkten_category = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = {
 				factor = 0
 				NOT = {
@@ -112,7 +116,7 @@ SWE_decision_Forsvarsmarkten_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_fortifications"
-			set_temp_variable = { treasury_change = -12.00 }
+			set_temp_variable = { treasury_change = -10.45 }
 			modify_treasury_effect = yes
 		}
 
@@ -183,7 +187,23 @@ SWE_decision_Forsvarsmarkten_category = {
 			}
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+				NOT = {
+					OR = {
+						has_defensive_war = yes
+						any_of_scopes = {
+							array = SWE.potential_and_current_enemies
+							is_justifying_wargoal_against = SWE
+						}
+					}
+				}
+			}
+		}
 	}
 
 	SWE_open_weapons_depots = {
@@ -239,8 +259,11 @@ SWE_decision_Forsvarsmarkten_category = {
 		days_remove = 30
 		cost = 100
 		days_re_enable = 365
-		fire_only_once = no
-		available = { NOT = { has_country_flag = SWE_notice_pending } }
+
+		available = {
+			NOT = { has_country_flag = SWE_notice_pending }
+			any_army_leader = { is_field_marshal = no }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_Officer_education_course"
@@ -299,14 +322,18 @@ SWE_decision_Forsvarsmarkten_category = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 check_variable = { treasury < 6 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	SWE_only_active_Personal_Trainings_exercise = {
 		days_remove = 20
 		cost = 100
 		days_re_enable = 365
-		fire_only_once = no
 		available = { NOT = { has_country_flag = SWE_notice_pending } }
 
 		remove_effect = {
@@ -338,7 +365,6 @@ SWE_decision_Forsvarsmarkten_category = {
 		days_remove = 30
 		cost = 100
 		days_re_enable = 365
-		fire_only_once = no
 		available = { NOT = { has_country_flag = SWE_notice_pending } }
 
 		remove_effect = {
@@ -370,7 +396,6 @@ SWE_decision_Forsvarsmarkten_category = {
 
 	SWE_launch_total_defence = {
 		cost = 100
-		fire_only_once = no
 		visible = { SWE_under_military_threat = yes }
 
 		complete_effect = {
@@ -381,33 +406,45 @@ SWE_decision_Forsvarsmarkten_category = {
 			add_manpower = 15000
 			if = {
 				limit = { has_idea = defence_00 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_00 add_idea = defence_04 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = {
 				limit = { has_idea = defence_01 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_01 add_idea = defence_04 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = {
 				limit = { has_idea = defence_02 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_02 add_idea = defence_04 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = {
 				limit = { has_idea = defence_03 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_03 add_idea = defence_04 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = {
 				limit = { has_idea = defence_04 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_04 add_idea = defence_05 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			increase_policing_budget = yes
 			increase_conscription_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0 has_idea = SWE_idea_total_defence_duty }
+		}
 	}
 
 	SWE_back_to_normality = {
-		fire_only_once = no
 		cost = 100
 
 		available = {
@@ -420,19 +457,27 @@ SWE_decision_Forsvarsmarkten_category = {
 			remove_ideas = SWE_idea_total_defence_duty
 			if = {
 				limit = { has_idea = defence_03 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_03 add_idea = defence_02 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = {
 				limit = { has_idea = defence_04 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_04 add_idea = defence_02 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = {
 				limit = { has_idea = defence_05 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_05 add_idea = defence_02 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = {
 				limit = { has_idea = defence_06 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = { remove_idea = defence_06 add_idea = defence_02 }
+				clr_country_flag = spending_law_scripted_change
 			}
 			decrease_policing_budget = yes
 			decrease_conscription_effect = yes
@@ -441,7 +486,10 @@ SWE_decision_Forsvarsmarkten_category = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0 SWE_under_military_threat = yes }
+		}
 	}
 }
 #the_royal_familiy
@@ -601,7 +649,11 @@ SWE_decision_Royal_category = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	SWE_send_to_UN = {
@@ -871,7 +923,6 @@ SWE_decision_Royal_category = {
 
 	### royal officers
 	SWE_send_to_mandatory_service = {
-		fire_only_once = no
 		days_remove = 180
 
 		visible = {
@@ -896,7 +947,6 @@ SWE_decision_Royal_category = {
 	}
 
 	SWE_training_as_officer = {
-		fire_only_once = no
 		days_remove = 180
 
 		available = {
@@ -1431,7 +1481,6 @@ SWE_ai_path_category = {
 		visible = { SWE_ai_nationalist_path = yes }
 
 		available = {
-			has_civil_war = no
 			NOT = { has_completed_focus = SWE_monarch_constitution }
 			check_variable = { party_pop_array^20 < 0.55 }
 		}
@@ -1454,7 +1503,6 @@ SWE_ai_path_category = {
 		visible = { SWE_ai_nationalist_path = yes }
 
 		available = {
-			has_civil_war = no
 			NOT = { has_completed_focus = SWE_monarch_constitution }
 			nationalist_right_wing_populists_are_in_power = no
 			check_variable = { party_pop_array^20 > 0.5 }
@@ -1463,6 +1511,7 @@ SWE_ai_path_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_populists_take_the_country"
 			set_temp_variable = { rul_party_temp = 20 }
+			set_temp_variable = { disable_elections = 0 }
 			change_ruling_party_effect = yes
 		}
 
@@ -1476,7 +1525,6 @@ SWE_ai_path_category = {
 		visible = { has_global_flag = SWE_NORTHERN_CROWN_FOCUS_PATH }
 
 		available = {
-			has_civil_war = no
 			has_completed_focus = SWE_monarch_constitution
 			check_variable = { party_pop_array^23 < 0.55 }
 		}
@@ -1498,7 +1546,6 @@ SWE_ai_path_category = {
 		visible = { has_global_flag = SWE_NORTHERN_CROWN_FOCUS_PATH }
 
 		available = {
-			has_civil_war = no
 			has_completed_focus = SWE_monarch_constitution
 			nationalist_monarchists_are_in_power = no
 			check_variable = { party_pop_array^23 > 0.5 }
@@ -1507,6 +1554,8 @@ SWE_ai_path_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_monarchists_take_the_country"
 			set_temp_variable = { rul_party_temp = 23 }
+			set_temp_variable = { disable_elections = 1 }
+			if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
 			change_ruling_party_effect = yes
 		}
 
@@ -1520,7 +1569,6 @@ SWE_ai_path_category = {
 		visible = { has_global_flag = SWE_RED_SWEDEN_FOCUS_PATH }
 
 		available = {
-			has_civil_war = no
 			check_variable = { party_pop_array^4 < 0.55 }
 		}
 
@@ -1542,7 +1590,6 @@ SWE_ai_path_category = {
 		visible = { has_global_flag = SWE_RED_SWEDEN_FOCUS_PATH }
 
 		available = {
-			has_civil_war = no
 			emerging_communist_state_are_in_power = no
 			check_variable = { party_pop_array^4 > 0.5 }
 		}
@@ -1550,6 +1597,7 @@ SWE_ai_path_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_communists_take_the_country"
 			set_temp_variable = { rul_party_temp = 4 }
+			set_temp_variable = { disable_elections = 1 }
 			change_ruling_party_effect = yes
 		}
 
@@ -1563,7 +1611,6 @@ SWE_ai_path_category = {
 		visible = { has_global_flag = SWE_ARMED_NEUTRALITY_FOCUS_PATH }
 
 		available = {
-			has_civil_war = no
 			check_variable = { party_pop_array^17 < 0.55 }
 		}
 
@@ -1585,7 +1632,6 @@ SWE_ai_path_category = {
 		visible = { has_global_flag = SWE_ARMED_NEUTRALITY_FOCUS_PATH }
 
 		available = {
-			has_civil_war = no
 			neutrality_neutral_green_are_in_power = no
 			check_variable = { party_pop_array^17 > 0.5 }
 		}
@@ -1593,6 +1639,7 @@ SWE_ai_path_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SWE_greens_take_the_country"
 			set_temp_variable = { rul_party_temp = 17 }
+			set_temp_variable = { disable_elections = 0 }
 			change_ruling_party_effect = yes
 		}
 

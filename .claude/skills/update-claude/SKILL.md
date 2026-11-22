@@ -13,6 +13,7 @@ Summarize the current conversation and propose improvements to CLAUDE.md, rules,
 - One home per rule: grep `.claude/` for an existing statement before adding anywhere; extend the existing home, and put at most a one-line pointer elsewhere.
 - Always-loaded files (`CLAUDE.md`, `AGENTS.md`, `.claude/rules/*.md` without `paths:` frontmatter) hold only high-frequency, broadly-applicable rules in <=2 lines; worked examples and niche topics go to `.claude/docs/`.
 - Every new `.claude/docs` file must be added to `.claude/docs/documentation-references.md`.
+- Backlogs, finding counts, and change history go in a GitHub issue or the commit message, never in a doc.
 - New skills need frontmatter (`name` + a trigger-quality `description`); never add tables duplicating harness-injected lists.
 - Topic guidance that should auto-load for certain files → `.claude/rules/*.md` with `paths:` glob frontmatter.
 
@@ -49,7 +50,7 @@ Filter ruthlessly — only propose additions that:
 Read the current state of:
 
 - `CLAUDE.md` and `AGENTS.md` routing: do their pointers still reach the right guidance?
-- `.claude/rules/general-rules.md`: has implementation detail crept back in?
+- Always-loaded files (`AGENTS.md`, unscoped `.claude/rules/*.md`): has implementation detail crept back in?
 - `.claude/docs/localisation-rules.md` — any gaps?
 - `AGENTS.md` — any conventions needing updates?
 

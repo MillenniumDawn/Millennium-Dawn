@@ -4,7 +4,52 @@ import io
 
 import change_groups
 import pytest
+import run_validator_batch
 from validate_file_paths import CONTENT_ROOTS
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "common/ai_equipment/shared.txt",
+        "common/units/equipment/modules/guns.txt",
+        "common/technologies/naval.txt",
+        "common/technology_tags/folders.txt",
+        "common/bookmarks/start.txt",
+        "common/scripted_effects/research.txt",
+        "common/special_projects/projects/naval.txt",
+        "history/countries/AAA - Test.txt",
+    ),
+)
+def test_buildability_inputs_select_the_existing_batch(path):
+    groups = change_groups.classify([path])
+    assert groups["ai-equipment"] is True
+    assert groups["full_suite"] is False
+    changed = {name for name in change_groups.GROUP_PATTERNS if groups[name]}
+    spec = next(
+        spec
+        for spec in run_validator_batch.selected_specs("targeted-a", changed)
+        if spec.name == "ai-equipment"
+    )
+    assert spec.args == ("--check-buildability",)
+    assert spec.strict is True
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "gfx/entities/test.asset",
+        "gfx/models/ships/test.asset",
+        "gfx/models/ships/test.gfx",
+        "common/technologies/armor.txt",
+        "common/bookmarks/start.txt",
+        "interface/equipment.gfx",
+    ),
+)
+def test_variant_reference_inputs_select_the_oob_validator(path):
+    groups = change_groups.classify([path])
+    assert groups["oob"] is True
+    assert groups["content"] is True
 
 
 def test_localisation_only_change():
@@ -15,6 +60,21 @@ def test_localisation_only_change():
     assert groups["full_suite"] is False
     assert groups["tools"] is False
     assert groups["style_files"] == []
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "common/countries/Guangxi.txt",
+        "common/graphicalculturetype.txt",
+    ),
+)
+def test_graphical_culture_inputs_select_common_validators(path):
+    groups = change_groups.classify([path])
+
+    assert groups["common"] is True
+    assert groups["content"] is True
+    assert groups["full_suite"] is False
 
 
 @pytest.mark.parametrize(
@@ -48,7 +108,7 @@ def test_validation_config_change_requests_focus_style_scan():
 
 
 def test_non_validation_tool_change_skips_full_suite():
-    groups = change_groups.classify(["tools/assets/dds_compression_audit.py"])
+    groups = change_groups.classify(["tools/assets/resize_decision_icons.py"])
 
     assert groups["full_suite"] is False
     assert groups["tools"] is True
@@ -107,10 +167,17 @@ def test_github_action_edit_runs_full_suite():
     assert groups["tools"] is True
 
 
-def test_map_adjacency_is_a_content_group():
-    groups = change_groups.classify(["map/adjacency_rules.txt"])
+@pytest.mark.parametrize(
+    "path, group",
+    (
+        ("map/adjacency_rules.txt", "map-adjacency"),
+        ("map/definition.csv", "map-definition"),
+    ),
+)
+def test_map_inputs_are_content_groups(path, group):
+    groups = change_groups.classify([path])
 
-    assert groups["map-adjacency"] is True
+    assert groups[group] is True
     assert groups["content"] is True
     assert groups["file-paths"] is True
     assert groups["full_suite"] is False
@@ -134,6 +201,24 @@ def test_graphics_and_map_paths_skip_expensive_content_job(path):
     assert groups["content"] is False
 
 
+def test_graphic_db_change_runs_gfx_references_group():
+    groups = change_groups.classify(
+        ["gfx/interface/equipmentdesigner/graphic_db/00_plane_icons.txt"]
+    )
+
+    assert groups["graphic-db"] is True
+    assert groups["interface"] is False
+    assert groups["content"] is True
+
+
+def test_music_script_change_runs_common_mistakes_group():
+    groups = change_groups.classify(["music/MD_regional_music.txt"])
+
+    assert groups["music"] is True
+    assert groups["common"] is False
+    assert groups["content"] is True
+
+
 @pytest.mark.parametrize(
     "path",
     ("gfx/interface/decisions/politics/crisis.dds", "interface/MD_decisions.gfx"),
@@ -144,6 +229,26 @@ def test_decision_art_change_runs_decision_validation(path):
     assert groups["decisions"] is True
     assert groups["content"] is True
     assert groups["full_suite"] is False
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "events/example.txt",
+        "common/national_focus/example.txt",
+        "common/ideas/example.txt",
+        "history/countries/example.txt",
+    ),
+)
+def test_unlock_tooltip_source_change_runs_decision_validation(path):
+    # These files hold the unlock tooltips the decisions validator scans for.
+    groups = change_groups.classify([path])
+
+    assert groups["decisions"] is True
+    changed = {name for name in change_groups.GROUP_PATTERNS if groups[name]}
+    assert "decisions" in {
+        spec.name for spec in run_validator_batch.selected_specs("targeted-a", changed)
+    }
 
 
 def test_file_path_roots_match_validator_content_roots():

@@ -8,7 +8,7 @@ Project slash commands for Claude Code. Each directory holds a `SKILL.md` whose 
 | `/additional-income`   | Wire a country income/expense stream into the money system           |
 | `/adversarial-review`  | Edge-case hunt over a diff or file (what could go wrong)             |
 | `/audit`               | Full pre-merge review via parallel reviewer agents                   |
-| `/changelog`           | Add branch changes to Changelog.txt                                  |
+| `/changelog`           | Add branch changes to Changelog.txt and merge duplicates             |
 | `/close-issue`         | Close a GitHub issue with a fix summary (explicit-only)              |
 | `/content-review`      | Check content against the MD content review checklist                |
 | `/country-ai-path`     | Build or standardise one country's AI path game rule                 |
@@ -29,4 +29,4 @@ Project slash commands for Claude Code. Each directory holds a `SKILL.md` whose 
 | `/validate`            | Run the validation tools and summarize errors (explicit-only)        |
 | `/warnings`            | Full untruncated issue list from one validator (explicit-only)       |
 
-Conventions: every skill has frontmatter with a trigger-quality `description`; `disable-model-invocation: true` marks skills that only run when the user invokes them (`/validate`, `/close-issue`, `/update-claude`). Reference material belongs in `.claude/docs/`, not in skill bodies — skills cite docs.
+Conventions: every skill has frontmatter with a trigger-quality `description`; `disable-model-invocation: true` marks skills that only run when the user invokes them. Reference material belongs in `.claude/docs/`, not in skill bodies — skills cite docs.

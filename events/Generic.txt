@@ -101,6 +101,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: md4.4.a executed"
 		ai_chance = {
 			base = 100
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		FROM = {
 			add_relation_modifier = {
@@ -430,7 +431,16 @@ country_event = {
 		name = md4.14.a
 		log = "[GetDateText]: [This.GetName]: md4.14.a executed"
 		ai_chance = {
-			base = 60
+			base = 0
+			modifier = {
+				add = 60
+				NOT = {
+					strength_ratio = {
+						tag = FROM
+						ratio > 2
+					}
+				}
+			}
 			modifier = {
 				factor = 1.5
 				strength_ratio = {
@@ -443,13 +453,6 @@ country_event = {
 				strength_ratio = {
 					tag = FROM
 					ratio > 1.5
-				}
-			}
-			modifier = {
-				factor = 0
-				strength_ratio = {
-					tag = FROM
-					ratio > 2
 				}
 			}
 			modifier = {
@@ -767,4 +770,39 @@ country_event = {
 		name = md4.23.a
 	}
 
+}
+
+# Guarantee review after a party change; only ideology-mismatched guarantees end.
+country_event = {
+	id = generic.8
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: generic.8 guarantee review after government change"
+		every_other_country = {
+			limit = {
+				is_guaranteed_by = ROOT
+				NOT = { has_government = ROOT }
+			}
+			ROOT = {
+				diplomatic_relation = {
+					country = PREV
+					relation = guarantee
+					active = no
+				}
+			}
+		}
+		every_other_country = {
+			limit = {
+				has_guaranteed = ROOT
+				NOT = { has_government = ROOT }
+			}
+			diplomatic_relation = {
+				country = ROOT
+				relation = guarantee
+				active = no
+			}
+		}
+	}
 }

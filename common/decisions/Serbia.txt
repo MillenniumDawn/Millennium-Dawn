@@ -23,6 +23,10 @@ SER_the_castle_crumbles = {
 				set_temp_variable = { party_popularity_increase = party_pop_array^18 }
 				change_relative_party_popularity = yes
 				set_temp_variable = { rul_party_temp = 18 }
+				set_temp_variable = { disable_elections = 1 }
+				if = { limit = { has_elections = yes }
+					set_temp_variable = { disable_elections = 0 }
+				}
 				change_ruling_party_effect = yes
 				create_country_leader = {
 					name = "Milan Milutinović"
@@ -461,7 +465,6 @@ SER_The_Montenegro_Confederacy = {
 		}
 		days_mission_timeout = 70
 		is_good = no
-		fire_only_once = no
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission timeout SER_Political_separatism"
@@ -471,7 +474,6 @@ SER_The_Montenegro_Confederacy = {
 
 	SER_retainment_of_connections_Montenegro = {
 		icon = GFX_decision_monte_separatism_button
-		fire_only_once = no
 		days_remove = 20
 		cost = 25
 
@@ -484,10 +486,10 @@ SER_The_Montenegro_Confederacy = {
 		modifier = { political_power_gain = -0.05 }
 		ai_will_do = {
 			base = 355
+			modifier = { factor = 0 check_variable = { SER_Montenegro_separatism < 1 } }
 		}
 	}
 	SER_attack_mnt_militias = {
-		fire_only_once = no
 		icon = GFX_decision_monte_attack_button
 		days_remove = 20
 		fixed_random_seed = no
@@ -555,10 +557,13 @@ SER_The_Montenegro_Confederacy = {
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
+		# Serbia.17 needs fewer than 500 Montenegrin combatants to end the crisis
+		ai_will_do = {
+			base = 355
+			modifier = { factor = 0 check_variable = { SER_Montenegro_combatants < 500 } }
+		}
 	}
 	SER_deploy_more_troops = {
-		fire_only_once = no
 		icon = GFX_decision_monte_troops_button
 		days_remove = 20
 		complete_effect = {
@@ -1332,8 +1337,7 @@ SER_balkan_federation_category = {
 	SER_invite_bosnia = {
 		icon = GFX_decision_balkan_fed_button
 		cost = 75
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1357,8 +1361,7 @@ SER_balkan_federation_category = {
 	SER_invite_croatia = {
 		icon = GFX_decision_balkan_fed_button
 		cost = 75
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1382,8 +1385,7 @@ SER_balkan_federation_category = {
 	SER_invite_slovenia = {
 		icon = GFX_decision_balkan_fed_button
 		cost = 75
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1405,8 +1407,7 @@ SER_balkan_federation_category = {
 	SER_invite_makedonia = {
 		icon = GFX_decision_balkan_fed_button
 		cost = 75
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1430,8 +1431,7 @@ SER_balkan_federation_category = {
 	SER_invite_greece = {
 		icon = GFX_decision_balkan_fed_button
 		cost = 75
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1455,8 +1455,7 @@ SER_balkan_federation_category = {
 	SER_invite_albania = {
 		icon = GFX_decision_balkan_fed_button
 		cost = 75
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1478,8 +1477,7 @@ SER_balkan_federation_category = {
 	SER_invite_bulgaria = {
 		icon = GFX_decision_balkan_fed_button
 		cost = 75
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1501,8 +1499,7 @@ SER_balkan_federation_category = {
 	SER_invite_romania = {
 		icon = GFX_decision_balkan_fed_button
 		cost = 75
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1529,8 +1526,7 @@ SER_vojvodina_separatism_category = {
 	VOJ_more_separ = {
 		icon = GFX_decision_ser_voj_button
 		allowed = { original_tag = VOJ }
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1555,8 +1551,7 @@ SER_vojvodina_separatism_category = {
 	VOJ_more_autonomy = {
 		icon = GFX_decision_ser_voj_button1
 		allowed = { original_tag = VOJ }
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1581,13 +1576,9 @@ SER_vojvodina_separatism_category = {
 	VOJ_more_army = {
 		icon = GFX_decision_ser_voj_button1
 		allowed = { original_tag = VOJ }
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
-		}
-		available = {
-			country_exists = VOJ
 		}
 		visible = {
 			has_completed_focus = VOJ_vs
@@ -1612,13 +1603,9 @@ SER_vojvodina_separatism_category = {
 		icon = GFX_decision_ser_voj_button1
 		allowed = { original_tag = VOJ }
 		cost = 40
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
-		}
-		available = {
-			country_exists = VOJ
 		}
 		visible = {
 			has_completed_focus = VOJ_true_fed
@@ -1641,8 +1628,7 @@ SER_vojvodina_separatism_category = {
 		icon = GFX_decision_ser_voj_button1
 		allowed = { original_tag = SER }
 		cost = 40
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1653,9 +1639,6 @@ SER_vojvodina_separatism_category = {
 					has_autonomy_state = autonomy_autonomous_province
 				}
 			}
-		}
-		visible = {
-			country_exists = VOJ
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision VOJ_integrate_buff"
@@ -1669,8 +1652,7 @@ SER_vojvodina_separatism_category = {
 		icon = GFX_decision_ser_voj_button1
 		allowed = { original_tag = SER }
 		cost = 25
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1684,7 +1666,6 @@ SER_vojvodina_separatism_category = {
 		}
 		visible = {
 			has_completed_focus = SER_mvd
-			country_exists = VOJ
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision VOJ_separ_debuff"
@@ -1698,8 +1679,7 @@ SER_vojvodina_separatism_category = {
 		icon = GFX_decision_ser_voj_button1
 		allowed = { original_tag = SER }
 		cost = 40
-		fire_only_once = no
-		days_remove = 320
+		days_re_enable = 320
 		ai_will_do = {
 			base = 355
 		}
@@ -1713,7 +1693,6 @@ SER_vojvodina_separatism_category = {
 		}
 		visible = {
 			has_completed_focus = SER_anti_terror
-			country_exists = VOJ
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision VOJ_separ_debuff1"
@@ -1729,7 +1708,7 @@ KOS_albania_union = {
 	KOS_unity_boost = {
 		available = {
 			custom_trigger_tooltip = {
-				check_variable = { from.KOS_serbs > 0.49 }
+				check_variable = { KOS_serbs > 0.49 }
 				tooltip = KOS_serb_opinion
 			}
 			is_subject = no
@@ -1739,9 +1718,6 @@ KOS_albania_union = {
 		}
 		icon = GFX_decision_kos_boost_button
 		days_remove = 12
-		visible = {
-			country_exists = ALB
-		}
 
 		cost = 25
 
@@ -1753,6 +1729,7 @@ KOS_albania_union = {
 		}
 		ai_will_do = {
 			base = 355
+			modifier = { factor = 0 KOS_ai_not_albanian_unity_path = yes }
 		}
 	}
 	#
@@ -1765,9 +1742,6 @@ KOS_albania_union = {
 		}
 		icon = GFX_decision_kos_serb_down_button
 		days_remove = 12
-		visible = {
-			country_exists = ALB
-		}
 		cost = 25
 
 		remove_effect = {
@@ -1793,9 +1767,6 @@ KOS_albania_union = {
 				check_variable = { KOS_albania > 0.99 }
 			}
 		}
-		visible = {
-			country_exists = ALB
-		}
 		icon = GFX_decision_kos_unify_button
 		days_remove = 12
 		cost = 35
@@ -1808,6 +1779,7 @@ KOS_albania_union = {
 		}
 		ai_will_do = {
 			base = 355
+			modifier = { factor = 0 KOS_ai_not_albanian_unity_path = yes }
 		}
 	}
 }
@@ -1833,7 +1805,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_asia
-			NOT = { has_country_flag = KOS_china_rec }
+			country_exists = CHI
+			NOT = { is_in_array = { recognised_by = CHI } }
 		}
 		icon = GFX_decision_recogn_unn_button
 		days_remove = 31
@@ -1872,7 +1845,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_asia
-			NOT = { has_country_flag = KOS_india_rec }
+			country_exists = RAJ
+			NOT = { is_in_array = { recognised_by = RAJ } }
 		}
 		icon = GFX_decision_recogn_unn_button
 		days_remove = 35
@@ -1911,7 +1885,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_asia
-			NOT = { has_country_flag = KOS_indonesia_rec }
+			country_exists = IND
+			NOT = { is_in_array = { recognised_by = IND } }
 		}
 		icon = GFX_decision_recogn_unn_button
 		days_remove = 35
@@ -1950,7 +1925,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_south_america
-			NOT = { has_country_flag = KOS_brazil_rec }
+			country_exists = BRA
+			NOT = { is_in_array = { recognised_by = BRA } }
 		}
 		icon = GFX_decision_recogn_unn_button
 		days_remove = 35
@@ -1989,7 +1965,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_south_america
-			NOT = { has_country_flag = KOS_argentina_rec }
+			country_exists = ARG
+			NOT = { is_in_array = { recognised_by = ARG } }
 		}
 		icon = GFX_decision_recogn_unn_button
 		days_remove = 35
@@ -2029,7 +2006,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_south_america
-			NOT = { has_country_flag = KOS_chile_rec }
+			country_exists = CHL
+			NOT = { is_in_array = { recognised_by = CHL } }
 		}
 		days_remove = 35
 		days_re_enable = 100
@@ -2068,7 +2046,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_east_europe
-			NOT = { has_country_flag = KOS_belarus_rec }
+			country_exists = BLR
+			NOT = { is_in_array = { recognised_by = BLR } }
 		}
 		days_remove = 35
 		days_re_enable = 100
@@ -2106,7 +2085,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_east_europe
-			NOT = { has_country_flag = KOS_ukraine_rec }
+			country_exists = UKR
+			NOT = { is_in_array = { recognised_by = UKR } }
 		}
 		icon = GFX_decision_recogn_unn_button
 		days_remove = 35
@@ -2145,7 +2125,8 @@ KOS_int_recognition = {
 		}
 		visible = {
 			has_completed_focus = KOS_campaign_east_europe
-			NOT = { has_country_flag = KOS_russia_rec }
+			country_exists = SOV
+			NOT = { is_in_array = { recognised_by = SOV } }
 		}
 		icon = GFX_decision_recogn_unn_button
 		days_remove = 35
@@ -2165,6 +2146,108 @@ KOS_int_recognition = {
 	}
 }
 
+KOS_ai_path_category = {
+	KOS_rally_the_pdk = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = KOS_ALBANIAN_UNITY_FOCUS_PATH }
+
+		available = {
+			check_variable = { party_pop_array^14 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOS_rally_the_pdk"
+			set_temp_variable = { party_index = 14 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	KOS_pdk_takes_the_government = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = KOS_ALBANIAN_UNITY_FOCUS_PATH }
+
+		available = {
+			neutrality_neutral_conservatism_are_in_power = no
+			check_variable = { party_pop_array^14 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOS_pdk_takes_the_government"
+			set_temp_variable = { rul_party_temp = 14 }
+			set_temp_variable = { disable_elections = 0 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	KOS_rally_the_lkck = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = KOS_YUGOSLAV_REVIVAL_FOCUS_PATH }
+
+		available = {
+			check_variable = { party_pop_array^4 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOS_rally_the_lkck"
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	KOS_lkck_takes_the_government = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = KOS_YUGOSLAV_REVIVAL_FOCUS_PATH }
+
+		available = {
+			emerging_communist_state_are_in_power = no
+			check_variable = { party_pop_array^4 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOS_lkck_takes_the_government"
+			set_temp_variable = { rul_party_temp = 4 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+}
+
 SER_ai_path_category = {
 	SER_rally_the_monarchists = {
 
@@ -2178,7 +2261,6 @@ SER_ai_path_category = {
 
 		available = {
 			has_country_flag = SER_bulldozer_revolution
-			has_civil_war = no
 			check_variable = { party_pop_array^23 < 0.4 }
 		}
 
@@ -2205,7 +2287,6 @@ SER_ai_path_category = {
 
 		available = {
 			has_country_flag = SER_bulldozer_revolution
-			has_civil_war = no
 			nationalist_monarchists_are_in_power = no
 			check_variable = { party_pop_array^23 > 0.3 }
 		}
@@ -2213,6 +2294,7 @@ SER_ai_path_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SER_monarchists_take_the_country"
 			set_temp_variable = { rul_party_temp = 23 }
+			set_temp_variable = { disable_elections = 1 }
 			change_ruling_party_effect = yes
 		}
 
@@ -2231,7 +2313,6 @@ SER_ai_path_category = {
 
 		available = {
 			has_country_flag = SER_bulldozer_died
-			has_civil_war = no
 			nationalist_right_wing_populists_are_in_power = yes
 			check_variable = { party_pop_array^20 < 0.45 }
 		}
@@ -2259,7 +2340,6 @@ SER_ai_path_category = {
 
 		available = {
 			has_country_flag = SER_bulldozer_died
-			has_civil_war = no
 			nationalist_right_wing_populists_are_in_power = no
 			NOT = {
 				OR = {
@@ -2273,6 +2353,10 @@ SER_ai_path_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SER_socialists_retake_the_country"
 			set_temp_variable = { rul_party_temp = 20 }
+			set_temp_variable = { disable_elections = 1 }
+			if = { limit = { has_elections = yes }
+				set_temp_variable = { disable_elections = 0 }
+			}
 			change_ruling_party_effect = yes
 			create_country_leader = {
 				name = "Slobodan Milošević"

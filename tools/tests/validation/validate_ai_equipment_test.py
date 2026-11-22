@@ -6,6 +6,7 @@ never produces designs for that role; duplicate template names mean the
 last-loaded file silently wins.
 """
 
+from shared.suite import broken_symlink, write_under
 from validate_ai_equipment import Validator, parse_equipment_file
 
 
@@ -157,7 +158,7 @@ def test_unreadable_design_file_is_reported_and_skipped(tmp_path, caplog):
     _write_equipment(
         tmp_path, "usa_naval.txt", _template("usa_destroyer", "naval_destroyer")
     )
-    (tmp_path / "common" / "ai_equipment" / "broken.txt").mkdir()
+    broken_symlink(tmp_path / "common" / "ai_equipment" / "broken.txt")
 
     with caplog.at_level(logging.WARNING):
         validator = _run(tmp_path)
@@ -190,19 +191,17 @@ _HISTORY_GROUP = """TST_navy = {
 """
 
 
-def _staged_repo(tmp_path, write_path):
-    write_path(tmp_path, "common/units/equipment/MD_hulls.txt", "equipments = { }\n")
+def _staged_repo(tmp_path):
+    write_under(tmp_path, "common/units/equipment/MD_hulls.txt", "equipments = { }\n")
     _write_equipment(tmp_path, "tst_naval.txt", _HISTORY_GROUP)
     _write_equipment(
         tmp_path, "usa_naval.txt", _template("usa_destroyer", "naval_destroyer")
     )
 
 
-def test_staged_run_without_ai_equipment_files_skips_every_check(
-    tmp_path, write_path, monkeypatch
-):
-    _staged_repo(tmp_path, write_path)
-    write_path(tmp_path, "common/ideas/unrelated.txt", "ideas = { }\n")
+def test_staged_run_without_ai_equipment_files_skips_every_check(tmp_path, monkeypatch):
+    _staged_repo(tmp_path)
+    write_under(tmp_path, "common/ideas/unrelated.txt", "ideas = { }\n")
     monkeypatch.setenv("MD_STAGED_FILES", "common/ideas/unrelated.txt")
 
     validator = Validator(
@@ -213,10 +212,8 @@ def test_staged_run_without_ai_equipment_files_skips_every_check(
     assert validator._issues == []
 
 
-def test_staged_run_checks_only_the_staged_equipment_file(
-    tmp_path, write_path, monkeypatch
-):
-    _staged_repo(tmp_path, write_path)
+def test_staged_run_checks_only_the_staged_equipment_file(tmp_path, monkeypatch):
+    _staged_repo(tmp_path)
     monkeypatch.setenv("MD_STAGED_FILES", "common/ai_equipment/usa_naval.txt")
 
     validator = Validator(
@@ -227,10 +224,8 @@ def test_staged_run_checks_only_the_staged_equipment_file(
     assert validator._issues == []
 
 
-def test_partial_history_and_unknown_hull_are_reported_in_a_full_run(
-    tmp_path, write_path
-):
-    _staged_repo(tmp_path, write_path)
+def test_partial_history_and_unknown_hull_are_reported_in_a_full_run(tmp_path):
+    _staged_repo(tmp_path)
 
     validator = _run(tmp_path)
     categories = sorted(i.category for i in validator._issues)

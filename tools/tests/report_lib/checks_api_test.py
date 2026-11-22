@@ -204,6 +204,46 @@ def test_pick_annotations_truncates_with_overflow_notice():
     assert anns[-1]["annotation_level"] == "notice"
 
 
+def test_pick_annotations_keeps_the_prs_own_warnings_under_a_backlog():
+    backlog = [
+        Issue(
+            severity=Severity.WARNING,
+            category="c",
+            message=f"backlog {i}",
+            file=f"common/ideas/file_{i:03d}.txt",
+            line=1,
+            validator="ideas",
+        )
+        for i in range(MAX_ANNOTATIONS_PER_CHECK + 10)
+    ]
+    in_diff = Issue(
+        severity=Severity.WARNING,
+        category="c",
+        message="in the diff",
+        file="events/changed.txt",
+        line=3,
+        validator="events",
+        in_diff=True,
+    )
+    new = Issue(
+        severity=Severity.WARNING,
+        category="c",
+        message="new against the baseline",
+        file="history/untouched.txt",
+        line=7,
+        validator="history",
+        baseline_status="new",
+    )
+
+    anns = _pick_annotations(_run_with_issues(backlog + [in_diff, new]))
+
+    assert [ann["path"] for ann in anns[:2]] == [
+        "events/changed.txt",
+        "history/untouched.txt",
+    ]
+    assert len(anns) == MAX_ANNOTATIONS_PER_CHECK
+
+
 def test_build_check_payload_includes_head_sha_and_name():
     run = _run_with_issues(
         [
@@ -339,16 +379,28 @@ def test_fallback_job_maps_batch_and_standalone_names():
     assert _fallback_job("tools-windows") == "Tools tests (Windows)"
 
 
-def test_post_checks_keeps_path_failures_in_their_own_check(tmp_path, monkeypatch):
+_PATH_FAILURES = {
+    "file-paths": ("case-collision", "duplicate path", "common/example.txt"),
+    "dds": ("texture-art-standard", "use DXT5", "gfx/interface/example.dds"),
+}
+
+
+@pytest.mark.parametrize("slug", _PATH_FAILURES)
+def test_post_checks_keeps_path_failures_in_their_own_check(
+    tmp_path, monkeypatch, slug
+):
+    category, message, path = _PATH_FAILURES[slug]
     results_dir = make_results_tree(
         tmp_path,
         {
-            "file-paths": {
+            slug: {
                 "issues": [
                     {
                         "severity": "error",
-                        "category": "case-collision",
-                        "message": "duplicate path",
+                        "category": category,
+                        "message": message,
+                        "file": path,
+                        "line": 1,
                     }
                 ]
             },
@@ -356,7 +408,7 @@ def test_post_checks_keeps_path_failures_in_their_own_check(tmp_path, monkeypatc
     )
 
     runs = load_all(str(results_dir))
-    assert [(run.name, run.status) for run in runs] == [("file-paths", "failed")]
+    assert [(run.name, run.status) for run in runs] == [(slug, "failed")]
     calls = _transport(
         monkeypatch,
         [
@@ -371,6 +423,7 @@ def test_post_checks_keeps_path_failures_in_their_own_check(tmp_path, monkeypatc
     assert calls[1][2]["name"] == "File path validation"
     assert calls[1][2]["conclusion"] == "failure"
     assert calls[1][2]["name"] != "Mod tests (core)"
+    assert calls[1][2]["output"]["annotations"][0]["path"] == path
 
 
 def test_run_job_field_wins_over_the_name_fallback(monkeypatch):

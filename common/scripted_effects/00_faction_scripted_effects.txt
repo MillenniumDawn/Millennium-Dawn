@@ -1,0 +1,73 @@
+# Hands THIS country's faction to its free, standing member with the largest GDP. Does nothing when THIS is not the leader or no member qualifies.
+# The CSTO and the Axis of Resistance disband instead: they are nothing without Russia or Iran.
+# Call it before puppet or annex_country on a possible leader: those effects destroy the faction before any on_action fires.
+pass_faction_leadership = {
+	hidden_effect = {
+		if = {
+			limit = {
+				is_faction_leader = yes
+				OR = {
+					has_faction_template = faction_template_csto
+					has_faction_template = faction_template_aor
+				}
+			}
+			dismantle_faction = yes
+		}
+		else_if = {
+			limit = {
+				is_faction_leader = yes
+				any_allied_country = {
+					is_subject = no
+					has_capitulated = no
+					NOT = { has_country_flag = collapsed_nation }
+				}
+			}
+			set_temp_variable = { faction_successor_gdp = -1 }
+			every_allied_country = {
+				limit = {
+					is_subject = no
+					has_capitulated = no
+					NOT = { has_country_flag = collapsed_nation }
+				}
+				if = {
+					limit = { check_variable = { gdp_total > faction_successor_gdp } }
+					set_temp_variable = { faction_successor_gdp = gdp_total }
+					save_event_target_as = new_faction_leader
+				}
+			}
+			event_target:new_faction_leader = {
+				set_faction_leader = yes
+				if = {
+					limit = { PREV = { has_country_flag = MER_unasul_faction_leader } }
+					PREV = { clr_country_flag = MER_unasul_faction_leader }
+					set_country_flag = MER_unasul_faction_leader
+				}
+				if = {
+					limit = { has_idea = NATO_member }
+					news_event = { id = NATO.20 hours = 6 }
+				}
+			}
+		}
+	}
+}
+
+# CSTO Scripted Effects
+CSTO_join = {
+	add_ideas = CSTO_member
+	ROOT = { add_to_tech_sharing_group = CSTO_Tech_Share }
+	random_scope_in_array = {
+		array = global.CSTO_member
+		limit = {
+			is_faction_leader = yes
+		}
+		add_to_faction = ROOT
+	}
+	hidden_effect = { news_event = { id = CSTO.4 hours = 6 } }
+}
+
+CSTO_leave = {
+	pass_faction_leadership = yes
+	remove_ideas = CSTO_member
+	leave_faction = yes
+	hidden_effect = { news_event = { id = CSTO.5 hours = 6 } }
+}

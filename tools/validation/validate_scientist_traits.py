@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Cross-reference every scientist trait against the medal sprite it resolves to.
 # A trait with no sprite draws a missing-texture box on the character panel, and
 # the `#TODO: ICON` markers in the trait file are hand-maintained, so they drift
@@ -11,6 +10,7 @@ from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import WORD_BLOCK_LINE_RE as TRAIT_DEF_RE
 from shared_utils import extract_block_from_text
 from sprite_index import build_sprite_index
 from validate_gfx_references import _load_vanilla_sprite_manifest
@@ -18,8 +18,6 @@ from validator_common import BaseValidator, FileOpener, Severity, run_validator_
 
 TRAIT_PATTERNS = ["common/scientist_traits/*.txt"]
 
-# Traits are top-level, one block each, so the opener is column-anchored.
-TRAIT_DEF_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
 ICON_RE = re.compile(r"\bicon\s*=\s*(\S+)")
 TODO_ICON_RE = re.compile(r"#.*\bTODO\b.*\bICON\b", re.IGNORECASE)
 

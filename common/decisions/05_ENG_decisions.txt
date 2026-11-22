@@ -199,6 +199,8 @@ decisions_ENG = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_alloys_modernisation"
 			set_country_flag = ENG_active_resource_project
+			set_temp_variable = { treasury_change = -8.50 }
+			modify_treasury_effect = yes
 		}
 
 		remove_effect = {
@@ -233,13 +235,14 @@ decisions_ENG = {
 				set_temp_variable = { ENG_dependency_change = 1 }
 				ENG_change_wales_dependency = yes
 			}
-			newline = yes
-			set_temp_variable = { treasury_change = -8.50 }
-			modify_treasury_effect = yes
 			clr_country_flag = ENG_active_resource_project
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	ENG_ellesmere_port_decision = {
@@ -706,6 +709,16 @@ decisions_ENG = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_roysth_naval_port_decision"
 			set_country_flag = ENG_active_productivity_project
+			if = {
+				limit = { 9 = { free_building_slots = { building = naval_base size > 1 province = 9392 } } }
+				set_temp_variable = { treasury_change = -0.1 }
+				modify_treasury_effect = yes
+			}
+			else_if = {
+				limit = { 9 = { free_building_slots = { building = naval_supply_hub size > 0 province = 9392 } } }
+				set_temp_variable = { treasury_change = -1 }
+				modify_treasury_effect = yes
+			}
 		}
 
 		remove_effect = {
@@ -758,7 +771,11 @@ decisions_ENG = {
 			clr_country_flag = ENG_active_productivity_project
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	ENG_expand_belfast_decision = {
@@ -839,16 +856,18 @@ decisions_ENG = {
 			add_to_variable = { ENG_global_building_slots_factor = 0.025 tooltip = global_building_slots_factor_tt }
 			if = {
 				limit = { has_active_mission = ENG_northen_powerhouse_mission }
+				newline = yes
 				add_days_mission_timeout = {
 					mission = ENG_northen_powerhouse_mission
-					days = -50
+					days = -150
 				}
 			}
 			else_if = {
 				limit = { has_active_mission = ENG_hs2_mission }
+				newline = yes
 				add_days_mission_timeout = {
 					mission = ENG_hs2_mission
-					days = -50
+					days = -150
 				}
 			}
 			clr_country_flag = ENG_active_productivity_project
@@ -974,23 +993,61 @@ decisions_ENG = {
 
 		activation = {
 			has_completed_focus = ENG_hs2
-			13 = { is_owned_by = ROOT }
-			14 = { is_owned_by = ROOT }
-			12 = { is_owned_by = ROOT }
+			OR = {
+				13 = { is_owned_by = ROOT }
+				14 = { is_owned_by = ROOT }
+				12 = { is_owned_by = ROOT }
+			}
+			
 		}
 
 		available = { hidden_trigger = { always = no } }
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_hs2_mission"
-			custom_effect_tooltip = {
-				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = ENG_economy_modifier
-			}
+			hidden_effect = { set_country_flag = ENG_rail_project_completed }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ENG_economy_modifier }
 			add_to_variable = { ENG_offices_productivity = 0.20 tooltip = offices_productivity_tt }
-			13 = { add_dynamic_modifier = { modifier = ENG_hs2_idea } }
-			14 = { add_dynamic_modifier = { modifier = ENG_hs2_idea } }
-			12 = { add_dynamic_modifier = { modifier = ENG_hs2_idea } }
+			newline = yes
+			if = {
+				limit = { owns_state = 12 }
+				12 = {
+					add_dynamic_modifier = { modifier = ENG_hs2_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+				
+			}
+			if = {
+				limit = { owns_state = 13 }
+				13 = {
+					add_dynamic_modifier = { modifier = ENG_hs2_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+			}
+			if = {
+				limit = { owns_state = 14 }
+				14 = {
+					add_dynamic_modifier = { modifier = ENG_hs2_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
 			newline = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -1022,15 +1079,49 @@ decisions_ENG = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_northen_powerhouse_mission"
-			custom_effect_tooltip = {
-				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = ENG_economy_modifier
-			}
+			hidden_effect = { set_country_flag = ENG_rail_project_completed }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ENG_economy_modifier }
 			add_to_variable = { ENG_civilian_factories_productivity = 0.10 tooltip = civilian_factories_productivity_tt }
 			add_to_variable = { ENG_military_factories_productivity = 0.10 tooltip = military_factories_productivity_tt }
-			11 = { add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea } }
-			10 = { add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea } }
-			1191 = { add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea } }
+			newline = yes
+			if = {
+				limit = { owns_state = 10 }
+				10 = {
+					add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+			}
+			if = {
+				limit = { owns_state = 11 }
+				11 = {
+					add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+			}
+			if = {
+				limit = { owns_state = 1191 }
+				1191 = {
+					add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
 			newline = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -1185,12 +1276,20 @@ decisions_ENG = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_operation_dagger"
+			every_enemy_country = {
+				limit = { has_war_together_with = OMA }
+				ENG = { white_peace = PREV }
+			}
 			ENG = { white_peace = OMA }
 			425 = { transfer_state_to = ENG }
 		}
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_operation_dagger"
+			every_enemy_country = {
+				limit = { has_war_together_with = OMA }
+				ENG = { white_peace = PREV }
+			}
 			ENG = { white_peace = OMA }
 			add_stability = -0.10
 		}
@@ -1918,12 +2017,12 @@ ENG_monarchy_decision_category = {
 						target = ENG
 						value > 0
 					}
-					has_emerging_aligned_government = yes
-					NOT = { has_opinion_modifier = mutual_trade_agreement }
+					has_government = communism
+					NOT = { is_in_array = { trade_agreement_partners = ENG } }
 				}
 				country_event = ENG_inner_circle_andrew.05
 				effect_tooltip = {
-					set_temp_variable = { receiver_nation = ROOT.id }
+					set_temp_variable = { receiver_nation = THIS.id }
 					set_temp_variable = { sender_nation = ENG.id }
 					set_improved_trade_agreement = yes
 				}
@@ -3508,8 +3607,7 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_rally
 		visible = { ENG_referendum_campaign_running = yes }
 		cost = 75
-		days_remove = 20
-		days_re_enable = 20
+		days_re_enable = 40
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_unionist_campaign_tour"
@@ -3526,8 +3624,7 @@ ENG_devolved_matters = {
 		visible = { ENG_referendum_campaign_running = yes }
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
-		days_remove = 30
-		days_re_enable = 30
+		days_re_enable = 60
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_fiscal_settlement_offer"
@@ -3561,8 +3658,7 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_nationalism
 		visible = { ENG_referendum_campaign_running = yes }
 		cost = 50
-		days_remove = 15
-		days_re_enable = 15
+		days_re_enable = 30
 		fixed_random_seed = no
 
 		complete_effect = {
@@ -3607,7 +3703,7 @@ ENG_devolved_matters = {
 		}
 
 		cost = 100
-		days_remove = 30
+		days_re_enable = 30
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_further_devolution_pledge"
@@ -3816,7 +3912,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_discourse
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			NOT = { has_country_flag = ENG_scottish_integrated }
 			NOT = { country_exists = SCO }
 			ENG_holds_scotland = yes
@@ -3836,8 +3931,7 @@ ENG_devolved_matters = {
 		}
 
 		cost = 60
-		days_remove = 90
-		days_re_enable = 90
+		days_re_enable = 180
 
 		available = {
 			check_variable = {
@@ -3869,7 +3963,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_discourse
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			NOT = { has_country_flag = ENG_north_irish_integrated }
 			NOT = { country_exists = NIR }
 			ENG_holds_north_ireland = yes
@@ -3878,8 +3971,7 @@ ENG_devolved_matters = {
 
 		highlight_states = { highlight_state_targets = { state = 17 } }
 		cost = 60
-		days_remove = 90
-		days_re_enable = 90
+		days_re_enable = 180
 
 		available = {
 			check_variable = {
@@ -3911,7 +4003,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_discourse
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			NOT = { has_country_flag = ENG_welsh_integrated }
 			NOT = { country_exists = WAS }
 			ENG_holds_wales = yes
@@ -3927,8 +4018,7 @@ ENG_devolved_matters = {
 
 		cost = 60
 
-		days_remove = 90
-		days_re_enable = 90
+		days_re_enable = 180
 
 		available = {
 			check_variable = {
@@ -3962,7 +4052,6 @@ ENG_devolved_matters = {
 		fire_only_once = yes
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			NOT = { has_country_flag = ENG_constitutional_convention }
 			OR = {
 				ENG_holds_scotland = yes
@@ -4003,7 +4092,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_rally
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_scottish_integrated }
 			NOT = { check_variable = { ENG_scottish_referendum_success = 3 } }
@@ -4048,14 +4136,17 @@ ENG_devolved_matters = {
 			}
 		}
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_scottish_union_settlement"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_scottish_union_settlement"
 			set_variable = { ENG_referendum_target = 1 }
 			ENG_seed_referendum_campaign = yes
 			activate_mission = ENG_scottish_union_settlement_referendum
-			newline = yes
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -4064,6 +4155,8 @@ ENG_devolved_matters = {
 				add = 20
 				has_global_flag = ENG_RULE_BRITANNIA_FOCUS_PATH
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -4071,7 +4164,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_rally
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_north_irish_integrated }
 			NOT = { check_variable = { ENG_north_irish_referendum_success = 3 } }
@@ -4111,14 +4203,17 @@ ENG_devolved_matters = {
 			}
 		}
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_north_irish_union_settlement"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_north_irish_union_settlement"
 			set_variable = { ENG_referendum_target = 2 }
 			ENG_seed_referendum_campaign = yes
 			activate_mission = ENG_north_irish_union_settlement_referendum
-			newline = yes
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -4127,6 +4222,8 @@ ENG_devolved_matters = {
 				add = 20
 				has_global_flag = ENG_RULE_BRITANNIA_FOCUS_PATH
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -4134,7 +4231,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_rally
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_welsh_integrated }
 			NOT = { check_variable = { ENG_welsh_referendum_success = 3 } }
@@ -4174,14 +4270,17 @@ ENG_devolved_matters = {
 			}
 		}
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ENG_welsh_union_settlement"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_welsh_union_settlement"
 			set_variable = { ENG_referendum_target = 3 }
 			ENG_seed_referendum_campaign = yes
 			activate_mission = ENG_welsh_union_settlement_referendum
-			newline = yes
-			set_temp_variable = { treasury_change = -5 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -4190,6 +4289,8 @@ ENG_devolved_matters = {
 				add = 20
 				has_global_flag = ENG_RULE_BRITANNIA_FOCUS_PATH
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -4198,7 +4299,6 @@ ENG_devolved_matters = {
 		fire_only_once = yes
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_scottish_integrated }
 			check_variable = { ENG_scottish_referendum_success = 3 }
@@ -4228,7 +4328,6 @@ ENG_devolved_matters = {
 		fire_only_once = yes
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_north_irish_integrated }
 			check_variable = { ENG_north_irish_referendum_success = 3 }
@@ -4258,7 +4357,6 @@ ENG_devolved_matters = {
 		fire_only_once = yes
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_welsh_integrated }
 			check_variable = { ENG_welsh_referendum_success = 3 }
@@ -4319,7 +4417,12 @@ ENG_devolved_matters = {
 
 		cancel_trigger = {
 			OR = {
-				check_variable = { ENG_north_irish_agitation > 24 }
+				check_variable = {
+					tooltip = ENG_decommission_tension_cancel_tt
+					var = ENG_north_irish_agitation
+					value = 24
+					compare = greater_than
+				}
 				NOT = { 17 = { is_owned_and_controlled_by = ROOT } }
 			}
 		}
@@ -4647,7 +4750,6 @@ ENG_a_more_united_kingdom_decisions = {
 
 ENG_fractured_kingdom_united_state_decisions = {
 	ENG_grant_land_in_isle_of_man = {
-		days_remove = 80
 
 		available = {
 			custom_trigger_tooltip = {

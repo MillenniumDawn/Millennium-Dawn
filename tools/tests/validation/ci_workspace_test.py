@@ -29,9 +29,14 @@ def test_workspace_profile_materializes_only_validator_inputs(tmp_path):
         "history/probe.txt",
         "localisation/english/probe.yml",
         "interface/core.gfx",
+        "gfx/entities/probe.asset",
+        "gfx/models/ships/probe.asset",
+        "gfx/models/ships/probe.gfx",
         "gfx/flags/probe.tga",
         "gfx/interface/decisions/probe.dds",
+        "gfx/interface/equipmentdesigner/graphic_db/probe.txt",
         "map/adjacency_rules.txt",
+        "map/definition.csv",
         "music/playlists/probe.txt",
         "resources/documentation/probe.md",
         ".claude/docs/typo-watchlist.md",
@@ -42,6 +47,8 @@ def test_workspace_profile_materializes_only_validator_inputs(tmp_path):
         "descriptor.mod",
     ]
     excluded = [
+        "gfx/models/ships/probe.mesh",
+        "gfx/models/ships/probe.dds",
         "gfx/interface/portraits/probe.dds",
         "resources/vanilla/interface/probe.gfx",
         "map/provinces.bmp",
@@ -98,7 +105,7 @@ def _staged_fetch(tmp_path):
         source.as_uri(),
         str(checkout),
     )
-    fetch = workflow_step("tools-tests", "Fetch PR head for staged integration")
+    fetch = workflow_step("tools-quality", "Fetch PR head for staged integration")
     command = shlex.split(
         substitute_expressions(
             fetch["run"],
@@ -133,7 +140,7 @@ def test_staged_worktree_step_checks_out_only_the_staged_profile(tmp_path):
     for profile in ("staged_sparse_profile.txt", "ci_workspace_profile.txt"):
         body = (REPO_ROOT / "tools/validation" / profile).read_text(encoding="utf-8")
         write_under_str(checkout, f"tools/validation/{profile}", body)
-    step = workflow_step("tools-tests", "Create staged integration worktree")
+    step = workflow_step("tools-quality", "Create staged integration worktree")
     script = substitute_expressions(
         step["run"],
         {
@@ -178,7 +185,7 @@ def test_workspace_archive_ships_the_declared_paths_without_git(tmp_path):
         (REPO_ROOT / ".github/workflows/test-suite.yml").read_text(encoding="utf-8")
     )
     workspace_paths = workflow["env"]["WORKSPACE_PATHS"]
-    shipped = [".workspace-manifest", ".validation_cache/v9/cache.db"]
+    shipped = [".workspace-manifest", ".validation_cache/v10/cache.db"]
     for entry in workspace_paths.split():
         entry = entry.replace("*", "descriptor")
         shipped.append(entry if PurePosixPath(entry).suffix else f"{entry}/probe")

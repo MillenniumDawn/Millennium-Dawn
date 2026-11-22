@@ -15,24 +15,13 @@ calculate_energy_use = {
 	# Add the Dynamic Modifiers for the System in case they are not present
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
 
-	set_variable = { energy_seasonal_population_demand_factor = 0 }
-	if = {
-		limit = {
-			OR = {
-				check_variable = { global.month = 12 }
-				check_variable = { global.month = 1 }
-				check_variable = { global.month = 2 }
-				check_variable = { global.month = 6 }
-				check_variable = { global.month = 7 }
-				check_variable = { global.month = 8 }
-			}
-		}
-		set_variable = { energy_seasonal_population_demand_factor = 0.2 }
-	}
+	# Months 12, 1, 2, 6, 7 and 8 are the ones where month mod 6 is below 3
+	set_variable = { energy_seasonal_population_demand_factor = { value = global.month mod = 6 less_than = 3 multiply = 0.2 } }
 
 	energy_calc_consumption = yes
 	energy_calc_generation = yes
 	energy_calc_balance = yes
+	ai_race_capture_power_sample = yes
 	energy_calc_fuel = yes
 }
 
@@ -210,6 +199,16 @@ energy_calc_consumption = {
 
 	# Static use from special decisions/events, scaled into its display var
 	set_variable = { other_energy_use_display_var = { value = modifier@energy_use multiply = display_multiplier } }
+	if = {
+		limit = {
+			OR = {
+				ai_race_country_initialized = yes
+				has_variable = ai_race_ai_target_stage
+			}
+		}
+		set_variable = { ai_race_accounted_power = { value = modifier@ai_race_applied_power multiply = display_multiplier } }
+		set_variable = { ai_race_sampled_power_multiplier = display_multiplier }
+	}
 
 	# Energy Use from Buildings, computed straight into the persistent per-type display vars with the display multiplier folded in
 	# Base energy use per building: count * (1 + modifier) * base_energy_use * display_multiplier
@@ -326,14 +325,23 @@ energy_calc_generation = {
 	set_variable = { maximum_renewable_energy_var = { value = maximum_renewable_energy_var_base multiply = temp_renewable_energy_gain_m } }
 
 	set_variable = { renewable_energy_display_var = energy_sum }
+	# Output at full staffing, for the employment priority tooltip
+	if = {
+		limit = { is_ai = no }
+		set_variable = {
+			renewable_energy_max = {
+				value = renewable_energy_display_var
+				divide = { value = renewable_energy_infra_manpower_fulfillment clamp = { min = 0.001 max = 1 } }
+			}
+		}
+	}
 
-	# Base amount of GW/h one battery park can store, scaled by storage size modifier
+	# Battery Park storage capacity is scaled by the storage size modifier.
 	set_variable = {
 		max_stored_energy = {
 			value = max_stored_energy_base
 			add = {
-				value = number_of_battery_parks
-				multiply = 100
+				value = modifier@battery_park_storage_capacity
 				multiply = { value = 1 add = modifier@battery_park_storage_size_modifier }
 			}
 		}
@@ -396,6 +404,16 @@ energy_calc_generation = {
 
 	multiply_variable = { fossil_pp_energy_generation = fossil_powerplants_manpower_fulfillment }
 
+	# Output at full staffing, for the employment priority tooltip
+	if = {
+		limit = { is_ai = no }
+		set_variable = { fossil_pp_energy_max = 0 }
+		if = {
+			limit = { NOT = { has_country_flag = disable_fossil_fuel_power_plant_flag } }
+			set_variable = { fossil_pp_energy_max = { value = number_of_fossil_pps multiply = fossil_pp_energy_per_plant_display } }
+		}
+	}
+
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
 	if = { limit = { check_variable = { fuel_k = 0 } }
@@ -430,6 +448,7 @@ energy_calc_generation = {
 		limit = {
 			NOT = { has_country_flag = disable_nuclear_power_plant_flag }
 			NOT = { has_idea = non_nuclear_power }
+			NOT = { nuclear_reactor < 1 }
 		}
 		# Weekly fuel consumption = base * (1 + consumption modifier), clamped to 0.0001 to avoid div-by-zero
 		set_variable = {
@@ -495,11 +514,16 @@ energy_calc_generation = {
 				multiply = temp_energy_gain_m
 			}
 		}
+		if = {
+			limit = { is_ai = no }
+			set_variable = { nuclear_energy_max = { value = nuclear_reactors multiply = nuclear_energy_per_reactor_display } }
+		}
 	}
 	else = {
 		# Set only to production when nuclear power is disabled
 		set_variable = { nuclear_fuel_consumption = 0 }
 		set_variable = { nuclear_energy_generation = 0 }
+		set_variable = { nuclear_energy_max = 0 }
 		set_variable = { net_nuclear_fuel_display = total_nuclear_reactor_fuel_production }
 	}
 
@@ -510,7 +534,8 @@ energy_calc_generation = {
 
 # Effect: energy_calc_balance
 # Purpose: Energy balance, storage withdrawal, fossil fuel-saving, fulfillment ratio, and unfulfilled-demand penalties
-# Requires (temp): temp_total_energy_use (from energy_calc_consumption)
+# Parameters:
+# - temp_total_energy_use (set by energy_calc_consumption): total energy demand
 energy_calc_balance = {
 	set_variable = { energy_consumption = temp_total_energy_use }
 	set_variable = { energy_balance = { value = energy_sum subtract = energy_consumption } }
@@ -557,10 +582,8 @@ energy_calc_balance = {
 	}
 
 	divide_temp_variable = { energy_fulfillment = energy_consumption }
-	set_variable = { energy_balance_value_display = energy_fulfillment }
-	clamp_variable = { var = energy_balance_value_display min = 0 }
-	clamp_temp_variable = { var = energy_fulfillment min = 0 max = 1 }
-	set_variable = { unfulfilled_energy_demand_var = { value = -1 add = energy_fulfillment } }
+	set_variable = { energy_balance_value_display = { value = energy_fulfillment max = 0 } }
+	set_variable = { unfulfilled_energy_demand_var = { value = energy_fulfillment clamp = { min = 0 max = 1 } subtract = 1 } }
 	add_to_variable = { energy_sum = energy_withdrawal_from_storage } #for display purposes
 
 	set_variable = { energy_difference_variable = { value = energy_sum subtract = energy_consumption } }
@@ -595,7 +618,8 @@ energy_calc_balance = {
 
 # Effect: energy_calc_fuel
 # Purpose: Non-electric fuel consumption and fuel displays, then fires the energy alerts and UI refresh
-# Requires (temp): no_fuel_killswitch_var (from energy_calc_generation)
+# Parameters:
+# - no_fuel_killswitch_var (set by energy_calc_generation): fuel killswitch state
 energy_calc_fuel = {
 	# Calculate the Non-Electric Fuel Consumption
 	set_variable = {
@@ -667,23 +691,16 @@ calculate_energy_load_sharing = {
 		# Calculate the Energy Shared
 		# Ensure you have enough energy to export
 		if = { limit = { NOT = { check_variable = { energy_balance < needed_energy_for_nations } } }
-			resize_array = { array = energy_load_sharing_nations_value size = energy_load_sharing_nations^num }
-
 			for_each_loop = {
 				array = energy_load_sharing_nations
 				var:v = {
 					# Only share if recipient has a deficit; ignore surplus
 					set_temp_variable = { energy_lack = { value = energy_difference_variable min = 0 } }
-					set_variable = { PREV.energy_load_sharing_nations_value^i = energy_lack }
 					set_variable = { energy_load_sharing_gain_var = { value = energy_lack multiply = -1 } }
 				}
 			}
-			set_temp_variable = { total_energy_required_to_share = 0 }
-			for_each_loop = {
-				array = energy_load_sharing_nations_value
-				add_to_temp_variable = { PREV.total_energy_required_to_share = v }
-			}
-			set_variable = { energy_load_sharing_use_var = { value = total_energy_required_to_share multiply = -1 } }
+			# Every recipient deficit was already summed by the pre-pass
+			set_variable = { energy_load_sharing_use_var = needed_energy_for_nations }
 		}
 		else = {
 			# Provider doesn't have enough energy to share
@@ -741,8 +758,7 @@ random_renewable_variable_calculation = {
 		# Monthly output: a random 0..1 fraction of the state's renewable factor (a multiplier averaging 1.0)
 		set_variable_to_random = { var = renewable_energy_random_var min = 0 max = 1 }
 		multiply_variable = { var = renewable_energy_random_var value = modifier@state_renewable_capacity_factor_modifier }
-		# Min / Max for UI info: lowest possible is 0, highest is the full factor
-		set_variable = { min_renewable_energy_var = 0 }
+		# Max for UI info: the full factor
 		set_variable = { max_renewable_energy_var = modifier@state_renewable_capacity_factor_modifier }
 	}
 }
@@ -753,12 +769,56 @@ random_renewable_variable_calculation = {
 # - temp_change - number of battery parks to add
 # - skip_payment - (optional) set to 1 to skip treasury charge
 build_battery_park_effect = {
-	custom_effect_tooltip = build_battery_park_effect_TT
+	set_temp_variable = { battery_park_builds_built = 0 }
+	for_each_scope_loop = {
+		array = owned_controlled_states
+		if = {
+			limit = { check_variable = { building_level@battery_park < 20 } }
+			set_temp_variable = {
+				battery_park_state_free_levels = {
+					value = 20
+					subtract = building_level@battery_park
+				}
+			}
+			add_to_temp_variable = { battery_park_builds_built = battery_park_state_free_levels }
+		}
+	}
 	if = {
-		limit = { NOT = { check_variable = { skip_payment = 1 } } }
+		limit = { check_variable = { battery_park_builds_built > temp_change } }
+		set_temp_variable = { battery_park_builds_built = temp_change }
+	}
+	custom_effect_tooltip = build_battery_park_effect_TT
+	hidden_effect = {
+		set_temp_variable = { battery_park_builds_remaining = battery_park_builds_built }
+		set_temp_variable = { battery_park_builds_built = 0 }
+		while_loop_effect = {
+			limit = { check_variable = { battery_park_builds_remaining > 0 } }
+			if = {
+				limit = { has_battery_park_construction_space = yes }
+				random_owned_controlled_state = {
+					limit = { check_variable = { building_level@battery_park < 20 } }
+					add_building_construction = {
+						type = battery_park
+						level = 1
+						instant_build = yes
+					}
+				}
+				add_to_temp_variable = { battery_park_builds_built = 1 }
+				subtract_from_temp_variable = { battery_park_builds_remaining = 1 }
+			}
+			else = {
+				set_temp_variable = { battery_park_builds_remaining = 0 }
+			}
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { battery_park_builds_built > 0 }
+			NOT = { check_variable = { skip_payment = 1 } }
+		}
 		set_temp_variable = {
 			treasury_change = {
-				value = temp_change
+				value = battery_park_builds_built
 				multiply = -100
 				multiply = {
 					value = 1
@@ -767,11 +827,6 @@ build_battery_park_effect = {
 			}
 		}
 		modify_treasury_effect = yes
-	}
-	hidden_effect = {
-		random_owned_controlled_state = {
-			add_to_variable = { number_of_battery_parks_state_var = temp_change }
-		}
 	}
 	ingame_update_setup = yes
 }

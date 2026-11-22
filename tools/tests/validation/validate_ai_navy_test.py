@@ -1,5 +1,6 @@
 """Behavior tests for AI navy parser and cross-reference checks."""
 
+from shared.suite import write_under
 from validate_ai_navy import (
     Validator,
     parse_fleet_files,
@@ -156,15 +157,15 @@ fleet_home = {
 """
 
 
-def _write_limits_fixture(tmp_path, write_path):
-    write_path(tmp_path, "common/units/MD_naval_units.txt", _UNITS)
-    write_path(
+def _write_limits_fixture(tmp_path):
+    write_under(tmp_path, "common/units/MD_naval_units.txt", _UNITS)
+    write_under(
         tmp_path,
         "common/units/MD_land_units.txt",
         "sub_units = {\n\tinfantry = { }\n}\n",
     )
-    write_path(tmp_path, "common/ai_navy/taskforce/limits.txt", _TASKFORCES)
-    write_path(tmp_path, "common/ai_navy/fleet/fleets.txt", _FLEETS)
+    write_under(tmp_path, "common/ai_navy/taskforce/limits.txt", _TASKFORCES)
+    write_under(tmp_path, "common/ai_navy/fleet/fleets.txt", _FLEETS)
 
 
 def _messages(tmp_path):
@@ -173,8 +174,8 @@ def _messages(tmp_path):
     return [issue.message for issue in validator._issues]
 
 
-def test_land_unit_files_supply_no_ship_types(tmp_path, write_path):
-    _write_limits_fixture(tmp_path, write_path)
+def test_land_unit_files_supply_no_ship_types(tmp_path):
+    _write_limits_fixture(tmp_path)
 
     assert parse_naval_units(str(tmp_path)) == {
         "carrier",
@@ -184,8 +185,8 @@ def test_land_unit_files_supply_no_ship_types(tmp_path, write_path):
     }
 
 
-def test_every_composition_category_limit_is_reported(tmp_path, write_path):
-    _write_limits_fixture(tmp_path, write_path)
+def test_every_composition_category_limit_is_reported(tmp_path):
+    _write_limits_fixture(tmp_path)
 
     messages = _messages(tmp_path)
     overload = [m for m in messages if "tf_overloaded exceeds" in m]
@@ -198,8 +199,8 @@ def test_every_composition_category_limit_is_reported(tmp_path, write_path):
     assert not any("tf_small exceeds" in m for m in messages)
 
 
-def test_min_composition_is_not_charged_against_the_limits(tmp_path, write_path):
-    _write_limits_fixture(tmp_path, write_path)
+def test_min_composition_is_not_charged_against_the_limits(tmp_path):
+    _write_limits_fixture(tmp_path)
 
     _defined, _ships, _missions, compositions = parse_taskforce_files(str(tmp_path))
 
@@ -212,8 +213,8 @@ def test_min_composition_is_not_charged_against_the_limits(tmp_path, write_path)
     }
 
 
-def test_suggestions_are_offered_only_when_a_close_name_exists(tmp_path, write_path):
-    _write_limits_fixture(tmp_path, write_path)
+def test_suggestions_are_offered_only_when_a_close_name_exists(tmp_path):
+    _write_limits_fixture(tmp_path)
 
     messages = _messages(tmp_path)
 
@@ -231,8 +232,8 @@ def test_suggestions_are_offered_only_when_a_close_name_exists(tmp_path, write_p
     assert len([m for m in messages if "unknown mission type" in m]) == 1
 
 
-def test_stray_closing_brace_does_not_break_taskforce_parsing(tmp_path, write_path):
-    write_path(
+def test_stray_closing_brace_does_not_break_taskforce_parsing(tmp_path):
+    write_under(
         tmp_path,
         "common/ai_navy/taskforce/stray.txt",
         "tf_stray = {\n\ttask = { }\n}\n}\n",
@@ -243,8 +244,8 @@ def test_stray_closing_brace_does_not_break_taskforce_parsing(tmp_path, write_pa
     assert defined == {"tf_stray"}
 
 
-def test_unreadable_inputs_are_skipped(tmp_path, write_path):
-    _write_limits_fixture(tmp_path, write_path)
+def test_unreadable_inputs_are_skipped(tmp_path):
+    _write_limits_fixture(tmp_path)
     (tmp_path / "common" / "units" / "naval_broken.txt").mkdir()
     (tmp_path / "common" / "ai_navy" / "taskforce" / "broken.txt").mkdir()
     (tmp_path / "common" / "ai_navy" / "fleet" / "broken.txt").mkdir()
@@ -263,9 +264,9 @@ def test_missing_navy_directories_yield_nothing(tmp_path):
     assert parse_fleet_files(str(tmp_path)) == []
 
 
-def test_staged_run_without_navy_files_skips(tmp_path, write_path, monkeypatch):
-    _write_limits_fixture(tmp_path, write_path)
-    write_path(tmp_path, "common/ideas/unrelated.txt", "ideas = { }\n")
+def test_staged_run_without_navy_files_skips(tmp_path, monkeypatch):
+    _write_limits_fixture(tmp_path)
+    write_under(tmp_path, "common/ideas/unrelated.txt", "ideas = { }\n")
     monkeypatch.setenv("MD_STAGED_FILES", "common/ideas/unrelated.txt")
 
     validator = Validator(str(tmp_path), use_colors=False, staged_only=True, workers=1)
@@ -274,8 +275,8 @@ def test_staged_run_without_navy_files_skips(tmp_path, write_path, monkeypatch):
     assert validator._issues == []
 
 
-def test_staged_navy_file_still_runs_every_check(tmp_path, write_path, monkeypatch):
-    _write_limits_fixture(tmp_path, write_path)
+def test_staged_navy_file_still_runs_every_check(tmp_path, monkeypatch):
+    _write_limits_fixture(tmp_path)
     monkeypatch.setenv("MD_STAGED_FILES", "common/ai_navy/taskforce/limits.txt")
 
     validator = Validator(str(tmp_path), use_colors=False, staged_only=True, workers=1)
@@ -284,9 +285,9 @@ def test_staged_navy_file_still_runs_every_check(tmp_path, write_path, monkeypat
     assert any("tf_overloaded exceeds" in i.message for i in validator._issues)
 
 
-def test_template_with_more_than_one_mission_is_reported(tmp_path, write_path):
-    write_path(tmp_path, "common/units/MD_naval_units.txt", _UNITS)
-    write_path(
+def test_template_with_more_than_one_mission_is_reported(tmp_path):
+    write_under(tmp_path, "common/units/MD_naval_units.txt", _UNITS)
+    write_under(
         tmp_path,
         "common/ai_navy/taskforce/taskforces.txt",
         "tf_double = {\n\tmission = { naval_strike naval_patrol }\n}\n"

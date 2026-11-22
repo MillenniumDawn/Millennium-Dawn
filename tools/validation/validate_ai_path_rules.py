@@ -7,11 +7,14 @@ least a `HISTORICAL` option and a `default = { }` block to steer it. Shared tree
 (several owner tags) and tags that only spawn later are out of scope.
 """
 
-import glob
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from shared_utils import list_files, validation_config
 from validator_common import (
     BaseValidator,
     extract_block_from_text,
@@ -30,6 +33,9 @@ STATE_OWNER_RE = re.compile(r"^\s*owner\s*=\s*([A-Z0-9]{3})\b", re.MULTILINE)
 RULE_RE = re.compile(r"^([A-Z0-9]{3})_ai_behavior\s*=\s*\{", re.MULTILINE)
 OPTION_NAME_RE = re.compile(r"\boption\s*=\s*\{\s*name\s*=\s*(\w+)")
 DEFAULT_BLOCK_RE = re.compile(r"\bdefault\s*=\s*\{")
+EXEMPT_TREE_FILES = set(
+    validation_config("validate_ai_path_rules", "exempt_tree_files")
+)
 
 
 def _tree_owner(text: str) -> Tuple[Optional[str], int]:
@@ -69,18 +75,18 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         mod = Path(self.mod_path)
-        focus_files = sorted(glob.glob(str(mod / FOCUS_DIR / "*.txt")))
+        focus_files = list_files(mod / FOCUS_DIR, recursive=False)
         if not focus_files:
             return
         if self.staged_only and not self.staged_touches(SCOPE_DIRS):
             return
 
         owners: Set[str] = set()
-        for path in sorted(glob.glob(str(mod / STATES_DIR / "*.txt"))):
+        for path in list_files(mod / STATES_DIR, recursive=False):
             owners |= _state_owners(self._read(path))
 
         rules: Dict[str, Tuple[str, int, List[str], bool]] = {}
-        for path in sorted(glob.glob(str(mod / GAME_RULES_DIR / "*.txt"))):
+        for path in list_files(mod / GAME_RULES_DIR, recursive=False):
             rel = Path(path).relative_to(mod).as_posix()
             for tag, (line, options, has_default) in _rules(self._read(path)).items():
                 rules[tag] = (rel, line, options, has_default)
@@ -88,11 +94,13 @@ class Validator(BaseValidator):
         trees = 0
         findings = 0
         for path in focus_files:
+            rel = Path(path).relative_to(mod).as_posix()
+            if rel in EXEMPT_TREE_FILES:
+                continue
             tag, line = _tree_owner(self._read(path))
             if tag is None or tag not in owners:
                 continue
             trees += 1
-            rel = Path(path).relative_to(mod).as_posix()
             if tag not in rules:
                 findings += 1
                 self.add_warning(

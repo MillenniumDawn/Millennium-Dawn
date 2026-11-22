@@ -14,36 +14,40 @@ AI_record_score = {
 	}
 }
 
+# THIS is the recipient country and ROOT is the investor.
 invest_cic = {
-	ROOT = {
-		set_variable = { project_building_type^-1 = 1 }
-		set_variable = { project_build_amount^-1 = 1 }
-		update_gui = yes
-		PREV = {
-			CONTROLLER = { send_pending_investment_offer = yes }
+	if = { limit = { ROOT = { investment_project_slot_available = yes } scripted_investment_recipient_available = yes }
+		set_temp_variable = { investment_donor = ROOT.id }
+		random_owned_controlled_state = {
+			limit = { scripted_civilian_investment_state_available = yes }
+			set_temp_variable = { scripted_investment_type = 1 }
+			send_scripted_investment = yes
 		}
 	}
 }
 
 invest_mic = {
-	ROOT = {
-		set_variable = { project_building_type^-1 = 2 }
-		set_variable = { project_build_amount^-1 = 1 }
-		update_gui = yes
-		PREV = {
-			CONTROLLER = { send_pending_investment_offer = yes }
+	if = { limit = { ROOT = { investment_project_slot_available = yes } scripted_investment_recipient_available = yes }
+		random_owned_controlled_state = {
+			limit = {
+				NOT = { is_in_array = { projects_in_state = ROOT } }
+				investment_military_slot_available = yes
+			}
+			set_temp_variable = { scripted_investment_type = 2 }
+			send_scripted_investment = yes
 		}
 	}
 }
 
-invest_infra = {
+# Parameters: scripted_investment_type = project type ID; THIS is the state, ROOT the investor.
+send_scripted_investment = {
+	set_variable = { ROOT.investments_state_target = THIS.id }
+	CONTROLLER = { set_variable = { ROOT.investments_nation_target = THIS.id } }
 	ROOT = {
-		set_variable = { project_building_type^-1 = 4 }
+		set_variable = { project_building_type^-1 = scripted_investment_type }
 		set_variable = { project_build_amount^-1 = 1 }
 		update_gui = yes
-		PREV = {
-			CONTROLLER = { send_pending_investment_offer = yes }
-		}
+		country_event = investments_event.3
 	}
 }
 
@@ -543,11 +547,11 @@ AI_country_selection_calculation = {
 	if = { limit = { is_in_faction_with = PREV }
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
-	if = { limit = { has_country_flag = trade_agreement@PREV }
+	if = { limit = { is_in_array = { trade_agreement_partners = PREV } }
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
 	if = {
-		limit = { has_country_flag = mutual_investment_treaty_@PREV }
+		limit = { is_in_array = { investment_treaty_partners = PREV } }
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
 	if = { limit = { PREV = { check_variable = { active_projects > 0 } } }
@@ -571,7 +575,7 @@ AI_country_selection_calculation = {
 		if = { limit = { check_variable = { inv_has_ECB_president = 1 } }
 			add_to_temp_variable = { AI_country_score = 15 }
 		}
-		if = { limit = { check_variable = { inv_has_EU_finance_minister = 1 } }
+		if = { limit = { check_variable = { inv_has_EU_ECOFIN_office_idea = 1 } }
 			add_to_temp_variable = { AI_country_score = 5 }
 		}
 	}
@@ -631,14 +635,40 @@ AI_country_selection_calculation = {
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
 
-	# AI Support the other AI
+	# Recipients pay 10% on acceptance: skip countries that cannot, and favor ones that can
 	if = {
 		limit = {
 			OR = {
-				num_of_available_civilian_factories < 15
-				check_variable = { treasury_rate < 1.00 }
+				has_active_mission = bankruptcy_incoming_collapse
+				has_active_mission = cheap_loan_from_the_imf_mission
+				has_active_mission = debt_default_main_mission
+				has_idea = debt_default_credit_downgrade
+				check_variable = { interest_rate > 9.999 }
 			}
 		}
+		add_to_temp_variable = { AI_country_score = -500 }
+	}
+	else_if = { limit = { ai_has_high_deficit = yes }
+		add_to_temp_variable = { AI_country_score = -40 }
+	}
+	else_if = { limit = { check_variable = { interest_rate > 7.999 } }
+		add_to_temp_variable = { AI_country_score = -20 }
+	}
+	if = { limit = { has_idea = depression }
+		add_to_temp_variable = { AI_country_score = -30 }
+	}
+	else_if = { limit = { has_idea = recession }
+		add_to_temp_variable = { AI_country_score = -15 }
+	}
+	else_if = { limit = { OR = { has_idea = fast_growth has_idea = economic_boom } }
+		add_to_temp_variable = { AI_country_score = 10 }
+	}
+	else_if = { limit = { has_idea = stable_growth }
+		add_to_temp_variable = { AI_country_score = 5 }
+	}
+
+	# Room to grow: few free civilian factories to build with
+	if = { limit = { num_of_available_civilian_factories < 15 }
 		add_to_temp_variable = { AI_country_score = 30 }
 	}
 
@@ -657,10 +687,11 @@ AI_country_selection_calculation = {
 
 	set_temp_variable_to_random = {
 		var = randomizer_country_score
-		min = 25
-		max = 75
+		min = 0
+		max = 30
 		integer = yes
 	}
+	# Cost and duration modifiers are bad when positive, so they lower the score
 	set_temp_variable = {
 		AI_country_score = {
 			value = AI_country_score
@@ -668,13 +699,13 @@ AI_country_selection_calculation = {
 			multiply = {
 				value = 1
 				subtract = modifier@receiving_investment_cost_modifier
-				add = inv_cost_modifier
+				subtract = inv_cost_modifier
 				clamp = { min = 0.50 max = 1.50 }
 			}
 			multiply = {
 				value = 1
-				add = modifier@receiving_investment_duration_modifier
-				add = inv_duration_modifier
+				subtract = modifier@receiving_investment_duration_modifier
+				subtract = inv_duration_modifier
 				clamp = { min = 0.50 max = 1.50 }
 			}
 		}

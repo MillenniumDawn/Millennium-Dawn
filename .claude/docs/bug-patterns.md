@@ -1,6 +1,6 @@
 # Bug Patterns
 
-Deduplicated catalog of known MD/HOI4 bug patterns. Two sections: **Scan patterns** are greppable signatures for codebase sweeps (`/fix-issue` idle scans); **Adversarial questions** are what-could-go-wrong checks for reviewing a diff (`/adversarial-review`, `/audit`). Reviewers apply both sections.
+Scan patterns are greppable signatures for codebase sweeps. Adversarial questions are what-could-go-wrong checks for a diff. Reviewers apply both.
 
 Also read [Scripting Edge Cases](scripting-edge-cases.md) and
 [Data Structures](hoi4-data-structures.md) for scope, state, and trigger semantics.
@@ -59,6 +59,7 @@ Ask these systematically against every changed block. If the answer is "no, it's
 
 - `clr_country_flag` / `clr_global_flag` on a flag never set: harmless, but signals the author did not trace the flag lifecycle.
 - `random_list` with all weights 0, or every `ai_chance` at `base = 0`: nothing is ever selected.
+- `ai_chance` or `ai_will_do` with only a flat base, or a `factor = 0` on a proxy that is not the variable the choice changes: the outcome is fixed. See "Situation weights" in `event-reference.md`.
 
 **Cross-Country Mechanics**
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Validate scripted localisation definitions and usage in Millennium Dawn."""
 
-import glob
 import os
 import re
 from multiprocessing import Pool
@@ -9,15 +8,18 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
-from shared_utils import validation_config
-from validate_gfx_references import sprite_names_from_gfx_text
+from shared_utils import list_files, validation_config
+from validate_gfx_references import (
+    _load_vanilla_sprite_manifest,
+    sprite_names_from_gfx_text,
+)
 from validator_common import (
     BaseValidator,
     Colors,
-    DataCleaner,
     FileOpener,
     Issue,
     Severity,
+    drop_partial_matches,
     find_line_number,
     run_validator_main,
     scan_meta_constructed_names,
@@ -128,13 +130,6 @@ def _scan_loc_token_candidates(
     }
     explicit = set() if is_scripted_loc_file else set(_LOC_REFERENCE_RE.findall(text))
     return bracketed, explicit
-
-
-def _scan_loc_tokens(
-    text: str, is_scripted_loc_file: bool, defined_names: Set[str] | None = None
-) -> Set[str]:
-    bracketed, explicit = _scan_loc_token_candidates(text, is_scripted_loc_file)
-    return _filter_bracket_loc_candidates(bracketed, defined_names or set()) | explicit
 
 
 _LOC_OBJECTS_DOC = os.path.join(
@@ -291,8 +286,10 @@ class ScriptedLocalisation:
                 if "scripted_localisation" in f and f.endswith(".txt")
             ]
         else:
-            pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
-            files_to_scan = glob.glob(pattern)
+            files_to_scan = list_files(
+                os.path.join(mod_path, "common", "scripted_localisation"),
+                recursive=False,
+            )
 
         args_list = [(f, lowercase, mod_path) for f in files_to_scan]
         results = _map_files(
@@ -337,18 +334,11 @@ class ScriptedLocalisation:
                 if f.endswith(".gui") or f.endswith(".yml") or f.endswith(".txt")
             ]
         else:
-            gui_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.gui"), recursive=True)
+            gui_files = list_files(mod_path, ("*.gui",))
+            yml_files = list_files(
+                os.path.join(mod_path, "localisation", "english"), ("*.yml",)
             )
-            yml_files = list(
-                glob.iglob(
-                    os.path.join(mod_path, "localisation", "english", "**", "*.yml"),
-                    recursive=True,
-                )
-            )
-            txt_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
+            txt_files = list_files(mod_path)
             files_to_scan = gui_files + yml_files + txt_files
 
         args_list = [(f, search_names, lowercase, mod_path) for f in files_to_scan]
@@ -406,14 +396,9 @@ class Validator(BaseValidator):
         )
 
         defined_locs_lower = [loc.lower() for loc in defined_locs]
-        used_locs_lower_raw = [loc.lower() for loc in used_locs]
         used_lower_to_original = {loc.lower(): loc for loc in used_locs}
-
-        used_locs_lower = (
-            DataCleaner.clear_false_positives_partial_match(
-                used_locs_lower_raw, tuple(false_positives)
-            )
-            or []
+        used_locs_lower = drop_partial_matches(
+            (loc.lower() for loc in used_locs), false_positives
         )
 
         results = []
@@ -439,7 +424,7 @@ class Validator(BaseValidator):
 
         if len(results) > 0:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Note: Some of these may be regular localisation keys rather than scripted localisation. Verify manually.{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Note: Some of these may be regular localisation keys rather than scripted localisation. Verify manually.{Colors.ENDC}",
                 "warning",
             )
             self._report(
@@ -466,15 +451,9 @@ class Validator(BaseValidator):
         )
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
-        defined_locs_lower = [loc.lower() for loc in defined_locs]
         used_locs_lower = [loc.lower() for loc in used_locs]
-
-        defined_locs_lower = (
-            DataCleaner.clear_false_positives_partial_match(
-                defined_locs_lower,
-                tuple(false_positives) + tuple(unused_only),
-            )
-            or []
+        defined_locs_lower = drop_partial_matches(
+            (loc.lower() for loc in defined_locs), (*false_positives, *unused_only)
         )
 
         results = []
@@ -493,10 +472,9 @@ class Validator(BaseValidator):
                 if os.path.exists(pattern):
                     full_path = pattern
                 else:
-                    for filename in glob.iglob(
-                        os.path.join(
-                            self.mod_path, "common", "scripted_localisation", "*.txt"
-                        )
+                    for filename in list_files(
+                        os.path.join(self.mod_path, "common", "scripted_localisation"),
+                        recursive=False,
                     ):
                         if os.path.basename(filename) == basename:
                             full_path = filename
@@ -521,10 +499,10 @@ class Validator(BaseValidator):
             "Checking GFX_ icon references in scripted localisation against .gfx definitions..."
         )
 
-        # Collect all GFX_ names defined in interface/*.gfx
-        gfx_path = str(Path(self.mod_path) / "interface") + "/"
-        defined_gfx = set()
-        for filename in glob.iglob(gfx_path + "**/*.gfx", recursive=True):
+        # Collect all GFX_ names defined in interface/*.gfx, plus vanilla sprites
+        gfx_path = str(Path(self.mod_path) / "interface")
+        defined_gfx = set(_load_vanilla_sprite_manifest())
+        for filename in list_files(gfx_path, ("*.gfx",)):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=False
             )
@@ -538,10 +516,10 @@ class Validator(BaseValidator):
                 if "scripted_localisation" in f and f.endswith(".txt")
             ]
         else:
-            pattern = os.path.join(
-                self.mod_path, "common", "scripted_localisation", "*.txt"
+            files_to_scan = list_files(
+                os.path.join(self.mod_path, "common", "scripted_localisation"),
+                recursive=False,
             )
-            files_to_scan = glob.glob(pattern)
 
         results = []
         reported = set()
@@ -560,7 +538,7 @@ class Validator(BaseValidator):
         self._report(
             results,
             "✓ All GFX_ icons in scripted localisation are defined in .gfx files",
-            "GFX_ icons referenced in scripted localisation but not defined in interface/*.gfx:",
+            "GFX_ icons referenced in scripted localisation but not defined in interface/*.gfx or vanilla:",
             Severity.ERROR,
             category="gfx-icon",
         )
@@ -633,8 +611,8 @@ class Validator(BaseValidator):
         getter_refs: Dict[str, List[Tuple[str, int]]] = {}
         if self.staged_only:
             # Staged scans cover a handful of files, so they map in-process.
-            all_defined_locs = ScriptedLocalisation.get_all_defined_localisations(
-                mod_path=self.mod_path, lowercase=False, workers=1
+            all_defined_locs, _ = ScriptedLocalisation.get_all_defined_localisations(
+                mod_path=self.mod_path, lowercase=False, return_paths=True, workers=1
             )
             defined_locs, defined_paths = (
                 ScriptedLocalisation.get_all_defined_localisations(
@@ -660,10 +638,11 @@ class Validator(BaseValidator):
             # repo-wide consumer scan only when a definition file is staged.
             all_used_locs: List[str] = []
             if defined_locs:
-                all_used_locs = ScriptedLocalisation.get_all_used_localisations(
+                all_used_locs, _ = ScriptedLocalisation.get_all_used_localisations(
                     mod_path=self.mod_path,
                     defined_names=set(all_defined_locs),
                     lowercase=False,
+                    return_paths=True,
                     workers=self.workers,
                     pool=self._get_pool(),
                 )

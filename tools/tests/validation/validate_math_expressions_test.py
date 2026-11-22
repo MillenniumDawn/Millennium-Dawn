@@ -1,5 +1,7 @@
 """Tests for the math-expression trap scanner (validate_math_expressions)."""
 
+import pytest
+from shared.suite import write_tree
 from shared.suite import write_under as _write
 from validate_math_expressions import Validator, scan_text
 
@@ -91,7 +93,7 @@ def test_malformed_siblings_beside_scoped_assignment_are_flagged():
     assert [f[1] for f in findings] == ["math-sibling-operator"]
 
 
-def test_unsafe_comparator_and_from_read_in_nested_operands_are_flagged():
+def test_from_read_in_nested_operands_is_flagged():
     script = (
         "set_variable = {\n"
         "\tglobal.productivity = {\n"
@@ -103,10 +105,7 @@ def test_unsafe_comparator_and_from_read_in_nested_operands_are_flagged():
         "}\n"
     )
 
-    assert [f[1] for f in scan_text(script)] == [
-        "math-from-read",
-        "math-unsafe-comparator",
-    ]
+    assert [f[1] for f in scan_text(script)] == ["math-from-read"]
 
 
 def test_unknown_expression_blocks_do_not_leak_descendants():
@@ -124,29 +123,33 @@ def test_unknown_expression_blocks_do_not_leak_descendants():
     assert scan_text(script) == []
 
 
-def test_unsafe_comparator_inside_expression_is_flagged():
+def test_comparators_inside_expression_are_clean():
     script = (
         "set_temp_variable = {\n"
         "\tchance = {\n"
         "\t\tvalue = v\n"
         "\t\tif = { limit = { value = reach equals = 1 } add = 15 }\n"
+        "\t\tif = { limit = { value = reach not_equals = 2 } add = 5 }\n"
+        "\t\tadd = { value = y less_than_or_equals = 3 }\n"
+        "\t\tadd = { value = y greater_than_or_equals = 3 }\n"
         "\t}\n"
         "}\n"
     )
 
-    findings = scan_text(script)
-
-    assert [f[1] for f in findings] == ["math-unsafe-comparator"]
-    assert findings[0][0] == 4
+    assert scan_text(script) == []
 
 
-def test_unsafe_comparator_in_nested_operand_is_flagged():
-    script = (
-        "set_variable = { X = { value = 1 add = { value = y "
-        "less_than_or_equals = 3 } } }\n"
-    )
+def test_from_read_inside_comparator_operand_is_flagged():
+    script = "set_variable = { X = { value = 1 equals = { value = FROM.y } } }\n"
 
-    assert [f[1] for f in scan_text(script)] == ["math-unsafe-comparator"]
+    assert [f[1] for f in scan_text(script)] == ["math-from-read"]
+
+
+def test_comparator_beside_value_is_flagged_as_sibling():
+    findings = scan_text("set_variable = { X = 0 equals = Y }\n")
+
+    assert [f[1] for f in findings] == ["math-sibling-operator"]
+    assert "equals" in findings[0][2]
 
 
 def test_effect_level_check_variable_comparators_are_clean():
@@ -239,6 +242,45 @@ def test_clamp_and_modulo_effects_are_out_of_scope():
     assert scan_text(script) == []
 
 
+def test_expression_clamp_with_min_above_max_is_flagged():
+    script = (
+        "set_temp_variable = {\n"
+        "\tX = {\n"
+        "\t\tvalue = Y\n"
+        "\t\tclamp = { min = 0.05 max = -0.10 }\n"
+        "\t}\n"
+        "}\n"
+    )
+
+    assert scan_text(script) == [
+        (
+            4,
+            "clamp-min-above-max",
+            "`clamp` has min 0.05 above max -0.10, so the bounds are swapped or "
+            "mistyped",
+        )
+    ]
+
+
+@pytest.mark.parametrize("effect", ["clamp_variable", "clamp_temp_variable"])
+def test_clamp_effect_with_min_above_max_is_flagged(effect):
+    findings = scan_text(f"\n{effect} = {{ var = X min = 5 max = 0 }}\n")
+
+    assert [(f[0], f[1]) for f in findings] == [(2, "clamp-min-above-max")]
+
+
+def test_clamps_without_two_inverted_literals_are_clean():
+    script = (
+        "clamp_variable = { var = X min = 5 max = 5 }\n"
+        "clamp_variable = { var = X min = floor max = 0 }\n"
+        "clamp_variable = { var = X min = 5 }\n"
+        "clamp_temp_variable = { var = X min = 5 max = @cap }\n"
+        "set_variable = { X = { value = Y clamp = { min = 5 max = { value = Z } } } }\n"
+    )
+
+    assert scan_text(script) == []
+
+
 def _sibling(ops):
     return (
         f"math statements ({ops}) sit beside var/value instead of inside the "
@@ -282,7 +324,42 @@ def test_validator_reports_file_and_line(tmp_path):
     assert [(i.category, i.file, i.line) for i in v._issues] == [
         ("math-sibling-operator", "common/scripted_effects/traps.txt", 1)
     ]
-    assert all(i.severity == "warning" for i in v._issues)
+    assert all(i.severity == "error" for i in v._issues)
+
+
+def test_validator_reports_math_from_read_as_error(tmp_path):
+    _write(
+        tmp_path,
+        "common/scripted_effects/from_read.txt",
+        "set_temp_variable = {\n\tchange = {\n\t\tvalue = FROM.debt_bailout\n\t}\n}\n",
+    )
+
+    v = _validator(tmp_path)
+    v.run_validations()
+
+    assert [(i.severity, i.category) for i in v._issues] == [
+        ("error", "math-from-read")
+    ]
+
+
+def test_clamp_bounds_are_reported_only_with_the_flag(tmp_path):
+    _write(
+        tmp_path,
+        "common/scripted_effects/clamp.txt",
+        "clamp_variable = { var = X min = 5 max = 0 }\n",
+    )
+
+    off = _validator(tmp_path)
+    off.run_validations()
+    on = Validator(
+        str(tmp_path), use_colors=False, workers=1, no_cache=True, clamp_bounds=True
+    )
+    on.run_validations()
+
+    assert off._issues == []
+    assert [(i.severity, i.category, i.file, i.line) for i in on._issues] == [
+        ("error", "clamp-min-above-max", "common/scripted_effects/clamp.txt", 1)
+    ]
 
 
 def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch, pool_sizes):
@@ -337,3 +414,226 @@ def test_staged_mode_scans_only_staged_files(tmp_path, monkeypatch):
     v.run_validations()
 
     assert [i.file for i in v._issues] == ["common/scripted_effects/traps.txt"]
+
+
+_TEMP_WRITES = (
+    "set_temp_variable",
+    "add_to_temp_variable",
+    "subtract_from_temp_variable",
+    "multiply_temp_variable",
+    "divide_temp_variable",
+    "modulo_temp_variable",
+    "clamp_temp_variable",
+    "round_temp_variable",
+    "randomize_temp_variable",
+    "set_temp_variable_to_random",
+    "career_profile_set_temp_variable",
+    "career_profile_set_temp_playthrough_variable",
+)
+_WEIGHT_FILE = "events/weights.txt"
+_TRIGGER_FILE = "common/scripted_triggers/nested/triggers.txt"
+_WEIGHT_WARNING = "ai-weight-temp-variable"
+
+# case: (files, (file, weight-block line) warnings)
+_WEIGHT_TEMP_CASES = {
+    **{
+        effect: (
+            {_WEIGHT_FILE: f"ai_will_do = {{ {effect} = {{ var = x value = 1 }} }}"},
+            [(_WEIGHT_FILE, 1)],
+        )
+        for effect in _TEMP_WRITES
+    },
+    "scalar rounding": (
+        {_WEIGHT_FILE: "ai_will_do = { round_temp_variable = x }"},
+        [(_WEIGHT_FILE, 1)],
+    ),
+    "event chance": (
+        {_WEIGHT_FILE: "ai_chance = { modifier = { set_temp_variable = { x = 1 } } }"},
+        [(_WEIGHT_FILE, 1)],
+    ),
+    "scorer": (
+        {
+            "common/scorers/country/target.txt": "score = { set_temp_variable = { x = 1 } }"
+        },
+        [("common/scorers/country/target.txt", 1)],
+    ),
+    "ordinary score is not a scorer": (
+        {_WEIGHT_FILE: "score = { set_temp_variable = { x = 1 } }"},
+        [],
+    ),
+    "clean comparisons and effects outside weights": (
+        {
+            _WEIGHT_FILE: "set_temp_variable = { x = 1 }\n"
+            "ai_will_do = { modifier = { factor = x check_variable = { debt > 7 } } }\n"
+            "ai_chance = { modifier = { check_expr = { value = debt add = 7.5 greater_than = 9 } } }"
+        },
+        [],
+    ),
+    "persistent writes are not temp writes": (
+        {_WEIGHT_FILE: "ai_will_do = { set_variable = { x = 1 } }"},
+        [],
+    ),
+    "nested calls and negation": (
+        {
+            _WEIGHT_FILE: "ai_will_do = { NOT = { outer = no } }",
+            _TRIGGER_FILE: "outer = { ROOT = { inner = yes } }\n"
+            "inner = { set_temp_variable = { x = 1 } }",
+        },
+        [(_WEIGHT_FILE, 1)],
+    ),
+    "transitive writer in a cycle": (
+        {
+            _WEIGHT_FILE: "ai_chance = { first = yes }",
+            _TRIGGER_FILE: "first = { second = yes }\n"
+            "second = { third = yes }\n"
+            "third = { first = yes set_temp_variable = { x = 1 } }",
+        },
+        [(_WEIGHT_FILE, 1)],
+    ),
+    "clean cycle": (
+        {
+            _WEIGHT_FILE: "ai_will_do = { first = yes }",
+            _TRIGGER_FILE: "first = { second = yes }\nsecond = { first = no }",
+        },
+        [],
+    ),
+    "only exact boolean calls count": (
+        {
+            _WEIGHT_FILE: "ai_will_do = { not_writer = yes writer = yesterday }",
+            _TRIGGER_FILE: "writer = { set_temp_variable = { x = 1 } }",
+        },
+        [],
+    ),
+    "comments quotes and CRLF preserve lines": (
+        {
+            _WEIGHT_FILE: "# ai_will_do = { set_temp_variable = { x = 1 } }\r\n"
+            'log = "ai_chance = { set_temp_variable = { x = 1 } }"\r\n'
+            "ai_will_do = {\r\n outer = yes\r\n}",
+            _TRIGGER_FILE: "outer = { inner = yes }\r\n"
+            "inner = { set_temp_variable = { x = 1 } }",
+        },
+        [(_WEIGHT_FILE, 3)],
+    ),
+    "commented and quoted calls and writes": (
+        {
+            _WEIGHT_FILE: 'ai_will_do = {\n # writer = yes\n log = "writer = yes"\n'
+            "clean = yes\n}",
+            _TRIGGER_FILE: "writer = { set_temp_variable = { x = 1 } }\n"
+            'clean = { # writer = yes\n log = "set_temp_variable = { x = 1 }"\n}',
+        },
+        [],
+    ),
+    "report once per weight block": (
+        {
+            _WEIGHT_FILE: "ai_will_do = { set_temp_variable = { x = 1 } writer = yes }\n"
+            "ai_chance = { writer = no writer = yes }",
+            _TRIGGER_FILE: "writer = { set_temp_variable = { x = 1 } }",
+        },
+        [(_WEIGHT_FILE, 1), (_WEIGHT_FILE, 2)],
+    ),
+    "unclosed weight block": (
+        {_WEIGHT_FILE: "ai_will_do = { set_temp_variable = { x = 1 }"},
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "files,expected", _WEIGHT_TEMP_CASES.values(), ids=_WEIGHT_TEMP_CASES
+)
+def test_weight_temp_variables(tmp_path, files, expected):
+    write_tree(tmp_path, files)
+    v = _validator(tmp_path)
+    v.run_validations()
+
+    assert [(i.category, i.severity, i.file, i.line) for i in v._issues] == [
+        (_WEIGHT_WARNING, "warning", path, line) for path, line in expected
+    ]
+    assert all("check_expr" in i.message for i in v._issues)
+
+
+def test_staged_weight_uses_unstaged_trigger_definitions(tmp_path, monkeypatch):
+    write_tree(
+        tmp_path,
+        {
+            _WEIGHT_FILE: "ai_will_do = { outer = yes }",
+            "events/unstaged.txt": "ai_chance = { outer = yes }",
+            _TRIGGER_FILE: "outer = { inner = yes }\n"
+            "inner = { set_temp_variable = { x = 1 } }",
+        },
+    )
+    monkeypatch.setenv("MD_STAGED_FILES", _WEIGHT_FILE)
+    v = Validator(
+        str(tmp_path), use_colors=False, workers=1, no_cache=True, staged_only=True
+    )
+    v.run_validations()
+
+    assert [(i.category, i.file) for i in v._issues] == [
+        (_WEIGHT_WARNING, _WEIGHT_FILE)
+    ]
+
+
+def test_changed_trigger_writes_invalidate_cached_weights(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    write_tree(
+        tmp_path,
+        {
+            _WEIGHT_FILE: "ai_will_do = { outer = yes }",
+            _TRIGGER_FILE: "outer = { inner = yes }\ninner = { always = yes }",
+        },
+    )
+    scans = []
+
+    def counted(raw, *args, **kwargs):
+        if "ai_will_do" in raw:
+            scans.append(raw)
+        return scan_text(raw, *args, **kwargs)
+
+    monkeypatch.setattr("validate_math_expressions.scan_text", counted)
+
+    def scan():
+        v = Validator(str(tmp_path), use_colors=False, workers=1)
+        v.run_validations()
+        return [(i.category, i.file, i.line) for i in v._issues]
+
+    assert scan() == scan() == []
+    _write(
+        tmp_path,
+        _TRIGGER_FILE,
+        "outer = { inner = yes }\ninner = { set_temp_variable = { x = 1 } }",
+    )
+    assert scan() == scan() == [(_WEIGHT_WARNING, _WEIGHT_FILE, 1)]
+    _write(tmp_path, _TRIGGER_FILE, "outer = { inner = yes }\ninner = { always = yes }")
+    assert scan() == []
+    assert len(scans) == 2
+
+
+def test_temp_trigger_lookup_survives_spawn(tmp_path, monkeypatch, pool_sizes):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    write_tree(
+        tmp_path,
+        {
+            _TRIGGER_FILE: "outer = { inner = yes }\n"
+            "inner = { set_temp_variable = { x = 1 } }",
+            **{
+                f"events/weights{index:02}.txt": "ai_chance = { outer = yes }"
+                for index in range(12)
+            },
+        },
+    )
+
+    def run(workers):
+        v = Validator(str(tmp_path), use_colors=False, workers=workers, no_cache=True)
+        v.run_all_validations()
+        return sorted((i.category, i.severity, i.file, i.line) for i in v._issues)
+
+    pooled = run(2)
+    assert pool_sizes == [2]
+    assert (
+        pooled
+        == run(1)
+        == [
+            (_WEIGHT_WARNING, "warning", f"events/weights{index:02}.txt", 1)
+            for index in range(12)
+        ]
+    )

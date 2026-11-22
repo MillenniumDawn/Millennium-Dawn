@@ -12,16 +12,23 @@ import sys
 
 import pytest
 import validate_simplifications as vs
+from shared.suite import write_under
 from validate_simplifications import (
     _count_children,
     _find_bare_not,
     _find_count_collapsible,
+    _find_duplicate_or_clauses,
     _find_empty_trigger_blocks,
     _find_government_match,
+    _find_has_idea_chains,
     _find_mergeable,
     _find_random_controlled_shortcut,
     _find_scope_expansion,
+    _find_this_wrappers,
+    _find_threshold_ladders,
     _find_two_bucket_random,
+    _idea_ladder_findings,
+    _idea_variable_groups,
     _iter_direct_assignments,
     _scan_composite,
     _scan_decision_file,
@@ -395,49 +402,17 @@ def test_extra_clause_gate_not_flagged():
     assert _gov(text) == []
 
 
-def test_extra_bare_condition_in_clause_not_flagged():
-    # Every clause carries an extra `has_war = yes`; collapsing to
-    # `has_government = FROM` would silently drop it.
-    text = (
-        "OR = {\n"
-        + "\n".join(
-            "  AND = {{ has_government = {i}  has_war = yes  "
-            "FROM = {{ has_government = {i} }} }}".format(i=i)
-            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-        )
-        + "\n}\n"
-    )
-    assert _gov(text) == []
-
-
-def test_extra_scope_block_in_clause_not_flagged():
-    # A second scope block (GER = { exists = yes }) is a real gate the collapse
-    # would drop.
-    text = (
-        "OR = {\n"
-        + "\n".join(
-            "  AND = {{ has_government = {i}  GER = {{ exists = yes }}  "
-            "FROM = {{ has_government = {i} }} }}".format(i=i)
-            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-        )
-        + "\n}\n"
-    )
-    assert _gov(text) == []
-
-
-def test_unrelated_not_inside_scope_not_misclassified():
-    # NOT wraps an unrelated trigger, not has_government; must not be read as a
-    # "different government" clause (and the extra trigger makes it non-clean).
-    text = (
-        "OR = {\n"
-        + "\n".join(
-            "  AND = {{ has_government = {i}  "
-            "FROM = {{ NOT = {{ has_war = yes }} has_government = {i} }} }}".format(i=i)
-            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-        )
-        + "\n}\n"
-    )
-    assert _gov(text) == []
+@pytest.mark.parametrize(
+    "scoped_template",
+    [
+        "has_war = yes  {t} = {{ has_government = {i} }}",
+        "GER = {{ exists = yes }}  {t} = {{ has_government = {i} }}",
+        "{t} = {{ NOT = {{ has_war = yes }} has_government = {i} }}",
+    ],
+    ids=["bare-condition", "extra-scope", "unrelated-not-in-scope"],
+)
+def test_extra_conditions_in_government_match_not_flagged(scoped_template):
+    assert _gov(_all_five("FROM", scoped_template)) == []
 
 
 def test_double_negation_collapses_to_same():
@@ -783,6 +758,269 @@ def test_missing_child_value_stops_the_count():
     assert _count_children(" tag =") == 1
 
 
+# --- duplicate OR clauses ----------------------------------------------------
+
+
+def _dup(text):
+    return _find_duplicate_or_clauses(_script(text))
+
+
+def test_repeated_block_clause_in_an_or_is_flagged_at_the_second_copy():
+    # SyriaFocus.80 shape: communism listed twice, neutrality missing
+    text = (
+        "OR = {\n"
+        "\tAND = { has_government = democratic FROM = { has_government = democratic } }\n"
+        "\tAND = { has_government = communism FROM = { has_government = communism } }\n"
+        "\tAND = {\n"
+        "\t\thas_government = communism\n"
+        "\t\tFROM = { has_government = communism }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _dup(text) == [
+        (
+            4,
+            "AND = { has_government = communism FROM = { has_government = communism } }",
+        )
+    ]
+
+
+def test_repeated_scalar_clause_in_an_or_is_flagged():
+    assert _dup("OR = { tag = ITA tag = GER tag = ITA }\n") == [(1, "tag = ITA")]
+
+
+def test_distinct_or_clauses_are_not_flagged():
+    assert _dup("OR = { tag = ITA original_tag = ITA NOT = { tag = ITA } }\n") == []
+
+
+def test_repeat_outside_an_or_is_not_flagged():
+    assert _dup("AND = { tag = ITA tag = ITA }\nadd_stability = 0.1\n") == []
+
+
+def test_nested_or_is_checked_on_its_own_children():
+    text = "OR = {\n\thas_war = yes\n\tAND = { OR = { tag = ITA tag = ITA } }\n}\n"
+    assert _dup(text) == [(3, "tag = ITA")]
+
+
+def test_composite_reports_a_duplicate_or_clause_outside_the_effect_dirs():
+    text = "ai_strategy = {\n\tenable = { OR = { tag = ITA tag = ITA } }\n}\n"
+    findings = _scan_composite(text, "common/ai_strategy/test.txt")
+    assert [line for _message, line in findings] == [2]
+    assert "OR repeats the clause `tag = ITA`" in findings[0][0]
+
+
+# --- no-op THIS wrappers ---------------------------------------------------
+
+# case: (text, lines flagged)
+_THIS_WRAPPER_CASES = {
+    "plain wrapper": (
+        "FROM = {\n\tTHIS = { any_neighbor_country = { has_war = yes } }\n}\n",
+        [2],
+    ),
+    "body reads PREV": (
+        "FROM = {\n\tTHIS = { is_in_faction_with = PREV }\n}\n",
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected", _THIS_WRAPPER_CASES.values(), ids=_THIS_WRAPPER_CASES.keys()
+)
+def test_this_wrapper(text, expected):
+    assert _find_this_wrappers(_script(text)) == expected
+
+
+def test_composite_reports_a_this_wrapper_outside_the_effect_dirs():
+    text = "action = {\n\tcomplete_effect = { THIS = { add_stability = 0.1 } }\n}\n"
+    findings = _scan_composite(text, "common/scripted_diplomatic_actions/t.txt")
+    assert [line for _message, line in findings] == [2]
+    assert "`THIS = { ... }` runs in the scope it is already in" in findings[0][0]
+
+
+# --- threshold if-ladders --------------------------------------------------
+
+
+def _step(test, add="total = 1", effect="add_to_temp_variable"):
+    return (
+        f"if = {{ limit = {{ check_variable = {{ {test} }} }} "
+        f"{effect} = {{ {add} }} }}\n"
+    )
+
+
+# case: (text, (line, steps, tested variable, target) of each ladder flagged)
+_THRESHOLD_LADDER_CASES = {
+    "three steps in both syntaxes": (
+        _step("score > 10")
+        + _step("var = score value = 20 compare = greater_than_or_equals")
+        + _step("score > 30", "var = total value = 2"),
+        [(1, 3, "score", "total")],
+    ),
+    "persistent variable": (
+        "".join(_step(f"score > {n}", effect="add_to_variable") for n in (10, 20, 30)),
+        [(1, 3, "score", "total")],
+    ),
+    "two steps": (_step("score > 10") + _step("score > 20"), []),
+    "mixed variables": (
+        _step("score > 10") + _step("score > 20") + _step("other > 30"),
+        [],
+    ),
+    "else_if chain": (
+        _step("score > 10")
+        + _step("score > 20")
+        + _step("score > 30")
+        + "else_if = { }",
+        [],
+    ),
+    "else after the last step": (
+        _step("score > 10") + _step("score > 20") + _step("score > 30") + "else = { }",
+        [],
+    ),
+    "adds to the tested variable": (
+        "".join(_step(f"score > {n}", "score = 1") for n in (10, 20, 30)),
+        [],
+    ),
+    "compared with a variable": (
+        "".join(_step(f"score > limit_{n}") for n in (1, 2, 3)),
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    _THRESHOLD_LADDER_CASES.values(),
+    ids=_THRESHOLD_LADDER_CASES.keys(),
+)
+def test_threshold_ladder(text, expected):
+    assert _find_threshold_ladders(_script(text)) == expected
+
+
+def test_composite_reports_a_threshold_ladder_in_the_effect_dirs():
+    steps = "".join(_step(f"score > {n}") for n in (10, 20, 30))
+    findings = _scan_composite(
+        f"my_effect = {{\n{steps}}}\n", "common/scripted_effects/t.txt"
+    )
+    assert [line for _message, line in findings] == [2]
+    assert "3 adjacent `if` blocks compare `score` with constants" in findings[0][0]
+    assert "value = score <comparator> = N multiply = V }`" in findings[0][0]
+
+
+# --- has_idea ladders over ideas that already set a variable -----------------
+
+
+def _ideas(*on_adds):
+    ideas = "".join(
+        f"\t\tlevel_{n} = {{ {on_add} }}\n" for n, on_add in enumerate(on_adds, 1)
+    )
+    return f"ideas = {{\n\tlevel_law = {{\n\t\tlaw = yes\n{ideas}\t}}\n}}\n"
+
+
+def _ladder(*bodies):
+    branches = "".join(
+        f"{'if' if n == 1 else 'else_if'} = "
+        f"{{ limit = {{ has_idea = level_{n} }} {body} }}\n"
+        for n, body in enumerate(bodies, 1)
+    )
+    return f"my_effect = {{\n{branches}}}\n"
+
+
+_SETS_TIER = (
+    "on_add = { set_variable = { tier = 1 } }",
+    "on_add = { custom_effect_tooltip = TT set_variable = { var = tier value = 2 } }",
+    "on_add = { set_variable = { tier = 3 } }",
+)
+_ADDS_BONUS = tuple(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 2, 3))
+_EVERY_EFFECT = (
+    _ADDS_BONUS[0],
+    "add_to_variable = { bonus = 2 }",
+    "set_temp_variable = { bonus = 3 } set_variable = { other = 1 }",
+)
+
+# case: (idea file, effect file, lines flagged)
+_IDEA_LADDER_CASES = {
+    "ladder over ideas that set a variable": (
+        _ideas(*_SETS_TIER),
+        _ladder(*_ADDS_BONUS),
+        [2],
+    ),
+    "values on no line through the levels": (
+        _ideas(*_SETS_TIER),
+        _ladder(*(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 2, 4))),
+        [],
+    ),
+    "every idea sets the same level": (
+        _ideas(*[_SETS_TIER[0]] * 3),
+        _ladder(*_ADDS_BONUS),
+        [],
+    ),
+    "first and last ideas share a level": (
+        _ideas(
+            *(f"on_add = {{ set_variable = {{ tier = {n} }} }}" for n in (1, 2, 3, 1))
+        ),
+        _ladder(*(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 5, 7, 1))),
+        [],
+    ),
+    "values from a named constant": (
+        _ideas(*_SETS_TIER),
+        _ladder(*(f"set_temp_variable = {{ rate = @factor_{n} }}" for n in (1, 2, 3))),
+        [],
+    ),
+    "branch the parser cannot read": (
+        _ideas(*_SETS_TIER),
+        _ladder(
+            *(f"add_to_variable = {{ bonus = {n} tooltip = tt }}" for n in (1, 2, 3))
+        ),
+        [],
+    ),
+    "branches mix effect kinds": (_ideas(*_SETS_TIER), _ladder(*_EVERY_EFFECT), []),
+    "ideas set no variable": (_ideas("", "", ""), _ladder(*_ADDS_BONUS), []),
+    "one idea sets no variable": (
+        _ideas(*_SETS_TIER[:2], ""),
+        _ladder(*_ADDS_BONUS),
+        [],
+    ),
+    "ladder writes that variable": (
+        _ideas(*_SETS_TIER),
+        _ladder(*(f"set_variable = {{ tier = {n} }}" for n in (1, 2, 3))),
+        [],
+    ),
+    "branch does more than set a value": (
+        _ideas(*_SETS_TIER),
+        _ladder(_ADDS_BONUS[0], "add_stability = 0.1", _ADDS_BONUS[2]),
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "ideas, effect, expected",
+    _IDEA_LADDER_CASES.values(),
+    ids=_IDEA_LADDER_CASES.keys(),
+)
+def test_idea_ladder(ideas, effect, expected):
+    chains = _find_has_idea_chains(_script(effect))
+    groups = _idea_variable_groups(_script(ideas))
+    findings = _idea_ladder_findings(chains, groups)
+    assert [line for _message, line in findings] == expected
+
+
+def test_validator_reports_a_has_idea_ladder_against_the_idea_files(tmp_path):
+    write_under(tmp_path, "common/ideas/t.txt", _ideas(*_SETS_TIER))
+    write_under(tmp_path, "common/scripted_effects/t.txt", _ladder(*_ADDS_BONUS))
+
+    validator = vs.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert [(i.file, i.line, i.severity) for i in validator._issues] == [
+        ("common/scripted_effects/t.txt", 2, "warning")
+    ]
+    assert (
+        "3 `has_idea` branches over `level_law` ideas only add or set a value, but "
+        "each of those ideas already sets `tier` in `on_add`; read `tier` instead"
+    ) == validator._issues[0].message
+
+
 # --- direct child iteration ------------------------------------------------
 
 
@@ -871,8 +1109,8 @@ def test_composite_runs_both_passes_inside_the_effect_dirs():
     assert any("NOT with 2 children" in m for m in messages)
 
 
-def test_validator_reports_findings_with_file_and_line(tmp_path, write_path):
-    write_path(
+def test_validator_reports_findings_with_file_and_line(tmp_path):
+    write_under(
         tmp_path,
         "common/national_focus/test_tree.txt",
         "focus_tree = {\n"
@@ -886,7 +1124,7 @@ def test_validator_reports_findings_with_file_and_line(tmp_path, write_path):
         "\t}\n"
         "}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/ai_strategy/test_ai.txt",
         "ai_strategy = {\n\tallowed = { NOT = { tag = USA tag = GER } }\n}\n",
@@ -904,8 +1142,8 @@ def test_validator_reports_findings_with_file_and_line(tmp_path, write_path):
     assert {issue.category for issue in validator._issues} == {"simplification"}
 
 
-def test_clean_tree_reports_nothing(tmp_path, write_path):
-    write_path(
+def test_clean_tree_reports_nothing(tmp_path):
+    write_under(
         tmp_path,
         "common/national_focus/clean.txt",
         "focus_tree = {\n\tid = clean\n}\n",
@@ -1278,8 +1516,8 @@ def test_decision_lines_account_for_leading_lines():
     assert [line for line, _m in findings] == [6]
 
 
-def test_owner_scope_only_flag_skips_other_passes(tmp_path, write_path):
-    write_path(
+def test_full_run_reports_merge_and_owner_scope_passes(tmp_path):
+    write_under(
         tmp_path,
         "common/national_focus/mix.txt",
         "focus_tree = {\n"
@@ -1298,14 +1536,6 @@ def test_owner_scope_only_flag_skips_other_passes(tmp_path, write_path):
         "\t}\n"
         "}\n",
     )
-
-    scoped = vs.Validator(
-        str(tmp_path), use_colors=False, workers=1, owner_scope_only=True
-    )
-    scoped.run_validations()
-    scoped_messages = [issue.message for issue in scoped._issues]
-    assert len(scoped_messages) == 1
-    assert "remove the wrapper" in scoped_messages[0]
 
     full = vs.Validator(str(tmp_path), use_colors=False, workers=1)
     full.run_validations()
@@ -1343,8 +1573,8 @@ def test_composite_routes_focus_and_decision_passes():
     assert any("remove the wrapper" in m for m in messages)
 
 
-def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
-    write_path(
+def test_cli_entry_point_exits_zero(tmp_path, monkeypatch):
+    write_under(
         tmp_path,
         "common/national_focus/clean.txt",
         "focus_tree = {\n\tid = clean\n}\n",
@@ -1365,8 +1595,8 @@ def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
 
 _MERGE_USA = "consecutive `USA = { }` blocks can be merged into one"
 _NOT_TWO = (
-    "NOT with 2 children is ambiguous (semantics disputed NAND vs NOR); "
-    "write `NOT = { OR = { ... } }` or one NOT per trigger"
+    "NOT with 2 children is NOR (true only when every child is false); "
+    "write `NOT = { OR = { ... } }` to say so, or `NOT = { AND = { ... } }` for not all"
 )
 
 # Quoted braces, a brace-only string, an escaped quote, an unclosed block, a
@@ -1403,8 +1633,8 @@ def test_block_end_matches_extract_block_from_text_for_every_brace_and_limit():
     assert checked > 1000
 
 
-def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path, write_path):
-    write_path(
+def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path):
+    write_under(
         tmp_path,
         "events/quoted.txt",
         "# USA = { a = yes } USA = { b = yes }\n"
@@ -1414,8 +1644,8 @@ def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path, write_path):
     assert _run(tmp_path) == [("events/quoted.txt", 3, _MERGE_USA)]
 
 
-def test_a_file_collected_twice_is_reported_once(tmp_path, monkeypatch, write_path):
-    path = write_path(
+def test_a_file_collected_twice_is_reported_once(tmp_path, monkeypatch):
+    path = write_under(
         tmp_path, "events/twice.txt", "USA = { a = yes }\nUSA = { b = yes }\n"
     )
     monkeypatch.setattr(
@@ -1424,8 +1654,8 @@ def test_a_file_collected_twice_is_reported_once(tmp_path, monkeypatch, write_pa
     assert _run(tmp_path) == [("events/twice.txt", 2, _MERGE_USA)]
 
 
-def test_crlf_file_reports_its_first_and_unterminated_last_line(tmp_path, write_path):
-    write_path(
+def test_crlf_file_reports_its_first_and_unterminated_last_line(tmp_path):
+    write_under(
         tmp_path,
         "common/scripted_triggers/crlf.txt",
         "NOT = { tag = USA tag = GER }\r\nUSA = { a = yes }\r\nUSA = { b = yes }",
@@ -1459,17 +1689,17 @@ def test_government_gate_opens_on_spaceless_has_government():
     assert _find_government_match(_script(text)) == [(2, "has_government = FROM")]
 
 
-def test_pooled_run_matches_in_process_findings_and_order(
-    tmp_path, monkeypatch, write_path
-):
+def test_pooled_run_matches_in_process_findings_and_order(tmp_path, monkeypatch):
     # 61 files cross the pool threshold and span two map chunks.
     for index in range(60):
-        write_path(
+        write_under(
             tmp_path,
             f"events/pool_{index:02}.txt",
             "\n" * index + "USA = { a = yes }\nUSA = { b = yes }\n",
         )
-    write_path(tmp_path, "common/ai_strategy/pool.txt", "NOT = { tag = USA tag = GER }")
+    write_under(
+        tmp_path, "common/ai_strategy/pool.txt", "NOT = { tag = USA tag = GER }"
+    )
     monkeypatch.setenv("MD_MAX_WORKERS", "2")
 
     pooled = vs.Validator(str(tmp_path), use_colors=False, workers=2)
@@ -1490,12 +1720,10 @@ def test_pooled_run_matches_in_process_findings_and_order(
     )
 
 
-def test_disk_cache_reuses_findings_until_the_content_changes(
-    tmp_path, monkeypatch, write_path
-):
+def test_disk_cache_reuses_findings_until_the_content_changes(tmp_path, monkeypatch):
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
     merge = "USA = { a = yes }\nUSA = { b = yes }\n"
-    path = write_path(tmp_path, "events/cached.txt", merge)
+    path = write_under(tmp_path, "events/cached.txt", merge)
     scanned = []
     original = vs._scan_composite
 
@@ -1511,7 +1739,7 @@ def test_disk_cache_reuses_findings_until_the_content_changes(
     assert _run(tmp_path) == cold == [("events/cached.txt", 2, _MERGE_USA)]
     assert scanned == [], "the warm run must read the cached findings"
 
-    write_path(tmp_path, "events/cached.txt", "\n" + merge)
+    write_under(tmp_path, "events/cached.txt", "\n" + merge)
     vs.FileOpener.invalidate(str(path))  # in-process reads are memoized per path
     assert _run(tmp_path) == [("events/cached.txt", 3, _MERGE_USA)]
     assert scanned == [os.path.normpath("events/cached.txt")]

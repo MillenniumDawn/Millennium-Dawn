@@ -8,6 +8,7 @@ add_namespace = TUR_flavor_event
 add_namespace = TurkicConfederation
 add_namespace = Turkish_mafia
 add_namespace = Turkish_parties
+add_namespace = turkey_varyag
 ######################## TURKISH ECONOMY EVENTS
 country_event = { #Turkey offers investments IRAN
 	id = Turkish_Economy.1
@@ -448,10 +449,6 @@ country_event = { #How do we appraoch our operation
 				factor = 5
 				TUR_ai_keeps_the_southeast = yes
 			}
-			modifier = {
-				factor = 0
-				has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
-			}
 		}
 	}
 
@@ -467,10 +464,6 @@ country_event = { #How do we appraoch our operation
 				factor = 5
 				TUR_ai_keeps_the_southeast = yes
 			}
-			modifier = {
-				factor = 0
-				has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
-			}
 		}
 	}
 
@@ -479,18 +472,10 @@ country_event = { #How do we appraoch our operation
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.c executed"
 		custom_effect_tooltip = TUR_PKK3_TT
 		set_country_flag = TUR_PKK_reconciliation
+		unlock_decision_category_tooltip = TUR_rebuilding_kurdistan
 		activate_mission = TUR_the_promise_of_no_return
-		ai_chance = {
-			base = 10
-			modifier = {
-				factor = 0
-				TUR_ai_keeps_the_southeast = yes
-			}
-			modifier = {
-				factor = 5
-				has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS
-			}
-		}
+		# The AI cannot finish the five reforms before the mission times out and hands the southeast to the PKK
+		ai_chance = { base = 0 }
 	}
 }
 
@@ -638,6 +623,7 @@ country_event = {
 		}
 		ai_chance = {
 			base = 1
+			modifier = { factor = 0 has_stability < 0.3 }
 		}
 	}
 
@@ -813,8 +799,8 @@ country_event = {
 		hidden_effect = {
 			random = {
 				chance = 50
-					add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -500 producer = TUR }
-					add_equipment_to_stockpile = { type = util_vehicle_type amount = -75 producer = TUR }
+				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -500 producer = TUR }
+				add_equipment_to_stockpile = { type = util_vehicle_type amount = -75 producer = TUR }
 			}
 		}
 		newline = yes
@@ -1051,7 +1037,10 @@ country_event = {
 		}
 		newline = yes
 		TUR_PKK_attack = yes
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 	}
 }
 # Massive PKK Convoy Ambushed
@@ -1070,15 +1059,15 @@ country_event = {
 		hidden_effect = {
 			random = {
 				chance = 50
-					935 = {
-						if = {
-							limit = { industrial_complex > 0 }
-							remove_building = {
-								type = industrial_complex
-								level = 1
-							}
+				935 = {
+					if = {
+						limit = { industrial_complex > 0 }
+						remove_building = {
+							type = industrial_complex
+							level = 1
 						}
 					}
+				}
 			}
 			TUR_PKK_attack = yes
 		}
@@ -1200,10 +1189,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: TUR_pkk.205.c executed"
 		if = {
 			limit = {
-				controls_state = 935
-				NOT = { controls_state = 709 }
-				935 = { NOT = { has_border_war = yes } }
-				709 = { NOT = { has_border_war = yes } }
+				set_temp_variable = { border_war_attacker_state = 935 }
+				set_temp_variable = { border_war_defender_state = 709 }
+				border_war_can_start = yes
 			}
 			start_border_war = {
 				change_state_after_war = no
@@ -1374,7 +1362,10 @@ country_event = {
 				}
 			}
 		}
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -1563,13 +1554,15 @@ country_event = { # Failed Promise
 						Special_Forces = { x = 0 y = 0 }
 						Special_Forces = { x = 0 y = 1 }
 						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 2 y = 0 }
 						Special_Forces = { x = 1 y = 0 }
 						SP_Arty_Bat = { x = 1 y = 1 }
 					}
+					regimental_support = {
+						SP_AA_Battery = { x = 1 y = 0 }
+					}
 					support = {
 						L_Engi_Comp = { x = 0 y = 0 }
-						SP_AA_Battery = { x = 0 y = 1 }
 					}
 				}
 				division_template = {
@@ -1578,13 +1571,15 @@ country_event = { # Failed Promise
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						L_Inf_Bat = { x = 0 y = 4 }
+						L_Inf_Bat = { x = 1 y = 0 }
+						L_Inf_Bat = { x = 1 y = 1 }
+					}
+					regimental_support = {
+						Arty_Battery = { x = 0 y = 0 }
+						Arty_Battery = { x = 1 y = 0 }
 					}
 					support = {
-						Arty_Battery = { x = 0 y = 0 }
-						SP_arty_battery = { x = 0 y = 1 }
-						L_Engi_Comp = { x = 0 y = 2 }
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				division_template = {
@@ -1593,8 +1588,8 @@ country_event = { # Failed Promise
 						Militia_Bat = { x = 0 y = 0 }
 						Militia_Bat = { x = 0 y = 1 }
 						Militia_Bat = { x = 0 y = 2 }
-						Militia_Bat = { x = 0 y = 3 }
-						Militia_Bat = { x = 0 y = 4 }
+						Militia_Bat = { x = 1 y = 0 }
+						Militia_Bat = { x = 1 y = 1 }
 					}
 				}
 			}
@@ -1773,9 +1768,9 @@ country_event = { # Failed Promise
 					create_country_leader = {
 						name = "Cemîl Bayik"
 						picture = "Cemil_Bayik.dds"
-						ideology = Conservative
+						ideology = reactionary
 						traits = {
-							emerging_Conservative
+							emerging_reactionary
 							guerrilla_leader
 						}
 					}
@@ -1784,9 +1779,9 @@ country_event = { # Failed Promise
 					create_country_leader = {
 						name = "Abdullah Öcalan"
 						picture = "abdullah_ocalan.dds"
-						ideology = Conservative
+						ideology = reactionary
 						traits = {
-							emerging_Conservative
+							emerging_reactionary
 							guerrilla_leader
 							political_dancer
 							political_prisoner
@@ -1800,13 +1795,15 @@ country_event = { # Failed Promise
 						Special_Forces = { x = 0 y = 0 }
 						Special_Forces = { x = 0 y = 1 }
 						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 2 y = 0 }
 						Special_Forces = { x = 1 y = 0 }
 						SP_Arty_Bat = { x = 1 y = 1 }
 					}
+					regimental_support = {
+						SP_AA_Battery = { x = 1 y = 0 }
+					}
 					support = {
 						L_Engi_Comp = { x = 0 y = 0 }
-						SP_AA_Battery = { x = 0 y = 1 }
 					}
 				}
 				division_template = {
@@ -1815,13 +1812,15 @@ country_event = { # Failed Promise
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						L_Inf_Bat = { x = 0 y = 4 }
+						L_Inf_Bat = { x = 1 y = 0 }
+						L_Inf_Bat = { x = 1 y = 1 }
+					}
+					regimental_support = {
+						Arty_Battery = { x = 0 y = 0 }
+						Arty_Battery = { x = 1 y = 0 }
 					}
 					support = {
-						Arty_Battery = { x = 0 y = 0 }
-						SP_arty_battery = { x = 0 y = 1 }
-						L_Engi_Comp = { x = 0 y = 2 }
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				division_template = {
@@ -1830,8 +1829,8 @@ country_event = { # Failed Promise
 						Militia_Bat = { x = 0 y = 0 }
 						Militia_Bat = { x = 0 y = 1 }
 						Militia_Bat = { x = 0 y = 2 }
-						Militia_Bat = { x = 0 y = 3 }
-						Militia_Bat = { x = 0 y = 4 }
+						Militia_Bat = { x = 1 y = 0 }
+						Militia_Bat = { x = 1 y = 1 }
 					}
 				}
 			}
@@ -2006,9 +2005,9 @@ country_event = { # PKK Breaks Free
 					create_country_leader = {
 						name = "Cemîl Bayik"
 						picture = "Cemil_Bayik.dds"
-						ideology = Conservative
+						ideology = reactionary
 						traits = {
-							emerging_Conservative
+							emerging_reactionary
 							guerrilla_leader
 						}
 					}
@@ -2017,9 +2016,9 @@ country_event = { # PKK Breaks Free
 					create_country_leader = {
 						name = "Abdullah Öcalan"
 						picture = "abdullah_ocalan.dds"
-						ideology = Conservative
+						ideology = reactionary
 						traits = {
-							emerging_Conservative
+							emerging_reactionary
 							guerrilla_leader
 							political_dancer
 							political_prisoner
@@ -2033,13 +2032,15 @@ country_event = { # PKK Breaks Free
 						Special_Forces = { x = 0 y = 0 }
 						Special_Forces = { x = 0 y = 1 }
 						Special_Forces = { x = 0 y = 2 }
-						Special_Forces = { x = 0 y = 3 }
+						Special_Forces = { x = 2 y = 0 }
 						Special_Forces = { x = 1 y = 0 }
 						SP_Arty_Bat = { x = 1 y = 1 }
 					}
+					regimental_support = {
+						SP_AA_Battery = { x = 1 y = 0 }
+					}
 					support = {
 						L_Engi_Comp = { x = 0 y = 0 }
-						SP_AA_Battery = { x = 0 y = 1 }
 					}
 				}
 				division_template = {
@@ -2048,13 +2049,15 @@ country_event = { # PKK Breaks Free
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
-						L_Inf_Bat = { x = 0 y = 4 }
+						L_Inf_Bat = { x = 1 y = 0 }
+						L_Inf_Bat = { x = 1 y = 1 }
+					}
+					regimental_support = {
+						Arty_Battery = { x = 0 y = 0 }
+						Arty_Battery = { x = 1 y = 0 }
 					}
 					support = {
-						Arty_Battery = { x = 0 y = 0 }
-						SP_arty_battery = { x = 0 y = 1 }
-						L_Engi_Comp = { x = 0 y = 2 }
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				division_template = {
@@ -2063,8 +2066,8 @@ country_event = { # PKK Breaks Free
 						Militia_Bat = { x = 0 y = 0 }
 						Militia_Bat = { x = 0 y = 1 }
 						Militia_Bat = { x = 0 y = 2 }
-						Militia_Bat = { x = 0 y = 3 }
-						Militia_Bat = { x = 0 y = 4 }
+						Militia_Bat = { x = 1 y = 0 }
+						Militia_Bat = { x = 1 y = 1 }
 					}
 				}
 			}
@@ -2229,6 +2232,7 @@ country_event = {
 				factor = 0
 				is_historical_focus_on = yes
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		lose_pp_for_2_months = yes
 		increase_corruption = yes
@@ -2650,6 +2654,7 @@ country_event = {
 						limit = { original_tag = TUR }
 						add_ideas = TUR_guards_of_kemalism
 						set_temp_variable = { rul_party_temp = 22 }
+						set_temp_variable = { disable_elections = 1 }
 						change_ruling_party_effect = yes
 						if = {
 							limit = { NOT = { has_idea = the_military } }
@@ -3318,7 +3323,10 @@ country_event = {
 	option = {
 		name = TurkeyFocusEvents.8.a
 		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.8.a executed"
-		ai_chance = { base = 40 }
+		ai_chance = {
+			base = 40
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 		add_stability = -0.10
 		if = {
 			limit = { ALA = { is_subject_of = ROOT } }
@@ -3920,11 +3928,11 @@ country_event = { #Who Revolts?
 					Militia_Bat = { x = 0 y = 0 }
 					Militia_Bat = { x = 0 y = 1 }
 					Militia_Bat = { x = 0 y = 2 }
-					Militia_Bat = { x = 0 y = 3 }
+					Militia_Bat = { x = 2 y = 2 }
 					Militia_Bat = { x = 1 y = 0 }
 					Militia_Bat = { x = 1 y = 1 }
 					Militia_Bat = { x = 1 y = 2 }
-					Militia_Bat = { x = 1 y = 3 }
+					Militia_Bat = { x = 3 y = 0 }
 					Militia_Bat = { x = 2 y = 0 }
 					Militia_Bat = { x = 2 y = 1 }
 				}
@@ -3963,11 +3971,11 @@ country_event = { #Who Revolts?
 					Militia_Bat = { x = 0 y = 0 }
 					Militia_Bat = { x = 0 y = 1 }
 					Militia_Bat = { x = 0 y = 2 }
-					Militia_Bat = { x = 0 y = 3 }
+					Militia_Bat = { x = 2 y = 2 }
 					Militia_Bat = { x = 1 y = 0 }
 					Militia_Bat = { x = 1 y = 1 }
 					Militia_Bat = { x = 1 y = 2 }
-					Militia_Bat = { x = 1 y = 3 }
+					Militia_Bat = { x = 3 y = 0 }
 					Militia_Bat = { x = 2 y = 0 }
 					Militia_Bat = { x = 2 y = 1 }
 				}
@@ -4517,6 +4525,7 @@ country_event = { #Invitation to the CIW
 		name = TurkeyFocusEvents.43.a
 		log = "[GetDateText]: [This.GetName]: TurkeyFocusEvents.43.a executed"
 		add_ideas = CIW_member
+		unlock_decision_category_tooltip = TUR_ciw_decisions
 		ai_chance = { base = 7 }
 	}
 
@@ -4929,6 +4938,7 @@ country_event = { #2001 Economic Crash
 		name = TUR_flavor_event.1.a
 		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.1.a executed"
 		set_country_flag = TUR_econ_disaster
+		unlock_decision_category_tooltip = TUR_disaster_income
 		add_ideas = TUR_no_economic_plan
 		custom_effect_tooltip = TUR_new_econ_mission
 		decrease_economic_growth = yes
@@ -4994,7 +5004,10 @@ country_event = { #2002 Men not regarded as head of family January
 		change_the_ulema_opinion = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_the_military_opinion = yes
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 	}
 
 	option = { # We are all for this change
@@ -5108,7 +5121,11 @@ country_event = { # 2005 Caspian oil pipeline
 				instant_build = yes
 			}
 		}
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	option = { # Let us save the money
@@ -5132,14 +5149,20 @@ country_event = { #2003 Istanbul bombings
 		name = TUR_flavor_event.3.a
 		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.3.a executed"
 		add_stability = -0.05
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 	}
 
 	option = { #Medium Response
 		name = TUR_flavor_event.3.b
 		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.3.b executed"
 		add_political_power = -100
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = { #Major response
@@ -5147,7 +5170,10 @@ country_event = { #2003 Istanbul bombings
 		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.3.c executed"
 		add_stability = 0.02
 		add_political_power = -200
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 #
@@ -5172,7 +5198,10 @@ country_event = { #2005 New Lira
 		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.4.b executed"
 		add_political_power = -200
 		add_stability = 0.10
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 #
@@ -5202,23 +5231,26 @@ country_event = { #2007 Armenian Hrat Dink
 		trigger = {
 			tag = TUR
 		}
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 
 	option = { #Armenia
-	name = TUR_flavor_event.5.b
-	log = "[GetDateText]: [This.GetName]: TUR_flavor_event.5.b executed"
-	effect_tooltip = {
-		add_opinion_modifier = {
-			modifier = recent_actions_negative
-			target = TUR
+		name = TUR_flavor_event.5.b
+		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.5.b executed"
+		effect_tooltip = {
+			add_opinion_modifier = {
+				modifier = recent_actions_negative
+				target = TUR
+			}
 		}
+		trigger = {
+			tag = ARM
+		}
+		ai_chance = { base = 5 }
 	}
-	trigger = {
-		tag = ARM
-	}
-	ai_chance = { base = 5 }
-}
 }
 #
 country_event = { #2008 Refugee Crisis
@@ -5300,14 +5332,20 @@ country_event = { #2010 Gaza flotilla raid
 		ISR = {
 			country_event = TUR_flavor_event.81
 		}
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = { #It does not matter
 		name = TUR_flavor_event.8.b
 		log = "[GetDateText]: [This.GetName]: TUR_flavor_event.8.b executed"
 		add_stability = -0.05
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 	}
 }
 #
@@ -5326,7 +5364,11 @@ country_event = { #Turkey demands that we pay reparations for the Flotilla raid
 		TUR = {
 			country_event = TUR_flavor_event.811
 		}
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	option = { #No
@@ -5398,7 +5440,10 @@ country_event = { #2011 Van Earthquake
 				instant_build = yes
 			}
 		}
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 	}
 
 	option = { #Mobilize disaster relief
@@ -5407,7 +5452,11 @@ country_event = { #2011 Van Earthquake
 		add_political_power = -50
 		set_temp_variable = { treasury_change = -10.50 }
 		modify_treasury_effect = yes
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 }
 #
@@ -5426,7 +5475,10 @@ country_event = { #2012 Nowruz protests
 		set_temp_variable = { party_popularity_increase = -0.05 }
 		set_temp_variable = { temp_outlook_increase = -0.05 }
 		change_relative_party_popularity = yes
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = { #Let them demonstrate
@@ -5455,7 +5507,10 @@ country_event = { #2013 attack on U.S. Embassy
 			add_stability = -0.02
 		}
 		add_stability = -0.05
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 	}
 
 	option = { #Launch a complete investigation
@@ -5463,7 +5518,11 @@ country_event = { #2013 attack on U.S. Embassy
 		name = TUR_flavor_event.11.b
 		set_temp_variable = { treasury_change = -30.45 }
 		modify_treasury_effect = yes
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 }
 #
@@ -5485,7 +5544,10 @@ country_event = { #2014 May coal fire
 			}
 		}
 		name = TUR_flavor_event.12.a
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 	}
 
 	option = { #Save what we can
@@ -5515,7 +5577,10 @@ country_event = { #2015 Ankara bombings
 				instant_build = yes
 			}
 		}
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
 	}
 
 	option = { #Okay
@@ -5923,6 +5988,7 @@ country_event = { #2002 General Elections (FOR AI)
 		set_temp_variable = { temp_outlook_increase = 0.65 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { rul_party_temp = 12 }
+		set_temp_variable = { disable_elections = 0 }
 		change_ruling_party_effect = yes
 		ai_chance = {
 			base = 25
@@ -5941,6 +6007,7 @@ country_event = { #2002 General Elections (FOR AI)
 		set_temp_variable = { temp_outlook_increase = 0.65 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { rul_party_temp = 1 }
+		set_temp_variable = { disable_elections = 0 }
 		change_ruling_party_effect = yes
 		ai_chance = {
 			base = 25
@@ -6009,31 +6076,34 @@ country_event = { # Turkish Mafia cause a scene!
 	}
 
 	option = { #Launch a full investigation
-	name = Turkish_mafia.1.c
-	log = "[GetDateText]: [This.GetName]: Turkish_mafia.1.c executed"
-	add_political_power = -50
-	set_variable = { TUR_event_counter_1_mafia = 2 }
-	custom_effect_tooltip = TUR_mafia_warn
-	random_list = {
-		20 = {
-			ROOT = {
-				country_event = {
-					id = Turkish_mafia.11
-					days = 2
+		name = Turkish_mafia.1.c
+		log = "[GetDateText]: [This.GetName]: Turkish_mafia.1.c executed"
+		add_political_power = -50
+		set_variable = { TUR_event_counter_1_mafia = 2 }
+		custom_effect_tooltip = TUR_mafia_warn
+		random_list = {
+			20 = {
+				ROOT = {
+					country_event = {
+						id = Turkish_mafia.11
+						days = 2
+					}
+				}
+			}
+			80 = {
+				ROOT = {
+					country_event = {
+						id = Turkish_mafia.12
+						days = 2
+					}
 				}
 			}
 		}
-		80 = {
-			ROOT = {
-				country_event = {
-					id = Turkish_mafia.12
-					days = 2
-				}
-			}
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
-	ai_chance = { base = 5 }
-}
 }
 #
 country_event = { # Investigation leads to nowhere
@@ -6223,7 +6293,10 @@ country_event = { # Mafia hideout discovered by police
 				}
 			}
 		}
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 #
@@ -6314,31 +6387,34 @@ country_event = { # Turkish mafia weapon cache discovered
 	}
 
 	option = { #Send in the police
-	name = Turkish_mafia.3.c
-	log = "[GetDateText]: [This.GetName]: Turkish_mafia.3.c executed"
-	add_political_power = -25
-	set_variable = { TUR_event_counter_1_mafia = 2 }
-	custom_effect_tooltip = TUR_mafia_warn
-	random_list = {
-		20 = {
-			ROOT = {
-				country_event = {
-					id = Turkish_mafia.31
-					days = 2
+		name = Turkish_mafia.3.c
+		log = "[GetDateText]: [This.GetName]: Turkish_mafia.3.c executed"
+		add_political_power = -25
+		set_variable = { TUR_event_counter_1_mafia = 2 }
+		custom_effect_tooltip = TUR_mafia_warn
+		random_list = {
+			20 = {
+				ROOT = {
+					country_event = {
+						id = Turkish_mafia.31
+						days = 2
+					}
+				}
+			}
+			80 = {
+				ROOT = {
+					country_event = {
+						id = Turkish_mafia.32
+						days = 2
+					}
 				}
 			}
 		}
-		80 = {
-			ROOT = {
-				country_event = {
-					id = Turkish_mafia.32
-					days = 2
-				}
-			}
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
-	ai_chance = { base = 5 }
-}
 }
 #
 country_event = { # Police Lose
@@ -6429,31 +6505,34 @@ country_event = { # Turkish mafia caught smuggling drugs
 	}
 
 	option = { #Send in the police
-	name = Turkish_mafia.4.c
-	log = "[GetDateText]: [This.GetName]: Turkish_mafia.4.c executed"
-	add_political_power = -25
-	set_variable = { TUR_event_counter_1_mafia = 2 }
-	custom_effect_tooltip = TUR_mafia_warn
-	random_list = {
-		80 = {
-			ROOT = {
-				country_event = {
-					id = Turkish_mafia.41
-					days = 2
+		name = Turkish_mafia.4.c
+		log = "[GetDateText]: [This.GetName]: Turkish_mafia.4.c executed"
+		add_political_power = -25
+		set_variable = { TUR_event_counter_1_mafia = 2 }
+		custom_effect_tooltip = TUR_mafia_warn
+		random_list = {
+			80 = {
+				ROOT = {
+					country_event = {
+						id = Turkish_mafia.41
+						days = 2
+					}
+				}
+			}
+			20 = {
+				ROOT = {
+					country_event = {
+						id = Turkish_mafia.42
+						days = 2
+					}
 				}
 			}
 		}
-		20 = {
-			ROOT = {
-				country_event = {
-					id = Turkish_mafia.42
-					days = 2
-				}
-			}
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
-	ai_chance = { base = 5 }
-}
 }
 #
 country_event = { # Police arrest dealers
@@ -6542,12 +6621,9 @@ country_event = { #Attack on commercial center
 		name = Turkish_mafia.7.a
 		log = "[GetDateText]: [This.GetName]: Turkish_mafia.7.a executed"
 		random_owned_state = {
+			limit = { offices > 0 }
+			remove_building = { type = offices level = 1 }
 			add_extra_state_shared_building_slots = -1
-			add_building_construction = {
-				type = offices
-				level = -1
-				instant_build = yes
-			}
 		}
 		ai_chance = { base = 5 }
 	}
@@ -6889,5 +6965,39 @@ country_event = { # HEPAR is founded
 		log = "[GetDateText]: [This.GetName]: Turkish_parties.11.a executed"
 		set_country_flag = TUR_hepar_founded
 		ai_chance = { base = 10 }
+	}
+}
+
+country_event = {
+	id = turkey_varyag.1
+	title = turkey_varyag.1.t
+	desc = turkey_varyag.1.desc
+	picture = GFX_UKR_varyag_refit
+	is_triggered_only = yes
+
+	immediate = { set_variable = { varyag_radar_tier = 2 } }
+
+	option = {
+		name = turkey_varyag.1.a
+		log = "[GetDateText]: [This.GetName]: turkey_varyag.1.a executed"
+		set_variable = { varyag_weapons_tier = 1 }
+		custom_effect_tooltip = varyag_legacy_weapons_tt
+		unlock_decision_tooltip = TUR_varyag_complete_the_carrier
+		unlock_decision_tooltip = TUR_varyag_order_hornets
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = turkey_varyag.1.b
+		trigger = { varyag_us_supply_available = yes }
+		log = "[GetDateText]: [This.GetName]: turkey_varyag.1.b executed"
+		set_variable = { varyag_weapons_tier = 2 }
+		custom_effect_tooltip = varyag_western_weapons_tt
+		unlock_decision_tooltip = TUR_varyag_complete_the_carrier
+		unlock_decision_tooltip = TUR_varyag_order_hornets
+		ai_chance = {
+			base = 50
+			modifier = { add = 25 has_idea = NATO_member }
+		}
 	}
 }

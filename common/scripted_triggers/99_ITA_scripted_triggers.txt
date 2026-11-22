@@ -9,18 +9,24 @@ ITA_ai_path_selected = {
 	}
 }
 
-ITA_ai_historical_path = {
+#true when the AI follows a path, from the ITA_ai_behavior rule or historical focus
+ITA_ai_has_path = {
 	OR = {
 		is_historical_focus_on = yes
-		has_global_flag = ITA_HISTORICAL_FOCUS_PATH
+		ITA_ai_path_selected = yes
 	}
 }
 
-ITA_ai_not_historical_path = {
+#a path chosen by the ITA_ai_behavior rule overrides the historical focus setting
+ITA_ai_historical_path = {
 	OR = {
-		has_global_flag = ITA_ROMAN_RESTORATION_FOCUS_PATH
-		has_global_flag = ITA_MARCH_ON_ROME_FOCUS_PATH
-		has_global_flag = ITA_EASTERN_TURN_FOCUS_PATH
+		has_global_flag = ITA_HISTORICAL_FOCUS_PATH
+		AND = {
+			is_historical_focus_on = yes
+			ITA_ai_roman_path = no
+			ITA_ai_march_path = no
+			ITA_ai_eastern_path = no
+		}
 	}
 }
 
@@ -28,65 +34,39 @@ ITA_ai_roman_path = {
 	has_global_flag = ITA_ROMAN_RESTORATION_FOCUS_PATH
 }
 
-ITA_ai_not_roman_path = {
-	NOT = { has_global_flag = ITA_ROMAN_RESTORATION_FOCUS_PATH }
-	OR = {
-		is_historical_focus_on = yes
-		ITA_ai_path_selected = yes
-	}
-}
-
-ITA_ai_not_march_path = {
-	NOT = { has_global_flag = ITA_MARCH_ON_ROME_FOCUS_PATH }
-	OR = {
-		is_historical_focus_on = yes
-		ITA_ai_path_selected = yes
-	}
+ITA_ai_march_path = {
+	has_global_flag = ITA_MARCH_ON_ROME_FOCUS_PATH
 }
 
 ITA_ai_eastern_path = {
 	has_global_flag = ITA_EASTERN_TURN_FOCUS_PATH
 }
 
-ITA_ai_not_eastern_path = {
-	NOT = { has_global_flag = ITA_EASTERN_TURN_FOCUS_PATH }
+#players get the timeline's elections and governments as choices; AI only on the historical path
+ITA_timeline_applies = {
 	OR = {
-		is_historical_focus_on = yes
-		ITA_ai_path_selected = yes
+		is_ai = no
+		ITA_ai_historical_path = yes
 	}
 }
 
 ITA_ai_nationalist_path = {
 	OR = {
-		has_global_flag = ITA_ROMAN_RESTORATION_FOCUS_PATH
-		has_global_flag = ITA_MARCH_ON_ROME_FOCUS_PATH
-	}
-}
-
-ITA_ai_not_nationalist_path = {
-	NOT = { ITA_ai_nationalist_path = yes }
-	OR = {
-		is_historical_focus_on = yes
-		ITA_ai_path_selected = yes
-	}
-}
-
-ITA_ai_not_unclaimed_path = {
-	OR = {
-		is_historical_focus_on = yes
-		ITA_ai_path_selected = yes
+		ITA_ai_roman_path = yes
+		ITA_ai_march_path = yes
 	}
 }
 
 has_statalist_government_or_in_coalition = {
 	custom_trigger_tooltip = {
 		tooltip = has_statalist_government_or_in_coalition_TT
+		not_tooltip = not_has_statalist_government_or_in_coalition_TT
 		OR = {
 			western_social_democrats_are_in_power = yes #socialism
 
 			emerging_communist_state_are_in_power = yes #communist_state
 			emerging_anarchist_communism_are_in_power = yes #anarchist_communism
-			emerging_reactionaries_are_in_power = yes #Conservative
+			emerging_reactionaries_are_in_power = yes #reactionary
 			emerging_autocracy_are_in_power = yes #Autocracy
 
 			neutrality_neutral_green_are_in_power = yes #Neutral_green
@@ -102,7 +82,7 @@ has_statalist_government_or_in_coalition = {
 
 			emerging_communist_state_are_in_coalition = yes #communist_state
 			emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
-			emerging_reactionaries_are_in_coalition = yes #Conservative
+			emerging_reactionaries_are_in_coalition = yes #reactionary
 			emerging_autocracy_are_in_coalition = yes #Autocracy
 
 			neutrality_neutral_green_are_in_coalition = yes #Neutral_green
@@ -125,7 +105,7 @@ has_statalist_government = {
 
 			emerging_communist_state_are_in_power = yes #communist_state
 			emerging_anarchist_communism_are_in_power = yes #anarchist_communism
-			emerging_reactionaries_are_in_power = yes #Conservative
+			emerging_reactionaries_are_in_power = yes #reactionary
 			emerging_autocracy_are_in_power = yes #Autocracy
 
 			neutrality_neutral_green_are_in_power = yes #Neutral_green
@@ -140,69 +120,15 @@ has_statalist_government = {
 	}
 }
 
-not_has_statalist_government_or_in_coalition = {
-	custom_trigger_tooltip = {
-		tooltip = not_has_statalist_government_or_in_coalition_TT
-		NOT = {
-			OR = {
-				western_social_democrats_are_in_power = yes #socialism
-
-				emerging_communist_state_are_in_power = yes #communist_state
-				emerging_anarchist_communism_are_in_power = yes #anarchist_communism
-				emerging_reactionaries_are_in_power = yes #Conservative
-				emerging_autocracy_are_in_power = yes #Autocracy
-
-				neutrality_neutral_green_are_in_power = yes #Neutral_green
-				neutrality_neutral_social_are_in_power = yes #neutral_Social
-				neutrality_neutral_communism_are_in_power = yes #Neutral_Communism
-
-				nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
-				nationalist_fascist_are_in_power = yes #Nat_Fascism
-				nationalist_military_junta_are_in_power = yes #Nat_Autocracy
-				nationalist_monarchists_are_in_power = yes #Monarchist
-
-				western_social_democrats_are_in_coalition = yes #socialism
-
-				emerging_communist_state_are_in_coalition = yes #communist_state
-				emerging_anarchist_communism_are_in_coalition = yes #anarchist_communism
-				emerging_reactionaries_are_in_coalition = yes #Conservative
-				emerging_autocracy_are_in_coalition = yes #Autocracy
-
-				neutrality_neutral_green_are_in_coalition = yes #Neutral_green
-				neutrality_neutral_social_are_in_coalition = yes #neutral_Social
-				neutrality_neutral_communism_are_in_coalition = yes #Neutral_Communism
-
-				nationalist_right_wing_populists_are_in_coalition = yes #Nat_Populism
-				nationalist_fascist_are_in_coalition = yes #Nat_Fascism
-				nationalist_military_junta_are_in_coalition = yes #Nat_Autocracy
-				nationalist_monarchists_are_in_coalition = yes #Monarchist
-			}
-		}
-	}
-}
-
 has_antistatalist_government_or_in_coalition = {
 	custom_trigger_tooltip = {
 		tooltip = has_antistatalist_government_or_in_coalition_TT
+		not_tooltip = not_has_antistatalist_government_or_in_coalition_TT
 		OR = {
 			western_liberals_are_in_power = yes #liberalism
 			neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
 			western_liberals_are_in_coalition = yes #liberalism
 			neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
-		}
-	}
-}
-
-not_has_antistatalist_government_or_in_coalition = {
-	custom_trigger_tooltip = {
-		tooltip = not_has_antistatalist_government_or_in_coalition_TT
-		NOT = {
-			OR = {
-				western_liberals_are_in_power = yes #liberalism
-				neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
-				western_liberals_are_in_coalition = yes #liberalism
-				neutrality_neutral_libertarians_are_in_coalition = yes #Neutral_Libertarian
-			}
 		}
 	}
 }
@@ -213,7 +139,7 @@ not_has_conservative_government_or_in_coalition = {
 		NOT = {
 			OR = {
 				western_conservatism_are_in_power = yes #conservatism
-				emerging_reactionaries_are_in_power = yes #Conservative
+				emerging_reactionaries_are_in_power = yes #reactionary
 				salafist_kingdom_are_in_power = yes #Kingdom
 				salafist_caliphate_are_in_power = yes #Caliphate
 				neutrality_neutral_muslim_brotherhood_are_in_power = yes #Neutral_Muslim_Brotherhood
@@ -223,7 +149,7 @@ not_has_conservative_government_or_in_coalition = {
 				nationalist_military_junta_are_in_power = yes #Nat_Autocracy
 				nationalist_monarchists_are_in_power = yes #Monarchist
 				western_conservatism_are_in_coalition = yes #conservatism
-				emerging_reactionaries_are_in_coalition = yes #Conservative
+				emerging_reactionaries_are_in_coalition = yes #reactionary
 				salafist_kingdom_are_in_coalition = yes #Kingdom
 				salafist_caliphate_are_in_coalition = yes #Caliphate
 				neutrality_neutral_muslim_brotherhood_are_in_coalition = yes #Neutral_Muslim_Brotherhood
@@ -275,50 +201,10 @@ has_expansionist_government = {
 	}
 }
 
-not_has_east_aligned_government = {
-	custom_trigger_tooltip = {
-		tooltip = not_has_east_aligned_government_TT
-		NOT = {
-			OR = {
-				emerging_communist_state_are_in_power = yes #communist_state
-				emerging_anarchist_communism_are_in_power = yes #anarchist_communism
-				emerging_reactionaries_are_in_power = yes #Conservative
-				emerging_autocracy_are_in_power = yes #Autocracy
-				nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
-			}
-		}
-	}
-}
-
-has_east_aligned_government = {
-	custom_trigger_tooltip = {
-		tooltip = has_east_aligned_government_TT
-		OR = {
-			emerging_communist_state_are_in_power = yes #communist_state
-			emerging_anarchist_communism_are_in_power = yes #anarchist_communism
-			emerging_reactionaries_are_in_power = yes #Conservative
-			emerging_autocracy_are_in_power = yes #Autocracy
-			nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
-		}
-	}
-}
-
-not_has_west_aligned_government = {
-	custom_trigger_tooltip = {
-		tooltip = not_has_west_aligned_government_TT
-		NOT = {
-			OR = {
-				has_government = democratic
-				neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
-				neutrality_neutral_libertarians_are_in_power = yes #Neutral_Libertarian
-			}
-		}
-	}
-}
-
 has_west_aligned_government = {
 	custom_trigger_tooltip = {
 		tooltip = has_west_aligned_government_TT
+		not_tooltip = not_has_west_aligned_government_TT
 		OR = {
 			has_government = democratic
 			neutrality_neutral_conservatism_are_in_power = yes #Neutral_conservatism
@@ -343,7 +229,7 @@ has_authoritarian_right_wing_government = {
 				western_autocrats_are_in_power = yes #Western_Autocracy
 				NOT = { has_country_leader_with_trait = western_technocrat }
 			}
-			emerging_reactionaries_are_in_power = yes #Conservative
+			emerging_reactionaries_are_in_power = yes #reactionary
 			emerging_autocracy_are_in_power = yes #Autocracy
 			neutrality_neutral_autocracy_are_in_power = yes #Neutral_Autocracy
 			neutrality_neutral_oligarch_are_in_power = yes #oligarchism
@@ -389,7 +275,7 @@ has_leftwing_populist_government = {
 	custom_trigger_tooltip = {
 		tooltip = has_leftwing_populist_government_TT
 		OR = {
-			emerging_reactionaries_are_in_power = yes #Conservative
+			emerging_reactionaries_are_in_power = yes #reactionary
 			nationalist_right_wing_populists_are_in_power = yes #Nat_Populism
 			nationalist_fascist_are_in_power = yes #Nat_Fascism
 		}

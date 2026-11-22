@@ -1,0 +1,71 @@
+collaboration_government_decisions = {
+	instantiate_collaboration = {
+		icon = generic_political_discourse
+
+		target_root_trigger = {
+			is_subject = no
+		}
+		target_array = occupied_countries
+		target_non_existing = yes
+
+		visible = {
+			is_available_to_collaboration_government = yes
+			has_core_occupation_modifier = {
+				occupied_country_tag = FROM
+				modifier = compliance_60
+			}
+		}
+
+		available = {
+			has_core_occupation_modifier = {
+				occupied_country_tag = FROM
+				modifier = compliance_80
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision instantiate_collaboration target [From.GetName]"
+			set_temp_variable = { country_to_initiate = FROM }
+			instantiate_collaboration_government = yes
+		}
+
+		ai_will_do = {
+			base = 12
+			# Larger occupations first; every eligible occupation has at least two cores.
+			modifier = { add = 3 collection_size = { input = collection:collaboration_controlled_target_cores value > 5 } }
+			modifier = { add = 5 collection_size = { input = collection:collaboration_controlled_target_cores value > 10 } }
+			modifier = { add = 10 collection_size = { input = collection:collaboration_controlled_target_cores value > 20 } }
+			# Only in a war or once world tension is rising
+			modifier = {
+				has_war = no
+				threat < 0.35
+				factor = 0
+			}
+			# Require half the target's cores and at least 1.5 + 0.7 per existing collaboration government.
+			modifier = {
+				FROM = {
+					ROOT = {
+						check_expr = {
+							value = 1.5
+							every_collection = { named_collection = collaboration_direct_subjects add = 0.7 }
+							max = { value = PREV.num_core_states multiply = 0.5 }
+							every_collection = { named_collection = collaboration_controlled_target_cores subtract = 1 }
+							greater_than = 0
+						}
+					}
+				}
+				factor = 0
+			}
+			modifier = {
+				any_core_state = {
+					OR = {
+						is_controlled_by = ROOT
+						is_owned_by = ROOT
+					}
+					is_core_of = FROM
+				}
+				factor = 0
+			}
+		}
+	}
+}

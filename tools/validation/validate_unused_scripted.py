@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Find scripted effects and triggers defined in common/scripted_effects/ and
 # common/scripted_triggers/ that are never called anywhere in the mod.
-import glob
 import os
 import re
 import sys
@@ -11,7 +10,7 @@ from typing import List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import validation_config
+from shared_utils import list_files, validation_config
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -145,7 +144,7 @@ class Validator(BaseValidator):
             return []
 
         if self.staged_files:
-            files = list(glob.iglob(search_path + "/**/*.txt", recursive=True))
+            files = list_files(search_path)
             files = [
                 f for f in files if not should_skip_file(f, mod_path=self.mod_path)
             ]
@@ -155,11 +154,7 @@ class Validator(BaseValidator):
             files = self._collect_files([f"common/{subdir}/**/*.txt"])
 
         args_list = [(f, self.mod_path) for f in files]
-        all_results = self._pool_map(extract_definitions, args_list, chunksize=10)
-
-        definitions = []
-        for result in all_results:
-            definitions.extend(result)
+        definitions = self._pool_flat_map(extract_definitions, args_list, chunksize=10)
 
         return definitions
 
@@ -204,11 +199,7 @@ class Validator(BaseValidator):
 
         # First pass: find all names used outside definition dirs
         args_list = [(f, all_names, self.mod_path) for f in other_files]
-        results = self._pool_map(scan_file_for_usages, args_list)
-
-        used_names: set = set()
-        for found in results:
-            used_names.update(found)
+        used_names = set(self._pool_flat_map(scan_file_for_usages, args_list))
 
         # Second pass: check cross-calls within definition files
         remaining = all_names - used_names
@@ -258,12 +249,6 @@ class Validator(BaseValidator):
                     unused_triggers.append(entry)
 
         return unused_effects, unused_triggers
-
-    def validate_unused_effects(self):
-        self._log_section("Checking for unused scripted effects...")
-
-    def validate_unused_triggers(self):
-        self._log_section("Checking for unused scripted triggers...")
 
     def run_validations(self):
         if self.staged_only:

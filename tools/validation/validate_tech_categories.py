@@ -14,7 +14,7 @@ from typing import Dict, FrozenSet, Iterable, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import FileOpener
+from shared_utils import FileOpener, blank_quoted_strings, find_unquoted_brace_close
 from validator_common import BaseValidator, Severity, run_validator_main
 
 # The tag block in common/technology_tags/. Every bare token inside it is a
@@ -181,16 +181,9 @@ _VALIDATE_PATTERNS = [
 
 
 def _brace_span(text: str, open_idx: int) -> int:
-    """Index just past the block whose opening brace is at *open_idx*."""
-    depth = 0
-    for i in range(open_idx, len(text)):
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-            if depth == 0:
-                return i
-    return len(text)
+    """Index of the `}` closing the `{` at *open_idx*, or the text end."""
+    close = find_unquoted_brace_close(text, open_idx)
+    return len(text) if close == -1 else close
 
 
 def _block_bodies(text: str, opener: "re.Pattern") -> Iterable[Tuple[str, int]]:
@@ -212,17 +205,18 @@ def _references(text: str, tech_file: bool = False) -> List[Tuple[str, int]]:
     `name = CAT_tribute` (a tech-bonus name) out of this.
     """
     found: List[Tuple[str, int]] = []
-    for m in _CATEGORY_ASSIGN_RE.finditer(text):
+    unquoted = blank_quoted_strings(text)
+    for m in _CATEGORY_ASSIGN_RE.finditer(unquoted):
         found.append((m.group(1), m.start(1)))
-    for body, offset in _block_bodies(text, _KEYED_BLOCK_RE):
+    for body, offset in _block_bodies(unquoted, _KEYED_BLOCK_RE):
         for km in _KEYED_CATEGORY_RE.finditer(body):
             found.append((km.group(1), offset + km.start(1)))
     listed = [_LISTED_BLOCK_RE]
     if tech_file:
         listed.append(_TECH_CATEGORIES_RE)
     for opener in listed:
-        for body, offset in _block_bodies(text, opener):
-            for tm in _TOKEN_RE.finditer(body):
+        for body, offset in _block_bodies(unquoted, opener):
+            for tm in _TOKEN_RE.finditer(text[offset : offset + len(body)]):
                 found.append((tm.group(0), offset + tm.start()))
     return found
 
@@ -406,9 +400,7 @@ class Validator(BaseValidator):
         )
 
         tech_files = self._collect_files([_TECH_GLOB], ignore_staged=True)
-        used: Set[str] = set()
-        for cats in self._pool_map(_tech_categories, [(f,) for f in tech_files]):
-            used.update(cats)
+        used = set(self._pool_flat_map(_tech_categories, [(f,) for f in tech_files]))
         self._report(
             [
                 (

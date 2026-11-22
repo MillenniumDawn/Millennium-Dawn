@@ -8,6 +8,8 @@ from types import SimpleNamespace
 
 import dev_setup
 import pytest
+from shared.suite import run_tool_script
+from shared.suite import write_text as write
 
 Version = namedtuple("Version", "major minor micro releaselevel serial")
 
@@ -17,6 +19,7 @@ CHECKS = {
     "check_hooks_installed": True,
     "check_pip_packages": True,
     "check_dev_packages": True,
+    "check_imagemagick": True,
     "check_bun": True,
     "check_docs_deps": True,
 }
@@ -46,12 +49,6 @@ def stub_run(monkeypatch, handler=lambda cmd: completed()):
 
     monkeypatch.setattr(dev_setup, "run", fake_run)
     return calls
-
-
-def write(path, text):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
 
 
 def venv_python(root):
@@ -148,7 +145,8 @@ def test_resolve_tool_ignores_a_non_executable_candidate(monkeypatch, tmp_path):
     bun.chmod(0o644)
     monkeypatch.setattr(dev_setup.Path, "home", staticmethod(lambda: tmp_path))
 
-    assert dev_setup._resolve_tool("bun") == ["bun"]
+    # A machine-wide /usr/local/bin/bun may still win, so only the skip is pinned.
+    assert dev_setup._resolve_tool("bun") != [str(bun)]
 
 
 def test_resolve_tool_survives_an_unreadable_candidate(monkeypatch, tmp_path):
@@ -160,6 +158,19 @@ def test_resolve_tool_survives_an_unreadable_candidate(monkeypatch, tmp_path):
     monkeypatch.setattr(dev_setup.Path, "exists", boom)
 
     assert dev_setup._resolve_tool("bun") == ["bun"]
+
+
+@pytest.mark.parametrize("binary", ["/tools/magick", "/tools/convert", None])
+def test_imagemagick_check_uses_the_art_tools_probe(monkeypatch, capsys, binary):
+    calls = []
+    monkeypatch.setattr(
+        dev_setup,
+        "find_imagemagick",
+        lambda *names: calls.append(names) or binary,
+    )
+    assert dev_setup.check_imagemagick() is (binary is not None)
+    assert calls == [("magick", "convert")]
+    assert (binary or "MISSING") in capsys.readouterr().out
 
 
 # ── interpreter / venv probes ───────────────────────────────────────────────
@@ -269,9 +280,9 @@ def test_reexec_with_hands_the_argv_tail_to_the_new_interpreter(monkeypatch, cap
 @pytest.mark.parametrize(
     ("version", "ok"),
     [
-        ((3, 13, 1), True),
-        ((3, 12, 0), True),
-        ((3, 11, 4), False),
+        ((3, 15, 1), True),
+        ((3, 14, 0), True),
+        ((3, 13, 4), False),
     ],
 )
 def test_check_python_grades_the_interpreter(version, ok, monkeypatch, capsys):
@@ -347,13 +358,24 @@ def test_check_hooks_installed_reports_a_missing_hook(monkeypatch, tmp_path, cap
     assert "Git hooks: MISSING" in capsys.readouterr().out
 
 
-def test_check_hooks_installed_accepts_a_pre_commit_hook(monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    ("hooks", "expected"),
+    [
+        (("pre-commit", "pre-push"), True),
+        (("pre-commit",), False),
+        (("pre-push",), False),
+    ],
+)
+def test_check_hooks_installed_requires_commit_and_push_hooks(
+    monkeypatch, tmp_path, hooks, expected
+):
     monkeypatch.setattr(dev_setup, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(dev_setup, "in_virtualenv", lambda: False)
     stub_run(monkeypatch, lambda cmd: completed(stdout=""))
-    write(tmp_path / ".git" / "hooks" / "pre-commit", "#!/bin/sh\nexec pre-commit\n")
+    for name in hooks:
+        write(tmp_path / ".git" / "hooks" / name, "#!/bin/sh\nexec pre-commit\n")
 
-    assert dev_setup.check_hooks_installed() is True
+    assert dev_setup.check_hooks_installed() is expected
 
 
 def test_check_hooks_installed_requires_the_venv_interpreter(
@@ -363,12 +385,16 @@ def test_check_hooks_installed_requires_the_venv_interpreter(
     monkeypatch.setattr(dev_setup, "in_virtualenv", lambda: True)
     monkeypatch.setattr(dev_setup, "venv_python_path", lambda: tmp_path / "python")
     stub_run(monkeypatch, lambda cmd: completed(stdout=""))
-    hook = tmp_path / ".git" / "hooks" / "pre-commit"
-    write(hook, "#!/bin/sh\nexec /usr/bin/python -m pre-commit\n")
+    hooks = [tmp_path / ".git" / "hooks" / name for name in ("pre-commit", "pre-push")]
+    for hook in hooks:
+        write(hook, "#!/bin/sh\nexec /usr/bin/python -m pre-commit\n")
 
     assert dev_setup.check_hooks_installed() is False
 
-    write(hook, f"#!/bin/sh\nexec {sys.executable} -m pre-commit\n")
+    write(hooks[0], f"#!/bin/sh\nexec {sys.executable} -m pre-commit\n")
+    assert dev_setup.check_hooks_installed() is False
+
+    write(hooks[1], f"#!/bin/sh\nexec {sys.executable} -m pre-commit\n")
     assert dev_setup.check_hooks_installed() is True
     assert "Git hooks: OK" in capsys.readouterr().out
 
@@ -388,11 +414,13 @@ def test_group_packages_reads_the_named_group(monkeypatch, tmp_path):
         pyproject,
         "[dependency-groups]\n"
         'runtime = [\n  "requests>=2.32",\n  "pillow",\n]\n'
-        'dev = [\n  "pytest>=9.1.0",\n]\n',
+        'test = [\n  "pytest>=9.1.0",\n]\n'
+        'dev = [\n  {include-group = "test"},\n  "ruff",\n]\n',
     )
     monkeypatch.setattr(dev_setup, "PYPROJECT", pyproject)
 
     assert dev_setup._group_packages("runtime") == ["requests>=2.32", "pillow"]
+    assert dev_setup._group_packages("dev") == ["pytest>=9.1.0", "ruff"]
     assert dev_setup._group_packages("analysis") == []
 
 
@@ -460,13 +488,15 @@ def test_check_group_maps_distribution_names_to_import_names(monkeypatch, capsys
         return object()
 
     monkeypatch.setattr(
-        dev_setup, "_group_packages", lambda _group: ["pillow>=11", "pyyaml", "ruff"]
+        dev_setup,
+        "_group_packages",
+        lambda _group: ["pillow>=11", "pyyaml", "ruff", "pytest-xdist"],
     )
     monkeypatch.setattr(dev_setup.importlib.util, "find_spec", fake_find_spec)
     monkeypatch.setattr(dev_setup.importlib.metadata, "version", lambda _name: "11.1.0")
 
     assert dev_setup._check_group("runtime", "Tool dependencies") is True
-    assert imported == ["PIL", "yaml", "ruff"]
+    assert imported == ["PIL", "yaml", "ruff", "xdist"]
     assert "Tool dependencies: OK" in capsys.readouterr().out
 
 
@@ -717,6 +747,14 @@ def run_main(monkeypatch, *argv):
     return exc.value.code
 
 
+def test_the_script_checks_the_real_environment():
+    result = run_tool_script("dev_setup.py", "--check")
+
+    assert "Python:" in result.stdout
+    assert "pre-commit" in result.stdout
+    assert result.returncode in (0, 1), f"crashed: {result.stderr[:200]}"
+
+
 def test_check_mode_reports_a_ready_environment(setup_env, monkeypatch, capsys):
     assert run_main(monkeypatch, "--check") == 0
     assert "Everything is set up." in capsys.readouterr().out
@@ -743,6 +781,15 @@ def test_check_mode_with_docs_fails_on_a_missing_docs_dependency(
     setup_env.state["check_docs_deps"] = False
 
     assert run_main(monkeypatch, "--check", "--docs") == 1
+
+
+@pytest.mark.parametrize("args", [(), ("--check",)])
+def test_missing_imagemagick_fails_setup_without_installing_system_packages(
+    setup_env, monkeypatch, args
+):
+    setup_env.state["check_imagemagick"] = False
+    assert run_main(monkeypatch, *args) == 1
+    assert not any(name.startswith("install_") for name in setup_env.calls)
 
 
 def test_main_reexecs_into_the_local_venv(setup_env, monkeypatch, tmp_path):

@@ -2,8 +2,8 @@
 """Refresh every vanilla-derived file the validators read, from a local HOI4 install.
 
 CI has no game installed, so validate_defines, validate_file_paths,
-validate_gfx_references and validate_modifiers fall back to committed copies of
-vanilla data. A game update leaves those stale: a modifier Paradox added after
+validate_gfx_references, validate_modifiers and validate_oob_units fall back to
+committed copies of vanilla data. A game update leaves those stale: a modifier Paradox added after
 the last refresh reads as a typo. Run this after a HOI4 version bump, from the
 mod root:
 
@@ -16,28 +16,31 @@ Requires the game installed (auto-detected, or set $HOI4_PATH).
 import argparse
 import glob
 import os
+import re
 import shutil
 import sys
-from typing import Callable, Dict, Iterable, List, Optional, Tuple
+import zipfile
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from equipment_module_slots import entity_names_from_text
 from image_size import read_image_size
-from shared_utils import find_hoi4_install
+from shared_utils import find_hoi4_install, get_root_dir, list_files
 from sprite_index import _gfx_root
-from validate_defines import find_vanilla_defines, parse_vanilla_defines
+from validate_defines import find_vanilla_defines, parse_vanilla_define_files
 from validate_file_paths import collect_vanilla_paths
 from validate_gfx_references import (
     _read_raw,
     _vanilla_gfx_files,
     _vanilla_gui_files,
     font_names_from_gfx_text,
+    gui_windows_from_text,
     sprite_defs_from_gfx_text,
+    sprite_names_from_gfx_text,
 )
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_DOC_DIR = os.path.normpath(
-    os.path.join(_HERE, "..", "..", "resources", "documentation")
-)
+_DOC_DIR = os.path.join(get_root_dir(), "resources", "documentation")
 
 
 class RefreshError(Exception):
@@ -61,8 +64,12 @@ def _write_manifest(
         "",
     ]
     lines = sorted(entries)
-    with open(os.path.join(_HERE, filename), "w", encoding="utf-8", newline="") as fh:
-        fh.write("\n".join(header) + "\n".join(lines) + "\n")
+    path = os.path.join(_HERE, filename)
+    try:
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            fh.write("\n".join(header) + "\n".join(lines) + "\n")
+    except OSError as exc:
+        raise RefreshError(f"cannot write {path}: {exc}") from exc
     return f"{filename}: {len(lines)} entries"
 
 
@@ -70,13 +77,15 @@ def _refresh_defines() -> str:
     path = find_vanilla_defines()
     if not path:
         raise RefreshError("common/defines/00_defines.lua not found")
-    namespaces = parse_vanilla_defines(path)
+    namespaces = parse_vanilla_define_files(path)
+    if not namespaces:
+        raise RefreshError("cannot load vanilla 00_defines.lua and 00_graphics.lua")
     return _write_manifest(
         "vanilla_defines.txt",
         [
-            "# Vanilla Hearts of Iron IV define names (NAMESPACE.NAME, from",
-            "# common/defines/00_defines.lua). Used by validate_defines.py when no",
-            "# live install is present (CI) to catch dead or renamed defines.",
+            "# Vanilla Hearts of Iron IV define names from common/defines/00_defines.lua",
+            "# (NAMESPACE.NAME) and 00_graphics.lua (NDefines_Graphics.NAMESPACE.NAME).",
+            "# Used by validate_defines.py when no live install is present (CI).",
         ],
         (f"{ns}.{name}" for ns, names in namespaces.items() for name in names),
     )
@@ -84,7 +93,7 @@ def _refresh_defines() -> str:
 
 def _refresh_docs() -> str:
     source = os.path.join(_install(), "documentation")
-    docs = glob.glob(os.path.join(source, "*.md"))
+    docs = list_files(source, ("*.md",), recursive=False)
     if not docs:
         raise RefreshError(f"no .md files under {source}")
     added = 0
@@ -168,6 +177,114 @@ def _refresh_sprites() -> str:
     )
 
 
+_ENGINE_BINARIES = ("hoi4", "hoi4.exe")
+_BINARY_NAME = re.compile(rb"\0([\w@.\-]+)(?=\0)")
+
+
+def _engine_names(install: str) -> Set[bytes]:
+    """Return the NUL-terminated identifier strings in the game binary."""
+    for name in _ENGINE_BINARIES:
+        path = os.path.join(install, name)
+        if os.path.isfile(path):
+            with open(path, "rb") as fh:
+                return set(_BINARY_NAME.findall(fh.read()))
+    raise RefreshError(f"no {' or '.join(_ENGINE_BINARIES)} binary in {install}")
+
+
+def _mount_path(path: str) -> str:
+    """Return a vanilla file's path as the game loads it (dlc/<x>/ stripped)."""
+    normalized = path.replace("\\", "/")
+    return normalized[len(_gfx_root(normalized)) + 1 :]
+
+
+def _refresh_ui_paths() -> str:
+    gfx_files = _vanilla_gfx_files()
+    gui_files = _vanilla_gui_files()
+    if not gfx_files or not gui_files:
+        raise RefreshError("no interface .gfx or .gui files found")
+    engine = _engine_names(_install())
+    groups: Dict[str, Set[str]] = {}
+    for path in gfx_files:
+        raw = _read_raw(path)
+        if raw is None:
+            continue
+        groups.setdefault(_mount_path(path), set()).update(
+            f"{name} engine" if name.encode() in engine else name
+            for name in sprite_names_from_gfx_text(raw)
+        )
+    for path in gui_files:
+        raw = _read_raw(path)
+        if raw is None:
+            continue
+        lines = groups.setdefault(_mount_path(path), set())
+        for window, elements in gui_windows_from_text(raw).items():
+            if window.encode() in engine:
+                lines.add(window)
+            lines.update(f"{window} {e}" for e in elements if e.encode() in engine)
+    return _write_manifest(
+        "vanilla_ui_paths.txt",
+        [
+            "# Vanilla Hearts of Iron IV interface files (base + DLC) by the path the",
+            "# game loads them from. An MD file at the same path replaces the file.",
+            "# Under a .gfx path: every sprite it defines; `engine` marks a name the",
+            "# game binary contains. Under a .gui path: each top-level window the",
+            "# binary names, then `window element` for each element inside a window",
+            "# that the binary names.",
+            "# Used by validate_gfx_references.py to find what an override drops.",
+        ],
+        (
+            "\n".join([path, *(f"\t{line}" for line in sorted(lines))])
+            for path, lines in groups.items()
+            if lines
+        ),
+    )
+
+
+def _vanilla_entity_files(base: str) -> List[str]:
+    roots = [
+        base,
+        *glob.glob(os.path.join(base, "dlc", "*")),
+        *glob.glob(os.path.join(base, "integrated_dlc", "*")),
+    ]
+    return sorted(
+        path
+        for root in roots
+        for extension in ("asset", "gfx")
+        for path in list_files(os.path.join(root, "gfx"), (f"*.{extension}",))
+    )
+
+
+def _refresh_entities() -> str:
+    names: set = set()
+    base = _install()
+    files = _vanilla_entity_files(base)
+    if not files:
+        raise RefreshError("no gfx .asset or .gfx files found")
+    for path in files:
+        raw = _read_raw(path)
+        if raw is not None:
+            names.update(entity_names_from_text(raw))
+    # Some DLC ship their gfx only inside a zip.
+    for archive_path in glob.glob(os.path.join(base, "dlc", "*", "*.zip")):
+        with zipfile.ZipFile(archive_path) as archive:
+            for member in archive.namelist():
+                if member.startswith("gfx/") and member.endswith((".asset", ".gfx")):
+                    names.update(
+                        entity_names_from_text(
+                            archive.read(member).decode("utf-8-sig", "replace")
+                        )
+                    )
+    return _write_manifest(
+        "vanilla_entities.txt",
+        [
+            "# Vanilla Hearts of Iron IV entity names, lowercased (base + DLC gfx).",
+            "# Used by validate_oob_units.py so a create_equipment_variant model",
+            "# naming a vanilla entity is not flagged.",
+        ],
+        names,
+    )
+
+
 def _refresh_fonts() -> str:
     gfx_files = _vanilla_gfx_files()
     if not gfx_files:
@@ -191,16 +308,20 @@ def _refresh_fonts() -> str:
 _TARGETS: Dict[str, Callable[[], str]] = {
     "defines": _refresh_defines,
     "docs": _refresh_docs,
+    "entities": _refresh_entities,
     "fonts": _refresh_fonts,
     "gui": _refresh_gui,
     "paths": _refresh_paths,
     "sprites": _refresh_sprites,
+    "ui-paths": _refresh_ui_paths,
 }
 
 
 def main() -> int:
     targets = sorted(_TARGETS)
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description="Refresh every vanilla-derived file the validators read, from a local HOI4 install."
+    )
     parser.add_argument(
         "--only",
         nargs="+",

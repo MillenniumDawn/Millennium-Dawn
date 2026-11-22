@@ -15,7 +15,7 @@ International investments allow you to fund the construction of buildings in for
 
 **Why invest internationally?**
 
-- Generate passive income at a 6% annual return rate (modified by national ideas and focuses)
+- Generate passive income at a 3% annual return rate (modified by national ideas and focuses)
 - Gain influence over the target country
 - Strengthen allies with military or energy infrastructure
 
@@ -78,11 +78,19 @@ If your nation has an active economic boycott of Israel, all your investment pro
 
 Your International Investments total grows every time a project completes. The system pays out a fraction of that total every week:
 
-- **Base ROI**: 6% per year (roughly $0.115B per week per $100B invested)
+- **Base ROI**: 3% per year (roughly $0.0575B per week per $100B invested)
 - **Modifiable**: national ideas and focus tree completions can raise the ROI rate up to a cap of 20%
 - **Currency effect**: a weak domestic currency makes returns worth more in local terms; a strong currency reduces their local value
 
 Your current investment total and weekly return are displayed in the Economy window. If your country is annexed by another nation, your entire investment portfolio transfers to the annexing power.
+
+### Selling Investments
+
+Right-click the investment total in the top bar to sell $1 billion in foreign investments. Hold **Ctrl** to sell $10 billion or **Shift** to sell $100 billion. The treasury receives a share of the investment value sold, not the full amount. The tooltip shows the current recovery rate.
+
+- **Base recovery:** 60% at corruption level 5. Each tier of lower corruption adds 1 percentage point. Each tier of higher corruption subtracts 1 point.
+- **Banking factions:** Opinion of 50 is neutral. International Bankers change the rate by up to 5 percentage points in either direction. Wall Street, their U.S. counterpart, changes it by up to 10 points in either direction.
+- **Hard cap:** Even if bonuses stack, you can never recover more than 80% through a sale. Selling investments does not change the annual return rate on your remaining balance.
 
 ### Cost Modifiers
 

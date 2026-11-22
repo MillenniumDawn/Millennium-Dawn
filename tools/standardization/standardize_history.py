@@ -7,7 +7,7 @@ Reorders the contents of every dated history block (e.g. ``2000.1.1 = { ... }``)
 into a fixed, readable grouping without changing anything semantically. The
 transform is lossless (no statement dropped) and idempotent (running twice is a
 no-op). Content outside dated blocks (``capital = ...``, naval OOB, equipment
-variants) is passed through untouched.
+variants) keeps its order. The whole file is reindented by brace depth.
 
 Target ordering inside each dated block:
   1. Consolidated ``add_ideas`` with # Laws / # MD Ideas / # Internal Factions /
@@ -25,7 +25,6 @@ modifier->variable map from common/dynamic_modifiers, so the tool works for any
 country, not just CHI.
 """
 
-import glob
 import os
 import re
 import sys
@@ -34,7 +33,14 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common_utils import BaseStandardizer, collapse_blank_runs, run_standardizer
-from shared_utils import extract_block, log_message, strip_inline_comment
+from shared_utils import (
+    extract_block,
+    find_mod_root,
+    list_files,
+    log_message,
+    reindent_by_brace_depth,
+    strip_inline_comment,
+)
 
 # --------------------------------------------------------------------------- #
 # Classification loaders (cached per mod root)
@@ -65,23 +71,6 @@ def _iter_code_lines(lines: List[str]) -> Iterator[Tuple[str, str]]:
         yield code, code.strip()
 
 
-def _detect_mod_root(start: str) -> Optional[str]:
-    """Walk up from *start* until a directory holding both common/ and history/."""
-    path = os.path.abspath(start)
-    if os.path.isfile(path):
-        path = os.path.dirname(path)
-    for _ in range(12):
-        if os.path.isdir(os.path.join(path, "common")) and os.path.isdir(
-            os.path.join(path, "history")
-        ):
-            return path
-        parent = os.path.dirname(path)
-        if parent == path:
-            break
-        path = parent
-    return None
-
-
 def _load_idea_classification(mod_root: str) -> Tuple[set, set]:
     """Return ``(law_tokens, faction_tokens)`` scanned from common/ideas/*.txt.
 
@@ -100,7 +89,7 @@ def _load_idea_classification(mod_root: str) -> Tuple[set, set]:
     law_categories: set = set()
 
     ideas_dir = os.path.join(mod_root, "common", "ideas")
-    for path in glob.glob(os.path.join(ideas_dir, "*.txt")):
+    for path in list_files(ideas_dir, recursive=False):
         is_lawfile = bool(_LAWFILE_RE.match(os.path.basename(path)))
         lines = _iter_file_lines(path)
         if lines is None:
@@ -161,7 +150,7 @@ def _load_modifier_variables(mod_root: str) -> Dict[str, set]:
     mods: Dict[str, set] = {}
 
     dm_dir = os.path.join(mod_root, "common", "dynamic_modifiers")
-    for path in glob.glob(os.path.join(dm_dir, "*.txt")):
+    for path in list_files(dm_dir, recursive=False):
         lines = _iter_file_lines(path)
         if lines is None:
             continue
@@ -304,7 +293,7 @@ class HistoryStandardizer(BaseStandardizer):
             and self._modvars is not None
         ):
             return
-        root = self._mod_root or _detect_mod_root(input_file)
+        root = self._mod_root or find_mod_root(input_file, ("common", "history"))
         if root:
             law, faction = _load_idea_classification(root)
             self._law = law if self._law is None else self._law
@@ -327,6 +316,10 @@ class HistoryStandardizer(BaseStandardizer):
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         self._ensure_classification(input_file)
         return super().standardize_file(input_file, output_file)
+
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        output_lines = super().standardize_lines(lines)
+        return None if output_lines is None else reindent_by_brace_depth(output_lines)
 
     # -- BaseStandardizer interface ----------------------------------------- #
 
@@ -403,8 +396,9 @@ class HistoryStandardizer(BaseStandardizer):
             "open_line": open_line,
             "close_line": close_line,
             "indent": indent,
-            "leader_top": [],  # start_politics_input / startup_politics / create_country_leader
+            "leader_top": [],  # start_politics_input / create_country_leader
             "politics_top": [],  # set_popularities / set_politics
+            "politics_startup": [],  # startup_politics, which reads the system vars
             "equipment": [],  # list of (domain_rank, stmt)
             "opinion": [],  # add_opinion_modifier / reverse_add_opinion_modifier
             "ideas": [],  # list of (token, text)
@@ -451,7 +445,12 @@ class HistoryStandardizer(BaseStandardizer):
                     props["country_vars"].append(stmt)
                 else:
                     props["system_vars"].append(stmt)
-            elif head in ("add_to_array", "remove_from_array"):
+            elif head in (
+                "add_to_array",
+                "remove_from_array",
+                "init_influence",
+                "sort_influence",
+            ):
                 props["system_vars"].append(stmt)
             elif head == "complete_special_project" or head.startswith("sp:"):
                 props["special_projects"].append(stmt)
@@ -461,12 +460,10 @@ class HistoryStandardizer(BaseStandardizer):
                 props["equipment"].append((self._equipment_domain(lines), stmt))
             elif head in ("set_oob", "set_air_oob", "set_naval_oob"):
                 props["equipment"].append((self._equipment_domain(lines), stmt))
-            elif head in (
-                "start_politics_input",
-                "startup_politics",
-                "create_country_leader",
-            ):
+            elif head in ("start_politics_input", "create_country_leader"):
                 props["leader_top"].append(stmt)
+            elif head == "startup_politics":
+                props["politics_startup"].append(stmt)
             elif head in ("set_popularities", "set_politics"):
                 props["politics_top"].append(stmt)
             elif head in ("add_opinion_modifier", "reverse_add_opinion_modifier"):
@@ -501,10 +498,18 @@ class HistoryStandardizer(BaseStandardizer):
                 if not _is_boilerplate_comment(raw):
                     props["ideas_extra_comments"].append(raw.rstrip())
                 continue
-            for tok in code.replace("{", " ").replace("}", " ").split():
-                if "=" in tok or tok == "add_ideas":
-                    continue
-                props["ideas"].append((tok, tok))
+            tokens = [
+                tok
+                for tok in code.replace("{", " ").replace("}", " ").split()
+                if "=" not in tok and tok != "add_ideas"
+            ]
+            comment = raw[len(code) :].strip()
+            if comment and not tokens:
+                props["ideas_extra_comments"].append(comment)
+            for tok in tokens:
+                # A trailing comment stays on the line's last idea.
+                text = f"{tok} {comment}" if comment and tok == tokens[-1] else tok
+                props["ideas"].append((tok, text))
 
     # -- formatting --------------------------------------------------------- #
 
@@ -566,11 +571,11 @@ class HistoryStandardizer(BaseStandardizer):
         )
         classified: Dict[str, List[str]] = {k: [] for k in groups}
         seen: set = set()
-        for token, _text in props["ideas"]:
+        for token, text in props["ideas"]:
             if token in seen:
                 continue
             seen.add(token)
-            classified[self._classify_idea(token)].append(token)
+            classified[self._classify_idea(token)].append(text)
         for key, header in groups.items():
             items = classified[key]
             if not items:
@@ -597,6 +602,7 @@ class HistoryStandardizer(BaseStandardizer):
                     self._emit_stmt(var_stmt, out)
 
         self._emit_group("System Variables", props["system_vars"], indent, out)
+        self._emit_top(props["politics_startup"], out)
         self._emit_group("Special Projects", props["special_projects"], indent, out)
         self._emit_group("Technologies", props["technologies"], indent, out)
         self._emit_equipment(props, indent, out)

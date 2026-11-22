@@ -13,7 +13,10 @@ update_nato_dirty_variable = {
 
 NATO_auto_ratify_accession = {
 	if = {
-		limit = { has_country_flag = NATO_Accession_Voting }
+		limit = {
+			has_country_flag = NATO_Accession_Voting
+			is_subject = no
+		}
 		for_each_scope_loop = {
 			array = global.nato_members
 			if = {
@@ -162,36 +165,19 @@ NATO_join_via_event = {
 }
 
 # Effect: NATO_leave
-# Purpose: Strips NATO membership and tech sharing, transfers faction leadership to another member if ROOT is the leader, tears down the mutual opinion/access web, and fires the departure news event.
+# Purpose: Strips NATO membership and tech sharing, transfers faction leadership to another member if THIS is the leader, tears down the mutual opinion/access web, and fires the departure news event.
 NATO_leave = {
-	set_temp_variable = { faction_goal_refresh_transferred_leader = 0 }
 	if = {
-		limit = { has_idea = NATO_member }
-
-		remove_ideas = NATO_member
-		remove_from_tech_sharing_group = NATO_Tech_Share
-
-		# If we are the faction leader, transfer leadership before leaving
-		if = {
-			limit = { is_faction_leader = yes }
-			# Find another NATO member to transfer leadership to
-			random_other_country = {
-				limit = {
-					has_idea = NATO_member
-					is_in_faction_with = ROOT
-				}
-				# Transfer faction leadership
-				set_faction_leader = yes
-				save_event_target_as = faction_goal_transferred_leader
-				set_temp_variable = { ROOT.faction_goal_refresh_transferred_leader = 1 }
+		limit = {
+			OR = {
+				has_idea = NATO_member
+				has_faction_template = faction_template_nato
 			}
 		}
 
+		remove_ideas = NATO_member
+		pass_faction_leadership = yes
 		leave_faction = yes
-		if = {
-			limit = { check_variable = { faction_goal_refresh_transferred_leader = 1 } }
-			hidden_effect = { event_target:faction_goal_transferred_leader = { faction_goal_refresh_all_caches = yes } }
-		}
 
 		for_each_scope_loop = {
 			array = global.nato_members
@@ -227,52 +213,6 @@ NATO_leave = {
 		custom_effect_tooltip = NATO_leave_tt
 
 		hidden_effect = { news_event = { id = NATO.6 hours = 6 } }
-	}
-}
-
-# Effect: NATO_promote_new_leader
-# Purpose: Hands NATO leadership to a surviving member when the current leader can no longer lead (the USA collapsing). Prefers a non-collapsed major member, falls back to any eligible member, then announces the transition via NATO.20.
-NATO_promote_new_leader = {
-	if = {
-		limit = {
-			any_of_scopes = {
-				array = global.nato_members
-				is_subject = no
-				is_major = yes
-				NOT = { has_country_flag = collapsed_nation }
-				is_faction_leader = no
-			}
-		}
-		random_scope_in_array = {
-			array = global.nato_members
-			limit = {
-				is_subject = no
-				is_major = yes
-				NOT = { has_country_flag = collapsed_nation }
-				is_faction_leader = no
-			}
-			set_faction_leader = yes
-			save_event_target_as = new_nato_leader
-		}
-	}
-	else = {
-		random_scope_in_array = {
-			array = global.nato_members
-			limit = {
-				is_subject = no
-				NOT = { has_country_flag = collapsed_nation }
-				is_faction_leader = no
-			}
-			set_faction_leader = yes
-			save_event_target_as = new_nato_leader
-		}
-	}
-	if = {
-		limit = { country_exists = event_target:new_nato_leader }
-		hidden_effect = {
-			event_target:new_nato_leader = { faction_goal_refresh_all_caches = yes }
-			news_event = { id = NATO.20 hours = 6 }
-		}
 	}
 }
 

@@ -7,7 +7,6 @@ CHI_sco_category = {
 		icon = GFX_decision_sco_watch_button
 
 		visible = {
-			CHI = { has_completed_focus = CHI_Form_the_SCO }
 			NOT = { CHI_sco_is_any = yes }
 		}
 
@@ -237,7 +236,11 @@ CHI_sco_category = {
 		}
 
 		days_re_enable = 365
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	### SCO Bilateral Decisions ###
@@ -290,6 +293,8 @@ CHI_sco_category = {
 				factor = 0
 				has_war = yes
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -310,8 +315,8 @@ CHI_sco_category = {
 			FROM = {
 				is_sco = yes
 				NOT = { tag = ROOT }
+				is_neighbor_of = ROOT
 			}
-			any_neighbor_country = { tag = FROM }
 		}
 
 		cost = 25
@@ -605,6 +610,7 @@ CHI_sco_category = {
 	}
 
 	### SCO Mega-Projects ###
+	# Proposal state: 0 idle, 1 active. Timed global flags reserve pending proposals.
 	sco_megaproject_energy_grid_propose = {
 		icon = GFX_decision_sco_watch_button
 
@@ -613,12 +619,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Civilian_Technology_Sharing }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_energy_grid_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_energy_grid_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_energy_grid_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_energy_grid_inactive_tt
+				check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_energy_grid_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 2.0 } }
 		custom_cost_text = cost_2_0
 		cost = 100
@@ -626,18 +640,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_energy_grid_propose"
-			set_country_flag = sco_megaproject_energy_grid_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_energy_grid_active = 1 }
+				set_country_flag = sco_megaproject_energy_grid_initiator
 				set_country_flag = { flag = sco_megaproject_energy_grid_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.42 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_energy_grid_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_energy_grid_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.30 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_energy_grid_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_energy_grid_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.30 days = 3 } }
 			}
 			newline = yes
@@ -675,7 +696,7 @@ CHI_sco_category = {
 		custom_cost_trigger = { check_variable = { treasury > 1.5 } }
 		custom_cost_text = cost_1_5
 		cost = 50
-		days_remove = 180
+		days_re_enable = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_energy_grid_optin"
@@ -714,12 +735,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Exploit_Economic_Clout }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_railway_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_railway_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_railway_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_railway_inactive_tt
+				check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_railway_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 3.0 } }
 		custom_cost_text = cost_3_0
 		cost = 150
@@ -727,18 +756,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_railway_propose"
-			set_country_flag = sco_megaproject_railway_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_railway_active = 1 }
+				set_country_flag = sco_megaproject_railway_initiator
 				set_country_flag = { flag = sco_megaproject_railway_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.41 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_railway_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_railway_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.31 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_railway_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_railway_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.31 days = 3 } }
 			}
 			newline = yes
@@ -776,7 +812,7 @@ CHI_sco_category = {
 		custom_cost_trigger = { check_variable = { treasury > 2.0 } }
 		custom_cost_text = cost_2_0
 		cost = 75
-		days_remove = 180
+		days_re_enable = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_railway_optin"
@@ -815,12 +851,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Development_Assistance }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_dev_bank_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_dev_bank_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_dev_bank_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_dev_bank_inactive_tt
+				check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_dev_bank_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 5.0 } }
 		custom_cost_text = cost_5_0
 		cost = 200
@@ -828,18 +872,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_dev_bank_propose"
-			set_country_flag = sco_megaproject_dev_bank_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_dev_bank_active = 1 }
+				set_country_flag = sco_megaproject_dev_bank_initiator
 				set_country_flag = { flag = sco_megaproject_dev_bank_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.43 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_dev_bank_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_dev_bank_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.32 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_dev_bank_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_dev_bank_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.32 days = 3 } }
 			}
 			newline = yes
@@ -877,7 +928,7 @@ CHI_sco_category = {
 		custom_cost_trigger = { check_variable = { treasury > 3.0 } }
 		custom_cost_text = cost_3_0
 		cost = 100
-		days_remove = 180
+		days_re_enable = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_dev_bank_optin"
@@ -916,12 +967,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Strengthen_Security_Framework }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_air_defense_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_air_defense_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_air_defense_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_air_defense_inactive_tt
+				check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_air_defense_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 1.5 } }
 		custom_cost_text = cost_1_5
 		cost = 100
@@ -929,18 +988,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_air_defense_propose"
-			set_country_flag = sco_megaproject_air_defense_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_air_defense_active = 1 }
+				set_country_flag = sco_megaproject_air_defense_initiator
 				set_country_flag = { flag = sco_megaproject_air_defense_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.44 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_air_defense_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_air_defense_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.33 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_air_defense_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_air_defense_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.33 days = 3 } }
 			}
 			newline = yes
@@ -978,7 +1044,7 @@ CHI_sco_category = {
 		custom_cost_trigger = { check_variable = { treasury > 1.0 } }
 		custom_cost_text = cost_1_0
 		cost = 50
-		days_remove = 180
+		days_re_enable = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_air_defense_optin"
@@ -1673,8 +1739,7 @@ CHI_subcontinent_strategy = {
 
 		available = { NOT = { has_war_with = RAJ } }
 		cost = 25
-		days_remove = 30
-		days_re_enable = 90
+		days_re_enable = 120
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_de_escalate_at_LAC executed"
@@ -1697,12 +1762,12 @@ CHI_subcontinent_strategy = {
 		ai_will_do = {
 			base = 5
 			modifier = {
-				factor = 0
-				has_war_with = RAJ
-			}
-			modifier = {
 				add = 5
 				check_variable = { CHI_chinese_aggression > 9 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = RAJ
 			}
 			modifier = {
 				factor = 0
@@ -1731,7 +1796,7 @@ CHI_subcontinent_strategy = {
 		}
 
 		cost = 50
-		days_remove = 90
+		days_re_enable = 90
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_seek_basing_BAN executed"
@@ -1758,7 +1823,7 @@ CHI_subcontinent_strategy = {
 		}
 
 		cost = 50
-		days_remove = 90
+		days_re_enable = 90
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_seek_basing_BRM executed"
@@ -1785,7 +1850,7 @@ CHI_subcontinent_strategy = {
 		}
 
 		cost = 50
-		days_remove = 90
+		days_re_enable = 90
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_seek_basing_CBD executed"
@@ -1808,7 +1873,7 @@ CHI_subcontinent_strategy = {
 
 		available = { NOT = { has_war_with = PAK } }
 		cost = 50
-		days_remove = 90
+		days_re_enable = 90
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_seek_basing_PAK executed"
@@ -1835,7 +1900,7 @@ CHI_subcontinent_strategy = {
 		}
 
 		cost = 50
-		days_remove = 90
+		days_re_enable = 90
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_seek_basing_SRI executed"
@@ -1857,8 +1922,7 @@ CHI_subcontinent_strategy = {
 
 		available = { NOT = { has_war_with = PAK } }
 		cost = 25
-		days_remove = 60
-		days_re_enable = 180
+		days_re_enable = 240
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_initiate_joint_military_training executed"
@@ -1894,8 +1958,7 @@ CHI_subcontinent_strategy = {
 		}
 
 		cost = 30
-		days_remove = 60
-		days_re_enable = 120
+		days_re_enable = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_back_nepalese_communists executed"
@@ -1925,8 +1988,7 @@ CHI_subcontinent_strategy = {
 		}
 
 		cost = 30
-		days_remove = 60
-		days_re_enable = 180
+		days_re_enable = 240
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_initiate_joint_exercises_with_RAJ executed"
@@ -2294,21 +2356,21 @@ CHI_national_commitee_decisions_category = {
 			if = {
 				limit = {
 					controls_state = 540
-					540 = { check_variable = { 540.productivity_state_var > 1499 } }
+					540 = { check_variable = { 540.productivity_state_var > 999 } }
 				}
 				540 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
 			}
 			if = {
 				limit = {
 					controls_state = 541
-					541 = { check_variable = { 541.productivity_state_var > 1499 } }
+					541 = { check_variable = { 541.productivity_state_var > 999 } }
 				}
 				541 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
 			}
 			if = {
 				limit = {
 					controls_state = 538
-					538 = { check_variable = { 538.productivity_state_var > 1499 } }
+					538 = { check_variable = { 538.productivity_state_var > 999 } }
 				}
 				538 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.05 } } }
 			}
@@ -2318,7 +2380,6 @@ CHI_national_commitee_decisions_category = {
 	CHI_eleventh_five_year_plan_mission = {
 		icon = generic_construction
 		fire_only_once = yes
-		is_good = yes
 		days_mission_timeout = 1825
 		activation = { has_completed_focus = CHI_eleventh_five_year_plan }
 
@@ -2344,7 +2405,7 @@ CHI_national_commitee_decisions_category = {
 				all_owned_state = { infrastructure > 1 }
 			}
 			has_tech = energy_efficiency
-			has_tech = early_renewables
+			has_tech = renewable_01
 			has_education_law_at_least_3 = yes
 			has_health_law_at_least_2 = yes
 			has_social_law_at_least_2 = yes
@@ -2393,7 +2454,7 @@ CHI_national_commitee_decisions_category = {
 			if = {
 				limit = {
 					has_tech = energy_efficiency
-					has_tech = early_renewables
+					has_tech = renewable_01
 				}
 				add_to_temp_variable = { CHI_fyp_goals_met = 1 }
 			}
@@ -2541,7 +2602,11 @@ CHI_national_commitee_decisions_category = {
 			CHI_apply_demographic_policy = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_adopt_three_child_policy = {
@@ -2576,7 +2641,11 @@ CHI_national_commitee_decisions_category = {
 			CHI_apply_demographic_policy = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_abolish_birth_limits = {
@@ -2610,7 +2679,11 @@ CHI_national_commitee_decisions_category = {
 			CHI_apply_demographic_policy = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_pro_natalist_subsidies = {
@@ -2640,7 +2713,11 @@ CHI_national_commitee_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_raise_retirement_age = {
@@ -2697,7 +2774,11 @@ CHI_national_commitee_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_automation_robotics_push = {
@@ -2724,7 +2805,11 @@ CHI_national_commitee_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -2737,7 +2822,7 @@ CHI_SAR_decisions_category = {
 
 		target_trigger = {
 			FROM = {
-				is_in_array = { recognised_countries = TAI }
+				TAI = { is_in_array = { recognised_by = PREV } }
 				NOT = { original_tag = CHI }
 				NOT = { original_tag = TAI }
 				NOT = { has_war_with = ROOT }
@@ -2747,14 +2832,11 @@ CHI_SAR_decisions_category = {
 
 		visible = {
 			has_completed_focus = CHI_SAR_one_china_framework
-			has_completed_focus = CHI_TAI_one_china_enforcement
 			country_exists = TAI
 		}
 
-		available = { has_completed_focus = CHI_TAI_one_china_enforcement }
 		cost = 50
 		days_remove = 90
-		fire_only_once = no
 		days_re_enable = 365
 
 		complete_effect = {
@@ -2768,7 +2850,7 @@ CHI_SAR_decisions_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_pressure_derecognize_TAI remove targeting [From.GetName]"
 			if = {
-				limit = { FROM = { is_in_array = { recognised_countries = TAI } } has_dlc = "By Blood Alone" }
+				limit = { TAI = { is_in_array = { recognised_by = FROM } } has_dlc = "By Blood Alone" }
 				send_embargo = FROM
 			}
 		}
@@ -2798,7 +2880,6 @@ CHI_SAR_decisions_category = {
 
 		cost = 50
 		days_remove = 120
-		fire_only_once = no
 		fixed_random_seed = no
 
 		complete_effect = {
@@ -2840,7 +2921,6 @@ CHI_SAR_decisions_category = {
 
 		cost = 100
 		days_remove = 100
-		fire_only_once = no
 		modifier = { political_power_factor = -0.15 }
 
 		remove_effect = {
@@ -2873,7 +2953,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
 		days_remove = 180
-		fire_only_once = no
 
 		modifier = {
 			education_cost_multiplier_modifier = 0.05
@@ -2893,7 +2972,11 @@ CHI_SAR_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 4 }
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_HKG_liaison_office_expansion = {
@@ -2914,7 +2997,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 6 } }
 		custom_cost_text = cost_6_0
 		days_remove = 365
-		fire_only_once = no
 
 		modifier = {
 			bureaucracy_cost_multiplier_modifier = 0.10
@@ -2966,7 +3048,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
 		days_remove = 180
-		fire_only_once = no
 
 		modifier = {
 			bureaucracy_cost_multiplier_modifier = 0.05
@@ -2986,7 +3067,11 @@ CHI_SAR_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 4 }
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_MAC_hengqin_integration_zone = {
@@ -3006,7 +3091,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 6 } }
 		custom_cost_text = cost_6_0
 		days_remove = 365
-		fire_only_once = no
 
 		modifier = {
 			infrastructure_cost_multiplier_modifier = 0.10
@@ -3055,7 +3139,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
 		days_remove = 180
-		fire_only_once = no
 
 		modifier = {
 			education_cost_multiplier_modifier = 0.05
@@ -3078,7 +3161,11 @@ CHI_SAR_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 4 }
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_TIB_village_cadre_teams = {
@@ -3102,7 +3189,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 6 } }
 		custom_cost_text = cost_6_0
 		days_remove = 365
-		fire_only_once = no
 
 		modifier = {
 			police_cost_multiplier_modifier = 0.10
@@ -3151,7 +3237,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
 		days_remove = 180
-		fire_only_once = no
 
 		modifier = {
 			education_cost_multiplier_modifier = 0.05
@@ -3174,7 +3259,11 @@ CHI_SAR_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 4 }
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_ETK_labour_transfer_scheme = {
@@ -3198,7 +3287,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 6 } }
 		custom_cost_text = cost_6_0
 		days_remove = 365
-		fire_only_once = no
 
 		modifier = {
 			personnel_cost_multiplier_modifier = 0.10
@@ -3246,7 +3334,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_OMG_sinicization_slot_free = yes }
-		fire_only_once = no
 		days_remove = 180
 		modifier = { social_cost_multiplier_modifier = 0.03 }
 
@@ -3298,7 +3385,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { CHI_OMG_sinicization_slot_free = yes }
-		fire_only_once = no
 		days_remove = 270
 
 		modifier = {
@@ -3358,7 +3444,6 @@ CHI_SAR_decisions_category = {
 			556 = { resistance < 60 }
 		}
 
-		fire_only_once = no
 		days_remove = 365
 
 		modifier = {
@@ -3418,7 +3503,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
 		days_remove = 180
-		fire_only_once = no
 
 		modifier = {
 			education_cost_multiplier_modifier = 0.05
@@ -3441,7 +3525,11 @@ CHI_SAR_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 4 }
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_OMG_pastoral_sedentarisation = {
@@ -3465,7 +3553,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 6 } }
 		custom_cost_text = cost_6_0
 		days_remove = 365
-		fire_only_once = no
 
 		modifier = {
 			social_cost_multiplier_modifier = 0.10
@@ -3511,7 +3598,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 15 } }
 		custom_cost_text = cost_15_0
 		days_remove = 730
-		fire_only_once = no
 
 		modifier = {
 			education_cost_multiplier_modifier = 0.10
@@ -3552,7 +3638,6 @@ CHI_SAR_decisions_category = {
 		custom_cost_trigger = { check_variable = { treasury > 30 } }
 		custom_cost_text = cost_30_0
 		days_remove = 1095
-		fire_only_once = no
 
 		modifier = {
 			police_cost_multiplier_modifier = 0.15
@@ -3623,7 +3708,6 @@ CHI_SAR_decisions_category = {
 		cost = 50
 		custom_cost_trigger = { check_variable = { treasury > 2 } }
 		custom_cost_text = cost_2_0
-		days_remove = 180
 		fire_only_once = yes
 
 		complete_effect = {
@@ -3635,7 +3719,11 @@ CHI_SAR_decisions_category = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 4 }
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_TAI_media_infiltration = {
@@ -3657,7 +3745,6 @@ CHI_SAR_decisions_category = {
 			TAI = { NOT = { has_country_flag = TAI_foreign_interference } }
 		}
 
-		fire_only_once = no
 		cost = 50
 		days_re_enable = 120
 
@@ -3692,7 +3779,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3714,7 +3800,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3736,7 +3821,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3758,7 +3842,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3780,7 +3863,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3802,7 +3884,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3824,7 +3905,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3846,7 +3926,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3868,7 +3947,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3890,7 +3968,6 @@ CHI_SAR_decisions_category = {
 		}
 
 		available = { NOT = { has_war_with = TAI } }
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 45
 
@@ -3915,7 +3992,6 @@ CHI_SAR_decisions_category = {
 			NOT = { has_war_with = TAI }
 		}
 
-		fire_only_once = no
 		cost = 50
 		days_re_enable = 90
 
@@ -3942,7 +4018,6 @@ CHI_SAR_decisions_category = {
 			NOT = { has_war_with = TAI }
 		}
 
-		fire_only_once = no
 		cost = 40
 		days_re_enable = 60
 
@@ -3975,7 +4050,6 @@ CHI_SAR_decisions_category = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 80
 		days_re_enable = 90
 
@@ -4011,7 +4085,6 @@ CHI_SAR_decisions_category = {
 			NOT = { has_war_with = TAI }
 		}
 
-		fire_only_once = no
 		cost = 30
 		days_re_enable = 60
 
@@ -4056,7 +4129,6 @@ CHI_SAR_decisions_category = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 100
 		days_re_enable = 180
 
@@ -4276,8 +4348,11 @@ CHI_SAR_decisions_category = {
 			clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 			random = {
 				chance = 15
-				add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
-				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+					add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				}
 			}
 		}
 
@@ -4872,8 +4947,11 @@ CHI_SAR_decisions_category = {
 			}
 			random = {
 				chance = 40
-				add_to_variable = { CHI_taiwan_us_support = 10 tooltip = CHI_taiwan_us_support_tt }
-				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+					add_to_variable = { CHI_taiwan_us_support = 10 tooltip = CHI_taiwan_us_support_tt }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				}
 				USA = { add_opinion_modifier = { target = CHI modifier = chi_usa_sanctions_response } }
 			}
 		}
@@ -4883,6 +4961,10 @@ CHI_SAR_decisions_category = {
 			modifier = {
 				add = 5
 				USA = { has_war_with = PER }
+			}
+			modifier = {
+				factor = 0
+				NOT = { check_variable = { CHI_taiwan_us_support > 0 } }
 			}
 		}
 	}
@@ -4970,8 +5052,11 @@ CHI_SAR_decisions_category = {
 			USA = { add_stability = -0.02 }
 			random = {
 				chance = 40
-				add_to_variable = { CHI_taiwan_us_support = 8 tooltip = CHI_taiwan_us_support_tt }
-				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+					add_to_variable = { CHI_taiwan_us_support = 8 tooltip = CHI_taiwan_us_support_tt }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				}
 				USA = { add_opinion_modifier = { target = CHI modifier = chi_usa_sanctions_response } }
 			}
 		}
@@ -4981,6 +5066,10 @@ CHI_SAR_decisions_category = {
 			modifier = {
 				add = 5
 				USA = { has_war = yes }
+			}
+			modifier = {
+				factor = 0
+				NOT = { check_variable = { CHI_taiwan_us_support > 0 } }
 			}
 		}
 	}
@@ -5023,7 +5112,6 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Cabbage_Strategy }
 
 		available = {
-			has_war = no
 			NOT = { has_idea = CHI_militia_deployed }
 		}
 
@@ -5058,10 +5146,9 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Sansha_Administrative_Upgrade }
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_island_construction_treasury_tt
-				check_variable = { treasury > 4 }
+				check_variable = { treasury > 5 }
 			}
 		}
 
@@ -5091,7 +5178,11 @@ CHI_south_china_sea_category = {
 			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_scs_island_construction_sam_battery = {
@@ -5099,10 +5190,9 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Sansha_Administrative_Upgrade }
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_island_construction_treasury_tt
-				check_variable = { treasury > 4 }
+				check_variable = { treasury > 5 }
 			}
 		}
 
@@ -5132,7 +5222,11 @@ CHI_south_china_sea_category = {
 			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_scs_island_construction_radar = {
@@ -5140,10 +5234,9 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Sansha_Administrative_Upgrade }
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_island_construction_treasury_tt
-				check_variable = { treasury > 4 }
+				check_variable = { treasury > 5 }
 			}
 		}
 
@@ -5173,7 +5266,11 @@ CHI_south_china_sea_category = {
 			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_scs_island_construction_civilian = {
@@ -5181,10 +5278,9 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Sansha_Administrative_Upgrade }
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_island_construction_treasury_tt
-				check_variable = { treasury > 4 }
+				check_variable = { treasury > 5 }
 			}
 		}
 
@@ -5214,7 +5310,11 @@ CHI_south_china_sea_category = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_scs_standoff_philippines = {
@@ -5227,7 +5327,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = PHI }
 		}
 
@@ -5301,7 +5400,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = VIE }
 		}
 
@@ -5375,7 +5473,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = MAY }
 		}
 
@@ -5448,7 +5545,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = IND }
 		}
 
@@ -5485,7 +5581,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = IND }
 		}
 
@@ -5514,7 +5609,6 @@ CHI_south_china_sea_category = {
 		icon = generic_political_discourse
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_The_Spirit_Of_Zheng_He }
-		available = { has_war = no }
 		cost = 50
 
 		complete_effect = {
@@ -5541,7 +5635,6 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Maritime_Silk_Road_Initiative }
 
 		available = {
-			has_war = no
 			country_exists = CBD
 			country_exists = LAO
 			CBD = { has_opinion = { target = ROOT value > 25 } }
@@ -5581,7 +5674,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			VIE = { has_opinion = { target = ROOT value > 0 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_0_tt
@@ -5590,8 +5682,7 @@ CHI_south_china_sea_category = {
 		}
 
 		cost = 75
-		days_remove = 90
-		days_re_enable = 730
+		days_re_enable = 820
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_scs_joint_development_VIE executed"
@@ -5628,7 +5719,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			PHI = { has_opinion = { target = ROOT value > 0 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_0_tt
@@ -5637,8 +5727,7 @@ CHI_south_china_sea_category = {
 		}
 
 		cost = 75
-		days_remove = 90
-		days_re_enable = 730
+		days_re_enable = 820
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_scs_joint_development_PHI executed"
@@ -5676,7 +5765,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			MAY = { has_opinion = { target = ROOT value > 0 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_0_tt
@@ -5685,8 +5773,7 @@ CHI_south_china_sea_category = {
 		}
 
 		cost = 75
-		days_remove = 90
-		days_re_enable = 730
+		days_re_enable = 820
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_scs_joint_development_MAY executed"
@@ -5722,7 +5809,6 @@ CHI_south_china_sea_category = {
 			country_exists = VIE
 		}
 
-		available = { has_war = no }
 		cost = 100
 		days_re_enable = 1095
 		fixed_random_seed = no
@@ -5762,7 +5848,6 @@ CHI_south_china_sea_category = {
 			country_exists = PHI
 		}
 
-		available = { has_war = no }
 		cost = 100
 		days_re_enable = 1095
 		fixed_random_seed = no
@@ -5802,7 +5887,6 @@ CHI_south_china_sea_category = {
 			country_exists = MAY
 		}
 
-		available = { has_war = no }
 		cost = 100
 		days_re_enable = 1095
 		fixed_random_seed = no
@@ -5844,7 +5928,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			VIE = { has_opinion = { target = ROOT value > 25 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_20_tt
@@ -5884,7 +5967,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			PHI = { has_opinion = { target = ROOT value > 25 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_20_tt
@@ -5924,7 +6006,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			MAY = { has_opinion = { target = ROOT value > 25 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_20_tt
@@ -5956,7 +6037,6 @@ CHI_south_china_sea_category = {
 	CHI_scs_first_island_chain_exercise = {
 		icon = generic_naval
 		visible = { has_completed_focus = CHI_Liu_Huaqing_Doctrine }
-		available = { has_war = no }
 		cost = 75
 		days_remove = 120
 		days_re_enable = 365
@@ -5977,7 +6057,6 @@ CHI_south_china_sea_category = {
 	CHI_scs_carrier_strike_group_deployment = {
 		icon = HOL_air_carrier
 		visible = { has_completed_focus = CHI_The_PLAN_Expeditionary_Buildup }
-		available = { has_war = no }
 		cost = 100
 		days_remove = 90
 		days_re_enable = 180
@@ -6009,7 +6088,6 @@ CHI_south_china_sea_category = {
 			country_exists = VIE
 		}
 
-		available = { has_war = no }
 		cost = 80
 		days_re_enable = 90
 
@@ -6067,7 +6145,6 @@ CHI_south_china_sea_category = {
 			country_exists = PHI
 		}
 
-		available = { has_war = no }
 		cost = 80
 		days_re_enable = 90
 
@@ -6125,7 +6202,6 @@ CHI_south_china_sea_category = {
 			country_exists = MAY
 		}
 
-		available = { has_war = no }
 		cost = 80
 		days_re_enable = 90
 
@@ -6185,7 +6261,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_clash_counter_VIE_req_tt
 				check_variable = { CHI_scs_clash_counter_VIE > 2 }
@@ -6225,7 +6300,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_clash_counter_PHI_req_tt
 				check_variable = { CHI_scs_clash_counter_PHI > 2 }
@@ -6265,7 +6339,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_clash_counter_MAY_req_tt
 				check_variable = { CHI_scs_clash_counter_MAY > 2 }
@@ -6297,7 +6370,6 @@ CHI_south_china_sea_category = {
 	CHI_scs_summon_dragon_king_blessing = {
 		icon = eng_abdication_crisis
 		visible = { has_completed_focus = CHI_The_Mandate_Of_The_Seas }
-		available = { has_war = no }
 		cost = 25
 		days_re_enable = 1095
 
@@ -6321,7 +6393,6 @@ CHI_south_china_sea_category = {
 			controls_state = 943
 		}
 
-		available = { has_war = no }
 		cost = 300
 
 		complete_effect = {
@@ -6585,13 +6656,7 @@ CHI_japan_strategy = {
 			CHI = { clr_country_flag = CHI_rare_earth_embargo_active }
 		}
 
-		ai_will_do = {
-			base = 5
-			modifier = {
-				factor = 0
-				has_political_power < 100
-			}
-		}
+		ai_will_do = { base = 5 }
 	}
 
 	CHI_jap_reinforce_coast_guard = {
@@ -6641,12 +6706,12 @@ CHI_japan_strategy = {
 		ai_will_do = {
 			base = 3
 			modifier = {
-				factor = 0
-				has_war_with = CHI
-			}
-			modifier = {
 				add = 3
 				CHI = { check_variable = { CHI_senkaku_pressure > 60 } }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = CHI
 			}
 		}
 	}
@@ -6654,6 +6719,7 @@ CHI_japan_strategy = {
 	CHI_push_rcep_signing = {
 		icon = GFX_decision_generic_decision
 		allowed = { original_tag = CHI }
+		fire_only_once = yes
 
 		available = {
 			has_completed_focus = CHI_the_rcep_acceleration
@@ -6700,12 +6766,12 @@ CHI_japan_strategy = {
 		ai_will_do = {
 			base = 1
 			modifier = {
-				factor = 0
-				has_war_with = JAP
-			}
-			modifier = {
 				add = 2
 				check_variable = { CHI_chinese_aggression > -10 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = JAP
 			}
 		}
 	}
@@ -6768,7 +6834,7 @@ CHI_japan_strategy = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_invite_JAP_mitsubishi_aerospace executed"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_jap_industrial_partnerships }
 			add_to_variable = { CHI_jap_air_attack_factor = 0.02 tooltip = air_attack_factor_tt }
-			add_to_variable = { CHI_jap_industry_air_research_factor = 0.03 tooltip = industry_air_research_factor_tt }
+			add_tech_bonus = { name = CHI_invite_JAP_mitsubishi_aerospace bonus = 0.5 uses = 1 category = CAT_aircraft }
 			random_owned_controlled_state = {
 				limit = { is_capital = yes }
 				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
@@ -7078,8 +7144,7 @@ CHI_japan_strategy = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_invite_JAP_nec executed"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_jap_industrial_partnerships }
-			add_to_variable = { CHI_jap_electronics_research_factor = 0.02 tooltip = electronics_research_factor_tt }
+			add_tech_bonus = { name = CHI_invite_JAP_nec bonus = 0.5 uses = 1 category = CAT_electronics }
 			if = {
 				limit = { has_dlc = "Arms Against Tyranny" }
 				set_country_flag = CHI_JAP_nec_partnered
@@ -7124,8 +7189,7 @@ CHI_japan_strategy = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_invite_JAP_toshiba executed"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_jap_industrial_partnerships }
-			add_to_variable = { CHI_jap_electronics_research_factor = 0.02 tooltip = electronics_research_factor_tt }
+			add_tech_bonus = { name = CHI_invite_JAP_toshiba bonus = 0.5 uses = 1 category = CAT_electronics }
 			if = {
 				limit = { has_dlc = "Arms Against Tyranny" }
 				set_country_flag = CHI_JAP_toshiba_partnered
@@ -7172,7 +7236,7 @@ CHI_japan_strategy = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_invite_JAP_mitsubishi_shipbuilding executed"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_jap_industrial_partnerships }
 			add_to_variable = { CHI_jap_naval_speed_factor = 0.03 tooltip = naval_speed_factor_tt }
-			add_to_variable = { CHI_jap_naval_research_factor = 0.02 tooltip = naval_research_factor_tt }
+			add_tech_bonus = { name = CHI_invite_JAP_mitsubishi_shipbuilding bonus = 0.5 uses = 1 category = CAT_naval }
 			random_owned_controlled_state = {
 				limit = { is_capital = yes }
 				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
@@ -7291,8 +7355,7 @@ CHI_japan_strategy = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_invite_JAP_jmu executed"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_jap_industrial_partnerships }
-			add_to_variable = { CHI_jap_naval_research_factor = 0.02 tooltip = naval_research_factor_tt }
+			add_tech_bonus = { name = CHI_invite_JAP_jmu bonus = 0.5 uses = 1 category = CAT_naval }
 			random_owned_controlled_state = {
 				limit = { is_capital = yes }
 				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
@@ -7496,7 +7559,7 @@ CHI_japan_strategy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_invite_JAP_panasonic executed"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_jap_industrial_partnerships }
-			add_to_variable = { CHI_jap_electronics_research_factor = 0.04 tooltip = electronics_research_factor_tt }
+			add_tech_bonus = { name = CHI_invite_JAP_panasonic bonus = 0.75 uses = 1 category = CAT_electronics }
 			add_to_variable = { CHI_jap_consumer_goods_factor = -0.05 tooltip = consumer_goods_factor_tt }
 			random_owned_controlled_state = {
 				limit = { is_capital = yes }
@@ -7540,7 +7603,10 @@ CHI_japan_strategy = {
 			add_to_variable = { CHI_jap_production_speed_infrastructure_factor = 0.05 tooltip = production_speed_infrastructure_factor_tt }
 			add_to_variable = { CHI_jap_monthly_population = 0.05 tooltip = monthly_population_tt }
 			random_owned_controlled_state = {
-				limit = { is_capital = yes }
+				limit = {
+					is_capital = yes
+					free_building_slots = { building = infrastructure size > 0 }
+				}
 				add_building_construction = { type = infrastructure level = 1 instant_build = yes }
 			}
 			add_to_variable = { CHI_JAP_invitations_used = 1 }
@@ -7567,8 +7633,7 @@ CHI_BRI_management = {
 		}
 
 		cost = 100
-		days_remove = 30
-		days_re_enable = 1095
+		days_re_enable = 1125
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_FOCAC_Summit executed"
@@ -7590,7 +7655,9 @@ CHI_BRI_management = {
 			base = 1
 			modifier = { factor = 5 has_government = neutrality }
 			modifier = { factor = 3 has_stability < 0.5 }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -7607,8 +7674,7 @@ CHI_BRI_management = {
 		}
 
 		cost = 200
-		days_remove = 30
-		days_re_enable = 1095
+		days_re_enable = 1125
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_Forum_Triennial executed"
@@ -7624,7 +7690,9 @@ CHI_BRI_management = {
 			base = 1
 			modifier = { factor = 5 has_government = neutrality }
 			modifier = { factor = 3 has_stability < 0.5 }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -7637,7 +7705,6 @@ CHI_BRI_management = {
 		}
 
 		cost = 0
-		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_automation_enable executed"
@@ -7657,7 +7724,6 @@ CHI_BRI_management = {
 		}
 
 		cost = 0
-		fire_only_once = no
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_BRI_automation_disable executed"
@@ -7679,7 +7745,6 @@ CHI_BRI_management = {
 		}
 
 		cost = 75
-		fire_only_once = no
 		days_re_enable = 365
 
 		complete_effect = {
@@ -7690,6 +7755,44 @@ CHI_BRI_management = {
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CHI_bri_deposit_treasury = {
+		icon = generic_fundraising
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = CHI_bri_treasury_deposit_req_tt
+				check_variable = { var = treasury value = 50 compare = greater_than_or_equals }
+			}
+		}
+
+		cost = 10
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_bri_deposit_treasury executed"
+			set_temp_variable = { treasury_change = -50 }
+			modify_treasury_effect = yes
+			add_to_variable = { CHI_bri_treasury = 50 tooltip = CHI_bri_treasury_tt }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				check_variable = { CHI_bri_treasury < 0 }
+				check_variable = { treasury > 100 }
+			}
+			modifier = {
+				factor = 0
+				ai_has_high_deficit = yes
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -7779,7 +7882,6 @@ CHI_BRI_management = {
 
 		target_root_trigger = {
 			has_completed_focus = CHI_Predatory_Lending_Doctrine
-			has_political_power > 49
 		}
 
 		target_array = CHI_bri_debtors
@@ -7822,8 +7924,6 @@ CHI_BRI_management = {
 		target_root_trigger = {
 			has_completed_focus = CHI_Digital_Silk_Road_Initiative
 			has_war = no
-			check_variable = { var = CHI_bri_treasury value = 80 compare = greater_than_or_equals }
-			check_variable = { var = treasury value = 80 compare = greater_than_or_equals }
 		}
 
 		target_array = global.countries
@@ -7836,12 +7936,21 @@ CHI_BRI_management = {
 			}
 		}
 
+		available = {
+			hidden_trigger = { FROM = { NOT = { has_idea = chinese_surveillance_systems } } }
+			custom_trigger_tooltip = {
+				tooltip = CHI_bri_dual_treasury_80_tt
+				check_variable = { var = CHI_bri_treasury value = 80 compare = greater_than_or_equals }
+				check_variable = { var = treasury value = 80 compare = greater_than_or_equals }
+			}
+		}
+
 		cost = 75
 		days_re_enable = 365
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_Surveillance_Export executed"
-			subtract_from_variable = { CHI_bri_treasury = 80 }
+			add_to_variable = { CHI_bri_treasury = -80 tooltip = CHI_bri_treasury_tt }
 			FROM = { add_ideas = chinese_surveillance_systems }
 			newline = yes
 			set_temp_variable = { treasury_change = -80 }
@@ -7852,7 +7961,9 @@ CHI_BRI_management = {
 			base = 1
 			modifier = { factor = 5 has_government = neutrality }
 			modifier = { factor = 3 has_stability < 0.5 }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -7877,7 +7988,6 @@ CHI_BRI_management = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 25
 
 		complete_effect = {
@@ -7916,7 +8026,6 @@ CHI_BRI_management = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 25
 
 		complete_effect = {
@@ -7955,7 +8064,6 @@ CHI_BRI_management = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 25
 
 		complete_effect = {
@@ -7994,7 +8102,6 @@ CHI_BRI_management = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 25
 
 		complete_effect = {
@@ -8033,7 +8140,6 @@ CHI_BRI_management = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 25
 
 		complete_effect = {
@@ -8072,7 +8178,6 @@ CHI_BRI_management = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 25
 
 		complete_effect = {
@@ -8111,7 +8216,6 @@ CHI_BRI_management = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 25
 
 		complete_effect = {
@@ -8150,7 +8254,6 @@ CHI_BRI_management = {
 			}
 		}
 
-		fire_only_once = no
 		cost = 25
 
 		complete_effect = {
@@ -8416,7 +8519,7 @@ CHI_BRI_recipient_finance = {
 CHI_VEN_petrocaribe_program = {
 	CHI_VEN_oil_processing_aid = {
 		icon = oil
-		visible = { country_exists = VEN VEN = { has_opinion_modifier = CHI_loans_for_oil_partner } }
+		visible = { VEN = { has_opinion_modifier = CHI_loans_for_oil_partner } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -8426,9 +8529,7 @@ CHI_VEN_petrocaribe_program = {
 		}
 
 		cost = 75
-		days_remove = 90
-		fire_only_once = no
-		days_re_enable = 365
+		days_re_enable = 455
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_VEN_oil_processing_aid"
@@ -8449,7 +8550,6 @@ CHI_VEN_petrocaribe_program = {
 
 	CHI_VEN_emergency_food_aid = {
 		icon = SWI_support_humanitarian_efforts
-		visible = { country_exists = VEN }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -8459,9 +8559,7 @@ CHI_VEN_petrocaribe_program = {
 		}
 
 		cost = 50
-		days_remove = 60
-		fire_only_once = no
-		days_re_enable = 180
+		days_re_enable = 240
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_VEN_emergency_food_aid"
@@ -8483,7 +8581,6 @@ CHI_VEN_petrocaribe_program = {
 		icon = sovfed_money_button
 
 		visible = {
-			country_exists = VEN
 			date > 2017.1.1
 		}
 
@@ -8495,7 +8592,6 @@ CHI_VEN_petrocaribe_program = {
 		}
 
 		cost = 75
-		days_remove = 120
 		fire_only_once = yes
 
 		complete_effect = {
@@ -8523,9 +8619,7 @@ CHI_LATAM_security_options = {
 		}
 
 		cost = 50
-		days_remove = 30
-		fire_only_once = no
-		days_re_enable = 180
+		days_re_enable = 210
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_LATAM_emergency_aid"
@@ -8550,9 +8644,7 @@ CHI_LATAM_security_options = {
 		icon = generic_army_support
 		available = { has_army_experience > 49 }
 		cost = 75
-		days_remove = 60
-		fire_only_once = no
-		days_re_enable = 365
+		days_re_enable = 425
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_LATAM_military_advisors"
@@ -8573,9 +8665,7 @@ CHI_LATAM_security_options = {
 	CHI_LATAM_intel_sharing_pact = {
 		icon = recruit_operative
 		cost = 50
-		days_remove = 90
-		fire_only_once = no
-		days_re_enable = 730
+		days_re_enable = 820
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_LATAM_intel_sharing_pact"
@@ -8599,9 +8689,7 @@ CHI_pacific_pla_training = {
 		visible = { country_exists = SOL }
 		available = { has_army_experience > 24 }
 		cost = 50
-		days_remove = 60
-		fire_only_once = no
-		days_re_enable = 365
+		days_re_enable = 425
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_pla_train_SOL"
@@ -8634,9 +8722,7 @@ CHI_pacific_pla_training = {
 		}
 
 		cost = 50
-		days_remove = 90
-		fire_only_once = no
-		days_re_enable = 365
+		days_re_enable = 455
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_pla_joint_maritime_exercise"
@@ -8667,12 +8753,10 @@ CHI_pacific_pla_training = {
 CHI_BRI_project_missions = {
 	CHI_bri_project_mission = {
 		icon = generic_construction
-		allowed = { NOT = { original_tag = CHI } }
 		activation = { always = no }
 		available = { hidden_trigger = { always = no } }
 		is_good = yes
 		days_mission_timeout = 730
-		fire_only_once = no
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission CHI_bri_project_mission completed"
@@ -8709,7 +8793,6 @@ CHI_olympic_preparations = {
 
 	CHI_olympic_venue_construction = {
 		icon = generic_construction
-		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		custom_cost_trigger = { check_variable = { treasury > 15 } }
 		custom_cost_text = cost_15_0
 		cost = 0
@@ -8741,12 +8824,15 @@ CHI_olympic_preparations = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_olympic_athlete_village = {
 		icon = generic_construction
-		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		custom_cost_trigger = { check_variable = { treasury > 10 } }
 		custom_cost_text = cost_10_0
 		cost = 0
@@ -8773,12 +8859,15 @@ CHI_olympic_preparations = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_olympic_transport_links = {
 		icon = generic_construction
-		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		custom_cost_trigger = { check_variable = { treasury > 10 } }
 		custom_cost_text = cost_10_0
 		cost = 0
@@ -8812,12 +8901,15 @@ CHI_olympic_preparations = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_olympic_environmental_program = {
 		icon = generic_forestry
-		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		custom_cost_trigger = { check_variable = { treasury > 8 } }
 		custom_cost_text = cost_8_0
 		cost = 0
@@ -8834,7 +8926,11 @@ CHI_olympic_preparations = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -8877,7 +8973,11 @@ CHI_water_shortage_category = {
 			CHI_add_water_project_progress = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_drip_irrigation_rollout = {
@@ -8900,7 +9000,11 @@ CHI_water_shortage_category = {
 			CHI_add_water_project_progress = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_anti_desertification_belt = {
@@ -8923,7 +9027,11 @@ CHI_water_shortage_category = {
 			CHI_add_water_project_progress = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_urban_water_recycling = {
@@ -8946,7 +9054,11 @@ CHI_water_shortage_category = {
 			CHI_add_water_project_progress = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -8992,7 +9104,11 @@ CHI_railway_improvement = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_hsr_wuhan_guangzhou = {
@@ -9036,7 +9152,11 @@ CHI_railway_improvement = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_hsr_beijing_shanghai = {
@@ -9080,7 +9200,11 @@ CHI_railway_improvement = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_hsr_chengdu_chongqing = {
@@ -9134,7 +9258,11 @@ CHI_railway_improvement = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_railway_north_upgrade = {
@@ -9144,7 +9272,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9155,7 +9283,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_north_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9180,7 +9308,11 @@ CHI_railway_improvement = {
 			add_to_variable = { CHI_economy_production_speed_buildings_factor = 0.01 tooltip = production_speed_buildings_factor_tt }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_railway_east_upgrade = {
@@ -9190,7 +9322,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9201,7 +9333,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_east_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9226,7 +9358,11 @@ CHI_railway_improvement = {
 			add_to_variable = { CHI_economy_production_speed_buildings_factor = 0.01 tooltip = production_speed_buildings_factor_tt }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_railway_south_upgrade = {
@@ -9236,7 +9372,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9247,7 +9383,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_south_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9272,7 +9408,11 @@ CHI_railway_improvement = {
 			add_to_variable = { CHI_economy_production_speed_buildings_factor = 0.01 tooltip = production_speed_buildings_factor_tt }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_railway_central_upgrade = {
@@ -9282,7 +9422,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9293,7 +9433,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_central_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9318,7 +9458,11 @@ CHI_railway_improvement = {
 			add_to_variable = { CHI_economy_production_speed_buildings_factor = 0.01 tooltip = production_speed_buildings_factor_tt }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_railway_west_upgrade = {
@@ -9327,8 +9471,8 @@ CHI_railway_improvement = {
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12 }
+				tooltip = CHI_railway_west_upgrade_treasury_tt
+				check_variable = { treasury > 22.5 }
 			}
 		}
 
@@ -9339,7 +9483,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_west_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -22.5 }
 			modify_treasury_effect = yes
 		}
 
@@ -9369,7 +9513,11 @@ CHI_railway_improvement = {
 			add_to_variable = { CHI_economy_production_speed_buildings_factor = 0.01 tooltip = production_speed_buildings_factor_tt }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -9413,7 +9561,12 @@ CHI_local_debt_category = {
 
 		available = { always = no }
 
-		cancel_trigger = { NOT = { check_variable = { CHI_local_debt_pressure < 1 } } }
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				tooltip = CHI_local_debt_pressure_gt_0_tt
+				NOT = { check_variable = { CHI_local_debt_pressure < 1 } }
+			}
+		}
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission CHI_local_debt_resolution_mission completed"
@@ -9459,10 +9612,6 @@ CHI_industrial_investment_category = {
 			base = 3
 			modifier = {
 				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
 				num_of_civilian_factories_available_for_projects < 8
 			}
 		}
@@ -9492,10 +9641,6 @@ CHI_industrial_investment_category = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
-			modifier = {
-				factor = 0
-				has_political_power < 100
-			}
 		}
 	}
 
@@ -9522,10 +9667,6 @@ CHI_industrial_investment_category = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
-				has_political_power < 75
 			}
 		}
 	}
@@ -9554,10 +9695,6 @@ CHI_industrial_investment_category = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
-			modifier = {
-				factor = 0
-				has_political_power < 75
-			}
 		}
 	}
 
@@ -9578,10 +9715,6 @@ CHI_industrial_investment_category = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
-				has_political_power < 75
 			}
 		}
 	}
@@ -9607,10 +9740,6 @@ CHI_industrial_investment_category = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
-				has_political_power < 75
 			}
 		}
 	}
@@ -9649,10 +9778,6 @@ CHI_industrial_investment_category = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
-			modifier = {
-				factor = 0
-				has_political_power < 40
-			}
 		}
 	}
 
@@ -9690,10 +9815,6 @@ CHI_industrial_investment_category = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
-			modifier = {
-				factor = 0
-				has_political_power < 50
-			}
 		}
 	}
 
@@ -9720,10 +9841,6 @@ CHI_industrial_investment_category = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
-				has_political_power < 75
 			}
 		}
 	}
@@ -9772,10 +9889,6 @@ CHI_industrial_investment_category = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
-			modifier = {
-				factor = 0
-				has_political_power < 100
-			}
 		}
 	}
 
@@ -9804,10 +9917,6 @@ CHI_industrial_investment_category = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
-				has_political_power < 100
 			}
 		}
 	}
@@ -9841,10 +9950,6 @@ CHI_industrial_investment_category = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
-			modifier = {
-				factor = 0
-				has_political_power < 150
-			}
 		}
 	}
 
@@ -9873,7 +9978,7 @@ CHI_industrial_investment_category = {
 		}
 
 		cost = 50
-		days_remove = 180
+		days_re_enable = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_big_fund_iii_allocate_tranche_decision executed"
@@ -9889,10 +9994,6 @@ CHI_industrial_investment_category = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
-				has_political_power < 50
 			}
 		}
 	}
@@ -9918,10 +10019,6 @@ CHI_industrial_investment_category = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
-				has_political_power < 120
 			}
 		}
 	}
@@ -10400,6 +10497,36 @@ CHI_industrial_investment_category = {
 }
 
 CHI_military_decisions_category = {
+	CHI_varyag_negotiate_transit = {
+		icon = varyag_transit
+		fire_only_once = yes
+		cost = 15
+
+		visible = { has_global_flag = varyag_dispute_open }
+
+		available = {
+			varyag_transit_possible = yes
+			custom_trigger_tooltip = {
+				tooltip = varyag_chinese_funds_tt
+				check_variable = { var = treasury value = 2.0 compare = greater_than_or_equals }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_varyag_negotiate_transit"
+			custom_effect_tooltip = varyag_transit_offer_tt
+			hidden_effect = { TUR = { country_event = ukraine_varyag.4 } }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { add = 5 has_opinion = { target = TUR value > 25 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 is_historical_focus_on = yes }
+		}
+	}
+
 	CHI_eastern_theatre_command = {
 		icon = generic_army_support
 		visible = { has_completed_focus = CHI_joint_operations_command }
@@ -10484,7 +10611,6 @@ CHI_military_decisions_category = {
 		icon = generic_research
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 		cost = 50
-		days_remove = 365
 		fire_only_once = yes
 
 		complete_effect = {
@@ -10499,7 +10625,6 @@ CHI_military_decisions_category = {
 		icon = generic_research
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 		cost = 50
-		days_remove = 365
 		fire_only_once = yes
 
 		complete_effect = {
@@ -10514,7 +10639,6 @@ CHI_military_decisions_category = {
 		icon = generic_research
 		visible = { has_completed_focus = CHI_original_innovation_problem }
 		cost = 50
-		days_remove = 365
 		fire_only_once = yes
 
 		complete_effect = {
@@ -10726,7 +10850,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_snwt_eastern_done }
 		}
 
@@ -10778,7 +10901,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_snwt_central_done }
 		}
 
@@ -10830,7 +10952,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_snwt_western_done }
 		}
 
@@ -10881,7 +11002,6 @@ CHI_megaprojects = {
 		icon = generic_electricity
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_uhv_west_done }
 		}
 
@@ -10983,7 +11103,6 @@ CHI_megaprojects = {
 		icon = decision_generic_electricity
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_fusion_program_done }
 		}
 
@@ -11037,7 +11156,6 @@ CHI_megaprojects = {
 		icon = generic_forestry
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_green_wall_done }
 		}
 
@@ -11089,7 +11207,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_sichuan_tibet_done }
 			589 = { is_owned_by = CHI }
 		}
@@ -11177,7 +11294,6 @@ CHI_megaprojects = {
 		}
 
 		target_root_trigger = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			custom_trigger_tooltip = {
 				tooltip = CHI_mega_rail_hub_cap_tt
 				check_variable = { CHI_mega_rail_hub_count < 5 }
@@ -11185,8 +11301,8 @@ CHI_megaprojects = {
 		}
 
 		available = { num_of_civilian_factories_available_for_projects > 5 }
-		custom_cost_trigger = { check_variable = { treasury > 10 } }
-		custom_cost_text = cost_10_0
+		custom_cost_trigger = { check_variable = { treasury > 9 } }
+		custom_cost_text = cost_9_0
 		cost = 0
 		days_remove = 365
 		days_re_enable = 30
@@ -11195,7 +11311,7 @@ CHI_megaprojects = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_build_mega_rail_hub in [FROM.GetName] executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -10 }
+			set_temp_variable = { treasury_change = -9 }
 			modify_treasury_effect = yes
 		}
 
@@ -11225,7 +11341,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_hainan_ftp_done }
 			531 = { is_owned_by = CHI }
 		}
@@ -11339,7 +11454,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_kra_underwritten }
 			SIA = { has_completed_focus = SIA_kra_patron_china }
 		}
@@ -11393,7 +11507,6 @@ CHI_megaprojects = {
 		icon = generic_naval
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_kra_transit_done }
 			SIA = {
 				OR = {
@@ -11470,7 +11583,11 @@ CHI_megaprojects = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 2 }
+		ai_will_do = {
+			base = 2
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_localise_licensed_system = {
@@ -11504,7 +11621,6 @@ CHI_space_program = {
 		fixed_random_seed = no
 		icon = buran_timer_button
 		days_mission_timeout = 150
-		fire_only_once = no
 		is_good = yes
 		selectable_mission = no
 		available = { hidden_trigger = { always = no } }
@@ -11532,7 +11648,6 @@ CHI_space_program = {
 		fixed_random_seed = no
 		icon = generic_research
 		days_mission_timeout = 180
-		fire_only_once = no
 		is_good = yes
 		selectable_mission = no
 		available = { hidden_trigger = { always = no } }
@@ -11557,7 +11672,6 @@ CHI_space_program = {
 		fixed_random_seed = no
 		icon = generic_research
 		days_mission_timeout = 180
-		fire_only_once = no
 		is_good = yes
 		selectable_mission = no
 		available = { hidden_trigger = { always = no } }
@@ -11613,7 +11727,6 @@ CHI_space_program = {
 
 	CHI_launch_payload = {
 		icon = generic_operation
-		fire_only_once = no
 		cost = 25
 		days_remove = 90
 		available = { has_country_flag = CHI_shenzhou_mission_done }
@@ -11623,6 +11736,8 @@ CHI_space_program = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_launch_payload"
 			air_experience = 5
+			set_temp_variable = { treasury_change = -25 }
+			modify_treasury_effect = yes
 		}
 
 		remove_effect = {
@@ -11633,17 +11748,17 @@ CHI_space_program = {
 				chance = 35
 				add_tech_bonus = { name = CHI_launch_payload bonus = 0.25 uses = 1 category = CAT_space }
 			}
-			newline = yes
-			set_temp_variable = { treasury_change = -25 }
-			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 3 }
+		ai_will_do = {
+			base = 3
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_retry_shenzhou_mission = {
 		icon = generic_research
-		fire_only_once = no
 		cost = 35
 		days_re_enable = 30
 		visible = { has_country_flag = CHI_shenzhou_mission_failed }
@@ -11657,12 +11772,15 @@ CHI_space_program = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_retry_tiangong_mission = {
 		icon = generic_research
-		fire_only_once = no
 		cost = 35
 		days_re_enable = 30
 		visible = { has_country_flag = CHI_tiangong_mission_failed }
@@ -11676,12 +11794,15 @@ CHI_space_program = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_retry_chang_e_mission = {
 		icon = generic_research
-		fire_only_once = no
 		cost = 35
 		days_re_enable = 30
 		visible = { has_country_flag = CHI_chang_e_mission_failed }
@@ -11695,12 +11816,15 @@ CHI_space_program = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	CHI_asteroid_mining_investment = {
 		icon = asteroid_mining
-		fire_only_once = no
 		cost = 50
 		days_remove = 120
 
@@ -11715,18 +11839,25 @@ CHI_space_program = {
 		visible = { has_country_flag = CHI_asteroid_mining_unlocked }
 		fixed_random_seed = no
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_asteroid_mining_investment"
+			set_temp_variable = { treasury_change = -50 }
+			modify_treasury_effect = yes
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_asteroid_mining_investment"
 			random = {
 				chance = 60
 				CHI_unlock_random_asteroid_bonus = yes
 			}
-			newline = yes
-			set_temp_variable = { treasury_change = -50 }
-			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 2 }
+		ai_will_do = {
+			base = 2
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -11734,7 +11865,7 @@ CHI_factional_balance_category = {
 	CHI_back_princeling_network = {
 		icon = eng_propaganda_campaigns
 		cost = 75
-		days_remove = 180
+		days_re_enable = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_back_princeling_network"
@@ -11774,7 +11905,7 @@ CHI_factional_balance_category = {
 	CHI_promote_youth_league = {
 		icon = eng_propaganda_campaigns
 		cost = 75
-		days_remove = 180
+		days_re_enable = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_promote_youth_league"

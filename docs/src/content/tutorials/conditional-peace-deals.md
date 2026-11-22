@@ -5,7 +5,7 @@ description: How to negotiate peace treaties with state actions, country actions
 
 Conditional Peace Deals let you negotiate a custom peace treaty with an enemy country instead of fighting to total capitulation. You can demand or concede states, impose political conditions, and extract reparations, all scored through a Victory Point (VP) system that the AI uses to decide whether to accept.
 
-This system is enabled by the **Player-Led Peace Deals** game rule (on by default).
+This system is enabled by the **Allow Conditional Peace Deals** game rule (on by default).
 
 ---
 

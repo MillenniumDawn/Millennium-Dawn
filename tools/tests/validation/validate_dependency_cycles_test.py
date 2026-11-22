@@ -6,16 +6,8 @@ left GRAY by an earlier cycle abort (cycle A->B->C->A plus D->C, E->C): the
 GRAY branch indexed a node that was never on the second DFS's own path.
 """
 
+from shared.suite import write_focus_file as _write_focus_file
 from validate_focus_tree import Validator
-
-
-def _write_focus_file(tmp_path, content):
-    nf_dir = tmp_path / "common" / "national_focus"
-    nf_dir.mkdir(parents=True, exist_ok=True)
-    fpath = nf_dir / "test.txt"
-    fpath.write_text(content, encoding="utf-8")
-    return fpath
-
 
 # A->B->C->A is the cycle; D->C and E->C fan in from outside it. Two fan-in
 # roots make the pre-fix crash order-independent: whichever DFS reaches the

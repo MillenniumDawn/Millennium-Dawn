@@ -9,16 +9,17 @@ Usage:
 
 Prerequisites
 -------------
-- Python 3.12+
+- Python 3.14+
 - Git
+- ImageMagick (magick or convert on PATH)
 - (Optional for --docs) Node.js 24+ and Bun (https://bun.sh/)
 
 The script will auto-create a local ``.venv`` if your system Python is
 externally managed (PEP 668 on Debian/Ubuntu and similar).
 
 Run this after cloning the repo. It will:
-  1. Check Python version (3.12+ required)
-  2. Install pre-commit and set up git hooks
+  1. Check Python version (3.14+ required)
+  2. Install pre-commit and set up the pre-commit and pre-push git hooks
   3. Install Python tool dependencies (requests, pillow)
   4. Install Python dev/test and static-analysis dependencies so tests and
      Python quality checks work locally
@@ -32,7 +33,10 @@ import re
 import subprocess
 import sys
 import sysconfig
+import tomllib
 from pathlib import Path
+
+from assets.md_art_convert import find_imagemagick
 
 # Force line-buffered stdout so prints appear in the correct order
 # even when subprocesses write directly to the fd.
@@ -46,9 +50,9 @@ DOCS_DIR = REPO_ROOT / "docs"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 
 # Packages whose import name differs from their distribution name.
-_IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml"}
+_IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml", "pytest-xdist": "xdist"}
 
-MIN_PYTHON = (3, 12)
+MIN_PYTHON = (3, 14)
 MIN_NODE = 24
 
 
@@ -179,31 +183,36 @@ def check_hooks_installed() -> bool:
     except FileNotFoundError:
         pass
 
-    hook_file = REPO_ROOT / ".git" / "hooks" / "pre-commit"
-    if not hook_file.exists():
-        print(f"  Git hooks: {check_mark(False)}")
-        return False
-    text = hook_file.read_text(errors="replace")
-    has_pre_commit = "pre-commit" in text
-    # When using a local venv the hook should point to our python so that
-    # commits work even when the venv is not activated.
-    if in_virtualenv() and venv_python_path():
-        points_to_us = sys.executable in text
-        ok = has_pre_commit and points_to_us
-    else:
-        ok = has_pre_commit
+    ok = all(_hook_installed(name) for name in ("pre-commit", "pre-push"))
     print(f"  Git hooks: {check_mark(ok)}")
     return ok
+
+
+def _hook_installed(name: str) -> bool:
+    hook_file = REPO_ROOT / ".git" / "hooks" / name
+    if not hook_file.exists():
+        return False
+    text = hook_file.read_text(errors="replace")
+    # When using a local venv the hook should point to our python so that
+    # commits work even when the venv is not activated.
+    if in_virtualenv() and venv_python_path() and sys.executable not in text:
+        return False
+    return "pre-commit" in text
 
 
 def _group_packages(group: str) -> list[str]:
     """Return the package specs in a pyproject [dependency-groups] entry."""
     if not PYPROJECT.exists():
         return []
-    match = re.search(
-        rf"(?ms)^{re.escape(group)}\s*=\s*\[(.*?)\]", PYPROJECT.read_text()
-    )
-    return re.findall(r'"([^"]+)"', match.group(1)) if match else []
+    with PYPROJECT.open("rb") as handle:
+        groups = tomllib.load(handle).get("dependency-groups", {})
+    specs: list[str] = []
+    for entry in groups.get(group, []):
+        if isinstance(entry, str):
+            specs.append(entry)
+        else:
+            specs.extend(_group_packages(entry["include-group"]))
+    return specs
 
 
 def _version_tuple(value: str) -> tuple[int, ...]:
@@ -255,6 +264,15 @@ def check_pip_packages() -> bool:
 
 def check_dev_packages() -> bool:
     return _check_group("dev", "Dev/test dependencies")
+
+
+def check_imagemagick() -> bool:
+    binary = find_imagemagick("magick", "convert")
+    if binary:
+        print(f"  ImageMagick: {binary}")
+        return True
+    print("  ImageMagick: MISSING (install it on PATH; see tools/README.md)")
+    return False
 
 
 def check_node() -> tuple[bool, str | None]:
@@ -386,6 +404,7 @@ def main() -> None:
     hooks_ok = check_hooks_installed()
     deps_ok = check_pip_packages()
     dev_deps_ok = check_dev_packages()
+    imagemagick_ok = check_imagemagick()
 
     docs_ready = True
     node_ok = True
@@ -399,13 +418,18 @@ def main() -> None:
         docs_ready = node_ok and bun_ok and docs_deps_ok
 
     if args.check:
-        all_ok = py_ok and pc_ok and hooks_ok and deps_ok and dev_deps_ok
+        all_ok = (
+            py_ok and pc_ok and hooks_ok and deps_ok and dev_deps_ok and imagemagick_ok
+        )
         if args.docs:
             all_ok = all_ok and docs_ready
         if all_ok:
             print("Everything is set up.")
         else:
-            print("Some components need setup. Run without --check to install.")
+            print(
+                "Some components need setup. Install system prerequisites as shown above; "
+                "run without --check for Python dependencies and hooks."
+            )
         sys.exit(0 if all_ok else 1)
 
     if not py_ok:
@@ -415,7 +439,7 @@ def main() -> None:
         sys.exit(1)
 
     # --- Install phase ---
-    ok = True
+    ok = imagemagick_ok
 
     if not pc_ok:
         ok = install_pre_commit() and ok

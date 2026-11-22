@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import write_text_under
 
 

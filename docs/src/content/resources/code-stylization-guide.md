@@ -15,7 +15,9 @@ Keep the change local, reuse existing behavior, and add only what the task needs
   for historical transitions or state the engine cannot otherwise answer.
 - Keep behavior-preserving cleanup separate from gameplay changes.
 - Remove unused code and commented-out blocks. Add a comment only for a non-obvious
-  reason, in one short line. Do not narrate the code.
+  reason, in one short line. Do not narrate the code. The doc header on a scripted
+  effect or trigger that takes inputs is the exception, see
+  [Scripted Effects](#scripted-effects).
 
 ### Names and Encoding
 
@@ -39,14 +41,15 @@ UTF-8 with BOM. Python tools must preserve LF when writing; see
 
 # Quick Reference
 
-| Feature      | Key Rules                                                      |
-| ------------ | -------------------------------------------------------------- |
-| Focus Trees  | Use `relative_position_id`, include logging, `ai_will_do` last |
-| Decisions    | Include logging, use `fire_only_once` sparingly                |
-| Events       | Use `is_triggered_only = yes`, log only if effects exist       |
-| Ideas        | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
-| Technologies | Gates, effects, unlocks, research, tree, `ai_will_do` last     |
-| Formatting   | Tabs (not spaces), 1 line between elements                     |
+| Feature          | Key Rules                                                      |
+| ---------------- | -------------------------------------------------------------- |
+| Focus Trees      | Use `relative_position_id`, include logging, `ai_will_do` last |
+| Decisions        | Include logging, use `fire_only_once` sparingly                |
+| Events           | Use `is_triggered_only = yes`, log only if effects exist       |
+| Ideas            | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
+| Technologies     | Gates, effects, unlocks, research, tree, `ai_will_do` last     |
+| Scripted Effects | Doc header with `# Parameters:` on effects that take inputs    |
+| Formatting       | Tabs (not spaces), 1 line between elements                     |
 
 ---
 
@@ -195,6 +198,14 @@ Write only the properties the focus uses. An empty commented-out slot marker
 - Structure with clear `visible` and `available` conditions
 - Include `ai_will_do`
 
+## Naming
+
+- Name decisions and categories `TAG_lowercase_words`. Keep everything after the prefix
+  lowercase, even a wrapped tag: `SER_invite_kos`, not `SER_invite_KOS`.
+- Start each effect block's log with `Decision <id>` (`Mission <id>` in a mission),
+  naming the decision the block sits in.
+- Do not rename existing ids to fit these rules.
+
 ## Example Decision
 
 ```hoiscript
@@ -294,6 +305,20 @@ BRA_idea_higher_minimum_wage_1 = {
 }
 ```
 
+## Removable Spirit Footer
+
+Every starting national spirit the player can fix ends its description with a footer that says how. Good examples are Armenia, Transnistria, and Iran.
+
+```yaml
+TAG_spirit_desc: "Last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §Y$TAG_focus_id$§! focus."
+```
+
+- Use the fixed wording: `will be §RRemoved§!`, `will §GImprove§!`, `will §RWorsen§!`, or `will never be §RRemoved§!`
+- Name the source as `the §Y$focus_id$§! focus`, `the §Y$decision_id$§! decision`, or a `§Y<threshold>§!` for a variable. An event fired by a focus names the focus
+- List up to three sources. With more, name the branch by its root focus
+- Tiered spirits get the footer on every tier
+- Skip the footer on spirits nothing ever changes: permanent spirits, positive flavour spirits, hidden ideas, and dynamic modifiers that only give bonuses
+
 ---
 
 # Technologies
@@ -351,6 +376,74 @@ night_vision_1 = {
 
     ai_will_do = { factor = 1 }
 }
+```
+
+---
+
+# Scripted Effects
+
+Scripted effects take no arguments, so a caller passes values through variables and
+cannot see what an effect needs by calling it. An effect that needs values from its
+caller gets a doc header directly above it, the same idea as a Javadoc comment. The
+header is the contract callers must meet.
+
+## Doc Header
+
+```hoiscript
+# Effect: get_pol_distance
+# Purpose: Reads the political distance between two party slots
+# Output: pol_distance_current
+# Parameters:
+# - pol_dist_target_index: party slot 0-23
+# - pol_dist_source_index: party slot 0-23
+get_pol_distance = {
+    ...
+}
+```
+
+Write the lines in this order:
+
+| Line              | When   | Content                                         |
+| ----------------- | ------ | ----------------------------------------------- |
+| `# Effect: name`  | Always | The exact effect name                           |
+| `# Purpose: text` | Always | One line on what the effect does, not how       |
+| `# Output: text`  | If any | Values it leaves for the caller to read         |
+| `# Parameters:`   | Always | Every value it reads from the caller, see below |
+
+Scripted triggers use the same header with `# Trigger: name`.
+
+Do not add this header to an effect that takes no inputs. A plain helper needs no
+documentation pass.
+
+## Parameters Block
+
+The validators read this block and check every call against it. Write one line per input.
+The marker after the name says what kind of input it is:
+
+| Line                                | Input                                        |
+| ----------------------------------- | -------------------------------------------- |
+| `# - name: text`                    | Temp variable the caller must set first      |
+| `# - name (optional): text`         | Temp variable the caller may leave unset     |
+| `# - name (set by an_effect): text` | Temp variable an earlier effect leaves       |
+| `# - name (variable): text`         | Real variable, written above the effect call |
+
+## Best Practices
+
+- Use `# Parameters:` only. Do not write `# Inputs:`, `# Expects:`, `# Requires:`, or
+  `# Reads:`. Only this header is checked.
+- Keep the block as the last comment above the effect, with no blank line inside it.
+  Put `# Output:` and `# Writes:` lines above it.
+- Do not list scopes or event targets. Describe those in `# Purpose:`.
+- Scripted triggers use the same block. Nothing checks trigger calls against it yet.
+- Write a `(variable)` input before the call. `startup_politics` totals the party
+  setup when it runs, so it goes below the last `party_pop_array`, `ruling_party`, and
+  `gov_coalition_array` line:
+
+```hoiscript
+set_variable = { party_pop_array^4 = 0.479 }
+set_variable = { ruling_party = 4 }
+add_to_array = { gov_coalition_array = 7 }
+startup_politics = yes
 ```
 
 ---

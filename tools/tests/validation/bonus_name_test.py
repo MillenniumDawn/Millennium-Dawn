@@ -9,18 +9,9 @@ localised) while naming the tech field rather than the source, so it has its own
 finding.
 """
 
+from shared.suite import write_focus_file as _write_focus_file
+from shared.suite import write_under as _write
 from validate_bonus_names import Validator, _scan_file
-
-
-def _write(tmp_path, relpath, content):
-    fpath = tmp_path / relpath
-    fpath.parent.mkdir(parents=True, exist_ok=True)
-    fpath.write_text(content, encoding="utf-8")
-    return fpath
-
-
-def _write_focus_file(tmp_path, content):
-    return _write(tmp_path, "common/national_focus/test.txt", content)
 
 
 def _scan(tmp_path, relpath, content):

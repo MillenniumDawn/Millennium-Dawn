@@ -7,32 +7,17 @@ import os
 import struct
 import subprocess
 import sys
-import tempfile
 import urllib.error
 from http.client import HTTPMessage
 from pathlib import Path
 from types import ModuleType
 
+import pytest
 import yaml
 from report_lib.models import Issue, Severity
+from shared_utils import iter_statements
 
 from shared.paths import REPO_ROOT
-
-
-def symlinks_available() -> bool:
-    """Whether this process may create a symlink.
-
-    Windows refuses without Developer Mode or admin rights (WinError 1314), so
-    symlink-rejection tests skip there instead of failing the whole suite.
-    """
-    with tempfile.TemporaryDirectory() as folder:
-        target = Path(folder) / "target"
-        target.mkdir()
-        try:
-            (Path(folder) / "link").symlink_to(target)
-        except (OSError, NotImplementedError):
-            return False
-    return True
 
 
 def imagemagick_available() -> bool:
@@ -45,9 +30,18 @@ def imagemagick_available() -> bool:
     return converter.find_imagemagick("magick", "convert", "identify") is not None
 
 
+def prevent_commit_signing_during_tests(*args) -> tuple:
+    """Prevents git commit signing during tests."""
+    git_args = tuple(args)
+    if "pytest" in sys.modules and "commit" in args:
+        git_args += ("--no-gpg-sign",)
+    return git_args
+
+
 def run_git(repository, *args):
+    git_args = prevent_commit_signing_during_tests(*args)
     return subprocess.run(
-        ["git", *args],
+        ["git", *git_args],
         cwd=repository,
         check=True,
         capture_output=True,
@@ -96,16 +90,158 @@ def run_bash_step(script: str, cwd, env=None) -> subprocess.CompletedProcess:
     )
 
 
-def run_validator(validator_cls, tmp_path, **kwargs):
-    validator = validator_cls(
-        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
+def run_tool_script(script, *args, timeout=60) -> subprocess.CompletedProcess:
+    """Run tools/<script> as its own process, the way run.py and the hooks do."""
+    return subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / script), *map(str, args)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
     )
+
+
+def build_validator(validator_cls, root, **kwargs):
+    return validator_cls(
+        mod_path=str(root), use_colors=False, workers=1, no_cache=True, **kwargs
+    )
+
+
+def run_validator(validator_cls, tmp_path, **kwargs):
+    validator = build_validator(validator_cls, tmp_path, **kwargs)
     validator.run_validations()
     return validator
 
 
+def checks_called_by_run(validator, monkeypatch):
+    """Stub every `validate_*` method and run the validator.
+
+    Returns (checks the run called, checks the class defines), both sorted.
+    """
+    checks = sorted(name for name in dir(validator) if name.startswith("validate_"))
+    called = []
+    for name in checks:
+        monkeypatch.setattr(
+            validator, name, lambda *_args, name=name: called.append(name)
+        )
+    validator.run_validations()
+    return sorted(called), checks
+
+
+def _finding_matches(row, entry):
+    if isinstance(entry, str):
+        return row == entry
+    return all(part in row for part in entry)
+
+
+def assert_findings(results, expected):
+    """One result per expected entry: a string matches a whole result, a tuple
+    matches a result holding every fragment in it. A result matches once."""
+    unmatched = list(results)
+    for entry in expected:
+        match = next((row for row in unmatched if _finding_matches(row, entry)), None)
+        assert match is not None, (entry, results)
+        unmatched.remove(match)
+    assert not unmatched, unmatched
+
+
 def issue_categories(validator):
     return sorted(issue.category for issue in validator._issues)
+
+
+def issue_rows(validator):
+    return sorted(
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    )
+
+
+_YML_SECTIONS = (
+    "brackets",
+    "syntax",
+    "mandatory",
+    "typos",
+    "prose",
+    "var_refs",
+    "subst",
+    "yaml",
+)
+
+
+def yml_scan(path, section: str, valid_colors=()):
+    """One section of the localisation validator's shared scan of a single file."""
+    import validate_localisation
+
+    results = validate_localisation._scan_shared_yml_file(
+        (str(path), list(valid_colors), False, str(path))
+    )
+    return results[_YML_SECTIONS.index(section)]
+
+
+def yml_syntax(path, valid_colors, subst_keys=frozenset()):
+    """Syntax findings as the validator reports them: substitution keys exempt."""
+    pairs = yml_scan(path, "syntax", valid_colors)
+    return [finding for finding, key in pairs if key not in subst_keys]
+
+
+_CALL_SITE_SECTIONS = (
+    "longform",
+    "invalid",
+    "typed",
+    "counts",
+    "dynamic",
+    "fof",
+    "major",
+)
+
+
+def call_site_scan(path, section: str, mod_path, tracked=frozenset()):
+    """One section of the event validator's shared call-site scan of a single file."""
+    import validate_events
+
+    index = _CALL_SITE_SECTIONS.index(section)
+    args = (str(path), str(mod_path), 1 << index, tracked, tracked, tracked)
+    return validate_events._scan_shared_call_site_file(args)[index]
+
+
+# section: (mask flag, index in the shared result)
+_VARIABLE_SECTIONS = {
+    "math": ("_F_MATH", 0),
+    "treasury": ("_F_TREASURY", 1),
+    "clamp_checks": ("_F_CLAMP", 5),
+    "available": ("_F_AVAILABLE", 6),
+    "available_flags": ("_F_AVAILABLE", 7),
+    "scripted": ("_F_SCRIPTED", 8),
+    "var_tooltips": ("_F_VAR_TOOLTIP", 9),
+    "missing": ("_F_MISSING", 10),
+    "flag_syntax": ("_F_FLAG_SYNTAX", 11),
+}
+
+
+def variable_scan(
+    path,
+    section: str,
+    mod_path,
+    *,
+    ai_categories=frozenset(),
+    flagged_names=frozenset(),
+    backing=None,
+):
+    """One section of the variables validator's shared scan of a single file."""
+    import validate_variables
+
+    flag, index = _VARIABLE_SECTIONS[section]
+    args: tuple = (
+        str(path),
+        str(mod_path),
+        getattr(validate_variables, flag),
+        ai_categories,
+        flagged_names,
+        backing or {},
+        {},
+        frozenset(),
+    )
+    return validate_variables._scan_shared_file(args)[index]
 
 
 def collecting_validator(cls):
@@ -130,10 +266,27 @@ def fake_decisions_validator(*args, **kwargs):
     return collecting_validator(V.Validator)(*args, **kwargs)
 
 
-def decision_factory(body):
+def decision_factory(body, basename="X.txt"):
     import validate_decisions as V
 
-    return V.DecisionFactory(body, source_basename="X.txt")
+    return V.DecisionFactory(body, source_path=basename)
+
+
+def event_block(event_id, *fields, kind="country_event"):
+    """One event definition: the id on line 2, then one line per field.
+
+    `event_id=None` leaves the id out. A multi-line field carries its own tabs
+    after the first line.
+    """
+    lines = (f"id = {event_id}",) * (event_id is not None) + fields
+    return f"{kind} = {{\n" + "".join(f"\t{line}\n" for line in lines) + "}\n"
+
+
+def only_block(script, name):
+    """The body of the single `name = { ... }` statement directly in `script`."""
+    blocks = [body for key, _, body in iter_statements(script) if key == name]
+    assert len(blocks) == 1 and blocks[0] is not None, name
+    return blocks[0]
 
 
 def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
@@ -210,6 +363,118 @@ def dds_header(
     )
 
 
+def dds_stub(width: int, height: int) -> bytes:
+    """A DDS header that carries a size and nothing else."""
+    header = bytearray(128)
+    header[0:4] = b"DDS "
+    struct.pack_into("<II", header, 12, height, width)
+    return bytes(header)
+
+
+# A unit square of two triangles with normals, tangents and UVs, for mesh_bytes.
+MESH_QUAD = {
+    "p": [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+    "tri": [0, 1, 2, 0, 2, 3],
+    "n": [[0, 0, 1]] * 4,
+    "ta": [[1, 0, 0, 1]] * 4,
+    "u0": [[0, 0], [1, 0], [1, 1], [0, 1]],
+}
+
+
+def mesh_plate(cells=23, spike=True, offset=(0.0, 0.0, 0.0), **extra) -> dict:
+    """A mesh_bytes part: a flat plate of 2 * cells^2 triangles, optionally with a thin spike."""
+    import numpy as np
+
+    side = np.arange(cells + 1, dtype=float)
+    x, y = np.meshgrid(side, side)
+    points = np.c_[x.ravel(), y.ravel(), np.zeros(x.size)]
+    corner = np.arange(cells * (cells + 1)).reshape(cells, cells + 1)[:, :-1].ravel()
+    first = np.c_[corner, corner + 1, corner + cells + 2]
+    second = np.c_[corner, corner + cells + 2, corner + cells + 1]
+    triangles = np.vstack([first, second])
+    if spike:
+        tip = len(points)
+        points = np.vstack([points, [[5, 5, 0], [5.2, 5, 0], [5.1, 5, 12]]])
+        triangles = np.vstack([triangles, [[tip, tip + 1, tip + 2]]])
+    count = len(points)
+    part = {
+        "p": points + np.asarray(offset, float),
+        "tri": triangles,
+        "n": [[0, 0, 1]] * count,
+        "ta": [[1, 0, 0, 1]] * count,
+        "u0": points[:, :2] / cells,
+    }
+    return {**part, **extra}
+
+
+def mesh_bytes(*parts, joints: int = 0) -> bytes:
+    """A binary `.mesh` with one shape per part, for the model tool tests.
+
+    A part maps `p` and `tri` to arrays, and optionally `n`, `ta`, `u0`, `ix`,
+    `w` and `shader`. `joints` adds a skeleton of that size to every shape.
+    """
+    import numpy as np
+    import pdx_mesh
+
+    root = pdx_mesh.Node("", 0)
+    root.props["pdxasset"] = ("i", np.array([1, 0], "<i4"))
+    top = pdx_mesh.Node("object", 1)
+    root.children.append(top)
+    for number, part in enumerate(parts):
+        shape = pdx_mesh.Node(f"shape{number}", 2)
+        mesh = pdx_mesh.Node("mesh", 3)
+        for name in ("p", "n", "ta", "u0"):
+            if name in part:
+                mesh.props[name] = ("f", np.asarray(part[name], "<f4").ravel())
+        mesh.props["tri"] = ("i", np.asarray(part["tri"], "<i4").ravel())
+        material = pdx_mesh.Node("material", 4)
+        shader = part.get("shader", "PdxMeshAdvanced").encode() + b"\0"
+        material.props["shader"] = ("s", [shader])
+        mesh.children.append(material)
+        if "ix" in part:
+            skin = pdx_mesh.Node("skin", 4)
+            skin.props["bones"] = ("i", np.array([part.get("bones", 4)], "<i4"))
+            skin.props["ix"] = ("i", np.asarray(part["ix"], "<i4").ravel())
+            skin.props["w"] = ("f", np.asarray(part["w"], "<f4").ravel())
+            mesh.children.append(skin)
+        shape.children.append(mesh)
+        if joints:
+            skeleton = pdx_mesh.Node("skeleton", 3)
+            for joint in range(joints):
+                node = pdx_mesh.Node(f"joint{joint}", 4)
+                node.props["ix"] = ("i", np.array([joint], "<i4"))
+                if joint:
+                    node.props["pa"] = ("i", np.array([0], "<i4"))
+                skeleton.children.append(node)
+            shape.children.append(skeleton)
+        top.children.append(shape)
+    return pdx_mesh.write(root)
+
+
+def dds_texture(width, height, fourcc=b"DXT1", mipmaps=1, body=b"", bits=32) -> bytes:
+    """A DDS file: a legacy header for the size, format and level count, then `body`.
+
+    An empty `fourcc` makes an uncompressed texture of `bits` per texel.
+    """
+    head = bytearray(128)
+    head[0:4] = b"DDS "
+    flags = 0x1007 | (0x20000 if mipmaps > 1 else 0)
+    struct.pack_into("<II", head, 4, 124, flags)
+    struct.pack_into("<II", head, 12, height, width)
+    struct.pack_into("<I", head, 28, mipmaps if mipmaps > 1 else 0)
+    struct.pack_into("<I", head, 76, 32)
+    if fourcc:
+        struct.pack_into("<I", head, 80, 4)
+        head[84:88] = fourcc
+    else:
+        alpha = 0xFF000000 if bits == 32 else 0
+        struct.pack_into("<I", head, 80, 0x41 if alpha else 0x40)
+        struct.pack_into("<I", head, 88, bits)
+        struct.pack_into("<4I", head, 92, 0xFF0000, 0xFF00, 0xFF, alpha)
+    struct.pack_into("<I", head, 108, 0x1000 | (0x400008 if mipmaps > 1 else 0))
+    return bytes(head) + body
+
+
 def load_tool_module(
     relative_path: str, *, module_name: str | None = None, register: bool = False
 ) -> ModuleType:
@@ -238,6 +503,32 @@ def write_under(root: Path, relative_path: str, content: str) -> Path:
 
 def write_under_str(root: Path, relative_path: str, content: str) -> str:
     return str(write_under(root, relative_path, content))
+
+
+def write_tree(root: Path, files: dict) -> Path:
+    """Write `{relative path: content}` under root."""
+    for relative_path, content in files.items():
+        write_under(root, relative_path, content)
+    return root
+
+
+def broken_symlink(path: Path) -> str:
+    """A listed file whose read raises, or a skip where symlinks are unavailable."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.symlink(str(path.parent / "no_such_target"), str(path))
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks unavailable on this platform")
+    return str(path)
+
+
+def write_focus_file(root: Path, content: str) -> Path:
+    return write_under(root, "common/national_focus/test.txt", content)
+
+
+def write_yml(root: Path, name: str, value_line: str) -> str:
+    """One English localisation entry in a file that starts with a BOM."""
+    return write_under_str(root, name, f"﻿l_english:\n {value_line}\n")
 
 
 def read_text(path: Path) -> str:

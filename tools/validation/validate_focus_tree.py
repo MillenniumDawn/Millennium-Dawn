@@ -5,9 +5,11 @@ import os
 import re
 import sys
 from collections import defaultdict
+from decimal import Decimal
 from functools import cached_property
 from typing import (
     Any,
+    Callable,
     Dict,
     FrozenSet,
     Iterator,
@@ -21,32 +23,52 @@ from typing import (
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from focus_geometry import HIDE_RULE_PREFIX, HIDE_RULE_TERMS, analyze_layout
+from shared_utils import AVAILABLE_OPEN_RE as _AVAILABLE_BLOCK_START
+from shared_utils import TRIGGER_OPEN_RE as _OPTION_TRIGGER_RE
+from shared_utils import (
+    blank_quoted_strings,
+    get_staged_files,
+    iter_statements,
+    label_before_brace,
+    read_text_under,
+    validation_config,
+    word_start_re,
+)
 from shared_utils import extract_block_from_text as _extract_block
-from shared_utils import read_text_under, validation_config
 from sprite_index import build_sprite_index
+from validate_events import (
+    CostLookups,
+    EventPayments,
+    ItemFacts,
+    chooser_kinds,
+    commits_money,
+    item_payers,
+    load_cost_lookups,
+    load_event_payments,
+    split_roles,
+    war_target_payers,
+)
+from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
+    DEFICIT_GUARD_RE as _DEFICIT_GUARD_RE,
+)
+from validator_common import (
+    FACTOR_ZERO_RE,
     BaseValidator,
     Severity,
     case_mismatch,
     casefold_index,
+    lowering_treasury_checks,
     run_validator_main,
     strip_comments,
+    unneeded_treasury_checks,
 )
-
-
-def _keyword_re(keyword: str, rest: str) -> re.Pattern[str]:
-    """Compile `\\b<keyword><rest>` led by the keyword itself.
-
-    A leading `\\b` makes the engine try every offset; led by the literal it
-    skips between occurrences, and the lookbehind checks the same boundary.
-    """
-    return re.compile(keyword + r"(?<=\b" + keyword + ")" + rest)
-
 
 # Opening of a focus_tree or top-level focus definition block
 # (shared_focus and joint_focus are both standalone definitions that can be
 # referenced as prerequisites — they live outside any focus_tree wrapper)
-_FOCUS_TREE_START = _keyword_re("focus_tree", r"\s*=\s*\{")
+_FOCUS_TREE_START = word_start_re("focus_tree", r"\s*=\s*\{")
 # Same as `\b(?:shared_focus|joint_focus)`, led by its first letters.
 _SHARED_FOCUS_DEF_START = re.compile(
     r"(?:shared|joint)_focus(?:(?<=\bshared_focus)|(?<=\bjoint_focus))\s*=\s*\{"
@@ -77,7 +99,7 @@ def _fmt_codes(codes: List[str]) -> str:
 
 
 # focus ID extraction
-_FOCUS_ID_RE = _keyword_re("focus", r"\s*=\s*\{")
+_FOCUS_ID_RE = word_start_re("focus", r"\s*=\s*\{")
 _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 
 # focus icon: `icon = X` or `icon = "GFX X"`. The value resolves verbatim to a
@@ -87,34 +109,34 @@ _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 # the engine matches the sprite name verbatim (a quoted value with a space is a
 # real, distinct sprite name, not two tokens).
 _FOCUS_BLOCK_START = re.compile(r"\b(?:focus|shared_focus|joint_focus)\s*=\s*\{")
-_ICON_LINE_RE = _keyword_re("icon", r'\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
-_RELATIVE_POSITION_RE = _keyword_re("relative_position_id", r"\s*=\s*(\S+)")
+_ICON_LINE_RE = word_start_re("icon", r'\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
+_RELATIVE_POSITION_RE = word_start_re("relative_position_id", r"\s*=\s*(\S+)")
 
 # prerequisite blocks: prerequisite = { focus = A  focus = B }
-_PREREQ_BLOCK_RE = _keyword_re("prerequisite", r"\s*=\s*\{([^}]*)\}")
+_PREREQ_BLOCK_RE = word_start_re("prerequisite", r"\s*=\s*\{([^}]*)\}")
 _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 
 # shared_focus reference inside a focus_tree block (not a definition)
-_SHARED_REF_RE = _keyword_re("shared_focus", r"\s*=\s*(\w+)")
+_SHARED_REF_RE = word_start_re("shared_focus", r"\s*=\s*(\w+)")
 
 # completion_reward, incl. the joint-focus reward variants
-_REWARD_BLOCK_RE = _keyword_re(
+_REWARD_BLOCK_RE = word_start_re(
     "completion_reward", r"(?:_joint_originator|_joint_member)?\s*=\s*\{"
 )
 
-# PP malus in completion_reward (focus time is the cost — AGENTS.md).
+# PP malus in completion_reward (focus time is the cost).
 # Occurrences inside an effect_tooltip = { } subtree preview a PP change
 # applied elsewhere (e.g. a select_effect) rather than executing it, so
 # they are not flagged.
-_EFFECT_TOOLTIP_START = _keyword_re("effect_tooltip", r"\s*=\s*\{")
-_PP_MALUS_RE = _keyword_re("add_political_power", r"\s*=\s*(-\d+(?:\.\d+)?)\b")
+_EFFECT_TOOLTIP_START = word_start_re("effect_tooltip", r"\s*=\s*\{")
+_PP_MALUS_RE = word_start_re("add_political_power", r"\s*=\s*(-\d+(?:\.\d+)?)\b")
 
 _PP_MALUS_EXEMPT_FOCUS_IDS = frozenset(
     validation_config("validate_focus_tree", "pp_malus_exempt_focus_ids")
 )
 
-# ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md
-# convention). Building type -> the scripted trigger
+# ai_will_do staffing/bankruptcy guards (issue #2233 +
+# search-filters.md). Building type -> the scripted trigger
 # (common/scripted_triggers/00_economic_triggers.txt) that an ai_will_do
 # factor = 0 modifier must check before the AI takes a focus building it.
 _STAFFABLE_TRIGGERS = {
@@ -131,7 +153,7 @@ _STAFFABLE_TRIGGERS = {
 # from negative treasury_change literals applied via modify_treasury_effect)
 # needs the bankruptcy guard. Focus `cost` is completion time, not money, so
 # the actual money spend in the reward is what gates the guard.
-_MONEY_SPEND_THRESHOLD = 5.0
+_MONEY_SPEND_THRESHOLD = 1.0
 # Search filters that mark a focus as military/economic/research. A focus that
 # spends money or builds should carry one of these; a money/building focus
 # tagged with none of them is miscategorized (e.g. an economic focus tagged
@@ -150,22 +172,19 @@ _MIL_ECON_RESEARCH_FILTERS = frozenset(
     }
 )
 
-_AI_WILL_DO_START = _keyword_re("ai_will_do", r"\s*=\s*\{")
-_MODIFIER_START = _keyword_re("modifier", r"\s*=\s*\{")
-_FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
+_AI_WILL_DO_START = word_start_re("ai_will_do", r"\s*=\s*\{")
+_MODIFIER_START = word_start_re("modifier", r"\s*=\s*\{")
 _CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
 _CAN_STAFF_NOT_YES_RE = re.compile(
     r"\bNOT\s*=\s*\{\s*(can_staff_an_\w+)\s*=\s*yes\s*\}"
 )
-_BANKRUPTCY_GUARD_RE = re.compile(
-    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
-)
-_ADD_BUILDING_START = _keyword_re("add_building_construction", r"\s*=\s*\{")
+_ADD_BUILDING_START = word_start_re("add_building_construction", r"\s*=\s*\{")
 _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # Money spend (MD budget system): treasury_change is set (a literal, a `{ }`
 # computed value, or a bare-identifier reference to another variable — the
 # latter two we can't sum statically) then applied by modify_treasury_effect;
-# modify_debt_effect raises debt. Negative treasury spends, positive is income.
+# modify_debt_effect adds debt_change to debt. Negative treasury spends, positive
+# is income; for debt_change the signs are reversed.
 # Only set_temp_variable/set_variable actually assign treasury_change (as the
 # key, or as `var = treasury_change`); any other verb touching it
 # (multiply_temp_variable, add_to_temp_variable, clamp_temp_variable, ...)
@@ -202,15 +221,28 @@ _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # the treasury). Group 1 is the suffix, empty for the plain form; a non-empty
 # suffix applies an amount that can't be computed statically, so it forces the
 # segment unknown. The `_tt` loc key is never called with `= yes`.
-_MODIFY_TREASURY_RE = _keyword_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
-_MODIFY_DEBT_RE = _keyword_re("modify_debt_effect", r"\s*=\s*yes\b")
-_SEARCH_FILTERS_RE = _keyword_re("search_filters", r"\s*=\s*\{([^{}]*)\}")
+_MODIFY_TREASURY_RE = word_start_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
+_MODIFY_DEBT_RE = word_start_re("modify_debt_effect", r"\s*=\s*yes\b")
+_DEBT_CHANGE_RE = re.compile(
+    r"debt_change(?<=\bdebt_change)\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
+    r"|var(?<=\bvar)\s*=\s*debt_change\b"
+)
+_TAX_RATE_EFFECT_RE = word_start_re(
+    "modify_", r"(?:population|corporate)_tax_rate_effect\s*=\s*yes\b"
+)
+# Building effects charge nothing once the caller sets this temp variable.
+_SKIP_PAYMENT_RE = re.compile(r"\bskip_payment\s*=\s*1\b")
+_PAYMENT_TOKEN_RE = re.compile(
+    r'"[^"\n]*"|(?P<open>\{)|(?P<close>\})'
+    rf"|(?P<skip>{_SKIP_PAYMENT_RE.pattern})|\b(?P<key>[A-Za-z0-9_]+)\s*="
+)
+_SEARCH_FILTERS_RE = word_start_re("search_filters", r"\s*=\s*\{([^{}]*)\}")
 _BRACE_RE = re.compile(r"[{}]")
 _BRACE_OR_QUOTE_RE = re.compile(r'["{}]')
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 
-# Cross-country event tooltip check (AGENTS.md "Cross-country event tooltips"):
+# Cross-country event tooltip check (event-reference.md "Cross-country events"):
 # a completion_reward that fires a country_event into another nation's scope
 # should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT so the player sees the
 # acceptance outcome. Foreignness is decided by the fire's nearest enclosing
@@ -221,7 +253,7 @@ _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 # TT_IF_THIS_ACCEPTS and TT_IF_EACH_ACCEPTS are the same preview worded for one
 # named target and for a fan-out; the former renders [THIS.GetNameWithFlag], so
 # it sits inside the target's scope block rather than beside its effect_tooltip.
-_COUNTRY_EVENT_RE = _keyword_re("country_event", r"\b")
+_COUNTRY_EVENT_RE = word_start_re("country_event", r"\b")
 _TT_IF_THEY_ACCEPT_RE = re.compile(
     r"\b(?:TT_IF_THEY_ACCEPT|TT_IF_THIS_ACCEPTS"
     r"|TT_IF_EACH_ACCEPTS|TT_EFFECTS_FROM_EVENT)\b"
@@ -234,9 +266,8 @@ _FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w
 # inside an option is a fire, and would otherwise index x as optionless.
 _EVENT_BLOCK_RE = re.compile(r"^(country_event|news_event)\s*=\s*\{", re.M)
 _EVENT_ID_RE = re.compile(r"\bid\s*=\s*([\w.]+)")
-_EVENT_OPTION_RE = _keyword_re("option", r"\s*=\s*\{")
-_EVENT_HIDDEN_RE = _keyword_re("hidden", r"\s*=\s*yes\b")
-_OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
+_EVENT_OPTION_RE = word_start_re("option", r"\s*=\s*\{")
+_EVENT_HIDDEN_RE = word_start_re("hidden", r"\s*=\s*yes\b")
 _NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
 # Option bookkeeping that is not an outcome: the label, the log line, the AI
 # weight and the visibility trigger. An option with nothing else does nothing.
@@ -245,7 +276,7 @@ _OPTION_LOG_RE = re.compile(r"\blog\s*=\s*\"[^\"]*\"")
 _OPTION_INERT_BLOCK_RE = re.compile(r"\b(?:ai_chance|trigger)\s*=\s*\{")
 # `tag = XXX` / `original_tag = XXX`, in a focus_tree's `country = { }` block
 # (the owner) and in an event option's `trigger = { }` (the recipient).
-_FT_COUNTRY_BLOCK_RE = _keyword_re("country", r"\s*=\s*\{")
+_FT_COUNTRY_BLOCK_RE = word_start_re("country", r"\s*=\s*\{")
 _TAG_ASSIGN_RE = re.compile(r"\b(?:original_)?tag\s*=\s*([A-Z]{3})\b")
 _LITERAL_TAG_RE = re.compile(r"^[A-Z]{3}$")
 # Iterators that step over other countries (every_country, random_other_country,
@@ -289,26 +320,6 @@ def _top_level_search_filters(body: str) -> Set[str]:
     return set()
 
 
-def _label_before_brace(body: str, brace_idx: int) -> Optional[str]:
-    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
-
-    Returns None for an anonymous block (no `=` before the brace), e.g. a
-    color/array literal.
-    """
-    j = brace_idx - 1
-    while j >= 0 and body[j] in " \t\r\n":
-        j -= 1
-    if j < 0 or body[j] != "=":
-        return None
-    j -= 1
-    while j >= 0 and body[j] in " \t\r\n":
-        j -= 1
-    end = j + 1
-    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
-        j -= 1
-    return body[j + 1 : end] or None
-
-
 def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
     """Return (label, open_brace_index) of the innermost block enclosing *pos*.
 
@@ -322,7 +333,7 @@ def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
             depth += 1
         elif c == "{":
             if depth == 0:
-                return _label_before_brace(body, i), i
+                return label_before_brace(body, i), i
             depth -= 1
         i -= 1
     return None, -1
@@ -347,6 +358,28 @@ def _is_conjunctive_guard(body: str, pos: int, *, negated: bool = False) -> bool
     return "OR" not in labels and (negated or "NOT" not in labels)
 
 
+def _country_scope_at(body: str, pos: int, own_tags: Optional[FrozenSet[str]]) -> str:
+    """Return the country role enclosing a treasury effect or check."""
+    label, opener = _enclosing_block_label(body, pos)
+    while label is not None:
+        if label == "FROM":
+            return "FROM"
+        if label in {"ROOT", "PREV", "OWNER", "CONTROLLER", "CAPITAL"}:
+            return "ROOT"
+        if _LITERAL_TAG_RE.fullmatch(label) and label not in _NON_TAG_KEYWORDS:
+            return "ROOT" if own_tags and label in own_tags else label
+        if _COUNTRY_ITERATOR_RE.match(label):
+            return "_OTHER"
+        label, opener = _enclosing_block_label(body, opener)
+    return "ROOT"
+
+
+def _may_be_focus_owner(role: str, own_tags: Optional[FrozenSet[str]]) -> bool:
+    return role == "ROOT" or (
+        own_tags is None and bool(_LITERAL_TAG_RE.fullmatch(role))
+    )
+
+
 def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, int]]:
     """Spans of every `effect_tooltip = { }` subtree between *start* and *end*.
 
@@ -368,23 +401,54 @@ def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, in
         pos = tend
 
 
+def _payment_keys(body: str, waived_at_start: bool) -> Iterator[Tuple[int, str, bool]]:
+    """(offset, key, waived) for each `key =` in *body*, in one forward pass.
+
+    Waived means a skip_payment = 1 set earlier in the key's block or one
+    enclosing it is in force; one set in a branch beside it is not.
+    """
+    stack = [-1]
+    waived = {-1} if waived_at_start else set()
+    for m in _PAYMENT_TOKEN_RE.finditer(body):
+        kind = m.lastgroup
+        if kind == "open":
+            stack.append(m.start())
+        elif kind == "close":
+            if len(stack) > 1:
+                stack.pop()
+        elif kind == "skip":
+            # The set sits in its set_temp_variable block; its holder is the parent.
+            waived.add(stack[-2] if len(stack) > 1 else -1)
+        elif kind == "key":
+            yield m.start(), m["key"], not waived.isdisjoint(stack)
+
+
 def _body_money_cost(
-    body: str, money_effects: FrozenSet[str]
+    body: str,
+    money_effects: FrozenSet[str],
+    waivable: FrozenSet[str] = frozenset(),
+    waived_at_start: bool = False,
+    *,
+    is_payer: Optional[Callable[[int], bool]] = None,
 ) -> Tuple[float, bool, bool]:
     """Money an effect body spends. Returns (spend, has_cost, unknown).
 
     spend    - summed magnitude (billions) of negative treasury_change literals
                actually applied via modify_treasury_effect.
-    has_cost - the body reduces the treasury or raises debt at all.
+    has_cost - the body reduces the treasury or may raise debt.
     unknown  - a real cost exists whose amount can't be summed statically (a
                computed or variable-referenced treasury_change, a
                treasury_change touched by anything other than a plain set, a
-               debt change, a corruption-style modify_treasury_effect variant,
-               or a called effect in *money_effects*).
+               debt change other than a literal cut, a corruption-style
+               modify_treasury_effect variant, or a called effect in
+               *money_effects*, unless it is *waivable* and a
+               skip_payment = 1 is in force; *waived_at_start* says one
+               already is when the body begins).
     An amount whose sign is still known to be positive after scaling is income,
     not an unknown cost, so it counts as neither.
     Amounts inside effect_tooltip previews (outcomes applied elsewhere) are
-    ignored.
+    ignored. With *is_payer*, only effects at matching positions count, while
+    temp variable writes in every scope can still supply their amounts.
     """
     spans = _effect_tooltip_spans(body, 0, len(body))
 
@@ -438,7 +502,7 @@ def _body_money_cost(
     seg_neg = False
     seg_sign_unknown = False
     seg_var_base = False
-    for _, kind, val in events:
+    for pos, kind, val in events:
         if kind == "set":
             seg_has_set = True
             if val is not None and _NUMERIC_LITERAL_RE.match(val):
@@ -496,7 +560,7 @@ def _body_money_cost(
                 cur_unknown = True
                 cur_income = False
             # a non-negative applied treasury_change is income, not a cost
-            if not cur_income:
+            if not cur_income and (is_payer is None or is_payer(pos)):
                 if cur_unknown:
                     has_cost = True
                     unknown = True
@@ -506,15 +570,49 @@ def _body_money_cost(
             seg_max, seg_unknown, seg_has_set = 0.0, False, False
             seg_neg, seg_sign_unknown, seg_var_base = False, False, False
 
+    # debt_change carries over between applies like treasury_change. Only a
+    # segment whose every set is a literal cut is known to be free.
+    debt_events: List[Tuple[int, str, Optional[str]]] = []
+    for m in _DEBT_CHANGE_RE.finditer(body):
+        if previewed(m.start()):
+            continue
+        verb, _ = _enclosing_block_label(body, m.start())
+        if verb in _TREASURY_SET_VERBS:
+            debt_events.append((m.start(), "set", m.group(1)))
+        elif verb in _TREASURY_MUTATE_VERBS:
+            debt_events.append((m.start(), "set", None))
     for m in _MODIFY_DEBT_RE.finditer(body):
         if not previewed(m.start()):
+            debt_events.append((m.start(), "apply", None))
+    debt_events.sort()
+    cut = False  # debt_change set outside this body
+    seg_cut, seg_has_set = True, False
+    for pos, kind, val in debt_events:
+        if kind == "set":
+            seg_has_set = True
+            seg_cut = (
+                seg_cut
+                and val is not None
+                and _NUMERIC_LITERAL_RE.match(val) is not None
+                and float(val) <= 0
+            )
+            continue
+        if seg_has_set:
+            cut = seg_cut
+        if not cut and (is_payer is None or is_payer(pos)):
             has_cost = True
             unknown = True
             break
+        seg_cut, seg_has_set = True, False
 
     if money_effects and not money_effects.isdisjoint(_REWARD_KEY_RE.findall(body)):
-        for m in _REWARD_KEY_RE.finditer(body):
-            if m.group(1) in money_effects and not previewed(m.start()):
+        for pos, key, waived in _payment_keys(body, waived_at_start):
+            if (
+                key in money_effects
+                and not previewed(pos)
+                and not (waived and key in waivable)
+                and (is_payer is None or is_payer(pos))
+            ):
                 has_cost = True
                 unknown = True
                 break
@@ -585,11 +683,28 @@ def _scripted_effect_facts(
     )
 
 
+# Idea name -> money modifiers, from validator_common.idea_money_modifiers.
+_IdeaMoney = Dict[str, Dict[str, Decimal]]
+
+
+class _EffectFacts(NamedTuple):
+    """Scripted-effect facts through call chains.
+
+    A waivable effect checks skip_payment itself, so a caller's
+    skip_payment = 1 makes it free.
+    """
+
+    staffable: Dict[str, FrozenSet[str]]
+    money: FrozenSet[str]
+    waivable: FrozenSet[str]
+
+
 def _resolve_scripted_effect_chains(
     effect_bodies: Dict[str, str],
     direct_staffable: Dict[str, FrozenSet[str]],
     direct_money: FrozenSet[str],
-) -> Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]:
+) -> _EffectFacts:
+    """_EffectFacts from each effect's body and its direct builds and spends."""
     known_effects = set(effect_bodies)
     calls = {
         name: set(_REWARD_KEY_RE.findall(body)) & known_effects
@@ -609,15 +724,20 @@ def _resolve_scripted_effect_chains(
                 staffable[name] = resolved
                 changed = True
 
-    money = set(direct_money)
-    changed = True
-    while changed:
-        changed = False
-        for name, dependencies in calls.items():
-            if name not in money and dependencies & money:
-                money.add(name)
-                changed = True
-    return staffable, frozenset(money)
+    def with_callers(names: Set[str]) -> FrozenSet[str]:
+        changed = True
+        while changed:
+            changed = False
+            for name, dependencies in calls.items():
+                if name not in names and dependencies & names:
+                    names.add(name)
+                    changed = True
+        return frozenset(names)
+
+    waivable = frozenset(
+        name for name, body in effect_bodies.items() if _SKIP_PAYMENT_RE.search(body)
+    )
+    return _EffectFacts(staffable, with_callers(set(direct_money)), waivable)
 
 
 def _is_tag_routed(option_bodies: List[str]) -> bool:
@@ -670,8 +790,8 @@ def _is_flavor_only(option_bodies: List[str]) -> bool:
     return True
 
 
-def _notification_ids_in_file(args: Tuple[str, str]) -> List[str]:
-    """Pool worker: ids of the events in one file that the target cannot answer."""
+def _event_notifications_in_file(args: Tuple[str, str]) -> List[str]:
+    """Pool worker: the ids of one file's events the target cannot answer."""
     filepath, mod_path = args
     raw = _read_mod_text(filepath, mod_path)
     if not raw:
@@ -708,7 +828,7 @@ def _notification_ids_in_file(args: Tuple[str, str]) -> List[str]:
         return found
 
     return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.notification_events.v4", filepath, text, _compute
+        mod_path, "focus_tree.event_notifications", filepath, text, _compute
     )
 
 
@@ -927,6 +1047,16 @@ class _FocusFile:
             blocks.append(_FocusBlock(focus_id, body, start, end, line))
         return blocks
 
+    @cached_property
+    def owner_tags(self) -> FrozenSet[str]:
+        """Tags the tree's `country = { }` blocks name."""
+        tags: Set[str] = set()
+        for cm in _FT_COUNTRY_BLOCK_RE.finditer(self.text):
+            cbody, _ = _block_at(self.text, cm.start(), self.pairs)
+            if cbody:
+                tags.update(_TAG_ASSIGN_RE.findall(cbody))
+        return frozenset(tags)
+
     def _cached(self, tag: str, scan, *payload, fingerprint: Optional[str] = None):
         content = self.text if fingerprint is None else f"{self.text}\x00{fingerprint}"
         return disk_cache.per_file_cached_by_content(
@@ -942,29 +1072,41 @@ class _FocusFile:
     def relative_positions(self) -> List[Tuple[str, Optional[str], str, int]]:
         return self._cached("focus_tree.relative_positions", _scan_relative_positions)
 
+    def layout(self) -> Dict:
+        return self._cached("focus_tree.layout.v2", _scan_focus_layout)
+
     def missing_search_filters(self) -> List[Tuple[str, str, int]]:
         return self._cached(
             "focus_tree.search_filters.v1", _scan_missing_search_filters
         )
 
     def ai_guards(
-        self, staffable_map: Dict[str, FrozenSet[str]], money_effects: FrozenSet[str]
+        self, effects: _EffectFacts, commitments: FrozenSet[str], ideas: _IdeaMoney
     ) -> List[Dict]:
         # The maps are part of the key, so entries invalidate when
-        # scripted-effect definitions change.
-        fingerprint = (
-            ";".join(
-                f"{name}:{','.join(sorted(types))}"
-                for name, types in sorted(staffable_map.items())
+        # scripted-effect or idea definitions change.
+        def joined(mapping: Dict[str, Any]) -> str:
+            return ";".join(
+                f"{name}:{','.join(sorted(map(str, values)))}"
+                for name, values in sorted(mapping.items())
             )
-            + "|"
-            + ",".join(sorted(money_effects))
+
+        fingerprint = "|".join(
+            [
+                joined(effects.staffable),
+                *(
+                    ",".join(sorted(names))
+                    for names in (effects.money, effects.waivable, commitments)
+                ),
+                joined({name: money.items() for name, money in ideas.items()}),
+            ]
         )
         return self._cached(
-            "focus_tree.ai_guards.v7",
+            "focus_tree.ai_guards.v11",
             _scan_ai_guards,
-            staffable_map,
-            money_effects,
+            effects,
+            commitments,
+            ideas,
             fingerprint=fingerprint,
         )
 
@@ -1003,22 +1145,29 @@ def _scan_focus_icons(source: _FocusFile) -> List[Tuple[str, str, str, int]]:
 
 def _scan_ai_guards(
     source: _FocusFile,
-    staffable_map: Dict[str, FrozenSet[str]],
-    money_effects: FrozenSet[str],
+    effects: _EffectFacts,
+    commitments: FrozenSet[str],
+    ideas: _IdeaMoney,
 ) -> List[Dict]:
     """Per-focus facts for the ai_will_do guard checks.
 
     Returns one dict per focus: id, line, search filters, the staffable
     building types its rewards construct (directly or via a scripted effect
-    from *staffable_map*, and never from inside an effect_tooltip, which only
-    previews), the money its rewards spend (spend / has_cost / unknown, with
-    *money_effects* naming the scripted effects that spend money), whether an
+    from *effects*, and never from inside an effect_tooltip, which only
+    previews), the money its rewards charge the owner (spend / unknown), whether an
     effect_tooltip previews a cost the focus commits to but pays elsewhere
-    (a cross-country offer settled in the event), and the
+    (a cross-country offer settled in the event), the treasury checks its
+    ai_will_do lowers the weight on (see lowering_treasury_checks), and the
     guard triggers present in factor = 0 ai_will_do modifiers (both the
     `X = no` and `NOT = { X = yes }` forms; guards hidden behind wrapper
     scripted triggers are not recognized).
+
+    has_cost, pp_cost (a literal political power loss), and commits_money
+    (validate_events.commits_money) consider costs to the owner. The events and
+    scripted effects the rewards start go in fires and calls for the parent to trace.
     """
+    staffable_map, money_effects, waivable = effects
+    own = source.owner_tags or None
     out: List[Dict] = []
     for focus_id, fbody, fstart, fend, fline in source.blocks:
         if focus_id is None:
@@ -1028,9 +1177,14 @@ def _scan_ai_guards(
 
         buildings: Set[str] = set()
         spend = 0.0
+        money_cost_roles: Set[str] = set()
         has_cost = False
         unknown_cost = False
         previewed_cost = False
+        pp_cost = False
+        commits = False
+        fires: List[Tuple[str, Optional[str]]] = []
+        calls: List[Tuple[str, str]] = []
         for rbody, _, _ in _iter_reward_blocks(
             source.text, fstart, fend, pairs=source.pairs
         ):
@@ -1067,18 +1221,53 @@ def _scan_ai_guards(
                         if t in _STAFFABLE_TRIGGERS
                     )
                 bpos = bend
-            s, hc, u = _body_money_cost(rbody, called_money)
+            scope_body = blank_quoted_strings(rbody)
+
+            def owner_pays(pos: int, body: str = scope_body) -> bool:
+                return _may_be_focus_owner(_country_scope_at(body, pos, own), own)
+
+            s, owner_cost, u = _body_money_cost(
+                scope_body, called_money, waivable, is_payer=owner_pays
+            )
             spend += s
-            has_cost = has_cost or hc
             unknown_cost = unknown_cost or u
             previewed_cost = previewed_cost or any(
                 _body_money_cost(
-                    rbody[rbody.index("{", s0) + 1 : e0 - 1], called_money
+                    rbody[rbody.index("{", s0) + 1 : e0 - 1], called_money, waivable
                 )[1]
                 for s0, e0 in spans
             )
+            texts, reward_fires, reward_calls = split_roles(scope_body, own)
+            money_cost_roles.update(
+                role
+                for role, text in texts.items()
+                if role != "ROOT" and _body_money_cost(text, called_money, waivable)[1]
+            )
+            fires += reward_fires
+            calls += reward_calls
+            owner_text = " ".join(
+                text for role, text in texts.items() if _may_be_focus_owner(role, own)
+            )
+            # A tax rate change moves potential_income, which the bankruptcy
+            # mission weighs against debt_rate.
+            has_cost = (
+                has_cost or owner_cost or bool(_TAX_RATE_EFFECT_RE.search(owner_text))
+            )
+            pp_cost = pp_cost or bool(_PP_MALUS_RE.search(owner_text))
+            targets = war_target_payers(texts)
+            if own:
+                for tag in own:
+                    if tag in targets:
+                        targets["ROOT"].update(targets.pop(tag))
+            commits = (
+                commits
+                or commits_money(owner_text, commitments, ideas)
+                or "money" in chooser_kinds(targets, bool(own))
+            )
 
         guards: Set[str] = set()
+        treasury_checks: Set[str] = set()
+        treasury_checks_by_role: Dict[str, Set[str]] = defaultdict(set)
         am = _AI_WILL_DO_START.search(fbody)
         if am:
             abody, _ = _extract_block(fbody, am.start())
@@ -1094,7 +1283,7 @@ def _scan_ai_guards(
                         continue
                     factor_zero = any(
                         _enclosing_block_label(mbody, fm.start())[0] is None
-                        for fm in _FACTOR_ZERO_RE.finditer(mbody)
+                        for fm in FACTOR_ZERO_RE.finditer(mbody)
                     )
                     if factor_zero:
                         for gm in _CAN_STAFF_NO_RE.finditer(mbody):
@@ -1104,8 +1293,24 @@ def _scan_ai_guards(
                             if _is_conjunctive_guard(mbody, gm.start(1), negated=True):
                                 guards.add(gm.group(1))
                         for gm in _BANKRUPTCY_GUARD_RE.finditer(mbody):
-                            if _is_conjunctive_guard(mbody, gm.start()):
+                            if _is_conjunctive_guard(
+                                mbody, gm.start()
+                            ) and _may_be_focus_owner(
+                                _country_scope_at(mbody, gm.start(), own), own
+                            ):
                                 guards.add("bankruptcy_incoming_collapse")
+                    lowered_checks = lowering_treasury_checks(mbody)
+                    treasury_checks |= lowered_checks
+                    for check, pattern in (
+                        ("bankruptcy", _BANKRUPTCY_GUARD_RE),
+                        ("deficit", _DEFICIT_GUARD_RE),
+                    ):
+                        if check not in lowered_checks:
+                            continue
+                        for gm in pattern.finditer(mbody):
+                            if _is_conjunctive_guard(mbody, gm.start()):
+                                role = _country_scope_at(mbody, gm.start(), own)
+                                treasury_checks_by_role[role].add(check)
                     mpos = mend
 
         out.append(
@@ -1117,9 +1322,17 @@ def _scan_ai_guards(
                 "buildings": buildings,
                 "guards": guards,
                 "spend": spend,
+                "money_cost_roles": money_cost_roles,
                 "has_cost": has_cost,
                 "unknown": unknown_cost,
                 "previewed_cost": previewed_cost,
+                "pp_cost": pp_cost,
+                "commits_money": commits,
+                "fires": tuple(fires),
+                "calls": tuple(calls),
+                "owner_tags": own,
+                "treasury_checks": treasury_checks,
+                "treasury_checks_by_role": treasury_checks_by_role,
             }
         )
     return out
@@ -1154,12 +1367,6 @@ def _scan_cross_country_fires(
     text = source.text
     if "country_event" not in text:
         return []
-    owner_tags: Set[str] = set()
-    for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
-        cbody, _ = _block_at(text, cm.start(), source.pairs)
-        if cbody:
-            owner_tags.update(_TAG_ASSIGN_RE.findall(cbody))
-    owner_frozen = frozenset(owner_tags)
 
     out: List[Dict] = []
     for focus_id, fbody, fstart, fend, fline in source.blocks:
@@ -1180,7 +1387,7 @@ def _scan_cross_country_fires(
                     if tm and tm.group(1) in notifications:
                         continue
                     if _country_event_target_is_foreign(
-                        rbody, ce.start(), owner_frozen
+                        rbody, ce.start(), source.owner_tags
                     ):
                         flagged = True
                         break
@@ -1228,11 +1435,10 @@ _FOCUS_DEFAULT_WRITE_RE = re.compile(
     r"\b(?:cancel_if_invalid\s*=\s*yes|continue_if_invalid\s*=\s*no"
     r"|available_if_capitulated\s*=\s*no)\b"
 )
-_AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 _ALWAYS_NO_BODY_RE = re.compile(r"\s*always\s*=\s*no\s*")
 _RE_BYPASS_BLOCK = re.compile(r"\bbypass\s*=\s*\{")
-_RE_EMPTY_MUTEX = _keyword_re("mutually_exclusive", r"\s*=\s*\{\s*\}")
-_RE_EMPTY_AVAILABLE = _keyword_re("available", r"\s*=\s*\{\s*\}")
+_RE_EMPTY_MUTEX = word_start_re("mutually_exclusive", r"\s*=\s*\{\s*\}")
+_RE_EMPTY_AVAILABLE = word_start_re("available", r"\s*=\s*\{\s*\}")
 
 
 def _scan_focus_structural(source: _FocusFile) -> List[Tuple[str, str, str, int]]:
@@ -1280,6 +1486,115 @@ def _scan_relative_positions(
         else:
             out.append((block.focus_id, None, source.filepath, block.line))
     return out
+
+
+def _branch_terms(body: str, prefix: str = "") -> Set[str]:
+    terms = set()
+    for key, scalar, nested in iter_statements(body):
+        if nested is not None:
+            limit = next((b for k, _, b in iter_statements(nested) if k == "limit"), "")
+            if key == "if" and HIDE_RULE_TERMS <= _branch_terms(limit or ""):
+                inner = _branch_terms(nested, HIDE_RULE_PREFIX)
+                terms |= inner - {HIDE_RULE_PREFIX + t for t in HIDE_RULE_TERMS}
+            else:
+                terms |= _branch_terms(nested, prefix)
+        elif scalar:
+            terms.add(f"{prefix}{key}={scalar}")
+    return terms
+
+
+def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
+    record: Dict[str, Any] = {
+        "id": None,
+        "file": filepath,
+        "line": block.line,
+        "x": None,
+        "y": None,
+        "relative": None,
+        "allow_branch": False,
+        "branch_terms": [],
+        "offset": False,
+        "prerequisites": [],
+        "mutually_exclusive": [],
+    }
+    for key, scalar, body in iter_statements(block.body):
+        if key == "id":
+            record["id"] = scalar
+        elif key in ("x", "y"):
+            record[key] = (
+                Decimal(scalar)
+                if scalar and re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", scalar)
+                else None
+            )
+        elif key == "relative_position_id":
+            record["relative"] = scalar
+        elif key in ("allow_branch", "offset"):
+            record[key] = True
+            if key == "allow_branch" and body:
+                record["branch_terms"] = sorted(_branch_terms(body))
+        elif key == "prerequisite" and body is not None:
+            record["prerequisites"].append(
+                [
+                    value
+                    for name, value, _ in iter_statements(body)
+                    if name == "focus" and value
+                ]
+            )
+        elif key == "mutually_exclusive" and body is not None:
+            record["mutually_exclusive"].extend(
+                value
+                for name, value, _ in iter_statements(body)
+                if name == "focus" and value
+            )
+    return record
+
+
+def _scan_focus_layout(source: _FocusFile) -> Dict:
+    filepath = os.path.relpath(source.filepath, source.mod_path).replace(os.sep, "/")
+    result: Dict[str, Any] = {"filepath": filepath, "trees": [], "shared": []}
+    ranges = []
+    end = 0
+    for match in _FOCUS_TREE_START.finditer(source.text):
+        opening = source.text.find("{", match.start())
+        if match.start() < end or opening not in source.pairs:
+            continue
+        body, end = _block_at(source.text, match.start(), source.pairs)
+        if end == -1:
+            continue
+        line = source.text.count("\n", 0, match.start()) + 1
+        tree: Dict[str, Any] = {
+            "id": f"tree at line {line}",
+            "line": line,
+            "focuses": [],
+            "shared_refs": [],
+        }
+        for key, scalar, nested in iter_statements(body):
+            if key == "id" and scalar:
+                tree["id"] = scalar
+            elif key == "shared_focus":
+                refs = [scalar] if scalar else re.findall(r"[\w.-]+", nested or "")
+                tree["shared_refs"].extend(refs)
+        result["trees"].append(tree)
+        ranges.append((match.start(), end, tree))
+
+    tree_index = 0
+    for block in source.blocks:
+        if source.text.find("{", block.start) not in source.pairs:
+            continue
+        record = _layout_record(block, filepath)
+        if not record["id"]:
+            continue
+        while tree_index < len(ranges) and block.start >= ranges[tree_index][1]:
+            tree_index += 1
+        if (
+            tree_index < len(ranges)
+            and ranges[tree_index][0] < block.start < ranges[tree_index][1]
+        ):
+            if block.end <= ranges[tree_index][1]:
+                ranges[tree_index][2]["focuses"].append(record)
+        elif source.text.startswith(("shared_focus", "joint_focus"), block.start):
+            result["shared"].append(record)
+    return result
 
 
 def _parse_focus_text(source: _FocusFile) -> Dict:
@@ -1370,7 +1685,14 @@ def _parse_focus_text(source: _FocusFile) -> Dict:
 
 def _scan_focus_file(
     args: Tuple[
-        str, str, Dict[str, FrozenSet[str]], FrozenSet[str], FrozenSet[str], bool, bool
+        str,
+        str,
+        _EffectFacts,
+        FrozenSet[str],
+        FrozenSet[str],
+        _IdeaMoney,
+        bool,
+        bool,
     ],
 ) -> Dict[str, Any]:
     """Pool worker: every per-file focus scan from one read of the file.
@@ -1381,9 +1703,10 @@ def _scan_focus_file(
     (
         filepath,
         mod_path,
-        staffable_map,
-        money_effects,
+        effects,
         notifications,
+        commitments,
+        ideas,
         icons,
         reportable,
     ) = args
@@ -1391,13 +1714,14 @@ def _scan_focus_file(
     indexes = {
         "parse": source.parse(),
         "relative_positions": source.relative_positions(),
+        "layout": source.layout(),
     }
     if not reportable:
         return indexes
     return {
         **indexes,
         "missing_search_filters": source.missing_search_filters(),
-        "ai_guards": source.ai_guards(staffable_map, money_effects),
+        "ai_guards": source.ai_guards(effects, commitments, ideas),
         "cross_country_fires": source.cross_country_fires(notifications),
         "pp_malus": source.pp_malus(),
         "structural": source.structural(),
@@ -1421,9 +1745,17 @@ class Validator(BaseValidator):
         self._scans: Optional[List[Dict[str, Any]]] = None
         self._registry: Optional[_FocusRegistry] = None
         self._staged_paths: Optional[Set[str]] = None
-        self._scripted_effect_data: Optional[
-            Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]
-        ] = None
+        self.layout_counts: Dict[str, int] = {}
+        self._scripted_effect_data: Optional[_EffectFacts] = None
+        if self.staged_only:
+            self.staged_files = (
+                get_staged_files(
+                    self.mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=True,
+                )
+                or []
+            )
 
     # -----------------------------------------------------------------------
     # Data collection
@@ -1466,20 +1798,23 @@ class Validator(BaseValidator):
             return self._scans
         files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
         reportable = [self._is_reportable(f) for f in files]
-        if not any(reportable):
+        if not any(reportable) and not (self.staged_only and self._get_staged_paths()):
             self._scans = []
             return self._scans
-        staffable, money = self._scripted_effect_data_for_guards()
-        notifications = self._notification_event_ids()
+        effects = self._scripted_effect_data_for_guards()
+        notifications = self._event_notifications()
+        lookups = self._cost_lookups()
+        commitments = frozenset(lookups.commitments)
         self._scans = self._pool_map(
             _scan_focus_file,
             [
                 (
                     f,
                     self.mod_path,
-                    staffable,
-                    money,
+                    effects,
                     notifications,
+                    commitments,
+                    lookups.ideas,
                     self.missing_icons,
                     report,
                 )
@@ -1488,6 +1823,14 @@ class Validator(BaseValidator):
             chunksize=10,
         )
         return self._scans
+
+    def _cost_lookups(self) -> CostLookups:
+        return self.cached("cost_lookups", lambda: load_cost_lookups(self))
+
+    def _event_payments(self) -> EventPayments:
+        return self.cached(
+            "event_payments", lambda: load_event_payments(self, self._cost_lookups())
+        )
 
     def _reportable_results(self, key: str) -> Iterator[Tuple[str, List]]:
         """Yield (rel_path, results) for each reportable file's *key* scan."""
@@ -1876,11 +2219,9 @@ class Validator(BaseValidator):
     # Check 5c: ai_will_do staffing / bankruptcy guards
     # -----------------------------------------------------------------------
 
-    def _scripted_effect_data_for_guards(
-        self,
-    ) -> Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]:
-        """(staffable map, money-effect names), both resolved through call
-        chains from one read of common/scripted_effects/."""
+    def _scripted_effect_data_for_guards(self) -> _EffectFacts:
+        """_resolve_scripted_effect_chains from one read of
+        common/scripted_effects/."""
         if self._scripted_effect_data is not None:
             return self._scripted_effect_data
 
@@ -1912,19 +2253,7 @@ class Validator(BaseValidator):
         add_building_construction of a staffable type, so new builder-effect
         variants are picked up without a hardcoded list.
         """
-        return self._scripted_effect_data_for_guards()[0]
-
-    def _money_cost_effect_names(self) -> FrozenSet[str]:
-        """Scripted-effect names that (transitively) reduce the treasury or
-        raise debt, so a focus reward calling one counts as spending money.
-
-        Mirrors _staffable_effect_map: each effect's own body is scanned with
-        _body_money_cost, then call chains are resolved to a fixed point so a
-        money-spending wrapper of any depth stays visible. A computed
-        (non-literal) treasury_change is treated as a cost even though its sign
-        is unknown, so a handful of computed-income effects may be included.
-        """
-        return self._scripted_effect_data_for_guards()[1]
+        return self._scripted_effect_data_for_guards().staffable
 
     def validate_ai_will_do_guards(self):
         """Flag focuses missing (or carrying an unneeded) ai_will_do guard.
@@ -1932,17 +2261,21 @@ class Validator(BaseValidator):
         can_staff (issue #2233): a focus whose reward builds a staffable
         building — directly or via a scripted effect — needs the matching
         can_staff_an_* = no modifier so the AI skips it with no free workers.
-        Bankruptcy: a focus whose reward spends money needs a
+        Bankruptcy: a focus whose reward charges its owner needs a
         has_active_mission = bankruptcy_incoming_collapse modifier. Spend is
         the money the reward actually costs (summed negative treasury_change,
         or a money-spending scripted effect), not the focus completion time —
         so a focus spending at least the threshold without the guard is
-        flagged, a focus carrying the guard with no money cost is flagged as
-        unneeded, and a money/building focus tagged neither economic nor
-        military is flagged as miscategorized. Effect chains are resolved to a
-        fixed point so a wrapper of any depth stays visible; guards written via
-        wrapper scripted triggers are not recognized. All are per-file
-        aggregates so the backlog stays readable.
+        flagged, a focus whose ai_will_do lowers the weight on bankruptcy or a
+        high deficit with no cost to the owner is flagged as unneeded (a
+        previewed cost, a money commitment, and a charge the events or effects
+        the reward starts bring back to the owner still count, and so does a
+        political power loss for bankruptcy; the focus `cost` never does), and a
+        money/building focus tagged neither
+        economic nor military is flagged as miscategorized. Effect chains are
+        resolved to a fixed point so a wrapper of any depth stays visible;
+        guards written via wrapper scripted triggers are not recognized. All
+        are per-file aggregates so the backlog stays readable.
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 
@@ -1983,14 +2316,33 @@ class Validator(BaseValidator):
                     )
                 )
 
-            has_guard = "bankruptcy_incoming_collapse" in d["guards"]
-            if not has_guard:
+            if "bankruptcy_incoming_collapse" not in d["guards"]:
                 if d["spend"] >= _MONEY_SPEND_THRESHOLD:
                     underguarded_by_file[rel].append((d["id"], d["line"], d["spend"]))
                 elif d["unknown"]:
                     unknown_spend_by_file[rel].append((d["id"], d["line"]))
-            elif not d["has_cost"] and not d["previewed_cost"]:
-                unneeded_by_file[rel].append((d["id"], d["line"]))
+
+            if d["treasury_checks"]:
+                started = chooser_kinds(
+                    item_payers(
+                        ItemFacts({}, d["fires"], d["calls"]),
+                        self._event_payments(),
+                        d["owner_tags"],
+                    ),
+                    bool(d["owner_tags"]),
+                )
+                payer_checks = set()
+                for role in d["money_cost_roles"]:
+                    payer_checks.update(d["treasury_checks_by_role"].get(role, set()))
+                if unneeded_treasury_checks(
+                    d["treasury_checks"] - payer_checks,
+                    d["has_cost"]
+                    or d["previewed_cost"]
+                    or d["commits_money"]
+                    or "money" in started,
+                    d["pp_cost"] or "political power" in started,
+                ):
+                    unneeded_by_file[rel].append((d["id"], d["line"]))
 
             if (
                 d["filters"]
@@ -2039,12 +2391,14 @@ class Validator(BaseValidator):
         self._report(
             _aggregate(
                 unneeded_by_file,
-                "focus(es) with a bankruptcy guard but no money cost (guard unneeded)",
+                "focus(es) whose ai_will_do lowers the weight on bankruptcy or a"
+                " high deficit without a matching cost",
             ),
-            "No focuses carry an unneeded bankruptcy guard",
-            "Files with an unneeded bankruptcy guard (no treasury cost):",
+            "No focuses carry an unneeded treasury check",
+            "Files with treasury checks on focuses that cost no money (the focus"
+            " `cost` is time, not a price):",
             Severity.WARNING,
-            category="unneeded-bankruptcy-guard",
+            category="unneeded-treasury-guard",
         )
         self._report(
             _aggregate(
@@ -2058,27 +2412,30 @@ class Validator(BaseValidator):
             category="focus-filter-mismatch",
         )
 
-    def _notification_event_ids(self) -> FrozenSet[str]:
-        """Event ids the target cannot answer: hidden, fewer than 2 options,
-        options tag-routed one per recipient (see _is_tag_routed), or options
-        that are pure flavor with no outcome at all (see _is_flavor_only).
+    def _event_notifications(self) -> FrozenSet[str]:
+        """Ids of the events the target cannot answer, from one pass over the
+        event files.
 
-        Firing one of these into a foreign scope is a notification, not an
-        offer, so it never needs a TT_IF_THEY_ACCEPT tooltip.
+        That is hidden, fewer than 2 options, options tag-routed one per
+        recipient (see _is_tag_routed), or options that are pure flavor with no
+        outcome at all (see _is_flavor_only). Firing one of these into a foreign
+        scope is a notification, not an offer, so it never needs a
+        TT_IF_THEY_ACCEPT tooltip.
         """
         files = self._collect_files(["events/*.txt"], ignore_staged=True)
-        per_file = self._pool_map(
-            _notification_ids_in_file,
-            [(fp, self.mod_path) for fp in files],
-            chunksize=10,
+        return frozenset(
+            self._pool_flat_map(
+                _event_notifications_in_file,
+                [(fp, self.mod_path) for fp in files],
+                chunksize=10,
+            )
         )
-        return frozenset(event_id for ids in per_file for event_id in ids)
 
     def validate_cross_country_event_tooltips(self):
         """Flag focuses that fire an event to another nation without a
         TT_IF_THEY_ACCEPT tooltip.
 
-        AGENTS.md "Cross-country event tooltips": when a completion_reward fires
+        event-reference.md "Cross-country events": when a completion_reward fires
         a country_event into a foreign scope, the player should see the outcome
         via custom_effect_tooltip = TT_IF_THEY_ACCEPT. Reported per file as a
         WARNING — the presence of the tooltip anywhere in the reward clears it,
@@ -2117,7 +2474,7 @@ class Validator(BaseValidator):
         """Flag a literal PP loss (add_political_power = -N) inside a focus's
         completion_reward.
 
-        Focus time is the cost (AGENTS.md) — a PP malus on completion is a
+        Focus time is the cost — a PP malus on completion is a
         balance choice needing per-site judgment, so this reports at WARNING
         only. Scope is the literal-negative-number pattern: variable forms
         and timed lose-PP ideas are not detected. effect_tooltip previews of
@@ -2415,10 +2772,69 @@ class Validator(BaseValidator):
             category="relative-position-missing-target",
         )
 
+    def validate_focus_overlap(self):
+        self._log_section("Checking static focus coordinates...")
+        reportable = None
+        if self.staged_only:
+            reportable = {
+                path.replace(os.sep, "/") for path in self._get_staged_paths()
+            }
+            if any(
+                not os.path.isfile(os.path.join(self.mod_path, path))
+                for path in reportable
+            ):
+                reportable = None
+        layout = analyze_layout(
+            [scan["layout"] for scan in self._focus_scans()], reportable
+        )
+        self.layout_counts = layout["counts"]
+        self.log(
+            "Focus layout counts: "
+            + ", ".join(
+                f"{key}={value}" for key, value in sorted(self.layout_counts.items())
+            )
+        )
+        self._report(
+            layout["findings"],
+            "No static focus overlaps",
+            "Focuses less than two columns apart on the same row:",
+            Severity.WARNING,
+            category="focus-coordinate-overlap",
+        )
+        self._report(
+            layout["prerequisite_order"],
+            "Resolved prerequisites appear above their children",
+            "Resolved prerequisites at or below their child:",
+            Severity.WARNING,
+            category="focus-prerequisite-row-order",
+        )
+        self._report(
+            layout["mutually_exclusive_rows"],
+            "Mutually exclusive focuses share a row",
+            "Mutually exclusive focuses on different rows:",
+            Severity.WARNING,
+            category="focus-mutually-exclusive-row",
+        )
+        self._report(
+            layout["unresolved"],
+            "All focus coordinates resolved",
+            "Focus coordinates could not be resolved safely:",
+            Severity.WARNING,
+            category="focus-coordinate-unresolved",
+        )
+        self._report(
+            layout["branch_leaks"],
+            "No focus allow_branch shows a hidden branch",
+            "Focuses whose own allow_branch shows them under a hidden ancestor:",
+            Severity.WARNING,
+            category="focus-allow-branch-leak",
+        )
+
     def run_validations(self):
         self.validate_duplicate_focus_ids()
         self.validate_missing_prerequisite_targets()
         self.validate_relative_position_targets()
+        self.validate_focus_overlap()
         self.validate_orphan_focuses()
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()

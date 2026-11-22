@@ -1,6 +1,6 @@
 ---
 name: test-plan
-description: Generate an approximate playthrough test plan for the current branch in AngriestBird PR format. Run after /open-pr to attach a test plan, or standalone to draft test steps for a diff.
+description: Generate an approximate playthrough test plan for the current branch. Run after /open-pr to attach a test plan, or standalone to draft test steps for a diff.
 allowed-tools:
   - Bash
   - Read
@@ -8,7 +8,7 @@ allowed-tools:
   - Glob
 ---
 
-Generate an **approximate**, best-effort playthrough test plan for the current branch, in the AngriestBird PR format. The model cannot run the game, so the output is a draft the human verifies and trims before trusting it.
+Generate an approximate playthrough test plan for the current branch. The model cannot run the game, so the output is a draft the human verifies and trims.
 
 Arguments (optional, space-separated):
 
@@ -69,5 +69,5 @@ Rules:
 ### 4. Output
 
 1. Print the test plan block for the user to paste.
-2. If a PR already exists for the branch (`gh pr view --repo MillenniumDawn/Millennium-Dawn --json number,body`), offer to append the `### Test plan` section to the PR body via `gh pr edit`. Do not overwrite an existing test plan without confirmation.
+2. If a PR already exists for the branch (`gh pr view --repo MillenniumDawn/Millennium-Dawn --json number,body`), offer to add the `### Test plan` section to the PR body via `gh pr edit`, above the closing `BLUF` line. Do not overwrite an existing test plan without confirmation.
 3. State plainly that the plan is approximate and needs human review before it is trusted.

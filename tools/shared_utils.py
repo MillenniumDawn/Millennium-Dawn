@@ -4,8 +4,8 @@
 
 import argparse
 import bisect
+import fnmatch
 import json
-import logging
 import os
 import re
 import stat
@@ -16,19 +16,33 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
-from itertools import chain
+from itertools import chain, islice
 from pathlib import Path
 from typing import (
     Any,
     Callable,
     Container,
     Dict,
+    Iterable,
     Iterator,
     List,
     Optional,
     Set,
     Tuple,
 )
+
+WORD_BLOCK_START_RE = re.compile(r"^(\w+)\s*=\s*\{")
+WORD_BLOCK_LINE_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
+IDENTIFIER_BLOCK_START_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{")
+IDENTIFIER_BLOCK_LINE_RE = re.compile(
+    r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE
+)
+COUNTRY_TAG_ASSIGNMENT_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
+COUNTRY_TAG_ASSIGNMENT_LINE_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
+OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
+MODIFIER_OPEN_RE = re.compile(r"\bmodifier\s*=\s*\{")
+TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
+AVAILABLE_OPEN_RE = re.compile(r"\bavailable\s*=\s*\{")
 
 
 class Colors:
@@ -76,8 +90,8 @@ def _load_validation_config() -> Dict[str, Any]:
     return config
 
 
-def validation_config(validator: str, key: str) -> Dict[str, str]:
-    """Return one validation_config.json suppression list as entry -> reason."""
+def validation_config(validator: str, key: str) -> Any:
+    """Return one validation_config.json list: entry -> reason, or modifier_caps rows."""
     return _load_validation_config()[validator][key]
 
 
@@ -89,10 +103,10 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
     3: "socialism",
     4: "communist_state",
     5: "anarchist_communism",
-    6: "Conservative",
+    6: "reactionary",
     7: "Autocracy",
-    8: "Mod_Vilayat_e_Faqih",
-    9: "Vilayat_e_Faqih",
+    8: "moderate_shiite",
+    9: "hardline_shiite",
     10: "Kingdom",
     11: "Caliphate",
     12: "Neutral_Muslim_Brotherhood",
@@ -165,7 +179,7 @@ def log_message(
 def add_standard_file_arguments(
     parser: argparse.ArgumentParser, *, input_help="Input file to process"
 ):
-    """Add shared file arguments; --no-color remains specific to create_standard_parser."""
+    """Add the shared input, --output, --backup, and --verbose arguments."""
     parser.add_argument("input_file", help=input_help)
     parser.add_argument(
         "-o", "--output", help="Output file (default: overwrites input)"
@@ -174,19 +188,6 @@ def add_standard_file_arguments(
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-
-
-def create_standard_parser(description: str) -> argparse.ArgumentParser:
-    """Create a standard argument parser for Millennium Dawn tools"""
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    add_standard_file_arguments(parser)
-    parser.add_argument(
-        "--no-color", action="store_true", help="Disable ANSI color codes in output"
-    )
-    return parser
 
 
 def create_validation_parser(description: str) -> argparse.ArgumentParser:
@@ -349,15 +350,33 @@ def find_unquoted_block_end(text: str, start: int) -> Tuple[int, bool]:
     hide a brace inside a ``"..."`` span.
     """
     depth = 1
-    i = start
-    n = len(text)
-    while i < n and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return i, depth == 0
+    pos = start
+    # Depth only falls at a `}`, so hop between them and count the `{` skipped.
+    while True:
+        close = text.find("}", pos)
+        if close == -1:
+            return len(text), False
+        depth += text.count("{", pos, close) - 1
+        if not depth:
+            return close + 1, True
+        pos = close + 1
+
+
+def find_unquoted_brace_close(text: str, open_idx: int) -> int:
+    """Index of the ``}`` closing the ``{`` at *open_idx*, or -1 if unbalanced.
+
+    Like :func:`find_unquoted_block_end`, braces inside quotes still count.
+    """
+    depth = 0
+    pos = open_idx
+    while True:
+        close = text.find("}", pos)
+        if close == -1:
+            return -1
+        depth += text.count("{", pos, close) - 1
+        if not depth:
+            return close
+        pos = close + 1
 
 
 def compact_block(block_lines: List[str]) -> List[str]:
@@ -373,10 +392,22 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+# A stock idea on_add/on_remove log; the id is whichever id group matched
+# (m.lastgroup). A hand-written message or a runtime [name] does not match.
+STOCK_IDEA_LOG_RE = re.compile(
+    r'(?P<prefix>\blog\s*=\s*"\[GetDateText\]: \[[\w.]+\]: )'
+    r"(?:Idea (?P<standard>[\w.-]+) (?:added|removed)"
+    r"|(?:add|remove)(?: idea)? (?P<legacy>[\w.-]+)"
+    r'|(?P<trailing>[\w.-]+) idea added)"'
+)
+
+
 def count_braces(text: str) -> Tuple[int, int]:
     """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
     strings and after an unquoted ``#`` comment."""
     code = strip_inline_comment(text)
+    if '"' not in code:
+        return code.count("{"), code.count("}")
     opens = closes = 0
     in_str = False
     for i, c in enumerate(code):
@@ -412,6 +443,8 @@ def collapse_ws_outside_quotes(text: str) -> str:
     """Collapse runs of whitespace outside double-quoted spans to single spaces,
     leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
     unquoted text, but a `log`/tooltip string keeps its internal spacing."""
+    if '"' not in text:
+        return " ".join(text.split())
     result: List[str] = []
     in_str = False
     prev_space = False
@@ -451,6 +484,10 @@ def _normalize_oneline_braces(text: str) -> str:
 
 
 _COMPARISON_OPS = {"!=", "==", ">=", "<="}
+# The tokens normalize_spacing pads, two-character forms first.
+_SPACED_TOKEN_RE = re.compile(
+    "|".join(re.escape(op) for op in sorted(_COMPARISON_OPS)) + r"|\{\}|[{}=<>]"
+)
 
 
 def normalize_spacing(line: str) -> str:
@@ -470,28 +507,30 @@ def normalize_spacing(line: str) -> str:
 
     indent = code[: len(code) - len(code.lstrip())]
 
-    out: List[str] = []
-    in_str = False
-    i = 0
-    n = len(code)
-    while i < n:
-        c = code[i]
-        if c == '"' and (i == 0 or code[i - 1] != "\\"):
-            in_str = not in_str
-            out.append(c)
-        elif in_str:
-            out.append(c)
-        elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
-            out.append(f" {code[i : i + 2]} ")
-            i += 2
-            continue
-        elif c in "{}=<>":
-            out.append(f" {c} ")
-        else:
-            out.append(c)
-        i += 1
-
-    body = collapse_ws_outside_quotes("".join(out))
+    if '"' not in code:
+        body = " ".join(_SPACED_TOKEN_RE.sub(r" \g<0> ", code).split())
+    else:
+        out: List[str] = []
+        in_str = False
+        i = 0
+        n = len(code)
+        while i < n:
+            c = code[i]
+            if c == '"' and (i == 0 or code[i - 1] != "\\"):
+                in_str = not in_str
+                out.append(c)
+            elif in_str:
+                out.append(c)
+            elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
+                out.append(f" {code[i : i + 2]} ")
+                i += 2
+                continue
+            elif c in "{}=<>":
+                out.append(f" {c} ")
+            else:
+                out.append(c)
+            i += 1
+        body = collapse_ws_outside_quotes("".join(out))
     return f"{indent}{body} {comment}".rstrip() if comment else f"{indent}{body}"
 
 
@@ -519,9 +558,19 @@ def collapse_or_compact(
         first = block_lines[0]
         indent = first[: len(first) - len(first.lstrip())]
 
-    for line in block_lines:
-        if strip_inline_comment(line) != line:
-            return reindent_by_brace_depth(compact_block(block_lines), indent)
+    one_line = _one_line_form(block_lines, indent)
+    if one_line is not None:
+        return [one_line]
+    if any(strip_inline_comment(line) != line for line in block_lines):
+        return reindent_by_brace_depth(compact_block(block_lines), indent)
+    multi = compact_block(collapse_nested_blocks(block_lines))
+    return reindent_by_brace_depth(multi, indent)
+
+
+def _one_line_form(block_lines: List[str], indent: str) -> Optional[str]:
+    """The block on one line when it passes the single-leaf test, else None."""
+    if any(strip_inline_comment(line) != line for line in block_lines):
+        return None
 
     text = " ".join(line.strip() for line in block_lines if line.strip())
 
@@ -541,16 +590,14 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        multi = compact_block(collapse_nested_blocks(block_lines))
-        return reindent_by_brace_depth(multi, indent)
+        return None
 
     unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
     for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
         if len(group.split()) > 1:
-            multi = compact_block(collapse_nested_blocks(block_lines))
-            return reindent_by_brace_depth(multi, indent)
+            return None
 
-    return [f"{indent}{_normalize_oneline_braces(text)}"]
+    return f"{indent}{_normalize_oneline_braces(text)}"
 
 
 def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
@@ -588,8 +635,9 @@ def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
             return out
 
         child = collapse_nested_blocks(block_lines[i:j])
-        collapsed = collapse_or_compact(child)
-        out.extend(collapsed if len(collapsed) == 1 else child)
+        first = child[0]
+        one_line = _one_line_form(child, first[: len(first) - len(first.lstrip())])
+        out.extend(child if one_line is None else [one_line])
         i = j
 
     out.append(block_lines[last])
@@ -941,14 +989,7 @@ def _editor_settings_files() -> List[str]:
     mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
     vscode = os.path.join(mod_root, ".vscode")
     files = [os.path.join(vscode, "settings.json")]
-    try:
-        files.extend(
-            os.path.join(vscode, f)
-            for f in sorted(os.listdir(vscode))
-            if f.endswith(".code-workspace")
-        )
-    except OSError:
-        pass
+    files.extend(list_files(vscode, patterns=("*.code-workspace",), recursive=False))
     appdata = os.environ.get("APPDATA", "")
     files.extend(
         os.path.expanduser(p)
@@ -1036,15 +1077,7 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         return []
 
     out: List[Dict] = []
-    try:
-        filenames = sorted(os.listdir(tags_dir))
-    except OSError:
-        return out
-
-    for fname in filenames:
-        if not fname.endswith(".txt"):
-            continue
-        fpath = os.path.join(tags_dir, fname)
+    for fpath in list_files(tags_dir, recursive=False):
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 text = re.sub(r"#.*", "", f.read())
@@ -1144,7 +1177,7 @@ def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int
         idx = content.find(needle)
         if idx >= 0:
             return content.count("\n", 0, idx) + 1
-    except Exception:
+    except (OSError, UnicodeDecodeError):
         pass
     return 0
 
@@ -1160,14 +1193,7 @@ def strip_comments(text: str) -> str:
         if line.lstrip().startswith("#"):
             result.append("")
             continue
-        in_quote = False
-        for i, ch in enumerate(line):
-            if ch == '"':
-                in_quote = not in_quote
-            elif ch == "#" and not in_quote:
-                line = line[:i]
-                break
-        result.append(line)
+        result.append(strip_inline_comment(line))
     return "\n".join(result)
 
 
@@ -1288,9 +1314,10 @@ def iter_statement_ops(
             index = close + 1
             continue
         if cursor < length and body[cursor] == '"':
-            stop = body.find('"', cursor + 1)
-            if stop == -1:
+            closing_quote = _STRING_QUOTE_RE.search(body, cursor + 1)
+            if closing_quote is None:
                 return
+            stop = closing_quote.start()
             yield key, operator, body[cursor + 1 : stop], None
             index = stop + 1
             continue
@@ -1309,6 +1336,36 @@ def iter_statements(body: str) -> Iterator[Tuple[str, Optional[str], Optional[st
 
 def line_of(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
+
+
+def word_start_re(literal: str, rest: str) -> "re.Pattern[str]":
+    """Compile `\\b<literal><rest>` with the literal first.
+
+    A leading `\\b` makes the engine try the pattern at every offset. Led by
+    the literal it skips between occurrences, and the lookbehind checks the
+    same word boundary.
+    """
+    return re.compile(literal + r"(?<=\b" + literal + ")" + rest)
+
+
+def label_before_brace(body: str, brace_idx: int) -> Optional[str]:
+    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
+
+    Returns None for an anonymous block (no `=` before the brace), e.g. a
+    color/array literal.
+    """
+    j = brace_idx - 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    if j < 0 or body[j] != "=":
+        return None
+    j -= 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    end = j + 1
+    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
+        j -= 1
+    return body[j + 1 : end] or None
 
 
 def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
@@ -1334,15 +1391,18 @@ def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
 
 
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+# Matched with first_flat_match, which supplies the word boundary before the key.
+IS_AI_NO_RE = re.compile(r"is_ai\s*=\s*no\b")
+ALWAYS_NO_RE = re.compile(r"always\s*=\s*no\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
-_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+_TOP_LEVEL_BLOCK_RE = IDENTIFIER_BLOCK_LINE_RE
 
 
-def first_flat_match(
+def iter_flat_matches(
     block: str, pattern: "re.Pattern[str]"
-) -> Optional["re.Match[str]"]:
-    """First match of *pattern* sitting unconditionally at depth 0 of a block.
+) -> Iterator["re.Match[str]"]:
+    """Matches of *pattern* sitting unconditionally at depth 0 of a block.
 
     Nested inside NOT/OR/AND/if/limit or a scoped `TAG = { }` a token is
     conditional and means something different: `NOT = { has_country_flag = X }`
@@ -1351,14 +1411,20 @@ def first_flat_match(
     preceding-whitespace guard against matching mid-token.
     """
     if not block:
-        return None
+        return
     for inner, index in iter_flat_offsets(block):
         if index and not inner[index - 1].isspace():
             continue
         match = pattern.match(inner, index)
         if match:
-            return match
-    return None
+            yield match
+
+
+def first_flat_match(
+    block: str, pattern: "re.Pattern[str]"
+) -> Optional["re.Match[str]"]:
+    """First match of *pattern* sitting unconditionally at depth 0 of a block."""
+    return next(iter_flat_matches(block, pattern), None)
 
 
 def has_flat_is_ai(block: str) -> bool:
@@ -1426,7 +1492,7 @@ def ai_only_decision_categories(mod_path: str) -> Dict[str, str]:
     """
     root = Path(mod_path) / "common" / "decisions" / "categories"
     names: Dict[str, str] = {}
-    for path in sorted(root.rglob("*.txt")):
+    for path in map(Path, list_files(root)):
         try:
             text = path.read_text(encoding="utf-8-sig", errors="replace")
         except OSError:
@@ -1483,50 +1549,12 @@ class FileOpener:
         cls._cache.clear()
 
 
-class DataCleaner:
-    """Helper class for cleaning data structures"""
-
-    @classmethod
-    def clear_false_positives(cls, input_iter, false_positives: tuple = ()):
-        """Remove false positives from a dictionary or list"""
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                for key in false_positives:
-                    try:
-                        input_iter.pop(key)
-                    except KeyError:
-                        continue
-            return input_iter
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                return [i for i in input_iter if i not in false_positives]
-            return input_iter
-
-    @classmethod
-    def clear_false_positives_partial_match(
-        cls, input_iter, false_positives: tuple = ()
-    ):
-        """Remove items that partially match false positives"""
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-                for i in skip_list:
-                    if i in input_iter:
-                        input_iter.pop(i)
-            return input_iter
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-                input_iter = [i for i in input_iter if i not in skip_list]
-            return input_iter
+def drop_partial_matches(
+    names: Iterable[str], false_positives: Iterable[str]
+) -> List[str]:
+    """Return the names that contain none of the false-positive substrings."""
+    false_positives = tuple(false_positives)
+    return [name for name in names if not any(fp in name for fp in false_positives)]
 
 
 def timing_enabled() -> bool:
@@ -1680,10 +1708,45 @@ def collect_files_by_mode(
 
 
 def get_root_dir() -> str:
-    """Resolve the mod root directory (two levels up from tools/linting/)."""
-    return os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
-    )
+    """The checkout root that holds this tools/ directory."""
+    return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
+def find_mod_root(
+    start: str | os.PathLike[str], markers: Tuple[str, ...]
+) -> Optional[str]:
+    """The nearest of *start* and its parents that holds every *markers* directory."""
+    path = os.path.abspath(start)
+    while not all(os.path.isdir(os.path.join(path, marker)) for marker in markers):
+        parent = os.path.dirname(path)
+        if parent == path:
+            return None
+        path = parent
+    return path
+
+
+def list_files(
+    directory: str | os.PathLike[str],
+    patterns: Tuple[str, ...] = ("*.txt",),
+    recursive: bool = True,
+) -> List[str]:
+    """Sorted paths of the files in *directory* whose names match a pattern.
+
+    Subdirectories are searched only when *recursive*. Hidden files and
+    directories are skipped, as glob skips them. A missing directory gives an
+    empty list.
+    """
+    walk = os.walk(directory)
+    found: List[str] = []
+    for dirpath, dirnames, filenames in walk if recursive else islice(walk, 1):
+        dirnames[:] = [name for name in dirnames if not name.startswith(".")]
+        found.extend(
+            os.path.join(dirpath, name)
+            for name in filenames
+            if not name.startswith(".")
+            and any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
+        )
+    return sorted(found)
 
 
 def add_dry_run_argument(parser: argparse.ArgumentParser) -> None:
@@ -1807,31 +1870,28 @@ def get_git_diff_files(
         if env_files is not None:
             all_files = env_files
         else:
+            if staged_only:
+                cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMRT"]
+            else:
+                cmd = [
+                    "git",
+                    "diff",
+                    "--name-only",
+                    "--diff-filter=ACMRT",
+                    f"{base_branch}...HEAD",
+                ]
             try:
-                import subprocess as _sp
-
-                if staged_only:
-                    cmd = [
-                        "git",
-                        "diff",
-                        "--cached",
-                        "--name-only",
-                        "--diff-filter=ACMRT",
-                    ]
-                else:
-                    cmd = [
-                        "git",
-                        "diff",
-                        "--name-only",
-                        "--diff-filter=ACMRT",
-                        f"{base_branch}...HEAD",
-                    ]
-                result = _sp.run(
+                result = subprocess.run(
                     cmd, capture_output=True, text=True, check=True, timeout=15
                 )
-                all_files = [f for f in result.stdout.strip().split("\n") if f]
-            except Exception:
+            except (
+                OSError,
+                subprocess.CalledProcessError,
+                subprocess.TimeoutExpired,
+            ) as exc:
+                log_message("WARNING", f"git diff failed, checking no files: {exc}")
                 return []
+            all_files = [f for f in result.stdout.strip().split("\n") if f]
 
         if staged_only:
             _staged_files_cache = all_files
@@ -1851,19 +1911,13 @@ def get_all_txt_files(
     include_interface: bool = False,
 ) -> List[str]:
     """Get all .txt files from relevant directories."""
-    import fnmatch
-
     if include_interface:
         directories = _DIRECTORIES_WITH_INTERFACE
-
-    files_list = []
-    for directory in directories:
-        dir_path = os.path.join(root_dir, directory)
-        if os.path.exists(dir_path):
-            for root, _, filenames in os.walk(dir_path):
-                for filename in fnmatch.filter(filenames, "*.txt"):
-                    files_list.append(os.path.join(root, filename))
-    return files_list
+    return [
+        path
+        for directory in directories
+        for path in list_files(os.path.join(root_dir, directory))
+    ]
 
 
 def get_staged_files(
@@ -1943,62 +1997,6 @@ def get_staged_files(
         return None
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
-
-
-def run_tool_main(
-    tool_class,
-    description: str = "Run tool",
-    extra_args_fn=None,
-    method_name: str = "process_file",
-    argv=None,
-    parser=None,
-):
-    """Main entry point for single-file tools and standardizers.
-
-    Args:
-        tool_class: Class to instantiate (DataCleaner subclass or BaseStandardizer).
-        description: CLI description string.
-        extra_args_fn: Optional callback to add custom argparse arguments.
-        method_name: Method to call on the instance (default: "process_file").
-        argv: Argument list (default: sys.argv[1:]).
-        parser: Custom ArgumentParser (default: create_standard_parser).
-    """
-    if parser is None:
-        parser = create_standard_parser(description)
-    if extra_args_fn:
-        extra_args_fn(parser)
-    args = parser.parse_args(argv)
-
-    if not os.path.exists(args.input_file):
-        log_message("ERROR", f"File '{args.input_file}' does not exist")
-        sys.exit(1)
-
-    output_file = args.output if args.output else args.input_file
-
-    import inspect
-
-    sig = inspect.signature(tool_class.__init__)
-    valid_params = set(sig.parameters.keys()) - {"self"}
-    ctor_kwargs = {}
-    if "verbose" in valid_params:
-        ctor_kwargs["verbose"] = args.verbose
-    if "use_colors" in valid_params:
-        ctor_kwargs["use_colors"] = not getattr(args, "no_color", False)
-    tool = tool_class(**ctor_kwargs)
-
-    if args.backup:
-        backup_file = create_backup(args.input_file)
-        if not backup_file:
-            sys.exit(1)
-
-    log_message("INFO", f"Starting processing of {args.input_file}", args.verbose)
-
-    method = getattr(tool, method_name)
-    if method(args.input_file, output_file):
-        log_message("SUCCESS", f"Processing completed: {output_file}")
-    else:
-        log_message("ERROR", "Processing failed")
-        sys.exit(1)
 
 
 def run_validator_main(

@@ -2,6 +2,9 @@
 # multipliers it drives, and reserve-currency seigniorage and ROI bonuses.
 
 # Script Constants
+@currency_strength_min = 0.15
+@currency_strength_max = 2.0
+
 # Fundamentals push currency_strength each month; a pull draws it back toward currency_strength_base.
 @currency_pull = 0.01
 @currency_base_rise = 0.002
@@ -12,10 +15,6 @@
 @currency_debt_risk_span = 10
 @currency_debt_risk_cap = 20
 @currency_debt_risk_penalty = -0.01
-@currency_high_inflation = 0.05
-@currency_inflation_penalty_span = 0.15
-@currency_inflation_penalty = -0.015
-@currency_inflation_penalty_cap = 0.25
 @currency_stability_neutral = 0.5
 @currency_stability_sensitivity = 0.01
 @currency_depression = -0.006
@@ -31,7 +30,7 @@
 @currency_haven_tension = 0.5
 @currency_haven_usd_jpy = 0.002
 @currency_haven_chf = 0.003
-@currency_inflation_sensitivity = 0.05
+@currency_inflation_sensitivity = 0.025
 
 # Seigniorage income, in-game B/week.
 @seigniorage_per_adopter = 0.0225
@@ -62,6 +61,9 @@ currency_startup = {
 	if = { limit = { NOT = { has_variable = currency_strength_base } }
 		set_variable = { currency_strength_base = currency_strength }
 	}
+	if = { limit = { NOT = { has_variable = inflation_currency_strength_start } }
+		set_variable = { inflation_currency_strength_start = currency_strength }
+	}
 	update_currency_issuers = yes
 }
 
@@ -74,9 +76,9 @@ update_currency_issuers = {
 		var:global.usd_issuer = { clr_country_flag = is_usd_issuer }
 	}
 	1182 = { owner = {
-		set_variable = { global.usd_issuer = THIS }
-		set_country_flag = is_usd_issuer
-	} }
+			set_variable = { global.usd_issuer = THIS }
+			set_country_flag = is_usd_issuer
+		} }
 
 	# EUR: EUU if it exists, otherwise Berlin (state 45)
 	if = { limit = { check_variable = { global.eur_issuer > 0 } }
@@ -90,9 +92,9 @@ update_currency_issuers = {
 	}
 	else = {
 		45 = { owner = {
-			set_variable = { global.eur_issuer = THIS }
-			set_country_flag = is_eur_issuer
-		} }
+				set_variable = { global.eur_issuer = THIS }
+				set_country_flag = is_eur_issuer
+			} }
 	}
 
 	# CNY: Beijing (state 547)
@@ -100,87 +102,87 @@ update_currency_issuers = {
 		var:global.cny_issuer = { clr_country_flag = is_cny_issuer }
 	}
 	547 = { owner = {
-		set_variable = { global.cny_issuer = THIS }
-		set_country_flag = is_cny_issuer
-	} }
+			set_variable = { global.cny_issuer = THIS }
+			set_country_flag = is_cny_issuer
+		} }
 
 	# RUB: Moscow (state 652)
 	if = { limit = { check_variable = { global.rub_issuer > 0 } }
 		var:global.rub_issuer = { clr_country_flag = is_rub_issuer }
 	}
 	652 = { owner = {
-		set_variable = { global.rub_issuer = THIS }
-		set_country_flag = is_rub_issuer
-	} }
+			set_variable = { global.rub_issuer = THIS }
+			set_country_flag = is_rub_issuer
+		} }
 
 	# JPY: Tokyo (state 615)
 	if = { limit = { check_variable = { global.jpy_issuer > 0 } }
 		var:global.jpy_issuer = { clr_country_flag = is_jpy_issuer }
 	}
 	615 = { owner = {
-		set_variable = { global.jpy_issuer = THIS }
-		set_country_flag = is_jpy_issuer
-	} }
+			set_variable = { global.jpy_issuer = THIS }
+			set_country_flag = is_jpy_issuer
+		} }
 
 	# GBP: London (state 13)
 	if = { limit = { check_variable = { global.gbp_issuer > 0 } }
 		var:global.gbp_issuer = { clr_country_flag = is_gbp_issuer }
 	}
 	13 = { owner = {
-		set_variable = { global.gbp_issuer = THIS }
-		set_country_flag = is_gbp_issuer
-	} }
+			set_variable = { global.gbp_issuer = THIS }
+			set_country_flag = is_gbp_issuer
+		} }
 
 	# CHF: Bern (state 74)
 	if = { limit = { check_variable = { global.chf_issuer > 0 } }
 		var:global.chf_issuer = { clr_country_flag = is_chf_issuer }
 	}
 	74 = { owner = {
-		set_variable = { global.chf_issuer = THIS }
-		set_country_flag = is_chf_issuer
-	} }
+			set_variable = { global.chf_issuer = THIS }
+			set_country_flag = is_chf_issuer
+		} }
 
 	# NLG: Amsterdam (state 46)
 	if = { limit = { check_variable = { global.nlg_issuer > 0 } }
 		var:global.nlg_issuer = { clr_country_flag = is_nlg_issuer }
 	}
 	46 = { owner = {
-		set_variable = { global.nlg_issuer = THIS }
-		set_country_flag = is_nlg_issuer
-	} }
+			set_variable = { global.nlg_issuer = THIS }
+			set_country_flag = is_nlg_issuer
+		} }
 
 	if = { limit = { check_variable = { global.brl_issuer > 0 } }
 		var:global.brl_issuer = { clr_country_flag = is_brl_issuer }
 	}
 	885 = { owner = {
-		set_variable = { global.brl_issuer = THIS }
-		set_country_flag = is_brl_issuer
-	} }
+			set_variable = { global.brl_issuer = THIS }
+			set_country_flag = is_brl_issuer
+		} }
+
+	# Early-out gate for the currency ladders that test the issuer flags
+	every_country = {
+		set_variable = { currency_issuer_gate = 0 }
+		if = { limit = { is_reserve_currency_issuer = yes }
+			set_variable = { currency_issuer_gate = 1 }
+		}
+	}
+}
+
+# Run after every change to currency_strength. currency_strength_minimum_modifier is the floor itself, summed across sources.
+clamp_currency_strength = {
+	set_temp_variable = {
+		currency_strength_floor = {
+			value = modifier@currency_strength_minimum_modifier
+			clamp = { min = @currency_strength_min max = @currency_strength_max }
+		}
+	}
+	clamp_variable = { var = currency_strength min = currency_strength_floor max = @currency_strength_max }
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
 
 # Runs monthly for every country (on_monthly in MD_on_actions.txt).
 calculate_currency_strength = {
-	set_temp_variable = { inflation_pressure = 0 }
-	if = { limit = { check_variable = { inflation_rate_var > @currency_high_inflation } }
-		set_temp_variable = {
-			inflation_excess = {
-				value = inflation_rate_var
-				min = @currency_inflation_penalty_cap
-				subtract = @currency_high_inflation
-				divide = @currency_inflation_penalty_span
-			}
-		}
-		set_temp_variable = {
-			inflation_pressure = {
-				value = inflation_excess
-				multiply = inflation_excess
-				multiply = @currency_inflation_penalty
-			}
-		}
-	}
-
 	# Excludes the policy-rate share, or raising the policy rate would cancel its own support.
 	set_temp_variable = { debt_risk_pressure = 0 }
 	set_temp_variable = { debt_risk = { value = interest_rate subtract = cb_rate_premium } }
@@ -245,58 +247,63 @@ calculate_currency_strength = {
 	}
 
 	set_temp_variable = { issuer_adopters = 0 }
-	if = { limit = { has_country_flag = is_usd_issuer }
-		set_temp_variable = { issuer_adopters = global.usd_reserve_adoption_count }
-	}
-	else_if = { limit = { has_country_flag = is_eur_issuer }
-		set_temp_variable = { issuer_adopters = global.eur_reserve_adoption_count }
-	}
-	else_if = { limit = { has_country_flag = is_cny_issuer }
-		set_temp_variable = { issuer_adopters = global.cny_reserve_adoption_count }
-	}
-	else_if = { limit = { has_country_flag = is_rub_issuer }
-		set_temp_variable = { issuer_adopters = global.rub_reserve_adoption_count }
-	}
-	else_if = { limit = { has_country_flag = is_jpy_issuer }
-		set_temp_variable = { issuer_adopters = global.jpy_reserve_adoption_count }
-	}
-	else_if = { limit = { has_country_flag = is_gbp_issuer }
-		set_temp_variable = { issuer_adopters = global.gbp_reserve_adoption_count }
-	}
-	else_if = { limit = { has_country_flag = is_chf_issuer }
-		set_temp_variable = { issuer_adopters = global.chf_reserve_adoption_count }
-	}
-	else_if = { limit = { has_country_flag = is_nlg_issuer }
-		set_temp_variable = { issuer_adopters = global.nlg_reserve_adoption_count }
-	}
-	else_if = { limit = { has_country_flag = is_brl_issuer }
-		set_temp_variable = { issuer_adopters = global.brl_reserve_adoption_count }
-	}
-
 	set_temp_variable = { haven_weight = 0 }
-	if = { limit = { has_country_flag = is_chf_issuer }
-		set_temp_variable = { haven_weight = @currency_haven_chf }
-	}
-	else_if = {
-		limit = {
-			OR = {
-				has_country_flag = is_usd_issuer
-				has_country_flag = is_jpy_issuer
-			}
+	if = { limit = { check_variable = { currency_issuer_gate > 0 } }
+		if = { limit = { has_country_flag = is_usd_issuer }
+			set_temp_variable = { issuer_adopters = global.usd_reserve_adoption_count }
 		}
-		set_temp_variable = { haven_weight = @currency_haven_usd_jpy }
+		else_if = { limit = { has_country_flag = is_eur_issuer }
+			set_temp_variable = { issuer_adopters = global.eur_reserve_adoption_count }
+		}
+		else_if = { limit = { has_country_flag = is_cny_issuer }
+			set_temp_variable = { issuer_adopters = global.cny_reserve_adoption_count }
+		}
+		else_if = { limit = { has_country_flag = is_rub_issuer }
+			set_temp_variable = { issuer_adopters = global.rub_reserve_adoption_count }
+		}
+		else_if = { limit = { has_country_flag = is_jpy_issuer }
+			set_temp_variable = { issuer_adopters = global.jpy_reserve_adoption_count }
+		}
+		else_if = { limit = { has_country_flag = is_gbp_issuer }
+			set_temp_variable = { issuer_adopters = global.gbp_reserve_adoption_count }
+		}
+		else_if = { limit = { has_country_flag = is_chf_issuer }
+			set_temp_variable = { issuer_adopters = global.chf_reserve_adoption_count }
+		}
+		else_if = { limit = { has_country_flag = is_nlg_issuer }
+			set_temp_variable = { issuer_adopters = global.nlg_reserve_adoption_count }
+		}
+		else_if = { limit = { has_country_flag = is_brl_issuer }
+			set_temp_variable = { issuer_adopters = global.brl_reserve_adoption_count }
+		}
+
+		if = { limit = { has_country_flag = is_chf_issuer }
+			set_temp_variable = { haven_weight = @currency_haven_chf }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_country_flag = is_usd_issuer
+					has_country_flag = is_jpy_issuer
+				}
+			}
+			set_temp_variable = { haven_weight = @currency_haven_usd_jpy }
+		}
 	}
 
+	# The floor rises with the rate, so a higher rate still helps when inflation is far above it.
+	set_temp_variable = {
+		real_rate_floor = { value = cb_policy_rate multiply = 0.0025 subtract = 0.10 }
+	}
 	set_temp_variable = {
 		currency_delta = {
 			value = cb_policy_rate
 			divide = 100
 			subtract = inflation_rate_var
 			subtract = @currency_real_rate_neutral
-			clamp = { min = -0.05 max = 0.05 }
+			clamp = { min = real_rate_floor max = 0.05 }
 			multiply = @currency_real_rate_sensitivity
 			add = debt_risk_pressure
-			add = inflation_pressure
 			add = {
 				value = stability
 				subtract = @currency_stability_neutral
@@ -314,9 +321,11 @@ calculate_currency_strength = {
 				max = 0
 				multiply = haven_weight
 			}
+			# The pull targets the base plus currency_strength_modifier, so the modifier is the offset it settles at.
 			subtract = {
 				value = currency_strength
 				subtract = currency_strength_base
+				subtract = modifier@currency_strength_modifier
 				multiply = @currency_pull
 			}
 		}
@@ -324,29 +333,41 @@ calculate_currency_strength = {
 	clamp_temp_variable = { var = currency_delta min = -0.01 max = 0.02 }
 
 	# Issuers and hard-money standards drift within a tighter band.
-	if = { limit = { has_country_flag = is_usd_issuer }
-		clamp_temp_variable = { var = currency_delta min = -0.005 max = 0.02 }
-	}
-	else_if = { limit = { has_country_flag = is_eur_issuer }
-		clamp_temp_variable = { var = currency_delta min = -0.007 max = 0.015 }
-	}
-	else_if = { limit = { has_country_flag = is_rub_issuer }
-		clamp_temp_variable = { var = currency_delta min = -0.01 max = 0.012 }
-	}
-	else_if = { limit = { has_country_flag = is_gbp_issuer }
-		clamp_temp_variable = { var = currency_delta min = -0.008 max = 0.013 }
-	}
-	else_if = { limit = { has_country_flag = is_jpy_issuer }
-		clamp_temp_variable = { var = currency_delta min = -0.008 max = 0.012 }
-	}
-	else_if = { limit = { has_country_flag = is_chf_issuer }
-		clamp_temp_variable = { var = currency_delta min = -0.004 max = 0.010 }
-	}
-	else_if = { limit = { has_country_flag = is_nlg_issuer }
-		clamp_temp_variable = { var = currency_delta min = -0.004 max = 0.010 }
-	}
-	else_if = { limit = { has_country_flag = is_brl_issuer }
-		clamp_temp_variable = { var = currency_delta min = -0.01 max = 0.015 }
+	if = { limit = { check_variable = { currency_issuer_gate > 0 } }
+		if = { limit = { has_country_flag = is_usd_issuer }
+			clamp_temp_variable = { var = currency_delta min = -0.005 max = 0.02 }
+		}
+		else_if = { limit = { has_country_flag = is_eur_issuer }
+			clamp_temp_variable = { var = currency_delta min = -0.007 max = 0.015 }
+		}
+		else_if = { limit = { has_country_flag = is_rub_issuer }
+			clamp_temp_variable = { var = currency_delta min = -0.01 max = 0.012 }
+		}
+		else_if = { limit = { has_country_flag = is_gbp_issuer }
+			clamp_temp_variable = { var = currency_delta min = -0.008 max = 0.013 }
+		}
+		else_if = { limit = { has_country_flag = is_jpy_issuer }
+			clamp_temp_variable = { var = currency_delta min = -0.008 max = 0.012 }
+		}
+		else_if = { limit = { has_country_flag = is_chf_issuer }
+			clamp_temp_variable = { var = currency_delta min = -0.004 max = 0.010 }
+		}
+		else_if = { limit = { has_country_flag = is_nlg_issuer }
+			clamp_temp_variable = { var = currency_delta min = -0.004 max = 0.010 }
+		}
+		else_if = { limit = { has_country_flag = is_brl_issuer }
+			clamp_temp_variable = { var = currency_delta min = -0.01 max = 0.015 }
+		}
+		# The CNY issuer has no band of its own and falls through to the metal standards
+		else_if = { limit = { has_idea = gold_standard_back }
+			clamp_temp_variable = { var = currency_delta min = -0.005 max = 0.008 }
+		}
+		else_if = { limit = { has_idea = silver_standard }
+			clamp_temp_variable = { var = currency_delta min = -0.008 max = 0.012 }
+		}
+		else_if = { limit = { has_idea = bi_metal_standard }
+			clamp_temp_variable = { var = currency_delta min = -0.010 max = 0.015 }
+		}
 	}
 	else_if = { limit = { has_idea = gold_standard_back }
 		clamp_temp_variable = { var = currency_delta min = -0.005 max = 0.008 }
@@ -358,9 +379,11 @@ calculate_currency_strength = {
 		clamp_temp_variable = { var = currency_delta min = -0.010 max = 0.015 }
 	}
 
+	# Move by a share of the current level, or a weak currency's fixed step reads as ever-larger depreciation.
+	multiply_temp_variable = { currency_delta = currency_strength }
 	add_to_variable = { currency_strength = currency_delta }
 
-	# Gold and silver pull currency_strength back toward par (1.0).
+	# Metal standards pull currency_strength back toward par (1.0).
 	if = {
 		limit = { has_idea = gold_standard_back }
 		if = {
@@ -376,11 +399,18 @@ calculate_currency_strength = {
 		limit = { has_idea = silver_standard }
 		if = {
 			limit = { NOT = { check_variable = { currency_strength > 1.0 } } }
+			add_to_variable = { currency_strength = 0.003 }
+		}
+	}
+	else_if = {
+		limit = { has_idea = bi_metal_standard }
+		if = {
+			limit = { NOT = { check_variable = { currency_strength > 1.0 } } }
 			add_to_variable = { currency_strength = 0.002 }
 		}
 	}
 
-	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+	clamp_currency_strength = yes
 
 	if = { limit = { check_variable = { currency_strength > currency_strength_base } }
 		add_to_variable = {
@@ -403,6 +433,10 @@ calculate_currency_strength = {
 		}
 	}
 
+	calculate_reserve_roi_bonus = yes
+}
+
+refresh_currency_inflation_effects = {
 	# A currency below par (weak) adds inflation pressure; above par eases it.
 	set_variable = {
 		currency_inflation_feed = {
@@ -412,14 +446,14 @@ calculate_currency_strength = {
 			multiply = @currency_inflation_sensitivity
 		}
 	}
-
-	set_variable = { inflation_cost_combined_var = inflation_rate_var }
-	add_to_variable = { inflation_cost_combined_var = currency_inflation_feed }
-
-	calculate_reserve_roi_bonus = yes
-
-	# Currency relief can ease inflation but never push it negative.
-	clamp_variable = { var = inflation_cost_combined_var min = 0 }
+	set_variable = {
+		inflation_cost_combined_var = {
+			value = inflation_rate_var
+			add = currency_inflation_feed
+			subtract = { value = reserve_roi_bonus multiply = 0.5 }
+			clamp = { min = 0 max = 10000 }
+		}
+	}
 }
 
 # ── Income stream multipliers ─────────────────────────────────────────────────
@@ -460,62 +494,64 @@ calculate_seigniorage_income = {
 	set_variable = { seigniorage_income_display = 0 }
 	set_variable = { EU_seigniorage_weekly = 0 }
 
-	if = { limit = { has_country_flag = is_usd_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.usd_reserve_adoption_count  multiply = @seigniorage_per_adopter }
-		}
-	}
-	else_if = { limit = { has_country_flag = is_eur_issuer  country_exists = EUU }
-		set_temp_variable = {
-			seigniorage_base = { value = global.eur_reserve_adoption_count  multiply = @seigniorage_per_adopter }
-		}
-	}
-	# EUU not spawned yet: bank EUR seigniorage in the EU budget instead of paying an
-	# interim issuer. seigniorage_base stays 0.
-	else_if = { limit = { has_country_flag = is_eur_issuer  NOT = { country_exists = EUU } }
-		add_to_temp_variable = { seigniorage_mod = 1.0 }
-		set_temp_variable = {
-			pool_base = {
-				value = global.eur_reserve_adoption_count
-				multiply = @seigniorage_per_adopter
-				multiply = seigniorage_mod
+	if = { limit = { check_variable = { currency_issuer_gate > 0 } }
+		if = { limit = { has_country_flag = is_usd_issuer }
+			set_temp_variable = {
+				seigniorage_base = { value = global.usd_reserve_adoption_count  multiply = @seigniorage_per_adopter }
 			}
 		}
-		set_variable = { EU_seigniorage_weekly = pool_base }
-	}
-	else_if = { limit = { has_country_flag = is_rub_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.rub_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+		else_if = { limit = { has_country_flag = is_eur_issuer  country_exists = EUU }
+			set_temp_variable = {
+				seigniorage_base = { value = global.eur_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+			}
 		}
-	}
-	else_if = { limit = { has_country_flag = is_gbp_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.gbp_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+		# EUU not spawned yet: bank EUR seigniorage in the EU budget instead of paying an
+		# interim issuer. seigniorage_base stays 0.
+		else_if = { limit = { has_country_flag = is_eur_issuer  NOT = { country_exists = EUU } }
+			add_to_temp_variable = { seigniorage_mod = 1.0 }
+			set_temp_variable = {
+				pool_base = {
+					value = global.eur_reserve_adoption_count
+					multiply = @seigniorage_per_adopter
+					multiply = seigniorage_mod
+				}
+			}
+			set_variable = { EU_seigniorage_weekly = pool_base }
 		}
-	}
-	else_if = { limit = { has_country_flag = is_jpy_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.jpy_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+		else_if = { limit = { has_country_flag = is_rub_issuer }
+			set_temp_variable = {
+				seigniorage_base = { value = global.rub_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+			}
 		}
-	}
-	else_if = { limit = { has_country_flag = is_chf_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.chf_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+		else_if = { limit = { has_country_flag = is_gbp_issuer }
+			set_temp_variable = {
+				seigniorage_base = { value = global.gbp_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+			}
 		}
-	}
-	else_if = { limit = { has_country_flag = is_cny_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.cny_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+		else_if = { limit = { has_country_flag = is_jpy_issuer }
+			set_temp_variable = {
+				seigniorage_base = { value = global.jpy_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+			}
 		}
-	}
-	else_if = { limit = { has_country_flag = is_nlg_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.nlg_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+		else_if = { limit = { has_country_flag = is_chf_issuer }
+			set_temp_variable = {
+				seigniorage_base = { value = global.chf_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+			}
 		}
-	}
-	else_if = { limit = { has_country_flag = is_brl_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.brl_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+		else_if = { limit = { has_country_flag = is_cny_issuer }
+			set_temp_variable = {
+				seigniorage_base = { value = global.cny_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+			}
+		}
+		else_if = { limit = { has_country_flag = is_nlg_issuer }
+			set_temp_variable = {
+				seigniorage_base = { value = global.nlg_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+			}
+		}
+		else_if = { limit = { has_country_flag = is_brl_issuer }
+			set_temp_variable = {
+				seigniorage_base = { value = global.brl_reserve_adoption_count  multiply = @seigniorage_per_adopter }
+			}
 		}
 	}
 }
@@ -655,13 +691,7 @@ calculate_reserve_roi_bonus = {
 		}
 		clamp_variable = { var = reserve_trade_bonus min = @reserve_trade_base max = @reserve_trade_max }
 	}
-	set_temp_variable = {
-		tmp_inflation_buffer = {
-			value = tmp_reserve_roi
-			multiply = -0.5
-		}
-	}
-	add_to_variable = { inflation_cost_combined_var = tmp_inflation_buffer }
+	refresh_currency_inflation_effects = yes
 }
 
 adopt_chinese_yuan_reserve = {

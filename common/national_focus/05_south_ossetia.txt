@@ -16,7 +16,7 @@ focus_tree = {
 
 		cost = 7
 
-		search_filters = { FOCUS_FILTER_OSSETIA_MAIN }
+		search_filters = { FOCUS_FILTER_OSSETIA_MAIN FOCUS_FILTER_EXPENDITURE }
 
 		available = { has_war = no }
 
@@ -93,7 +93,13 @@ focus_tree = {
 					set_temp_variable = { treasury_change = -10 }
 					modify_treasury_effect = yes
 					add_ideas = SOO_help_ossetia_SOV
+					set_temp_variable = { int_investment_change = 10 }
+					modify_international_investment_effect = yes
 				}
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = SOV }
+				set_temp_variable = { influence_target = SOO }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -311,32 +317,42 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: focus SOO_banner_of_the_people"
 			custom_effect_tooltip = SOO_New_battalion_tt
 			hidden_effect = {
-			if = {
-				limit = { NOT = { has_template = "Motorizovannaya Brigada" } }
-				division_template = {
-					name = "Motorizovannaya Brigada"
+				if = {
+					limit = { NOT = { has_template = "Motorizovannaya Brigada" } }
+					division_template = {
+						name = "Motorizovannaya Brigada"
 
-					regiments = {
-						Mot_Inf_Bat = { x = 0 y = 0 }
-						Mot_Inf_Bat = { x = 0 y = 1 }
-					}
+						regiments = {
+							Mot_Inf_Bat = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
 
-					support = {
-						Arty_Battery = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
+						}
+
+						regimental_support = {
+							Arty_Battery = { x = 0 y = 0 }
+
+							Arty_Battery = { x = 1 y = 0 }
+						}
 					}
 				}
-			}
-			705 = {
-				create_unit = {
-					division = "name = \"Motorizovannaya Brigada\" division_template = \"Motorizovannaya Brigada\" start_experience_factor = 0.5"
-					owner = SOO
+				705 = {
+					create_unit = {
+						division = "name = \"Motorizovannaya Brigada\" division_template = \"Motorizovannaya Brigada\" start_experience_factor = 0.5"
+						owner = SOO
+					}
 				}
-			}
 			}
 			add_ideas = SOO_banner_of_the_people_idea
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -605,7 +621,11 @@ focus_tree = {
 				remove_idea = SOO_Host_transit_tax
 				add_idea = SOO_Ergneti_market_regulation
 			}
-			GEO = { add_opinion_modifier = { target = ROOT modifier = mutual_trade_opinion } }
+			if = { limit = { country_exists = GEO }
+				set_temp_variable = { sender_nation = ROOT.id }
+				set_temp_variable = { receiver_nation = GEO.id }
+				set_improved_trade_agreement = yes
+			}
 		}
 
 		ai_will_do = { base = 155 }
@@ -908,32 +928,42 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: focus SOO_Enduring_the_Sovereignty_Fight"
 			custom_effect_tooltip = SOO_New_battalion_tt
 			hidden_effect = {
-			if = {
-				limit = { NOT = { has_template = "Motorizovannaya Brigada" } }
-				division_template = {
-					name = "Motorizovannaya Brigada"
+				if = {
+					limit = { NOT = { has_template = "Motorizovannaya Brigada" } }
+					division_template = {
+						name = "Motorizovannaya Brigada"
 
-					regiments = {
-						Mot_Inf_Bat = { x = 0 y = 0 }
-						Mot_Inf_Bat = { x = 0 y = 1 }
-					}
+						regiments = {
+							Mot_Inf_Bat = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
 
-					support = {
-						Arty_Battery = { x = 0 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
+						}
+
+						regimental_support = {
+							Arty_Battery = { x = 0 y = 0 }
+
+							Arty_Battery = { x = 1 y = 0 }
+						}
 					}
 				}
-			}
-			705 = {
-				create_unit = {
-					division = "name = \"Motorizovannaya Brigada\" division_template = \"Motorizovannaya Brigada\" start_experience_factor = 0.5"
-					owner = SOO
+				705 = {
+					create_unit = {
+						division = "name = \"Motorizovannaya Brigada\" division_template = \"Motorizovannaya Brigada\" start_experience_factor = 0.5"
+						owner = SOO
+					}
 				}
-			}
 			}
 			add_war_support = 0.07
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1011,7 +1041,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -1237,11 +1271,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: focus SOO_increase_tolls_on_Roki_Tunnel"
-			add_to_variable = {
-				var = additional_income_SOO_Roki_tunnel_toll
-				value = 0.010
-				tooltip = SOO_increase_tolls_on_Roki_Tunnel_tt_focus
-			}
+			custom_effect_tooltip = SOO_increase_tolls_on_Roki_Tunnel_tt_focus
 		}
 
 		ai_will_do = { base = 155 }
@@ -1444,7 +1474,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOO_subsidise_the_Farmers }
 
-		search_filters = { FOCUS_FILTER_OSSETIA_MAIN }
+		search_filters = { FOCUS_FILTER_OSSETIA_MAIN FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: focus SOO_Boost_the_local_flour_production"
@@ -1676,7 +1706,11 @@ focus_tree = {
 			add_to_variable = { SOO_natpop_political_power_gain = 0.04 tooltip = political_power_gain_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -1711,7 +1745,11 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -1755,6 +1793,8 @@ focus_tree = {
 				factor = 0
 				can_staff_an_offices = no
 			}
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
 		}
 	}
 
@@ -1798,6 +1838,8 @@ focus_tree = {
 				factor = 0
 				can_staff_an_offices = no
 			}
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
 		}
 	}
 
@@ -1834,7 +1876,11 @@ focus_tree = {
 			add_to_variable = { SOO_natpop_social_cost_multiplier_modifier = 0.08 tooltip = social_cost_multiplier_modifier_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -1866,7 +1912,11 @@ focus_tree = {
 			add_to_variable = { SOO_natpop_nationalist_drift = 0.03 tooltip = nationalist_drift_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -1896,7 +1946,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -1934,7 +1988,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -1972,7 +2030,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2007,7 +2069,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2039,7 +2105,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2081,7 +2151,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2113,7 +2187,11 @@ focus_tree = {
 			change_influence_percentage = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2141,7 +2219,11 @@ focus_tree = {
 			create_faction_from_template = faction_template_firstborn_faction
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2221,6 +2303,8 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
 		}
 	}
 
@@ -2248,7 +2332,11 @@ focus_tree = {
 			change_domestic_influence_percentage = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_NATIONALIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_nationalist_path = yes }
+		}
 	}
 	###############################################
 	################NYHAZ###########
@@ -2277,7 +2365,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
+		}
 	}
 
 	focus = {
@@ -2305,7 +2397,11 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
+		}
 	}
 
 	focus = {
@@ -2334,7 +2430,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
+		}
 	}
 
 	focus = {
@@ -2349,7 +2449,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOO_nyhaz_narodovlastie }
 
-		search_filters = { FOCUS_FILTER_OSSETIA_NYKHAZ }
+		search_filters = { FOCUS_FILTER_OSSETIA_NYKHAZ FOCUS_FILTER_EXPENDITURE }
 
 		available = { emerging_anarchist_communism_are_in_power = yes }
 
@@ -2370,6 +2470,8 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
 		}
 	}
 
@@ -2397,7 +2499,11 @@ focus_tree = {
 			add_to_variable = { SOO_nyhaz_enemy_operative_capture_chance_factor = 0.15 tooltip = enemy_operative_capture_chance_factor_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
+		}
 	}
 
 	focus = {
@@ -2423,7 +2529,11 @@ focus_tree = {
 			add_to_variable = { SOO_nyhaz_root_out_resistance_effectiveness_factor = 0.15 tooltip = root_out_resistance_effectiveness_factor_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
+		}
 	}
 
 	focus = {
@@ -2449,7 +2559,11 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
+		}
 	}
 
 	focus = {
@@ -2498,7 +2612,12 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 2 ai_is_threatened = yes }
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
+		}
 	}
 
 	focus = {
@@ -2522,18 +2641,35 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: focus SOO_nyhaz_national_guard"
 			hidden_effect = {
 				if = {
-					limit = { NOT = { has_template = "Natsionalna Hvardiya" } }
+					limit = { NOT = { has_template = "Natsionalnaya Gvardiya" } }
 					division_template = {
-						name = "Natsionalna Hvardiya"
+						name = "Natsionalnaya Gvardiya"
 						regiments = {
 							Militia_Bat = { x = 0 y = 0 }
 							Militia_Bat = { x = 0 y = 1 }
 							Militia_Bat = { x = 0 y = 2 }
-							Militia_Bat = { x = 0 y = 3 }
+
+							Militia_Bat = { x = 1 y = 0 }
+							Militia_Bat = { x = 1 y = 1 }
+							Militia_Bat = { x = 1 y = 2 }
+
+							Militia_Bat = { x = 2 y = 0 }
+							Militia_Bat = { x = 2 y = 1 }
+							Militia_Bat = { x = 2 y = 2 }
+
+							Militia_Bat = { x = 3 y = 0 }
+							Militia_Bat = { x = 3 y = 1 }
+							Militia_Bat = { x = 3 y = 2 }
+						}
+						regimental_support = {
+							Militia_Recce_Comp = { x = 0 y = 0 }
+
+							Militia_Recce_Comp = { x = 1 y = 0 }
+
+							Militia_Recce_Comp = { x = 2 y = 0 }
 						}
 						support = {
 							L_Engi_Comp = { x = 0 y = 0 }
-							L_Recce_Comp = { x = 0 y = 0 }
 						}
 					}
 				}
@@ -2544,13 +2680,18 @@ focus_tree = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
 				prioritize = { 705 }
 				create_unit = {
-					division = "name = \"1st Operational Brigade of the National Guard\" division_template = \"Natsionalna Hvardiya\" start_experience_factor = 0.1"
+					division = "name = \"1st Operational Brigade of the National Guard\" division_template = \"Natsionalnaya Gvardiya\" start_experience_factor = 0.1"
 					owner = SOO
 				}
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 2 ai_is_threatened = yes }
+			modifier = { factor = 25 SOO_ai_historical_path = yes }
+			modifier = { factor = 0 SOO_ai_not_historical_path = yes }
+		}
 	}
 	###############################################
 	################COMMUNISTS###########
@@ -2586,7 +2727,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2621,7 +2766,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2648,7 +2797,11 @@ focus_tree = {
 			add_to_variable = { SOO_commie_police_cost_multiplier_modifier = 0.05 tooltip = police_cost_multiplier_modifier_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2675,7 +2828,11 @@ focus_tree = {
 			add_manpower = 300
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2709,7 +2866,11 @@ focus_tree = {
 			change_farmers_opinion = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2736,7 +2897,11 @@ focus_tree = {
 			add_to_variable = { SOO_commie_education_cost_multiplier_modifier = 0.09 tooltip = education_cost_multiplier_modifier_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2767,7 +2932,11 @@ focus_tree = {
 			change_communist_cadres_opinion = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2797,7 +2966,11 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2826,7 +2999,11 @@ focus_tree = {
 			change_communist_cadres_opinion = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2862,6 +3039,8 @@ focus_tree = {
 				factor = 0
 				can_staff_an_industrial_complex = no
 			}
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
 		}
 	}
 
@@ -2889,7 +3068,11 @@ focus_tree = {
 			add_to_variable = { SOO_commie_stability_factor = -0.07 tooltip = stability_factor_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2915,7 +3098,11 @@ focus_tree = {
 			add_to_variable = { SOO_commie_education_cost_multiplier_modifier = 0.10 tooltip = education_cost_multiplier_modifier_tt }
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2951,7 +3138,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -2989,7 +3180,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3030,7 +3225,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3056,7 +3255,11 @@ focus_tree = {
 			unlock_decision_category_tooltip = SOO_revoult_south_caucas
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3088,7 +3291,12 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 0 strength_ratio = { tag = PER ratio < 1 } }
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3120,7 +3328,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 has_global_flag = SOO_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 SOO_ai_not_communist_path = yes }
+		}
 	}
 	###NYKHAZ CONT
 	focus = {
@@ -3163,7 +3375,11 @@ focus_tree = {
 			set_improved_trade_agreement = yes
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_patriotic_path = yes }
+			modifier = { factor = 0 SOO_ai_not_patriotic_path = yes }
+		}
 	}
 
 	focus = {
@@ -3187,7 +3403,11 @@ focus_tree = {
 				nationalist_fascist_are_in_power = yes
 				nationalist_monarchists_are_in_power = yes
 			}
+			country_exists = SOV
+			SOV = { has_opinion = { target = SOO value > 19 } }
 		}
+
+		bypass = { NOT = { country_exists = SOV } }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: focus SOO_economic_pizda"
@@ -3196,9 +3416,9 @@ focus_tree = {
 			set_temp_variable = { influence_target = SOO }
 			change_influence_percentage = yes
 			SOV = {
-			set_temp_variable = { treasury_change = -7.60 }
-			modify_treasury_effect = yes
-			 }
+				set_temp_variable = { treasury_change = -7.60 }
+				modify_treasury_effect = yes
+			}
 			set_temp_variable = { treasury_change = 7.60 }
 			modify_treasury_effect = yes
 		}
@@ -3209,6 +3429,8 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = { factor = 25 SOO_ai_patriotic_path = yes }
+			modifier = { factor = 0 SOO_ai_not_patriotic_path = yes }
 		}
 	}
 
@@ -3247,7 +3469,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_patriotic_path = yes }
+			modifier = { factor = 0 SOO_ai_not_patriotic_path = yes }
+		}
 	}
 
 	focus = {
@@ -3288,6 +3514,9 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = { factor = 2 ai_is_threatened = yes }
+			modifier = { factor = 25 SOO_ai_patriotic_path = yes }
+			modifier = { factor = 0 SOO_ai_not_patriotic_path = yes }
 		}
 	}
 
@@ -3331,7 +3560,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_patriotic_path = yes }
+			modifier = { factor = 0 SOO_ai_not_patriotic_path = yes }
+		}
 	}
 
 	focus = {
@@ -3377,7 +3610,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 25 SOO_ai_patriotic_path = yes }
+			modifier = { factor = 0 SOO_ai_not_patriotic_path = yes }
+		}
 	}
 
 	focus = {
@@ -3408,10 +3645,17 @@ focus_tree = {
 						regiments = {
 							Mot_Inf_Bat = { x = 0 y = 0 }
 							Mot_Inf_Bat = { x = 0 y = 1 }
+							Mot_Inf_Bat = { x = 0 y = 2 }
+
+							Mot_Inf_Bat = { x = 1 y = 0 }
+							Mot_Inf_Bat = { x = 1 y = 1 }
+							Mot_Inf_Bat = { x = 1 y = 2 }
 						}
 
-						support = {
+						regimental_support = {
 							Arty_Battery = { x = 0 y = 0 }
+
+							Arty_Battery = { x = 1 y = 0 }
 						}
 					}
 				}
@@ -3424,7 +3668,12 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 2 ai_is_threatened = yes }
+			modifier = { factor = 25 SOO_ai_patriotic_path = yes }
+			modifier = { factor = 0 SOO_ai_not_patriotic_path = yes }
+		}
 	}
 
 	focus = {
@@ -3439,7 +3688,7 @@ focus_tree = {
 
 		prerequisite = { focus = SOO_podchistit_polit_pole }
 
-		search_filters = { FOCUS_FILTER_OSSETIA_PEOPLE FOCUS_FILTER_OSSETIA_NYKHAZ }
+		search_filters = { FOCUS_FILTER_OSSETIA_PEOPLE FOCUS_FILTER_OSSETIA_NYKHAZ FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			OR = {
@@ -3471,6 +3720,9 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = { factor = 2 ai_is_threatened = yes }
+			modifier = { factor = 25 SOO_ai_patriotic_path = yes }
+			modifier = { factor = 0 SOO_ai_not_patriotic_path = yes }
 		}
 	}
 	###############################################
@@ -3714,7 +3966,7 @@ focus_tree = {
 
 		ai_will_do = { base = 155 }
 	}
-###GEORGIA WAR STUFF
+	###GEORGIA WAR STUFF
 	focus = {
 		id = SOO_prepare_for_war
 		icon = against_georgia
@@ -3736,7 +3988,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: focus SOO_prepare_for_war"
 			add_war_support = 0.12
-			set_temp_variable = { treasury_change = -0.5 }
+			set_temp_variable = { treasury_change = -0.05 }
 			modify_treasury_effect = yes
 			add_ideas = SOO_against_georgia_idea
 			705 = {
@@ -3754,6 +4006,7 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = { factor = 2 ai_is_threatened = yes }
 		}
 	}
 
@@ -3829,7 +4082,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -3991,49 +4247,30 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: focus SOO_reinforce_sng2"
-			add_opinion_modifier = {
-				target = ABK
-				modifier = diplomatic_support
-			}
-			reverse_add_opinion_modifier = {
-				target = ABK
-				modifier = diplomatic_support
-			}
-			add_opinion_modifier = {
-				target = PMR
-				modifier = diplomatic_support
-			}
-			reverse_add_opinion_modifier = {
-				target = PMR
-				modifier = diplomatic_support
-			}
-			add_opinion_modifier = {
-				target = NKR
-				modifier = diplomatic_support
-			}
-			reverse_add_opinion_modifier = {
-				target = NKR
-				modifier = diplomatic_support
+			every_country = {
+				limit = {
+					OR = {
+						tag = ABK
+						tag = PMR
+						tag = NKR
+					}
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
+				reverse_add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
+				hidden_effect = {
+					country_event = {
+						id = Ossetia.16
+						days = 1
+					}
+				}
 			}
 			hidden_effect = {
-				PMR = {
-					country_event = {
-						id = Ossetia.16
-						days = 1
-					}
-				}
-				ABK = {
-					country_event = {
-						id = Ossetia.16
-						days = 1
-					}
-				}
-				NKR = {
-					country_event = {
-						id = Ossetia.16
-						days = 1
-					}
-				}
 				country_event = {
 					id = Ossetia.16
 					days = 1
@@ -4102,7 +4339,7 @@ focus_tree = {
 					producer = SOV
 					variant_name = "T-55AM"
 					amount = 30
-					}
+				}
 				add_equipment_to_stockpile = {
 					type = medium_tank_chassis_0
 					producer = SOV
@@ -4114,8 +4351,8 @@ focus_tree = {
 					producer = SOV
 					variant_name = "T-62M"
 					amount = 10
-			}
 				}
+			}
 			else = {
 				add_equipment_to_stockpile = {
 					type = MBT_2
@@ -4131,6 +4368,7 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = { factor = 2 ai_is_threatened = yes }
 		}
 	}
 
@@ -4170,7 +4408,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 155 }
+		ai_will_do = {
+			base = 155
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {

@@ -1,4 +1,8 @@
-"""Shared validator selection for CI batches and impact scans."""
+"""Shared validator selection for CI batches and impact scans.
+
+`ValidatorSpec.args` are also the flags of the main baseline run, so a PR
+and main enable the same checks. `baseline_args` apply to the main run only.
+"""
 
 import ast
 import os
@@ -21,6 +25,9 @@ class ValidatorSpec:
     strict: bool = True
     args: Tuple[str, ...] = ()
     runner: str = "standard"
+    # Main baseline only: widens a diff-scoped check to its whole domain, so a
+    # PR's scoped findings have full main results to match against.
+    baseline_args: Tuple[str, ...] = ()
 
 
 _CORE_GROUPS = (
@@ -34,44 +41,66 @@ _CORE_GROUPS = (
 
 BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     "core": (
-        ValidatorSpec("common-mistakes", "validate_common_mistakes.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "common-mistakes", "validate_common_mistakes.py", (*_CORE_GROUPS, "music")
+        ),
         ValidatorSpec(
             "variables",
             "validate_variables.py",
             _CORE_GROUPS,
             args=("--redundant-focus-flags",),
         ),
-        ValidatorSpec("math-expressions", "validate_math_expressions.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "math-expressions",
+            "validate_math_expressions.py",
+            _CORE_GROUPS,
+            args=("--clamp-bounds",),
+        ),
         ValidatorSpec(
             "scripted-localisation", "validate_scripted_localisation.py", _CORE_GROUPS
         ),
         ValidatorSpec("cosmetic-tags", "validate_cosmetic_tags.py", _CORE_GROUPS),
         ValidatorSpec("localisation", "validate_localisation.py", _CORE_GROUPS),
-        ValidatorSpec("events", "validate_events.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "events",
+            "validate_events.py",
+            _CORE_GROUPS,
+            args=("--check-ai-chance-costs",),
+        ),
         ValidatorSpec("achievements", "validate_achievements.py", _CORE_GROUPS),
-        ValidatorSpec("history-files", "validate_history.py", _CORE_GROUPS),
+        ValidatorSpec("history", "validate_history.py", _CORE_GROUPS),
         ValidatorSpec("unused-scripted", "validate_unused_scripted.py", _CORE_GROUPS),
         ValidatorSpec("agency-upgrades", "validate_agency_upgrades.py", _CORE_GROUPS),
-        ValidatorSpec("ideas", "validate_ideas.py", _CORE_GROUPS),
+        # --missing-loc stays off: its `_desc` backlog would drown the report.
+        ValidatorSpec(
+            "ideas", "validate_ideas.py", _CORE_GROUPS, args=("--missing-name-loc",)
+        ),
         ValidatorSpec("set-variables", "validate_set_variables.py", _CORE_GROUPS),
         # Cross-references the committed vanilla_defines.txt manifest.
         ValidatorSpec("defines", "validate_defines.py", _CORE_GROUPS),
     ),
     "targeted-a": (
         ValidatorSpec(
-            "decisions", "validate_decisions.py", ("decisions", "localisation")
+            "decisions",
+            "validate_decisions.py",
+            ("decisions", "localisation"),
+            args=("--unannounced-categories", "--id-case"),
         ),
-        ValidatorSpec("oob-units", "validate_oob_units.py", ("oob",)),
+        ValidatorSpec("oob-units", "validate_oob_units.py", ("oob", "localisation")),
         ValidatorSpec("equipment-upkeep", "validate_equipment_upkeep.py", ("oob",)),
         ValidatorSpec(
             "equipment-variants",
             "validate_equipment_variants.py",
             ("common", "events", "history"),
-            strict=False,
         ),
         ValidatorSpec("ai-roles", "validate_ai_roles.py", ("ai-strategy",)),
         ValidatorSpec("ai-navy", "validate_ai_navy.py", ("ai-navy",)),
-        ValidatorSpec("ai-equipment", "validate_ai_equipment.py", ("ai-equipment",)),
+        ValidatorSpec(
+            "ai-equipment",
+            "validate_ai_equipment.py",
+            ("ai-equipment",),
+            args=("--check-buildability",),
+        ),
         ValidatorSpec("factions", "validate_factions.py", ("factions",)),
         ValidatorSpec("characters", "validate_characters.py", ("characters",)),
         ValidatorSpec(
@@ -87,7 +116,10 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     ),
     "targeted-b": (
         ValidatorSpec(
-            "focus-tree", "validate_focus_tree.py", ("national-focus", "localisation")
+            "focus-tree",
+            "validate_focus_tree.py",
+            ("national-focus", "localisation"),
+            args=("--missing-icons",),
         ),
         ValidatorSpec("on-actions", "validate_on_actions.py", ("on-actions", "events")),
         ValidatorSpec(
@@ -98,13 +130,27 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "gfx-references",
             "validate_gfx_references.py",
-            ("interface", "common", "events", "history", "localisation"),
+            (
+                "interface",
+                "common",
+                "events",
+                "history",
+                "localisation",
+                "graphic-db",
+            ),
         ),
-        ValidatorSpec("bonus-names", "validate_bonus_names.py", ("common", "events")),
+        ValidatorSpec(
+            "bonus-names",
+            "validate_bonus_names.py",
+            ("common", "events"),
+            args=("--name-not-owner-id",),
+        ),
         ValidatorSpec(
             "tech-categories", "validate_tech_categories.py", ("common", "events")
         ),
-        ValidatorSpec("modifiers", "validate_modifiers.py", ("common",)),
+        ValidatorSpec(
+            "modifiers", "validate_modifiers.py", ("common", "events", "history")
+        ),
         ValidatorSpec(
             "simplifications",
             "validate_simplifications.py",
@@ -114,8 +160,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "building-guards",
             "validate_building_guards.py",
-            ("common", "events"),
-            strict=False,
+            ("common", "events", "history", "map-definition"),
         ),
         ValidatorSpec("dlc-guards", "validate_dlc_guards.py", ("common", "events")),
         ValidatorSpec(
@@ -126,8 +171,24 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "influence-calls", "validate_influence_calls.py", ("common", "events")
         ),
+        ValidatorSpec(
+            "influence-reads",
+            "validate_influence_reads.py",
+            ("common", "events", "history"),
+            strict=False,
+        ),
+        ValidatorSpec(
+            "ai-weight-order", "validate_ai_weight_order.py", ("common", "events")
+        ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
+        ValidatorSpec("special-projects", "validate_special_projects.py", ("common",)),
         ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
+        ValidatorSpec(
+            "graphical-cultures",
+            "validate_graphical_cultures.py",
+            ("common",),
+            strict=False,
+        ),
         ValidatorSpec(
             "ai-path-rules",
             "validate_ai_path_rules.py",
@@ -137,6 +198,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "party-loc",
             "validate_party_loc.py",
             ("localisation", "common"),
+            baseline_args=("--all",),
         ),
     ),
 }
@@ -168,10 +230,10 @@ IMPACT_ONLY_SPECS: Tuple[ValidatorSpec, ...] = (
 _IMPACT_ONLY_BY_SCRIPT = {spec.script: spec for spec in IMPACT_ONLY_SPECS}
 _IMPACT_EXCLUDED_SCRIPTS = {
     "validate_unused_textures.py",
-    # Reads gfx/models and gfx/entities, which the CI workspace does not ship.
+    # Read gfx/models and gfx/entities, which the CI workspace does not ship.
     "validate_mesh_textures.py",
+    "validate_asset_data.py",
     "validate_tools.py",
-    "validate_staged.py",
     # Manual-only: the standardization report is deliberately unwired from
     # pre-commit and CI; editing the script must not re-select it.
     "validate_standardization.py",

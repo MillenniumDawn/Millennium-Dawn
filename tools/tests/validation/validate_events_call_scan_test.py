@@ -13,6 +13,7 @@ from multiprocessing import get_context
 import pytest
 import validate_events as V
 import validator_common
+from shared.suite import call_site_scan, checks_called_by_run
 from shared.suite import write_under_str as _write
 
 
@@ -31,25 +32,29 @@ def _sprite_index(*names):
 
 
 _WORKERS: list[tuple[object, object]] = [
-    (V.scan_event_definitions, set()),
     (V.scan_event_definition_types, []),
-    (V.scan_event_fires, []),
-    (V.scan_typed_event_fires, []),
-    (V.scan_dynamic_event_namespaces, set()),
     (V.scan_date_gated_events, []),
     (V.scan_date_bounded_events, []),
     (V.scan_event_fire_graph, []),
-    (V.scan_invalid_event_calls, []),
     (V.scan_probability_rolled_fires, set()),
-    (V.count_event_ids_in_file, {}),
 ]
 
-# scan_event_definitions / scan_event_definition_types read with skip=False:
-# an event definition counts wherever it lives.
+# scan_event_definition_types reads with skip=False: an event definition counts
+# wherever it lives.
 _SKIP_AWARE_WORKERS = [
     (worker, empty)
     for worker, empty in _WORKERS
-    if worker not in (V.scan_event_definitions, V.scan_event_definition_types)
+    if worker is not V.scan_event_definition_types
+]
+
+_CALL_SITE_EMPTY = [
+    ("longform", []),
+    ("invalid", []),
+    ("typed", []),
+    ("counts", {}),
+    ("dynamic", set()),
+    ("fof", []),
+    ("major", []),
 ]
 
 
@@ -60,30 +65,73 @@ def test_worker_returns_empty_for_an_unreadable_file(tmp_path, worker, empty):
 
 @pytest.mark.parametrize("worker, empty", _SKIP_AWARE_WORKERS)
 def test_worker_skips_non_content_directories(tmp_path, worker, empty):
-    path = _write(tmp_path, "tools/helper.txt", "country_event = foo.1\n")
-    assert worker((path, frozenset())) == empty
+    event = (
+        "country_event = {\n"
+        "\tid = foo.1\n"
+        "\ttrigger = { date > 2005.1.1 }\n"
+        "\timmediate = { random = { chance = 5 country_event = foo.2 } }\n"
+        "}\n"
+    )
+    skipped = _write(tmp_path, "tools/helper.txt", event)
+    assert worker((skipped, frozenset())) == empty
+    read = _write(tmp_path, "events/helper.txt", event)
+    assert worker((read, frozenset())) != empty
+
+
+@pytest.mark.parametrize("section, empty", _CALL_SITE_EMPTY)
+def test_call_site_scan_is_empty_for_unreadable_and_ignored_files(
+    tmp_path, section, empty
+):
+    tracked = frozenset({"foo.1"})
+    gone = tmp_path / "events" / "gone.txt"
+    assert call_site_scan(gone, section, tmp_path, tracked) == empty
+    calls = (
+        "every_country = { country_event = { id = foo.1 } }\n"
+        "country_event { id = foo.2 }\n"
+        "country_event = dyn.[EVENT_ID]\n"
+    )
+    skipped = _write(tmp_path, "tools/helper.txt", calls)
+    assert call_site_scan(skipped, section, tmp_path, tracked) == empty
+    read = _write(tmp_path, "common/helper.txt", calls)
+    assert call_site_scan(read, section, tmp_path, tracked) != empty
+
+
+_EVENT_WITH_LOC_KEYS = (
+    "add_namespace = test\n"
+    "country_event = {\n"
+    "    id = test.1\n"
+    "    is_triggered_only = yes\n"
+    "    title = test.1.t\n"
+    "    desc = test.1.d\n"
+    "    option = { name = test.1.a }\n"
+    "}\n"
+)
+
+# case: (event file text, tracked ids, counts); callers zero-fill absent ids.
+_ID_COUNT_CASES = {
+    "loc keys do not count and an absent id is left out": (
+        _EVENT_WITH_LOC_KEYS,
+        {"test.1", "test.999"},
+        {"test.1": 1},
+    ),
+    "every fire counts": ("country_event = test.1\n" * 3, {"test.1"}, {"test.1": 3}),
+}
+
+
+@pytest.mark.parametrize(
+    ("text", "tracked", "counts"), _ID_COUNT_CASES.values(), ids=_ID_COUNT_CASES
+)
+def test_event_id_counts_whole_tokens(tmp_path, text, tracked, counts):
+    path = tmp_path / "events" / "test.txt"
+    path.parent.mkdir()
+    path.write_text(text)
+    assert call_site_scan(path, "counts", tmp_path, frozenset(tracked)) == counts
 
 
 def test_picture_worker_skips_unreadable_and_ignored_files(tmp_path):
     assert V._extract_event_pictures(str(tmp_path / "events" / "gone.txt")) == []
     skipped = _write(tmp_path, "tools/helper.txt", "picture = GFX_x\n")
     assert V._extract_event_pictures(skipped) == []
-
-
-def test_fire_only_once_worker_survives_an_unreadable_file(tmp_path):
-    args = (str(tmp_path / "common" / "gone.txt"), frozenset({"foo.1"}), str(tmp_path))
-    assert V.scan_fire_only_once_in_loop(args) == []
-
-
-def test_fire_only_once_worker_short_circuits_files_with_no_event_calls(tmp_path):
-    path = _write(
-        tmp_path,
-        "common/scripted_effects/00_fx.txt",
-        "fx = {\n\tevery_country = { add_political_power = 5 }\n}\n",
-    )
-    assert (
-        V.scan_fire_only_once_in_loop((path, frozenset({"foo.1"}), str(tmp_path))) == []
-    )
 
 
 def test_fire_only_once_worker_survives_a_stray_closing_brace(tmp_path):
@@ -94,9 +142,7 @@ def test_fire_only_once_worker_survives_a_stray_closing_brace(tmp_path):
         "common/scripted_effects/00_fx.txt",
         "}\nevery_country = {\n\tcountry_event = foo.1\n}\n",
     )
-    findings = V.scan_fire_only_once_in_loop(
-        (path, frozenset({"foo.1"}), str(tmp_path))
-    )
+    findings = call_site_scan(path, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(findings) == 1
     assert "fire_only_once event foo.1 fired inside" in findings[0]
 
@@ -106,22 +152,98 @@ def test_fire_only_once_worker_survives_a_stray_closing_brace(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_unclosed_event_block_is_not_a_definition(tmp_path):
-    path = _write(
-        tmp_path,
+DEFINITION = """country_event = {
+\tid = foo.1
+\tis_triggered_only = yes
+\toption = { name = foo.1.a }
+}
+"""
+
+# The scan brace-matches event blocks, because several event files indent their
+# definitions one tab deeper than the norm.
+# case: (file, text, (id, type) per definition)
+_DEFINITION_CASES = {
+    "definition": ("events/Ev.txt", DEFINITION, [("foo.1", "country_event")]),
+    "news event": (
+        "events/Ev.txt",
+        DEFINITION.replace("country_event", "news_event"),
+        [("foo.1", "news_event")],
+    ),
+    "one tab deeper": (
+        "events/Ev.txt",
+        "".join("\t" + line for line in DEFINITION.splitlines(keepends=True)),
+        [("foo.1", "country_event")],
+    ),
+    "fire block": (
+        "common/f.txt",
+        "x = {\n\tcountry_event = { id = foo.1 days = 3 }\n}\n",
+        [],
+    ),
+    "unclosed block": (
         "events/Ev.txt",
         "country_event = {\n\tid = foo.1\n\ttitle = foo.1.t\n",
-    )
-    assert V.scan_event_definitions((path, frozenset())) == set()
+        [],
+    ),
+}
 
 
-def test_fire_block_without_an_id_is_ignored(tmp_path):
-    path = _write(
-        tmp_path,
-        "common/f.txt",
+@pytest.mark.parametrize(
+    ("relative", "text", "definitions"),
+    _DEFINITION_CASES.values(),
+    ids=_DEFINITION_CASES,
+)
+def test_event_definitions_are_read_with_their_type(
+    tmp_path, relative, text, definitions
+):
+    path = _write(tmp_path, relative, text)
+
+    assert V.scan_event_definition_types((path, frozenset())) == definitions
+
+
+# case: (caller, (id, keyword, line) per fire)
+_TYPED_FIRE_CASES = {
+    "short, block and reordered forms": (
+        "x = {\n"
+        "\tcountry_event = short.1\n"
+        "\tcountry_event = { id = block.1 days = 3 }\n"
+        "\tnews_event = { days = 2 id = reordered.1 }\n"
+        "}\n",
+        [
+            ("short.1", "country_event", 2),
+            ("block.1", "country_event", 3),
+            ("reordered.1", "news_event", 4),
+        ],
+    ),
+    "block without an id": (
         "x = {\n\tcountry_event = { days = 3 }\n\tcountry_event = { id = real.1 }\n}\n",
+        [("real.1", "country_event", 3)],
+    ),
+    # `UN.[ID]` has no literal form to resolve.
+    "interpolated id": ("x = {\n\tcountry_event = UN.[ID]\n}\n", []),
+}
+
+
+@pytest.mark.parametrize(
+    ("caller", "fires"), _TYPED_FIRE_CASES.values(), ids=_TYPED_FIRE_CASES
+)
+def test_event_fires_are_read_with_their_keyword_and_line(tmp_path, caller, fires):
+    path = _write(tmp_path, "common/f.txt", caller)
+
+    found = sorted(call_site_scan(path, "typed", tmp_path), key=lambda fire: fire[3])
+
+    assert found == [(eid, keyword, path, line) for eid, keyword, line in fires]
+
+
+def test_metadata_retains_an_event_without_an_id():
+    metadata, namespaces = V._parse_event_metadata(
+        "country_event = {\n\tis_triggered_only = yes\n\toption = { name = missing.id.a }\n}\n",
+        "broken.txt",
     )
-    assert {f[0] for f in V.scan_event_fires((path, frozenset()))} == {"real.1"}
+
+    assert namespaces == set()
+    assert [(event["id"], event["file"]) for event in metadata] == [
+        (None, "broken.txt")
+    ]
 
 
 def test_option_trigger_is_not_the_events_own_gate(tmp_path):
@@ -178,19 +300,12 @@ def test_long_form_id_only_call_flagged_once_per_site(tmp_path):
         "kept = { country_event = { id = foo.3 days = 3 } }\n",
     )
     relative = os.path.join("common", "national_focus", "GER.txt")
-    assert V.process_txt_for_long_form_events((path, str(tmp_path))) == [
+    assert call_site_scan(path, "longform", tmp_path) == [
         f"{relative}:1 - country_event = {{ id = foo.1 }}"
         " → use shorthand `country_event = foo.1`",
         f"{relative}:2 - news_event = {{ id = foo.2 }}"
         " → use shorthand `news_event = foo.2`",
     ]
-
-
-def test_long_form_worker_skips_unreadable_and_ignored_files(tmp_path):
-    skipped = _write(tmp_path, "tools/helper.txt", "country_event = { id = foo.1 }\n")
-    assert V.process_txt_for_long_form_events((skipped, str(tmp_path))) == []
-    missing = str(tmp_path / "common" / "gone.txt")
-    assert V.process_txt_for_long_form_events((missing, str(tmp_path))) == []
 
 
 def test_long_form_check_reports_through_the_validator(tmp_path):
@@ -246,10 +361,7 @@ def test_matching_fire_type_is_not_flagged(tmp_path):
 def _validator_for_staged_event_change(tmp_path, definition, caller):
     event = _write(tmp_path, "events/Ev.txt", definition)
     _write(tmp_path, "common/f.txt", caller)
-    validator = _validator(tmp_path)
-    validator.staged_only = True
-    validator.staged_files = [event]
-    return validator
+    return _staged(tmp_path, event)
 
 
 def test_staged_event_type_change_rescans_unchanged_callers(tmp_path):
@@ -309,6 +421,79 @@ def test_undefined_fire_reported_once_per_id(tmp_path):
     assert v._issues[0].category == "undefined-event-fire"
 
 
+def _staged(tmp_path, staged_file):
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [staged_file]
+    return validator
+
+
+def test_type_mismatch_report_keeps_file_and_line(tmp_path):
+    _write(tmp_path, "common/f.txt", "country_event = foo.1\n")
+    validator = _validator(tmp_path)
+    validator._definition_types_cache = {"foo.1": "news_event"}
+
+    validator.validate_event_fire_types()
+
+    assert [(i.file, i.line) for i in validator._issues] == [("common/f.txt", 1)]
+
+
+def test_malformed_call_scan_uses_staged_scope(tmp_path):
+    staged = _write(tmp_path, "common/staged.txt", "country_event = foo.1\n")
+    _write(tmp_path, "common/unstaged.txt", "event_country = foo.2\n")
+
+    assert _staged(tmp_path, staged)._get_scoped_fire_scan_args() == [
+        (staged, frozenset())
+    ]
+
+
+def test_malformed_calls_keep_an_id_that_is_not_the_first_argument(tmp_path):
+    caller = _write(
+        tmp_path,
+        "common/f.txt",
+        "event_news = { days = 3 id = foo.3 }\ncountry_event { days = 3 id = foo.4 }\n",
+    )
+
+    assert call_site_scan(caller, "invalid", tmp_path) == [
+        ("reversed", "event_news", "foo.3", caller, 1),
+        ("missing-equals", "country_event", "foo.4", caller, 2),
+    ]
+
+
+def test_undefined_fire_in_staged_mode_reports_only_staged_callers(tmp_path):
+    _write(tmp_path, "events/Ev.txt", DEFINITION)
+    staged = _write(tmp_path, "common/staged.txt", "country_event = ghost.1\n")
+    _write(tmp_path, "common/unstaged.txt", "country_event = also_ghost.1\n")
+    validator = _staged(tmp_path, staged)
+
+    validator.validate_undefined_event_fires()
+
+    relative = os.path.join("common", "staged.txt")
+    assert [issue.message for issue in validator._issues] == [
+        f"ghost.1 - fired from {relative}:1, no event defines it"
+    ]
+
+
+def test_call_site_checks_skip_when_the_staged_file_has_no_fires(tmp_path, monkeypatch):
+    staged = _write(tmp_path, "common/ideas/x.txt", "idea = { allowed = yes }\n")
+    validator = _staged(tmp_path, staged)
+    for index in (
+        "_get_event_definition_types",
+        "_get_fire_only_once_ids",
+        "_get_major_event_ids",
+    ):
+        monkeypatch.setattr(
+            validator, index, lambda: pytest.fail("built a call-site index")
+        )
+
+    validator.validate_event_fire_types()
+    validator.validate_undefined_event_fires()
+    validator.validate_fire_only_once_in_loop()
+    validator.validate_major_event_in_loop()
+
+    assert validator._issues == []
+
+
 def test_event_fire_views_share_typed_scan(tmp_path, monkeypatch):
     monkeypatch.setenv("MD_NO_CACHE", "1")
     _write(tmp_path, "common/f.txt", "x = { country_event = foo.1 }\n")
@@ -320,23 +505,12 @@ def test_event_fire_views_share_typed_scan(tmp_path, monkeypatch):
         return original(cleaned, filename)
 
     monkeypatch.setattr(V, "_scan_typed_fires_text", wrapped)
-    monkeypatch.setattr(
-        V,
-        "_scan_fires_text",
-        lambda *_a: pytest.fail("untyped fires must reuse the typed scan"),
-    )
-    monkeypatch.setattr(
-        V,
-        "scan_event_fires",
-        lambda _args: pytest.fail("untyped fires must reuse the typed scan"),
-    )
     v = _validator(tmp_path)
     fires = v._get_event_fires()
-    typed_fires = v._get_typed_event_fires()
+    typed_fires = v._get_shared_call_site_scan()["typed"]
 
     assert calls == [str(tmp_path / "common" / "f.txt")]
     assert fires is v._get_event_fires()
-    assert typed_fires is v._get_typed_event_fires()
     assert fires == [(eid, filename, line) for eid, _, filename, line in typed_fires]
     assert [f[0] for f in fires] == ["foo.1"]
     assert v._rel_posix(str(tmp_path / "common" / "f.txt")) == "common/f.txt"
@@ -479,38 +653,16 @@ def test_picture_check_skips_when_the_sprite_index_failed_to_load(
 
 
 # ---------------------------------------------------------------------------
-# fire_only_once short circuit and the full run
+# The full run
 # ---------------------------------------------------------------------------
 
 
-def test_fire_only_once_check_short_circuits_without_declarations(
-    tmp_path, monkeypatch
-):
-    """With nothing declared fire_only_once there is nothing to scan for, so
-    the repo-wide file walk must not run at all."""
-    _write(
-        tmp_path,
-        "events/Ev.txt",
-        "country_event = {\n"
-        "\tid = foo.1\n"
-        "\tis_triggered_only = yes\n"
-        "\toption = { name = foo.1.a }\n"
-        "}\n",
-    )
-    _write(
-        tmp_path,
-        "common/scripted_effects/00_fx.txt",
-        "fx = {\n\tevery_country = { country_event = foo.1 }\n}\n",
-    )
-    v = _validator(tmp_path)
-    v._get_fire_only_once_ids()
+def test_run_validations_calls_every_check(tmp_path, monkeypatch):
+    called, checks = checks_called_by_run(_validator(tmp_path), monkeypatch)
 
-    def _fail(*args, **kwargs):
-        raise AssertionError("scanned for in-loop fires with no fire_only_once events")
-
-    monkeypatch.setattr(v, "_pool_map", _fail)
-    v.validate_fire_only_once_in_loop()
-    assert v._issues == []
+    # The omission report is a standalone audit, not part of the run.
+    checks.remove("validate_event_picture_omissions")
+    assert called == checks
 
 
 MOD_EVENTS = """add_namespace = foo

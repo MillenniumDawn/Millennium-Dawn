@@ -21,7 +21,7 @@ from equipment_module_slots import (
     blank_comments,
     parse_duplicate_archetypes,
 )
-from shared_utils import FileOpener, find_matching_brace, validation_config
+from shared_utils import FileOpener, find_matching_brace, line_of, validation_config
 from validator_common import BaseValidator, Severity, run_validator_main
 
 EQUIPMENT_GLOB = "common/units/equipment/**/*.txt"
@@ -48,11 +48,11 @@ _TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
 _TRANSPORT_RE = re.compile(r"\btransport\s*=\s*(\w+)")
 _ARCHETYPE_RE = re.compile(r"\barchetype\s*=\s*(\w+)")
 _IS_ARCHETYPE_RE = re.compile(r"\bis_archetype\s*=\s*yes\b")
-_ADD_TO_VARIABLE_RE = re.compile(r"\badd_to_variable\s*=\s*\{")
-_VAR_RE = re.compile(r"\bvar\s*=\s*" + _ACCUMULATOR + r"\b")
+_ACCUMULATOR_RE = re.compile(
+    r"\bset_variable\s*=\s*\{\s*" + _ACCUMULATOR + r"\s*=\s*\{"
+)
 _DEPLOYED_RE = re.compile(r"num_equipment_in_armies(?:_k)?@(\w+)")
 _STOCKPILE_RE = re.compile(r"num_equipment@(\w+)")
-_INIT_RE = re.compile(r"\bset_variable\s*=\s*\{\s*" + _ACCUMULATOR + r"\s*=")
 
 
 def _read(path: str) -> Optional[str]:
@@ -61,10 +61,6 @@ def _read(path: str) -> Optional[str]:
         return blank_comments(FileOpener.open_text_file(path))
     except (OSError, UnicodeDecodeError):
         return None
-
-
-def _line_of(text: str, offset: int) -> int:
-    return text.count("\n", 0, offset) + 1
 
 
 def _parse_equipment(text: str) -> Tuple[Set[str], Dict[str, str]]:
@@ -108,7 +104,7 @@ def _land_equipment_refs(text: str) -> Dict[str, Tuple[str, int]]:
             body = _depth0_text(text, ulo, uhi)
             if _LAND_MARKER not in body:
                 continue
-            line = _line_of(text, header)
+            line = line_of(text, header)
             tokens: Set[str] = set()
             for key, klo, khi, _ in _iter_blocks(text, ulo, uhi):
                 if key in _NEED_KEYS:
@@ -122,29 +118,21 @@ def _land_equipment_refs(text: str) -> Dict[str, Tuple[str, int]]:
 def _upkeep_terms(text: str) -> Tuple[Set[str], Set[str], int]:
     """(deployed archetypes, stockpiled archetypes, accumulator line).
 
-    Blocks are found by their `var = equipment_operative_cost` assignment rather
-    than by position, so reordering or moving the accumulator does not blind the
-    check.
+    The accumulator is one `set_variable = { equipment_operative_cost = { ... } }`
+    expression, found by that assignment rather than by position, so moving it
+    does not blind the check.
     """
-    deployed: Set[str] = set()
-    stockpiled: Set[str] = set()
-    line = 0
-    for m in _ADD_TO_VARIABLE_RE.finditer(text):
-        open_idx = m.end() - 1
-        close = find_matching_brace(text, open_idx)
-        if close == -1:
-            continue
-        body = text[open_idx:close]
-        if not _VAR_RE.search(body):
-            continue
-        if not line:
-            line = _line_of(text, m.start())
-        deployed.update(_DEPLOYED_RE.findall(body))
-        stockpiled.update(_STOCKPILE_RE.findall(body))
-    if not line:
-        init = _INIT_RE.search(text)
-        line = _line_of(text, init.start()) if init else 0
-    return deployed, stockpiled, line
+    m = _ACCUMULATOR_RE.search(text)
+    if not m:
+        return set(), set(), 0
+    open_idx = m.end() - 1
+    close = find_matching_brace(text, open_idx)
+    body = text[open_idx:close] if close != -1 else ""
+    return (
+        set(_DEPLOYED_RE.findall(body)),
+        set(_STOCKPILE_RE.findall(body)),
+        line_of(text, m.start()),
+    )
 
 
 class Validator(BaseValidator):

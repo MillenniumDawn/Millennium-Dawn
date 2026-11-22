@@ -2,8 +2,10 @@
 """
 Check for common scripting mistakes in HOI4 mod files.
 
-Detects mechanically-checkable rule violations from CLAUDE.md:
+Detects mechanically-checkable rule violations:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
+  - add_stability / add_war_support set to a numeric literal of magnitude 1 or
+    more (both take a fraction; a variable or an expression is left alone)
   - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
   - allowed_civil_war = { always = no } in ideas (no effect, remove it)
@@ -27,7 +29,10 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - every_country with has_idea = X_member when a pre-built array exists
     (display_individual_scopes loops exempt -- conversion collapses their output)
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
-  - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
+  - has_trade_agreement_with (not a valid trigger; MD uses is_in_array = { trade_agreement_partners = TAG })
+  - The trade agreement and investment treaty opinion modifiers outside
+    common/scripted_effects/00_economic_effects.txt (set_improved_trade_agreement
+    and set_mutual_investment_treaty apply them with the partner arrays)
   - Stat comparisons with the wrong trigger name (stability > 0.5 -> has_stability,
     has_command_power -> command_power); bare names inside variable blocks are game variables
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
@@ -39,8 +44,11 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     a check_variable-style leftover; block form or a bare scalar are both valid
   - every_owned_controlled_state (does not exist; use every_controlled_state)
   - random_select_amount set to a variable/decimal instead of an integer literal
-  - log = "...Focus X" / "...Decision X" / "...Event X" where X doesn't match the
-    enclosing focus/decision/event id (copy-paste bug from duplicating a neighbor)
+  - log = "...Focus X" / "...Decision X" / "...Event X" / a stock idea log where X
+    doesn't match the enclosing focus/decision/event/idea id (copy-paste bug from
+    duplicating a neighbor)
+  - An idea on_add/on_remove log beside nothing but tooltips, which records no state
+    change (warning)
   - Event AI choices that all reach factor 0 when historical focus and the
     bankruptcy mission are both active
   - hidden_trigger = { } directly inside custom_trigger_tooltip (redundant nesting)
@@ -57,9 +65,6 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     scope's faction; it takes a country tag or scope ref, never a faction name.
   - create_faction = X (deprecated; use create_faction_from_template = TEMPLATE
     for DLC compatibility)
-  - add_building_construction of a provincial building (naval_base, supply_node,
-    rail_way, bunker, the special-project facilities ...) with no province key --
-    the engine rejects the effect and the building is never placed
   - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
   - is_at_war = yes/no (not a HOI4 trigger; use has_war)
   - has_opinion_modifier = { ... } (the trigger takes a single modifier ID)
@@ -67,8 +72,6 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - var:x^i array-index shorthand (needs the full variable name)
   - limit as a direct child of an else block (else takes no condition, so the
     engine rejects the block and the branch never runs; the author meant else_if)
-  - province = { province = <id> } in add_building_construction (the block form
-    takes a selector, not a bare id, so nothing is built)
   - a log string carrying a second quoted run (a swallowed `# "comment"` closes
     the value early and the remainder parses as effects)
   - add_equipment_bonus with no name/project, or a bonus type outside
@@ -81,15 +84,26 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - add_opinion_modifier / add_relation_modifier naming an undefined modifier
   - a bare word inside a trigger/effect block (NOT = { my_trigger }), a
     scripted call missing "= yes" that the parser rejects
+  - an else_if whose limit implies an earlier branch's limit in the same chain
+    (the same statements, or a stricter > / < bound), so it never runs
 """
 
-import json
 import os
 import re
 import sys
 from bisect import bisect_left, bisect_right
 from functools import cached_property, lru_cache
 from itertools import accumulate
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import AVAILABLE_OPEN_RE as _RE_AVAILABLE_OPEN
+from shared_utils import IDENTIFIER_BLOCK_START_RE as _RE_AI_STRATEGY_BLOCK
+from shared_utils import MODIFIER_OPEN_RE as _RE_AI_MODIFIER_OPEN
+from shared_utils import OPTION_OPEN_RE as _RE_OPTION_BLOCK_OPEN
+from shared_utils import STOCK_IDEA_LOG_RE
+from shared_utils import TRIGGER_OPEN_RE as _RE_TRIGGER_BLOCK_OPEN
+from shared_utils import WORD_BLOCK_LINE_RE as _RE_MODIFIER_ENTRY
+from shared_utils import WORD_BLOCK_START_RE as _RE_CATEGORY
 
 _RE_THREAT = re.compile(r"(?<!\w)threat\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_WAR_SUPPORT = re.compile(r"(?<!\w)has_war_support\s*([><]=?)\s*(\d+\.?\d*)")
@@ -122,38 +136,15 @@ _RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=\s*(?:yes|no)\b")
 _RE_HAS_OPINION_MODIFIER_BLOCK = re.compile(r"\bhas_opinion_modifier\s*=\s*\{")
 _RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
 _RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
+_RE_DAILY_MASTERY_OPEN = re.compile(r"\badd_daily_mastery\s*=\s*\{")
+_RE_MASTERY_INDEX = re.compile(r"\bindex\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
 # engine silently resolves to nothing.
 _RE_VAR_INDEX_SHORTHAND = re.compile(r"\bvar:([A-Za-z])\^")
-_RE_ADD_BUILDING_OPEN = re.compile(r"\badd_building_construction\s*=\s*\{")
 _RE_BUILDING_TYPE = re.compile(r"\btype\s*=\s*(\w+)")
-_RE_BUILDING_PROVINCE = re.compile(r"\bprovince\s*=")
-_RE_BUILDING_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
-_RE_PROVINCE_MAX = re.compile(r"\bprovince_max\s*=")
-# Used only when common/buildings/ can't be read; the live parse is authoritative.
-_PROVINCIAL_BUILDINGS_FALLBACK = frozenset(
-    {
-        "naval_base",
-        "bunker",
-        "coastal_bunker",
-        "supply_node",
-        "rail_way",
-        "naval_facility",
-        "land_facility",
-        "air_facility",
-        "nuclear_facility",
-        "naval_supply_hub",
-        "naval_headquarters",
-        "dam",
-        "dam_mountain",
-        "canal_locks",
-    }
-)
 _RE_ELSE_OPEN = re.compile(r"(?<!_)\belse\s*=\s*\{")
 _RE_LIMIT_OPEN = re.compile(r"\blimit\s*=\s*\{")
 _RE_LOG_MULTI_QUOTE = re.compile(r'\blog\s*=\s*"[^"]*"[^"]*"')
-_RE_NESTED_PROVINCE = re.compile(r"\bprovince\s*=\s*\{([^{}]*)\}")
-_RE_PROVINCE_ID_ONLY = re.compile(r"^\s*province\s*=\s*\d+\s*$", re.M)
 _RE_EQUIPMENT_BONUS_OPEN = re.compile(r"\badd_equipment_bonus\s*=\s*\{")
 _RE_BONUS_OPEN = re.compile(r"\bbonus\s*=\s*\{")
 _RE_BLOCK_ENTRY = re.compile(r"(\w+)\s*=\s*\{")
@@ -175,9 +166,11 @@ _RE_DECISION_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
 _RE_RELATION_MODIFIER = re.compile(
     r"\badd_(relation|opinion)_modifier\s*=\s*\{[^{}]*?\bmodifier\s*=\s*([A-Za-z_]\w*)"
 )
-_RE_MODIFIER_ENTRY = re.compile(r"^(\w+)\s*=\s*\{", re.M)
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
+_RE_BARE_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
+_RE_STAT_EFFECT_VALUE = re.compile(r"\b(add_stability|add_war_support)\s*=\s*(\S+)")
+_RE_STAT_EFFECT_MATH = re.compile(r"\s*[-+*/]")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
 # always true. Captures both tokens + values; caller checks token match in code.
 _RE_TAUTOLOGICAL_OR = re.compile(
@@ -196,11 +189,9 @@ _RE_INFLUENCE_LOOP_OPEN = re.compile(
     r"^\s*(?:every|random)_[a-z_]*country[a-z_]*\s*=\s*\{"
 )
 _RE_IDEAS_BLOCK = re.compile(r"^ideas\s*=\s*\{")
-_RE_CATEGORY = re.compile(r"^(\w+)\s*=\s*\{")
 _RE_AVAILABLE_ALWAYS_NO = re.compile(r"\bavailable\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_VISIBLE_ALWAYS_NO = re.compile(r"\bvisible\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_BYPASS_OPEN = re.compile(r"\bbypass\s*=\s*\{")
-_RE_BYPASS_TRIVIAL = re.compile(r"\bbypass\s*=\s*\{\s*always\s*=\s*(?:yes|no)\s*\}")
 _RE_DECISION_MARKER = re.compile(
     r"\bcomplete_effect\s*=\s*\{|\bfire_only_once\s*=|\bactivation\s*=\s*\{|\bdays_mission_timeout\s*="
 )
@@ -212,9 +203,11 @@ _RE_FOCUS_ANY_BLOCK_OPEN = re.compile(
     r"^\s*(?:focus|shared_focus|joint_focus)\s*=\s*\{"
 )
 _RE_LOG_FOCUS_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bFocus\s+([\w-]+)', re.IGNORECASE)
-# "Decision <keyword...> <id>" tolerates a chain of filler words before the real
-# id: the block-name keywords (remove/complete/completed/timeout/cancel/add,
-# describing which effect block logged the line) and, in a couple of legacy
+_LOG_NOT_NEEDED_KEYS = {"log", "custom_effect_tooltip", "effect_tooltip"}
+# "Decision <keyword...> <id>" (or "Mission ...") tolerates a chain of filler
+# words before the real id: the block-name keywords (remove/complete/completed/
+# timeout/cancel/add, describing which effect block logged the line), the block
+# names themselves ("Mission timeout_effect X"), and, in a couple of legacy
 # logs, a spelled-out "effect" after the keyword ("Decision cancel effect X"
 # for a cancel_effect block). Strip all leading filler tokens, then compare
 # whatever's left to the decision's own id.
@@ -226,9 +219,24 @@ _DECISION_LOG_FILLER_WORDS = {
     "cancel",
     "add",
     "effect",
+    "complete_effect",
+    "remove_effect",
+    "timeout_effect",
+    "cancel_effect",
 }
-_RE_LOG_DECISION_MARKER = re.compile(r'log\s*=\s*"[^"]*\bDecision\b', re.IGNORECASE)
+_RE_LOG_DECISION_MARKER = re.compile(
+    r'log\s*=\s*"[^"]*\b(?:Decision|Mission)\b', re.IGNORECASE
+)
 _RE_NEXT_WORD = re.compile(r"\s+([\w-]+)")
+# A log with no "Decision" word still names its decision when it is the standard
+# prefix, filler words, and one id that ends the string. Longer free text is not
+# a copied id.
+_LOG_FILLER_ALT = "|".join(sorted(_DECISION_LOG_FILLER_WORDS))
+_RE_LOG_BARE_ID = re.compile(
+    r'log\s*=\s*"\[GetDateText\]:\s*\[\w+\.GetName\]:'
+    rf"(?:\s+(?:{_LOG_FILLER_ALT})\b)*\s+(?!(?:{_LOG_FILLER_ALT})\b)([\w-]+)\s*\"",
+    re.IGNORECASE,
+)
 # Event ids are namespace.number (dots), unlike focus/decision ids -- \w+ alone
 # would truncate at the dot.
 _RE_EVENT_DEF_OPEN = re.compile(
@@ -237,16 +245,27 @@ _RE_EVENT_DEF_OPEN = re.compile(
 _RE_EVENT_ID_IN_BLOCK = re.compile(r"^\s*id\s*=\s*([\w.]+)")
 _RE_OPTION_NAME_IN_BLOCK = re.compile(r"^\s*name\s*=\s*([\w.]+)")
 _RE_AI_CHANCE_OPEN = re.compile(r"\bai_chance\s*=\s*\{")
-_RE_AI_MODIFIER_OPEN = re.compile(r"\bmodifier\s*=\s*\{")
 _RE_AI_ASSIGNMENT = re.compile(r"\b([A-Za-z_]+)\s*=\s*([-A-Za-z0-9_.]+)")
 # Two log conventions coexist: the bare event id followed by a separate
 # "Option <letter>" phrase ("Event HKG_contract.1 Option a"), and the option's
 # own full dotted name standing in for the id ("event satellites.2.a" ==
 # namespace.number.letter). [\w.]+ is greedy, so on the second style it
 # swallows the trailing ".<letter>" into the token -- checked against both
-# forms below rather than assuming the bare id alone.
+# forms below rather than assuming the bare id alone. The canonical form omits
+# the Event word: "[GetDateText]: [This.GetName]: tag_ns.N.a executed".
 _RE_LOG_EVENT_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bEvent\s+([\w.]+)', re.IGNORECASE)
 _RE_LOG_EVENT_OPTION_SUFFIX = re.compile(r"\s+Option\s+([a-zA-Z])\b", re.IGNORECASE)
+_RE_LOG_EVENT_EXECUTED_TOKEN = re.compile(
+    r'log\s*=\s*"[^"]*\]:\s*([\w.]+)\s+(?:option\s+)?executed',
+    re.IGNORECASE,
+)
+# A bare event id at the end of the string needs a numeric id segment. Event
+# namespaces can end in digits (e.g. `md4` and `CZE_Army_2000`), but a token in
+# the version-like `v1.2` form is not an event id.
+_RE_LOG_EVENT_BARE_TOKEN = re.compile(
+    r'log\s*=\s*"[^"]*\]:\s*((?![vV]\d+\.\d+(?:\.[A-Za-z]\w*)?\")'
+    r'[A-Za-z_]\w*\.\d+(?:\.[A-Za-z]\w*)?)"'
+)
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
@@ -335,7 +354,6 @@ _FOREIGN_COUNTRY_SCOPE_TOKENS = {
     "create_dynamic_country",
 }
 _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
-_RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
 _RE_TOPLEVEL_WORD = re.compile(r"^\w")
 _RE_INDENTED_WORD = re.compile(r"^\s+\w")
 _RE_BLOCK_ID = re.compile(r"\s*([\w-]+)\s*=\s*\{")
@@ -355,8 +373,6 @@ _RE_IF_ELSE_OPEN = re.compile(r"\b(if|else_if|else)\s*=\s*\{")
 _RE_HAS_IDEA = re.compile(r"has_idea\s*=\s*(\w+)")
 _RE_OR_CONTENT = re.compile(r"OR\s*=\s*\{([^}]*)\}")
 _RE_LOG_ONLY_EFFECT = re.compile(r"log\s*=\s*\"[^\"]*\"\s*$")
-_RE_OPTION_BLOCK_OPEN = re.compile(r"\boption\s*=\s*\{")
-_RE_TRIGGER_BLOCK_OPEN = re.compile(r"\btrigger\s*=\s*\{")
 _OPTION_NON_EFFECT_KEYS = {"name", "log", "trigger", "ai_chance"}
 # Every block the engine runs as an effect list and MD logs from (#4456).
 _RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
@@ -365,6 +381,11 @@ _RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
 )
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
+_TRADE_MODIFIER_HOME = "common/scripted_effects/00_economic_effects.txt"
+_RE_TRADE_MODIFIER = re.compile(
+    r"\b(has_opinion_modifier|modifier)\s*=\s*(mutual_trade_agreement|mutual_trade_opinion"
+    r"|mutual_investment_treaty_opinion|mutual_investment_treaty_trade_opinion)\b"
+)
 _WRONG_STAT_TRIGGERS = {
     "stability": "has_stability",
     "war_support": "has_war_support",
@@ -426,7 +447,7 @@ _MUTUALLY_EXCLUSIVE_TRIGGERS = {
 # Idea slots where only one idea from the group can be active at a time. Two
 # `has_idea = X` checks for ideas in the same group inside a single AND block
 # are always false; inside a NOT block they are always true. The classic bug
-# from CLAUDE.md is `NOT = { has_idea = intervention_isolation
+# is `NOT = { has_idea = intervention_isolation
 # has_idea = intervention_local_security }` — silently true forever because no
 # country has both intervention doctrines at once.
 # Keep in sync with the mutually-exclusive idea slots defined in common/ideas/.
@@ -483,7 +504,6 @@ def _init_worker(focuses, decisions, nation_flags):
     _REAL_NATION_FLAGS = nation_flags
 
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from cleanup_or import find_redundant_and_blocks, find_single_condition_or_blocks
 from shared_utils import (
     PARTY_SLOT_NAMES,
@@ -491,8 +511,10 @@ from shared_utils import (
     clean_filepath,
     collect_files_by_mode,
     create_linting_parser,
+    find_unquoted_brace_close,
     get_non_selectable_idea_categories,
     get_root_dir,
+    list_files,
     print_timing_summary,
     run_with_pool,
     strip_inline_comment,
@@ -514,29 +536,22 @@ def _scan_global_refs(root_dir):
     decisions: set = set()
     nation_flags: set = set()
     for directory in ["common", "events", "history"]:
-        dir_path = os.path.join(root_dir, directory)
-        if not os.path.exists(dir_path):
-            continue
-        for root, _, filenames in os.walk(dir_path):
-            for filename in filenames:
-                if not filename.endswith(".txt"):
-                    continue
-                fp = os.path.join(root, filename)
-                try:
-                    with open(fp, "r", encoding="utf-8", errors="replace") as f:
-                        content = f.read()
-                except OSError:
-                    continue
-                # A \b-led pattern gets no literal-prefix scan, so test the
-                # literal every match contains before running it.
-                if "complete_national_focus" in content:
-                    focuses.update(_RE_COMPLETE_FOCUS.findall(content))
-                if "unlock_national_focus" in content:
-                    focuses.update(_RE_UNLOCK_FOCUS.findall(content))
-                if "activate_decision" in content:
-                    decisions.update(_RE_ACTIVATE_DECISION.findall(content))
-                if "_nation_flag" in content:
-                    nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
+        for fp in list_files(os.path.join(root_dir, directory)):
+            try:
+                with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+            except OSError:
+                continue
+            # A \b-led pattern gets no literal-prefix scan, so test the
+            # literal every match contains before running it.
+            if "complete_national_focus" in content:
+                focuses.update(_RE_COMPLETE_FOCUS.findall(content))
+            if "unlock_national_focus" in content:
+                focuses.update(_RE_UNLOCK_FOCUS.findall(content))
+            if "activate_decision" in content:
+                decisions.update(_RE_ACTIVATE_DECISION.findall(content))
+            if "_nation_flag" in content:
+                nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
     return focuses, decisions, nation_flags
 
 
@@ -963,11 +978,7 @@ def _get_event_block(event_id, event_blocks=None, event_index=None):
     global _EVENT_INDEX, _EVENT_INDEX_BUILT
     if event_index is None:
         if not _EVENT_INDEX_BUILT:
-            try:
-                root_dir = get_root_dir()
-            except Exception:
-                root_dir = None
-            _EVENT_INDEX = _build_event_index(root_dir)
+            _EVENT_INDEX = _build_event_index(get_root_dir())
             _EVENT_INDEX_BUILT = True
         event_index = _EVENT_INDEX
     filepath = event_index.get(event_id)
@@ -2053,8 +2064,8 @@ def _check_every_country_member_array(lines):
 
     The known member ideas (see _MEMBER_IDEA_TO_ARRAY) all have corresponding
     global arrays. for_each_scope_loop over the array iterates ~30 members
-    instead of 200+ tags. See simplification-patterns.md § "Convert
-    every_country Over Bloc Membership".
+    instead of 200+ tags. See simplification-patterns.md § "Bloc membership
+    loops".
     """
     issues = []
     src = _source(lines)
@@ -2428,7 +2439,6 @@ def _check_ai_daily_flag_cache(lines, filepath=""):
     return issues
 
 
-_RE_AI_STRATEGY_BLOCK = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{")
 _RE_ENEMIES_STRENGTH_RATIO = re.compile(r"\benemies_strength_ratio\s*>\s*([\d.]+)")
 _RE_AI_STRATEGY_TYPE = re.compile(r"\bai_strategy\s*=\s*\{[^}]*?\btype\s*=\s*(\w+)")
 
@@ -2505,12 +2515,8 @@ def _find_brace_close(text, open_pos):
     awareness. Returns `len(text)` if the braces never balance. Shared by
     the whole-file brace scans below.
     """
-    depth = 0
-    for brace in _RE_BRACE.finditer(text, open_pos):
-        depth += 1 if brace.group() == "{" else -1
-        if not depth:
-            return brace.start()
-    return len(text)
+    close = find_unquoted_brace_close(text, open_pos)
+    return len(text) if close == -1 else close
 
 
 def _check_invalid_is_at_war(lines):
@@ -2525,6 +2531,47 @@ def _check_invalid_is_at_war(lines):
                     "is_at_war is not a HOI4 trigger -- use has_war = yes/no",
                 )
             )
+    return issues
+
+
+def _check_trade_modifier_outside_shared_effects(lines, filepath=""):
+    """Flag the trade agreement and treaty opinion modifiers outside their shared effects.
+
+    set_improved_trade_agreement and set_mutual_investment_treaty, which the
+    diplomatic actions also call, apply them together with the partner arrays. A
+    bare modifier gives the opinion with no agreement behind it, and checking the
+    modifier misses agreements that exist.
+    """
+    if filepath.replace("\\", "/").endswith(_TRADE_MODIFIER_HOME):
+        return []
+    src = _source(lines)
+    issues = []
+    for i in _lines_with(src, "mutual_"):
+        match = _RE_TRADE_MODIFIER.search(src.depth_code[i])
+        if not match:
+            continue
+        keyword, modifier = match.groups()
+        is_treaty = "investment" in modifier
+        if keyword == "has_opinion_modifier":
+            array = (
+                "investment_treaty_partners"
+                if is_treaty
+                else "trade_agreement_partners"
+            )
+            fix = f"check is_in_array = {{ {array} = TAG }}"
+        else:
+            effect = (
+                "set_mutual_investment_treaty"
+                if is_treaty
+                else "set_improved_trade_agreement"
+            )
+            fix = f"call {effect}"
+        issues.append(
+            (
+                i + 1,
+                f"{modifier} belongs to the shared effects in {_TRADE_MODIFIER_HOME} -- {fix} instead",
+            )
+        )
     return issues
 
 
@@ -2569,6 +2616,32 @@ def _check_while_loop_max_iterations(lines):
     return issues
 
 
+def _check_daily_mastery_index(lines):
+    """Flag index inside add_daily_mastery -- the engine rejects it.
+
+    The vanilla effects documentation lists an index filter, but the game logs
+    Invalid effect 'index' for every such call.
+    """
+    issues = []
+    src = _source(lines)
+    if "add_daily_mastery" not in src.raw:
+        return issues
+    text = src.text
+    for match in _RE_DAILY_MASTERY_OPEN.finditer(text):
+        i = _find_brace_close(text, match.end() - 1)
+        body = text[match.end() : i]
+        for found in _RE_MASTERY_INDEX.finditer(body):
+            issues.append(
+                (
+                    text.count("\n", 0, match.end() + found.start()) + 1,
+                    "index is not a valid add_daily_mastery key -- the engine "
+                    "rejects it (Invalid effect 'index'); filter with track, "
+                    "sub_doctrine, grand_doctrine or folder",
+                )
+            )
+    return issues
+
+
 def _check_var_index_shorthand(lines):
     """Flag var:x^i shorthand -- an array read needs the full variable name."""
     src = _source(lines)
@@ -2584,81 +2657,6 @@ def _check_var_index_shorthand(lines):
                     f"full array name, e.g. var:my_array^i",
                 )
             )
-    return issues
-
-
-@lru_cache(maxsize=None)
-def _provincial_building_types(mod_root=None):
-    """Building types placed on a province rather than a state, read from
-    common/buildings/. A `level_cap = { province_max = N }` entry is the marker.
-
-    Falls back to the known list if the directory can't be read, so a hiccup
-    downgrades the check to a fixed list rather than silently disabling it.
-    """
-    if mod_root is None:
-        # Anchored on this file, not get_root_dir(): that reads sys.argv[0],
-        # which points at pytest rather than the linter when the tests import
-        # this. realpath so a symlinked checkout still lands on the real root.
-        mod_root = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
-        )
-    types = set()
-    buildings_dir = os.path.join(mod_root, "common", "buildings")
-    try:
-        filenames = sorted(os.listdir(buildings_dir))
-    except OSError:
-        return _PROVINCIAL_BUILDINGS_FALLBACK
-    for fname in filenames:
-        if not fname.endswith(".txt"):
-            continue
-        try:
-            with open(os.path.join(buildings_dir, fname), encoding="utf-8") as f:
-                lines = f.readlines()
-        except OSError:
-            continue
-        for i, line in enumerate(lines):
-            entry = _RE_BUILDING_ENTRY.match(_code_for_depth(line))
-            if not entry:
-                continue
-            block = "".join(_code_for_depth(bl) for bl in _get_block(lines, i)[0])
-            if _RE_PROVINCE_MAX.search(block):
-                types.add(entry.group(1))
-    return frozenset(types) or _PROVINCIAL_BUILDINGS_FALLBACK
-
-
-def _check_building_missing_province(lines, mod_root=None):
-    """Flag add_building_construction of a provincial building with no province.
-
-    A provincial building sits on a province, not a state, so the effect needs
-    `province = <id>` or a `province = { all_provinces = yes ... }` selector.
-    Without one the engine rejects the whole effect (state_effect_implementation.cpp)
-    and the building is never placed -- the focus or decision silently does nothing.
-    """
-    issues = []
-    src = _source(lines)
-    if "add_building_construction" not in src.raw:
-        return issues
-    provincial = _provincial_building_types(mod_root)
-    # Brace-matched over the whole file rather than per line: a construction
-    # block spans lines, and two single-line blocks can share one line.
-    text = src.text
-    for match in _RE_ADD_BUILDING_OPEN.finditer(text):
-        i = _find_brace_close(text, match.end() - 1)
-        body = text[match.end() : i]
-        type_match = _RE_BUILDING_TYPE.search(body)
-        if not type_match or type_match.group(1) not in provincial:
-            continue
-        if _RE_BUILDING_PROVINCE.search(body):
-            continue
-        issues.append(
-            (
-                text.count("\n", 0, match.start()) + 1,
-                f"add_building_construction type = {type_match.group(1)} has no "
-                f"province -- it is a provincial building, so the engine rejects "
-                f"the effect and nothing is built; add province = <id> or "
-                f"province = {{ all_provinces = yes ... }}",
-            )
-        )
     return issues
 
 
@@ -2679,17 +2677,9 @@ def _direct_child_matches(body, pattern):
     return found
 
 
-@lru_cache(maxsize=None)
-def _mod_root():
-    """Repo root anchored on this file, not sys.argv[0] -- pytest imports this."""
-    return os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
-    )
-
-
 def _read_dir_text(*parts):
     """Concatenated text of every .txt directly under the given mod directory."""
-    directory = os.path.join(_mod_root(), *parts)
+    directory = os.path.join(get_root_dir(), *parts)
     chunks = []
     try:
         filenames = sorted(os.listdir(directory))
@@ -2713,7 +2703,7 @@ def _equipment_bonus_enum():
     Returns None when the file can't be read, which disables the check rather
     than reporting every bonus as unknown.
     """
-    path = os.path.join(_mod_root(), "common", "script_enums.txt")
+    path = os.path.join(get_root_dir(), "common", "script_enums.txt")
     try:
         with open(path, encoding="utf-8") as f:
             text = f.read()
@@ -2808,34 +2798,6 @@ def _check_else_with_limit(lines):
                     text.count("\n", 0, match.end() + limit.start()) + 1,
                     "limit inside an else block -- else takes no condition, so the "
                     "engine rejects the block and the branch never runs; use else_if",
-                )
-            )
-    return issues
-
-
-def _check_nested_province_block(lines):
-    """Flag province = { province = <id> } in add_building_construction.
-
-    The block form of province takes a selector (all_provinces, limit_to_*), not
-    a bare id, so the engine rejects the whole token and nothing is built. A
-    single province is `province = <id>`.
-    """
-    issues = []
-    src = _source(lines)
-    if "add_building_construction" not in src.raw:
-        return issues
-    text = src.text
-    for match in _RE_ADD_BUILDING_OPEN.finditer(text):
-        body = _block_body(text, match.end())
-        for nested in _RE_NESTED_PROVINCE.finditer(body):
-            if not _RE_PROVINCE_ID_ONLY.search(nested.group(1)):
-                continue
-            issues.append(
-                (
-                    text.count("\n", 0, match.end() + nested.start()) + 1,
-                    "province = { province = <id> } is not a valid selector -- the "
-                    "engine rejects the add_building token and nothing is built; "
-                    "write province = <id>",
                 )
             )
     return issues
@@ -3083,6 +3045,36 @@ def _check_random_select_amount_literal(lines):
     return issues
 
 
+def _check_stat_effect_magnitude(lines):
+    """Flag add_stability / add_war_support set to a literal of magnitude 1 or more.
+
+    Both effects take a fraction. A variable or an expression is left alone.
+    """
+    src = _source(lines)
+    issues = []
+    for i in _lines_with(src, "add_stability", "add_war_support"):
+        if src[i].strip().startswith("#"):
+            continue
+        code = src.depth_code[i]
+        for match in _RE_STAT_EFFECT_VALUE.finditer(code):
+            token = match.group(2).rstrip("}")
+            if not _RE_BARE_NUMBER.match(token):
+                continue
+            if _RE_STAT_EFFECT_MATH.match(code[match.end() :]):
+                continue
+            if abs(float(token)) < 1:
+                continue
+            effect = match.group(1)
+            issues.append(
+                (
+                    i + 1,
+                    f"{effect} = {token} is at least 100% -- "
+                    f"{effect} takes a fraction (0.05 is 5%)",
+                )
+            )
+    return issues
+
+
 def _check_tautological_or(lines):
     """Flag OR = { X = yes X = no } blocks, which are always true."""
     src = _source(lines)
@@ -3161,15 +3153,83 @@ def _check_focus_log_id(lines):
     return issues
 
 
+def _idea_lifecycle_nodes(src):
+    """Yield (idea_id, node) for each on_add/on_remove directly in an idea, read from
+    the ideas > category > idea layout of common/ideas/ files."""
+    for root in src.tree:
+        if root.key != "ideas":
+            continue
+        for category in root.children:
+            for idea in category.children:
+                for node in idea.children:
+                    if node.key in ("on_add", "on_remove"):
+                        yield idea.key, node
+
+
+def _find_idea_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, idea_id, bad_token) for each stock
+    on_add/on_remove log naming an idea other than the enclosing one. Shared by
+    _check_idea_log_id and fix_log_ids.py.
+    """
+    src = _source(lines)
+    results = []
+    if "log" not in src.raw:
+        return results
+    owners = {node.line - 1: idea for idea, node in _idea_lifecycle_nodes(src)}
+    for start, end, _match in _outer_blocks(src, sorted(owners), lambda _i: True):
+        for row in range(start, end):
+            m = STOCK_IDEA_LOG_RE.search(src.code[row])
+            if m and m[m.lastgroup] != owners[start]:
+                tstart, tend = m.span(m.lastgroup)
+                results.append((row, tstart, tend, owners[start], m[m.lastgroup]))
+    return results
+
+
+def _check_idea_log_id(lines):
+    """Flag stock idea logs naming another idea -- almost always a copy-paste
+    leftover from duplicating a neighboring idea."""
+    return [
+        (
+            line_idx + 1,
+            f"log references idea {token}, but the enclosing idea is {idea_id} -- "
+            "likely copy-paste; fix the log id",
+        )
+        for line_idx, _s, _e, idea_id, token in _find_idea_log_mismatches(lines)
+    ]
+
+
+def _check_idea_log_not_needed(lines):
+    """Warn on an idea on_add/on_remove log beside nothing but tooltips. A tooltip
+    changes no state, so the log records nothing and only adds I/O. A block with no
+    other statement is _check_empty_log_only_blocks' finding."""
+    src = _source(lines)
+    issues = []
+    if "log" not in src.raw:
+        return issues
+    for idea, node in _idea_lifecycle_nodes(src):
+        keys = {child.key for child in node.children}
+        if "log" in keys and len(keys) > 1 and keys <= _LOG_NOT_NEEDED_KEYS:
+            issues.append(
+                (
+                    node.line,
+                    f"{node.key} of {idea} only shows tooltips, so its log records "
+                    "no state change -- drop the log",
+                )
+            )
+    return issues
+
+
 def _decision_log_token_span(line):
     """Return (token, start, end) for the id referenced by a
     `log = "...Decision ..."` line, skipping leading filler words
     (_DECISION_LOG_FILLER_WORDS), or None if the line has no such log
-    statement (or nothing substantive follows the filler words).
+    statement (or nothing substantive follows the filler words). A log with
+    no "Decision" word counts when it is only the standard prefix and one id.
     """
     marker = _RE_LOG_DECISION_MARKER.search(line)
     if not marker:
-        return None
+        bare = _RE_LOG_BARE_ID.search(line)
+        return (bare.group(1), bare.start(1), bare.end(1)) if bare else None
     pos = marker.end()
     while True:
         m = _RE_NEXT_WORD.match(line, pos)
@@ -3179,6 +3239,9 @@ def _decision_log_token_span(line):
         if token.lower() in _DECISION_LOG_FILLER_WORDS:
             pos = m.end()
             continue
+        # An id that runs into [?...] is built at runtime.
+        if line.startswith("[", m.end(1)):
+            return None
         return token, m.start(1), m.end(1)
 
 
@@ -3226,25 +3289,14 @@ def _check_decision_log_id(lines):
     return issues
 
 
-def _check_event_log_id(lines):
-    """Flag log = "...Event <token>..." lines inside a country_event /
-    news_event / operative_leader_event / unit_leader_event block where token
-    matches neither the block's own id nor the enclosing option's own declared
-    `name = ` (its real identity), or -- for the bare-id form -- where a
-    separate "Option <x>" phrase names a letter that doesn't match the suffix
-    of that same `name = `.
+def _iter_event_log_mismatches(lines):
+    """Yield (line_idx, start, end, replacement, token, own_name, kind).
 
-    Ground-truthed against the option's own `name = ` line rather than a
-    computed sequential letter: option lettering isn't always contiguous
-    (e.g. singapore.101 skips from .c straight to .e), so a position-based
-    a/b/c/... expectation would false-positive on those.
-
-    Only top-level event definitions count (column 0); a nested
-    `country_event = { id = X days = N }` is a scheduling effect call, not a
-    definition, and is skipped since it never starts at column 0.
+    kind is "id" when the log cites a different option/event id, or "letter"
+    when a bare event id is followed by the wrong "Option <letter>". Shared
+    by _find_event_log_mismatches and _check_event_log_id.
     """
     src = _source(lines)
-    issues = []
     option_rows = _lines_with(src, "option")
     for start, end, _match in _outer_blocks(
         src,
@@ -3268,44 +3320,121 @@ def _check_event_log_id(lines):
             src, inner, lambda j: _RE_OPTION_BLOCK_OPEN.search(src.code[j])
         ):
             own_name = None
-            for code in src.code[opt_start:opt_end]:
-                nm = _RE_OPTION_NAME_IN_BLOCK.match(code)
-                if nm:
-                    own_name = nm.group(1)
-                    break
+            depth = 0
+            for row in range(opt_start, opt_end):
+                # Deeper than 1 is an effect's own name (add_tech_bonus).
+                if depth == 1:
+                    nm = _RE_OPTION_NAME_IN_BLOCK.match(src.code[row])
+                    if nm:
+                        own_name = nm.group(1)
+                        break
+                depth += src.delta[row]
             own_suffix = None
             if own_name and own_name.startswith(event_id + "."):
                 own_suffix = own_name[len(event_id) + 1 :]
             for row in range(opt_start, opt_end):
                 obl_code = src.code[row]
+                used_event_word = True
                 m = _RE_LOG_EVENT_TOKEN.search(obl_code)
-                if not m:
+                if m is None:
+                    used_event_word = False
+                    m = _RE_LOG_EVENT_EXECUTED_TOKEN.search(
+                        obl_code
+                    ) or _RE_LOG_EVENT_BARE_TOKEN.search(obl_code)
+                if m is None:
                     continue
                 token = m.group(1)
                 if own_name and token == own_name:
                     continue
                 if token == event_id:
-                    om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
-                    if om and own_suffix and om.group(1).lower() != own_suffix.lower():
-                        issues.append(
-                            (
-                                row + 1,
-                                f"log says Option {om.group(1)} but "
-                                f"this option's own name is "
-                                f"{own_name} -- fix the option "
-                                f"letter",
+                    if used_event_word:
+                        om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
+                        if (
+                            om
+                            and own_suffix
+                            and om.group(1).lower() != own_suffix.lower()
+                        ):
+                            yield (
+                                row,
+                                om.start(1),
+                                om.end(1),
+                                own_suffix,
+                                om.group(1),
+                                own_name,
+                                "letter",
                             )
-                        )
+                    continue
+                # News/cartel options often reuse another event's loc key in
+                # `name =` while the log cites this event's own dotted id.
+                this_event_dotted = token.startswith(event_id + ".")
+                name_is_this_event = bool(
+                    own_name and own_name.startswith(event_id + ".")
+                )
+                if this_event_dotted and not name_is_this_event:
                     continue
                 if own_name:
-                    issues.append(
-                        (
-                            row + 1,
-                            f"log references Event {token}, but this "
-                            f"option's own name is {own_name} -- "
-                            f"likely copy-paste; fix the log id",
-                        )
+                    yield (
+                        row,
+                        m.start(1),
+                        m.end(1),
+                        own_name,
+                        token,
+                        own_name,
+                        "id",
                     )
+
+
+def _find_event_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, replacement, bad_token) for each
+    option log whose cited id doesn't match the option's own `name = `.
+
+    Shared by _check_event_log_id and fix_log_ids.py so both use the same
+    detection.
+    """
+    return [
+        (row, start, end, replacement, token)
+        for row, start, end, replacement, token, _name, _kind in _iter_event_log_mismatches(
+            lines
+        )
+    ]
+
+
+def _check_event_log_id(lines):
+    """Flag option logs whose cited id doesn't match the option's own name.
+
+    Covers `Event <token>` (with optional `Option <letter>`), and the
+    canonical `<id> executed` form that omits the Event word.
+
+    Ground-truthed against the option's own `name = ` line rather than a
+    computed sequential letter: option lettering isn't always contiguous
+    (e.g. singapore.101 skips from .c straight to .e), so a position-based
+    a/b/c/... expectation would false-positive on those.
+
+    Only top-level event definitions count (column 0); a nested
+    `country_event = { id = X days = N }` is a scheduling effect call, not a
+    definition, and is skipped since it never starts at column 0.
+    """
+    issues = []
+    for row, _s, _e, _repl, token, own_name, kind in _iter_event_log_mismatches(lines):
+        if kind == "letter":
+            issues.append(
+                (
+                    row + 1,
+                    f"log says Option {token} but "
+                    f"this option's own name is "
+                    f"{own_name} -- fix the option "
+                    f"letter",
+                )
+            )
+        else:
+            issues.append(
+                (
+                    row + 1,
+                    f"log references Event {token}, but this "
+                    f"option's own name is {own_name} -- "
+                    f"likely copy-paste; fix the log id",
+                )
+            )
     return issues
 
 
@@ -3973,6 +4102,106 @@ def _check_leader_rotation(lines):
     return sorted(issues)
 
 
+def _condition_key(node):
+    """A comparable form of one trigger statement, or None when it holds a quoted
+    value: the parser sees every quoted string as "", so two of them never compare."""
+    if node.value is not None:
+        return None if node.value == '""' else (node.key, node.op, node.value)
+    children = tuple(_condition_key(child) for child in node.children)
+    return None if None in children else (node.key, node.op, children)
+
+
+def _strict_bound(node):
+    """(subject, op, number) for a bare or check_variable `X > N` / `X < N`."""
+    subject = (node.key,)
+    if node.key == "check_variable" and len(node.children) == 1:
+        node = node.children[0]
+        subject = ("check_variable", node.key)
+    if node.op in ("<", ">") and node.value and _RE_BARE_NUMBER.match(node.value):
+        return subject, node.op, float(node.value)
+    return None
+
+
+def _covers(later, earlier):
+    """True when the later condition holds only if the earlier one does."""
+    if later[0] is not None and later[0] == earlier[0]:
+        return True
+    if later[1] is None or earlier[1] is None:
+        return False
+    subject, op, number = later[1]
+    earlier_subject, earlier_op, earlier_number = earlier[1]
+    if subject != earlier_subject or op != earlier_op:
+        return False
+    return number >= earlier_number if op == ">" else number <= earlier_number
+
+
+def _nested_branches(branch):
+    """else_if/else written inside a branch body, before any inner if claims them."""
+    found = []
+    for child in branch.children:
+        if child.key == "if":
+            break
+        if child.key in ("else_if", "else") and child.value is None:
+            found.append(child)
+            found.extend(_nested_branches(child))
+    return found
+
+
+def _branch_chains(nodes):
+    for index, node in enumerate(nodes):
+        if node.key != "if" or node.value is not None:
+            continue
+        chain = [node, *_nested_branches(node)]
+        for follower in nodes[index + 1 :]:
+            if follower.key not in ("else_if", "else"):
+                break
+            chain.append(follower)
+        yield chain
+
+
+def _check_shadowed_branches(lines):
+    """Flag an else_if that an earlier branch of its chain always takes first.
+
+    if/else_if stops at the first branch whose limit holds. When every condition
+    of an earlier limit also holds whenever a later limit does (the same statement,
+    or a stricter `>` / `<` bound on the same value), the later branch never runs.
+    """
+    issues = []
+    src = _source(lines)
+    if "else_if" not in src.raw:
+        return issues
+
+    def walk(nodes):
+        for chain in _branch_chains(nodes):
+            earlier = []
+            for branch in chain:
+                limit = _first_child(branch, "limit")
+                if limit is None:
+                    continue
+                conditions = [
+                    (_condition_key(child), _strict_bound(child))
+                    for child in limit.children
+                ]
+                if branch.key == "else_if":
+                    for line, before in earlier:
+                        if all(any(_covers(c, b) for c in conditions) for b in before):
+                            issues.append(
+                                (
+                                    branch.line,
+                                    f"else_if never runs -- the branch at line {line} "
+                                    "already matches whenever this limit holds, and "
+                                    "if/else_if stops at the first match",
+                                )
+                            )
+                            break
+                earlier.append((branch.line, conditions))
+        for node in nodes:
+            walk(node.children)
+
+    walk(src.tree)
+    return issues
+
+
 def classify_file_path(filepath):
     """Return which per-directory checks apply to `filepath`.
 
@@ -4004,14 +4233,17 @@ def classify_file_path(filepath):
 
 
 def check_file(filepath):
-    """Check a single file for common mistakes. Returns list of (filepath, line_num, message) tuples."""
+    """Check a single file for common mistakes. Returns (errors, shadowed, warnings),
+    each a list of (filepath, line_num, message) tuples. Shadowed branches and
+    warnings are kept apart so the validator can report them under their own
+    categories."""
     issues = []
 
     try:
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             lines = _Source(f.readlines())
     except Exception:
-        return issues
+        return issues, [], []
 
     (
         is_ideas,
@@ -4181,7 +4413,7 @@ def check_file(filepath):
             issues.append(
                 (
                     line_num,
-                    "has_trade_agreement_with is not a valid trigger -- use has_country_flag = trade_agreement@TAG",
+                    "has_trade_agreement_with is not a valid trigger -- use is_in_array = { trade_agreement_partners = TAG }",
                 )
             )
 
@@ -4221,6 +4453,8 @@ def check_file(filepath):
     if is_event_file:
         issues.extend(_check_event_ai_historical_bankruptcy_fallback(lines))
         issues.extend(_check_event_log_id(lines))
+    if is_ideas:
+        issues.extend(_check_idea_log_id(lines))
     if is_political_leaders_file:
         issues.extend(_check_leader_rotation(lines))
 
@@ -4245,9 +4479,12 @@ def check_file(filepath):
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
     issues.extend(_check_wrong_stat_trigger(lines))
+    issues.extend(_check_stat_effect_magnitude(lines))
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
+    issues.extend(_check_trade_modifier_outside_shared_effects(lines, filepath))
     issues.extend(_check_while_loop_max_iterations(lines))
+    issues.extend(_check_daily_mastery_index(lines))
     issues.extend(_check_var_index_shorthand(lines))
     issues.extend(_check_else_with_limit(lines))
     issues.extend(_check_log_nested_quote(lines))
@@ -4257,52 +4494,20 @@ def check_file(filepath):
     issues.extend(_check_modifier_ref_defined(lines))
     if is_common_or_events_file:
         issues.extend(_check_every_owned_controlled_state(lines))
-        issues.extend(_check_building_missing_province(lines))
-        issues.extend(_check_nested_province_block(lines))
         issues.extend(_check_bare_statement_token(lines))
 
-    return [(filepath, ln, msg) for ln, msg in issues]
-
-
-_JSON_CATEGORY = "common-mistakes"
-
-
-def _add_output_arg(parser):
-    parser.add_argument(
-        "--output",
-        "-o",
-        help="Write the findings to this log file and a matching .json sidecar",
+    # The leader rotation check already reports duplicate branches in these files.
+    shadowed = [] if is_political_leaders_file else _check_shadowed_branches(lines)
+    warnings = _check_idea_log_not_needed(lines) if is_ideas else []
+    return (
+        [(filepath, ln, msg) for ln, msg in issues],
+        [(filepath, ln, msg) for ln, msg in shadowed],
+        [(filepath, ln, msg) for ln, msg in warnings],
     )
-
-
-def _write_report(output_path, lines, issues):
-    """Mirror BaseValidator: a text log plus a `<stem>.json` issue sidecar.
-
-    newline="" keeps Windows from turning the log into CRLF.
-    """
-    with open(output_path, "w", encoding="utf-8", newline="") as handle:
-        handle.write("\n".join(lines) + "\n")
-
-    payload = [
-        {
-            "severity": "error",
-            "category": _JSON_CATEGORY,
-            "message": message,
-            "file": clean_filepath(filepath).replace(os.sep, "/"),
-            "line": line_num,
-            "validator": _JSON_CATEGORY,
-        }
-        for filepath, line_num, message in issues
-    ]
-    sidecar = os.path.splitext(output_path)[0] + ".json"
-    with open(sidecar, "w", encoding="utf-8", newline="") as handle:
-        json.dump(payload, handle, indent=2)
 
 
 def main():
-    parser = create_linting_parser(
-        "Check for common HOI4 scripting mistakes", extra_args_fn=_add_output_arg
-    )
+    parser = create_linting_parser("Check for common HOI4 scripting mistakes")
     args = parser.parse_args()
 
     timings = []
@@ -4314,16 +4519,6 @@ def main():
 
     if not files_list:
         print("No files to check")
-        if args.output:
-            _write_report(
-                args.output,
-                [
-                    "COMMON MISTAKES CHECK",
-                    "",
-                    "✓ VALIDATION COMPLETE - 0 ERROR(S) - 0 WARNING(S)",
-                ],
-                [],
-            )
         return 0
 
     # The available=always-no and is_X_nation checks need completion refs and
@@ -4363,28 +4558,18 @@ def main():
         )
     timings.append(("checking", t.elapsed))
 
-    all_issues = [issue for file_issues in results for issue in file_issues]
+    all_issues = sorted(
+        issue for errors, shadowed, _warnings in results for issue in errors + shadowed
+    )
 
-    sorted_issues = sorted(all_issues)
-    for filepath, line_num, message in sorted_issues:
+    for filepath, line_num, message in all_issues:
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
+    for filepath, line_num, message in sorted(
+        warning for _errors, _shadowed, warnings in results for warning in warnings
+    ):
+        print(f"{clean_filepath(filepath)}:{line_num}: warning: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
-
-    if args.output:
-        # "  file:line - message" plus the VALIDATION COMPLETE tokens match what
-        # tools/report_lib/loader.py parses when a JSON sidecar is unavailable.
-        report_lines = ["COMMON MISTAKES CHECK", ""]
-        report_lines += [
-            f"  {clean_filepath(filepath).replace(os.sep, '/')}:{line_num} - {message}"
-            for filepath, line_num, message in sorted_issues
-        ]
-        marker = "✗" if sorted_issues else "✓"
-        report_lines += [
-            "",
-            f"{marker} VALIDATION COMPLETE - {len(sorted_issues)} ERROR(S) - 0 WARNING(S)",
-        ]
-        _write_report(args.output, report_lines, sorted_issues)
 
     if all_issues:
         print(f"Found {len(all_issues)} issue(s)")

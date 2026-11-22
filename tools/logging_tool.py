@@ -103,10 +103,7 @@ def _iter_directory_paths(cpath, *parts):
 def _open_output(path, *, dry_run):
     if dry_run:
         return io.StringIO()
-    try:
-        return open(path, "w", encoding="utf-8", newline="")
-    except OSError:
-        raise
+    return open(path, "w", encoding="utf-8", newline="")
 
 
 def _open_output_or_raise(path, filename, *, dry_run):
@@ -263,7 +260,6 @@ def focus_remove(cpath, dry_run=False):
                 if 'log = "[GetDateText]' not in line:
                     outputfile.write(line)
                 else:
-                    outputfile.write("")
                     changes += 1
     return changes
 
@@ -342,7 +338,6 @@ def idea_remove(cpath, dry_run=False):
                 if 'log = "[GetDateText]' not in line:
                     outputfile.write(line)
                 else:
-                    outputfile.write("")
                     changes += 1
     return changes
 
@@ -392,8 +387,6 @@ def decision_remove(cpath, dry_run=False):
                     changes += 1
                     if "complete_effect" in line:
                         outputfile.write("complete_effect = {\n\t\t}\n")
-                    else:
-                        outputfile.write("")
     return changes
 
 
@@ -426,7 +419,6 @@ def tech_remove(cpath, dry_run=False):
             for x in range(len(lines)):
                 line = lines[x]
                 if 'log = "[GetDateText]' in line:
-                    outputfile.write("")
                     changes += 1
                 elif (
                     "on_research_complete" in line
@@ -434,10 +426,8 @@ def tech_remove(cpath, dry_run=False):
                     and ("}" in lines[x + 2] or "}" in lines[x + 1])
                 ):
                     print("Deleted logging at line", x, "in file", filename)
-                    outputfile.write("")
                     changes += 1
                 elif 'log = "[GetDateText]' in lines[x - 1] and "}" in line:
-                    outputfile.write("")
                     changes += 1
                 else:
                     outputfile.write(line)

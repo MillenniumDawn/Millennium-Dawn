@@ -128,7 +128,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 	#Internal State policy
 	focus = {
@@ -282,7 +288,7 @@ focus_tree = {
 
 		prerequisite = { focus = ABK_wine }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 		available = { NOT = { has_idea = non_state_actor } }
 
@@ -298,7 +304,13 @@ focus_tree = {
 			change_farmers_opinion = yes
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 	#Associated State
 	focus = {
@@ -569,6 +581,8 @@ focus_tree = {
 
 		cost = 5
 
+		mutually_exclusive = { focus = ABK_president_illness focus = ABK_president_illness3 }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = { emerging_communist_state_are_in_power = yes }
@@ -599,6 +613,7 @@ focus_tree = {
 				}
 				if = { limit = { NOT = { check_variable = { ruling_party = 4 } } }
 					set_temp_variable = { rul_party_temp = 4 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
 				}
 				set_temp_variable = { party_index = 4 }
@@ -939,10 +954,6 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 20
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
 			modifier = { factor = 25 has_global_flag = ABK_COMMUNIST_FOCUS_PATH }
 			modifier = { factor = 0 ABK_ai_not_communist_path = yes }
 		}
@@ -1020,9 +1031,11 @@ focus_tree = {
 					target = ROOT
 					modifier = improve_trade
 				}
-				set_temp_variable = { percent_change = 2 }
-				change_influence_percentage = yes
 			}
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = NKO }
+			set_temp_variable = { influence_target = ABK }
+			change_influence_percentage = yes
 		}
 
 		ai_will_do = {
@@ -1598,7 +1611,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ABK_defend_our_home2"
-			set_temp_variable = { treasury_change = -1 }
+			set_temp_variable = { treasury_change = -0.1 }
 			modify_treasury_effect = yes
 			706 = {
 				add_building_construction = {
@@ -1669,6 +1682,8 @@ focus_tree = {
 
 		cost = 5
 
+		mutually_exclusive = { focus = ABK_president_illness focus = ABK_president_illness2 }
+
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
@@ -1685,6 +1700,7 @@ focus_tree = {
 				clr_country_flag = dynamic_flag
 				if = { limit = { NOT = { check_variable = { ruling_party = 23 } } }
 					set_temp_variable = { rul_party_temp = 23 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
 				}
 				set_temp_variable = { party_index = 23 }
@@ -1899,7 +1915,7 @@ focus_tree = {
 		cost = 7
 
 		prerequisite = { focus = ABK_invest_from_eng
-		focus = ABK_invest_from_tur }
+			focus = ABK_invest_from_tur }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
 
@@ -2492,7 +2508,12 @@ focus_tree = {
 			nationalist_monarchists_are_in_power = yes
 		}
 
-		bypass = { SOO = { is_subject = yes } }
+		bypass = {
+			OR = {
+				NOT = { country_exists = SOO }
+				SOO = { is_subject = yes }
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ABK_ally_with_south_ossetia"
@@ -2610,7 +2631,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ABK_arm_battalion"
 			custom_effect_tooltip = ABK_legion_TT
 			hidden_effect = {
-			division_template = {
+				division_template = {
 					name = "Baghramyan Battalion"
 					is_locked = yes
 					regiments = {
@@ -2625,7 +2646,7 @@ focus_tree = {
 					limit = { ROOT = { has_full_control_of_state = PREV } }
 					prioritize = { 46 }
 					create_unit = {
-						division = "name = \"Baghramyan Battalion\" division_template = \"Armenian Battalion\" start_experience_factor = 0.5"
+						division = "name = \"Baghramyan Battalion\" division_template = \"Baghramyan Battalion\" start_experience_factor = 0.5"
 						owner = ABK
 					}
 				}
@@ -2665,7 +2686,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ABK_cool_thingy"
 			add_named_threat = {
 				threat = 2
-				name = ARM_aze_talishlezgin
+				name = ABK_georgia_war_preparations
 			}
 			GEO = {
 				add_stability = -0.05
@@ -2772,6 +2793,7 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = ABK_promotion_of_russia focus = ABK_promotion_of_independence }
+		mutually_exclusive = { focus = ABK_president_illness2 focus = ABK_president_illness3 }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -2794,6 +2816,8 @@ focus_tree = {
 			hidden_effect = {
 				if = { limit = { NOT = { check_variable = { ruling_party = 14 } } }
 					set_temp_variable = { rul_party_temp = 14 }
+					set_temp_variable = { disable_elections = 1 }
+					if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
 					change_ruling_party_effect = yes
 				}
 				set_temp_variable = { party_index = 14 }
@@ -2830,8 +2854,8 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ABK_energy_help"
 			if = {
 				limit = {
-						has_idea = ABK_energy_problems_idea
-					}
+					has_idea = ABK_energy_problems_idea
+				}
 				swap_ideas = {
 					remove_idea = ABK_energy_problems_idea
 					add_idea = ABK_energy_problems2_idea
@@ -2920,6 +2944,10 @@ focus_tree = {
 			base = 20
 			modifier = { factor = 25 ABK_ai_historical_path = yes }
 			modifier = { factor = 0 ABK_ai_not_historical_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	#Research net
@@ -2956,6 +2984,10 @@ focus_tree = {
 			base = 20
 			modifier = { factor = 25 ABK_ai_historical_path = yes }
 			modifier = { factor = 0 ABK_ai_not_historical_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	#Restore JD arms to Russia
@@ -3102,6 +3134,10 @@ focus_tree = {
 			base = 20
 			modifier = { factor = 25 ABK_ai_historical_path = yes }
 			modifier = { factor = 0 ABK_ai_not_historical_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	#CIS-2 create
@@ -3285,10 +3321,6 @@ focus_tree = {
 			base = 20
 			modifier = {
 				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0
 				can_staff_an_industrial_complex = no
 			}
 			modifier = { factor = 25 ABK_ai_historical_path = yes }
@@ -3405,6 +3437,8 @@ focus_tree = {
 			hidden_effect = {
 				if = { limit = { NOT = { check_variable = { ruling_party = 7 } } }
 					set_temp_variable = { rul_party_temp = 7 }
+					set_temp_variable = { disable_elections = 1 }
+					if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
 					change_ruling_party_effect = yes
 				}
 				set_temp_variable = { party_index = 7 }
@@ -3639,6 +3673,10 @@ focus_tree = {
 			base = 20
 			modifier = { factor = 25 ABK_ai_historical_path = yes }
 			modifier = { factor = 0 ABK_ai_not_historical_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	#Rus Hydro
@@ -3674,8 +3712,8 @@ focus_tree = {
 			}
 			if = {
 				limit = {
-						has_idea = ABK_energy_problems2_idea
-					}
+					has_idea = ABK_energy_problems2_idea
+				}
 				remove_ideas = ABK_energy_problems2_idea
 			}
 			if = {
@@ -3691,6 +3729,10 @@ focus_tree = {
 			modifier = { factor = 3 OR = { has_idea = ABK_energy_problems_idea has_idea = ABK_energy_problems2_idea } }
 			modifier = { factor = 25 ABK_ai_historical_path = yes }
 			modifier = { factor = 0 ABK_ai_not_historical_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3773,10 +3815,6 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 20
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
 			modifier = {
 				factor = 0
 				can_staff_an_offices = no
@@ -3895,19 +3933,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ABK_air"
 			air_experience = 30
-				add_tech_bonus = {
-					name = ABK_air
-					uses = 1
-					bonus = 0.25
-					category = CAT_aircraft
-				}
-				add_doctrine_cost_reduction = {
-					name = ABK_air
-					category = air_doctrine
-					uses = 1
-					cost_reduction = 0.15
-				}
+			add_tech_bonus = {
+				name = ABK_air
+				uses = 1
+				bonus = 0.25
+				category = CAT_aircraft
 			}
+			add_doctrine_cost_reduction = {
+				name = ABK_air
+				category = air_doctrine
+				uses = 1
+				cost_reduction = 0.15
+			}
+		}
 
 		ai_will_do = {
 			base = 20
@@ -3937,8 +3975,8 @@ focus_tree = {
 				bonus = 0.3
 				uses = 3
 				category = CAT_infantry
-				}
 			}
+		}
 
 		ai_will_do = {
 			base = 20
@@ -4208,6 +4246,10 @@ focus_tree = {
 		ai_will_do = {
 			base = 20
 			modifier = { factor = 2 ai_is_threatened = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	#England sosiski
@@ -4413,7 +4455,7 @@ focus_tree = {
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				add_equipment_to_stockpile = {
-					type = medium_tank_artillery_chassis_1
+					type = medium_tank_rocket_chassis_1
 					variant_name = "PHZ-89"
 					amount = 75
 					producer = CHI

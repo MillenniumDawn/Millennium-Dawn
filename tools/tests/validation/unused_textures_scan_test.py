@@ -15,6 +15,7 @@ import os
 
 import pytest
 import validate_unused_textures as vut
+from shared.suite import run_validator
 from validate_unused_textures import Validator
 
 
@@ -30,6 +31,16 @@ def _write(path, body="", binary=None):
     else:
         path.write_bytes(binary)
     return str(path)
+
+
+def _write_sprite(tmp_path, texture, quoted=True, write_texture=True):
+    if write_texture:
+        _write(tmp_path / texture)
+    tex = f'"{texture}"' if quoted else texture
+    _write(
+        tmp_path / "interface" / "icons.gfx",
+        f'spriteType = {{\n\tname = "GFX_x"\n\ttexturefile = {tex}\n}}\n',
+    )
 
 
 # --- texture discovery ------------------------------------------------------
@@ -57,6 +68,24 @@ def test_gfx_file_discovery_skips_the_same_dumps(tmp_path):
 
 # --- .gfx reference resolution ----------------------------------------------
 
+_TEXTURES = {"gfx/a/icon.dds", "gfx/b/icon.dds"}
+_LOOKUP = {"icon.dds": ["gfx/a/icon.dds", "gfx/b/icon.dds"]}
+
+# case: (reference, textures it loads)
+_RESOLVE_CASES = {
+    "full path on disk": ("gfx/a/icon.dds", ["gfx/a/icon.dds"]),
+    "full path gone, same name elsewhere": ("gfx/old/icon.dds", []),
+    "bare filename": ("icon.dds", ["gfx/a/icon.dds", "gfx/b/icon.dds"]),
+    "bare filename nowhere": ("absent.dds", []),
+}
+
+
+@pytest.mark.parametrize("case", _RESOLVE_CASES.values(), ids=_RESOLVE_CASES.keys())
+def test_texture_reference_resolution(case):
+    reference, expected = case
+    resolved = vut._resolve_texture_ref(reference, _TEXTURES, _LOOKUP)
+    assert sorted(resolved) == expected
+
 
 def test_gfx_reference_resolves_by_basename_for_entity_textures(tmp_path):
     path = _write(
@@ -74,6 +103,50 @@ def test_gfx_reference_resolves_by_basename_for_entity_textures(tmp_path):
     assert raw == {"unit_diffuse.dds"}
 
 
+def test_gfx_file_resolves_main_and_animation_textures_quoted_or_bare(tmp_path):
+    path = _write(
+        tmp_path / "interface" / "icons.gfx",
+        "spriteTypes = {\n"
+        "\tspriteType = {\n"
+        "\t\tname = GFX_ok\n"
+        "\t\ttexturefile = gfx/interface/used.dds\n"
+        "\t\tanimation = {\n"
+        '\t\t\tanimationtexturefile = "gfx/interface/shine.dds"\n'
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    textures = {"gfx/interface/used.dds", "gfx/interface/shine.dds"}
+    vut._textures_init(str(tmp_path), textures, {})
+
+    assert vut.process_gfx_file(path) == (textures, textures)
+
+
+def test_gfx_file_with_bytes_that_are_not_utf8_is_still_read(tmp_path):
+    # Vanilla .gfx files carry Windows-1252 comments.
+    path = _write(
+        tmp_path / "interface" / "core.gfx",
+        binary=b'# caf\xe9\nspriteType = {\n\ttexturefile = "gfx/interface/v.tga"\n}\n',
+    )
+    vut._textures_init(str(tmp_path), set(), {})
+    assert vut.process_gfx_file(path) == (set(), {"gfx/interface/v.tga"})
+
+
+def test_gfx_file_behind_a_symlinked_directory_is_still_read(tmp_path):
+    # Steam libraries are commonly reached through a symlink.
+    _write(
+        tmp_path / "real" / "interface" / "core.gfx",
+        'spriteType = {\n\ttexturefile = "gfx/interface/v.tga"\n}\n',
+    )
+    try:
+        (tmp_path / "link").symlink_to(tmp_path / "real", target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks unavailable on this platform")
+    vut._textures_init(str(tmp_path), set(), {})
+    path = str(tmp_path / "link" / "interface" / "core.gfx")
+    assert vut.process_gfx_file(path) == (set(), {"gfx/interface/v.tga"})
+
+
 def test_unreadable_gfx_file_resolves_nothing(tmp_path):
     vut._textures_init(str(tmp_path), set(), {})
     assert vut.process_gfx_file(str(tmp_path / "absent.gfx")) == (set(), set())
@@ -88,6 +161,17 @@ def test_sprite_texture_map_skips_incomplete_and_unbalanced_blocks(tmp_path):
         '\tspriteType = {\n\t\tname = "GFX_no_texture"\n\t}\n'
         "}\n"
         '\tspriteType = {\n\t\tname = "GFX_unbalanced"\n',
+    )
+    assert vut._sprite_name_to_texture([path]) == {"GFX_ok": "gfx/a/b.dds"}
+
+
+def test_sprite_texture_map_reads_unquoted_texturefile(tmp_path):
+    path = _write(
+        tmp_path / "interface" / "icons.gfx",
+        "spriteTypes = {\n"
+        '\tspriteType = {\n\t\tname = "GFX_ok"\n'
+        "\t\ttexturefile = gfx/a/b.dds\n\t}\n"
+        "}\n",
     )
     assert vut._sprite_name_to_texture([path]) == {"GFX_ok": "gfx/a/b.dds"}
 
@@ -153,28 +237,55 @@ def test_game_file_scan_does_not_descend_into_hidden_directories(tmp_path):
 # --- .mesh references -------------------------------------------------------
 
 
-def test_mesh_blob_marks_its_textures_as_used(tmp_path):
-    _write(tmp_path / "gfx" / "models" / "unit_diffuse.dds")
+_PDXMESH = 'objectTypes = {{\n\tpdxmesh = {{\n\t\t{}file = "{}"\n\t}}\n}}\n'
+
+# case: (file naming the pdxmesh, mesh path it names, commented out, in vanilla)
+_MESH_REF_CASES = {
+    "entity asset": ("gfx/entities/u.asset", "gfx/models/unit.mesh", False, False),
+    "interface gfx": ("interface/u.gfx", "gfx/models/unit.mesh", False, False),
+    "other case": ("gfx/entities/u.gfx", "GFX/Models/Unit.mesh", False, False),
+    "vanilla entity": ("gfx/entities/u.asset", "gfx/models/unit.mesh", False, True),
+    "commented out": ("gfx/entities/u.asset", "gfx/models/unit.mesh", True, False),
+    "other mesh": ("gfx/entities/u.asset", "gfx/models/other.mesh", False, False),
+}
+
+
+@pytest.mark.parametrize(
+    "entity, mesh, commented, vanilla",
+    _MESH_REF_CASES.values(),
+    ids=_MESH_REF_CASES.keys(),
+)
+def test_mesh_counts_only_when_a_pdxmesh_uses_it(
+    tmp_path, entity, mesh, commented, vanilla
+):
+    mod, install = tmp_path / "mod", tmp_path / "vanilla"
+    _write(mod / "gfx" / "models" / "unit_diffuse.dds")
     _write(
-        tmp_path / "gfx" / "models" / "unit.mesh",
+        mod / "gfx" / "models" / "unit.mesh",
         binary=b"\x00\x01pdxmesh\x00unit_diffuse.dds\x00\xff",
     )
-    # A directory ending in .mesh is matched by the glob but cannot be read.
-    (tmp_path / "gfx" / "models" / "broken.mesh").mkdir()
+    _write(
+        (install if vanilla else mod) / entity,
+        _PDXMESH.format("# " if commented else "", mesh),
+    )
+    install.mkdir(exist_ok=True)
 
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator = Validator(
+        mod_path=str(mod), use_colors=False, workers=1, hoi4_path=str(install)
+    )
     validator.validate_unused_textures()
 
-    assert "gfx/models/unit_diffuse.dds" in validator.mesh_referenced_textures
-    assert validator._issues == []
+    used = not commented and mesh.lower() == "gfx/models/unit.mesh"
+    unused = sorted(issue.message for issue in validator._issues)
+    assert unused == (
+        [] if used else ["gfx/models/unit.mesh", "gfx/models/unit_diffuse.dds"]
+    )
 
 
 # --- loc text icons ---------------------------------------------------------
 
 
-def test_text_icon_resolves_through_the_texture_basename(tmp_path):
-    # The sprite's texturefile path is stale but the art moved, not vanished —
-    # the basename lookup is what keeps it out of the unused report.
+def test_text_icon_with_a_stale_sprite_path_uses_no_texture(tmp_path):
     _write(tmp_path / "gfx" / "moved" / "icon.dds")
     _write(
         tmp_path / "interface" / "icons.gfx",
@@ -188,7 +299,7 @@ def test_text_icon_resolves_through_the_texture_basename(tmp_path):
     validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     validator.validate_unused_textures()
 
-    assert validator.text_icon_referenced_textures == {"gfx/moved/icon.dds"}
+    assert validator.text_icon_referenced_textures == set()
 
 
 def test_text_icon_scan_tolerates_an_unreadable_loc_path(tmp_path):
@@ -256,9 +367,9 @@ def _missing_validator(tmp_path, raw_refs, **kwargs):
     return validator
 
 
-def test_reference_resolving_by_basename_is_not_missing(tmp_path):
+def test_bare_filename_found_anywhere_under_gfx_is_not_missing(tmp_path):
     _write(tmp_path / "gfx" / "deep" / "icon.dds")
-    validator = _missing_validator(tmp_path, {"gfx/old/icon.dds"})
+    validator = _missing_validator(tmp_path, {"icon.dds"})
     validator.validate_missing_textures()
     assert validator.missing_count == 0
 
@@ -315,13 +426,9 @@ def test_missing_texture_is_an_error_with_an_install(tmp_path):
 
 def test_full_run_reports_unused_and_missing_without_an_install(tmp_path):
     _write(tmp_path / "gfx" / "interface" / "orphan.dds")
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        'spriteType = {\n\tname = "GFX_x"\n\ttexturefile = "gfx/absent/icon.dds"\n}\n',
-    )
+    _write_sprite(tmp_path, "gfx/absent/icon.dds", write_texture=False)
 
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
+    validator = run_validator(Validator, tmp_path)
 
     assert validator.unused_count == 1
     assert validator.missing_count == 1
@@ -338,52 +445,56 @@ def test_full_run_with_an_install_scans_vanilla_too(tmp_path):
         'spriteType = {\n\tname = "GFX_v"\n\ttexturefile = "gfx/interface/vanilla.dds"\n}\n',
     )
     _write(tmp_path / "gfx" / "interface" / "orphan.dds")
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        'spriteType = {\n\tname = "GFX_x"\n\ttexturefile = "gfx/interface/vanilla.dds"\n}\n',
-    )
+    _write_sprite(tmp_path, "gfx/interface/vanilla.dds", write_texture=False)
 
-    validator = Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, hoi4_path=str(install)
-    )
-    validator.run_validations()
+    validator = run_validator(Validator, tmp_path, hoi4_path=str(install))
 
     # The mod's reference points at vanilla art, so it is neither a mod texture
     # nor a missing one.
     assert "gfx/interface/vanilla.dds" in validator.vanilla_raw_referenced_textures
+    assert "  Texture references in vanilla .gfx files: 1" in validator.output_lines
     assert validator.missing_count == 0
     assert validator.unused_count == 1
+
+
+def test_full_run_reports_a_sprite_whose_file_only_exists_in_another_folder(tmp_path):
+    _write(tmp_path / "gfx" / "interface" / "other" / "icon.dds")
+    _write_sprite(tmp_path, "gfx/interface/own/icon.dds", write_texture=False)
+
+    validator = run_validator(Validator, tmp_path)
+
+    assert validator.missing_count == 1
+    assert validator.unused_count == 1
+    assert {issue.message for issue in validator._issues} == {
+        "gfx/interface/own/icon.dds",
+        "gfx/interface/other/icon.dds",
+    }
 
 
 def test_full_run_with_an_install_errors_on_a_reference_nothing_can_resolve(tmp_path):
     install = tmp_path / "hoi4"
     install.mkdir()
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        'spriteType = {\n\tname = "GFX_x"\n\ttexturefile = "gfx/absent/icon.dds"\n}\n',
-    )
+    _write_sprite(tmp_path, "gfx/absent/icon.dds", write_texture=False)
 
-    validator = Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, hoi4_path=str(install)
-    )
-    validator.run_validations()
+    validator = run_validator(Validator, tmp_path, hoi4_path=str(install))
 
     assert validator.missing_count == 1
     assert validator.errors_found == 1
 
 
-def test_clean_mod_reports_nothing(tmp_path):
-    _write(tmp_path / "gfx" / "interface" / "used.dds")
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        'spriteType = {\n\tname = "GFX_x"\n\ttexturefile = "gfx/interface/used.dds"\n}\n',
-    )
-
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-
+@pytest.mark.parametrize("quoted", (True, False))
+def test_present_texturefile_is_used_quoted_or_not(tmp_path, quoted):
+    _write_sprite(tmp_path, "gfx/interface/used.dds", quoted=quoted)
+    validator = run_validator(Validator, tmp_path)
     assert (validator.unused_count, validator.missing_count) == (0, 0)
     assert validator._issues == []
+
+
+def test_unquoted_missing_texturefile_is_reported(tmp_path):
+    _write_sprite(tmp_path, "gfx/absent/icon.dds", quoted=False, write_texture=False)
+    validator = run_validator(Validator, tmp_path)
+    assert validator.missing_count == 1
+    assert "gfx/absent/icon.dds" in {issue.message for issue in validator._issues}
 
 
 def test_hoi4_path_argument_is_registered():
