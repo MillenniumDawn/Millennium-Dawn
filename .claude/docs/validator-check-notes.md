@@ -368,6 +368,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `event-option-log-id` (ERROR): log the option's own id, not a neighboring option's.
   Version strings and dotted scopes are not event ids. Exemptions live in
   `validation_config.json` `option_log_id_exempt`.
+- `event-option-duplicate-name` (ERROR): an option with no `trigger` always
+  displays, so reusing a sibling option's `name` shows two identical labels (or
+  two labels for one choice). Options with mutually exclusive triggers may share
+  a name on purpose; that case is not reported.
 - `event-ai-chance-ignores-cost` (WARNING): authoring rules and cost kinds are in
   `event-reference.md`, "Cost-aware AI weights". A literal country scope is the
   receiver when a conjunctive event trigger requires `tag = TAG`, even with other
