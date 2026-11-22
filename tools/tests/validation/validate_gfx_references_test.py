@@ -18,6 +18,7 @@ _REAL_VANILLA_GUI_FILES = vg._vanilla_gui_files
 _REAL_VANILLA_GUI_REF_INDEX = vg._vanilla_gui_ref_index
 _REAL_SPRITE_MANIFEST = vg._load_vanilla_sprite_manifest
 _REAL_FONT_MANIFEST = vg._load_vanilla_font_manifest
+_REAL_UI_PATHS = vg._load_vanilla_ui_paths
 
 
 @pytest.fixture(autouse=True)
@@ -127,19 +128,22 @@ def test_committed_manifests_skip_comments_and_blank_lines(
 
 
 @pytest.mark.parametrize(
-    "loader, attribute",
+    "loader, attribute, empty",
     [
-        (_REAL_SPRITE_MANIFEST, "_VANILLA_SPRITES_MANIFEST"),
-        (_REAL_FONT_MANIFEST, "_VANILLA_FONTS_MANIFEST"),
-        (vg._load_vanilla_gui_basenames, "_VANILLA_GUI_MANIFEST"),
+        (_REAL_SPRITE_MANIFEST, "_VANILLA_SPRITES_MANIFEST", frozenset()),
+        (_REAL_FONT_MANIFEST, "_VANILLA_FONTS_MANIFEST", frozenset()),
+        (vg._load_vanilla_gui_basenames, "_VANILLA_GUI_MANIFEST", frozenset()),
+        (_REAL_UI_PATHS, "_VANILLA_UI_PATHS_MANIFEST", {}),
     ],
-    ids=["sprites", "fonts", "gui files"],
+    ids=["sprites", "fonts", "gui files", "ui paths"],
 )
-def test_corrupt_manifest_reads_as_empty(tmp_path, monkeypatch, loader, attribute):
+def test_corrupt_manifest_reads_as_empty(
+    tmp_path, monkeypatch, loader, attribute, empty
+):
     manifest = tmp_path / "manifest.txt"
     manifest.write_bytes(b"ENTRY_ONE\n\xff\xfe not utf-8 \x80\n")
     monkeypatch.setattr(vg, attribute, str(manifest))
-    assert loader() == frozenset()
+    assert loader() == empty
 
 
 def test_vanilla_gui_ref_index_keys_refs_by_basename(tmp_path, monkeypatch):
@@ -564,8 +568,11 @@ def test_only_a_placeholder_template_resolves_nothing(tmp_path):
     ],
     ids=["engine refs", "unused sprites"],
 )
-def test_missing_data_dirs_are_logged(tmp_path, gfx_notices, check, notices):
-    logged = gfx_notices(tmp_path, check)
+def test_missing_data_dirs_are_logged(tmp_path, monkeypatch, check, notices):
+    logged = []
+    validator = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    monkeypatch.setattr(validator, "log", lambda msg, *a, **k: logged.append(msg))
+    check(validator)
     for expected in notices:
         assert any(expected in msg for msg in logged)
 
@@ -690,6 +697,14 @@ _GUI_REF_CASES = {
         'spriteType = "GFX_NV_btn_add"\n',
         [("GFX_NV_btn_add", 3)],
     ),
+    "commented-out ref": (
+        '# spriteType = "GFX_commented_out"\nspriteType = "GFX_real"\n',
+        [("GFX_real", 2)],
+    ),
+    "trailing comment": (
+        'spriteType = "GFX_real" # spriteType = "GFX_commented"\n',
+        [("GFX_real", 1)],
+    ),
 }
 
 
@@ -765,12 +780,23 @@ def test_parse_script_refs(tmp_path, rel, text, refs):
             [("GFX_trigger_no", 2), ("GFX_mission_icons", 2)],
         ),
         ('l_english:\n A:0 "£GFX_$KEY$ : Jump"\n', []),
+        (
+            'l_english:\n# disabled: "£GFX_commented"\n'
+            ' live: "£GFX_live" # £GFX_trailing\n',
+            [("GFX_live", 3)],
+        ),
+        (
+            ' a: "£GFX_CTC.5"\n b: "£GFX_Polizistin-Kiesewetter"\n',
+            [("GFX_CTC.5", 1), ("GFX_Polizistin-Kiesewetter", 2)],
+        ),
     ],
     ids=[
         "punctuation and repeats",
         "prefix already present",
         "closing pound sign",
         "parameter-built name",
+        "hash comments",
+        "dotted and hyphenated names",
     ],
 )
 def test_parse_loc_refs(tmp_path, text, refs):
@@ -1378,7 +1404,7 @@ _NEVER_REFERENCED = (
 
 
 # The unused report is ~6.7k findings on a full repo, so a default run and CI
-# skip it, including the script ref collection that feeds only it.
+# skip it.
 @pytest.mark.parametrize(
     "report_unused, hide, reported",
     [(False, None, False), (True, None, True), (True, "1", False), (True, "0", True)],
@@ -1391,12 +1417,6 @@ def test_unused_report_gate(tmp_path, monkeypatch, report_unused, hide, reported
     kwargs = {"report_unused": True} if report_unused else {}
     validator = _validator(tmp_path, **kwargs)
     assert validator.report_unused is report_unused
-    if not report_unused:
-        monkeypatch.setattr(
-            validator,
-            "_collect_script_refs",
-            lambda: pytest.fail("script refs collected"),
-        )
 
     validator.run_validations()
 
@@ -1419,6 +1439,125 @@ def test_staged_report_unused_run_skips_the_full_repo_passes(tmp_path, monkeypat
     validator.run_validations()
 
     assert not _categories(validator, "unused-sprite")
+
+
+# --- vanilla UI dropped by overrides ----------------------------------------
+
+# Every case exempts `view legacy`, which no fixture defines.
+_UI_PATHS = {
+    "interface/topbar.gfx": [["GFX_kept"], ["GFX_lost"], ["GFX_still_loaded"]],
+    "interface/other.gfx": [["GFX_still_loaded"]],
+    "interface/factions/topbar.gfx": [["GFX_other_path"]],
+    "interface/engine.gfx": [["GFX_engine", "engine"]],
+    "interface/view.gui": [
+        ["view"],
+        ["view", "legacy"],
+        ["view", "speed"],
+        ["item", "label"],
+    ],
+}
+_TOPBAR_GFX = "spriteTypes = {\n" + _sprite("GFX_kept", "gfx/kept.dds") + "}\n"
+
+
+def _gui_ref(sprite):
+    return f'guiTypes = {{\n\ticonType = {{ name = "x" spriteType = "{sprite}" }}\n}}\n'
+
+
+def _view(*children):
+    body = "".join(f'\t\t\ticonType = {{ name = "{c}" }}\n' for c in children)
+    return (
+        'guiTypes = {\n\tcontainerWindowType = {\n\t\tname = "view"\n'
+        f"\t\tcontainerWindowType = {{\n{body}\t\t}}\n\t}}\n}}\n"
+    )
+
+
+_DROPPED_CASES = {
+    "unused content art": ({}, []),
+    "gui ref": (
+        {"interface/md_view.gui": _gui_ref("GFX_lost")},
+        [("dropped-vanilla-sprite", "interface/topbar.gfx", "interface/md_view.gui:2")],
+    ),
+    "script ref": (
+        {"events/x.txt": "x = { picture = GFX_lost }\n"},
+        [("dropped-vanilla-sprite", "interface/topbar.gfx", "events/x.txt uses")],
+    ),
+    "english loc ref": (
+        {"localisation/english/x_l_english.yml": 'l_english:\n x: "£lost"\n'},
+        [("dropped-vanilla-sprite", "interface/topbar.gfx", "x_l_english.yml:2")],
+    ),
+    "non-english loc ref": (
+        {"localisation/french/x_l_french.yml": 'l_french:\n x: "£lost"\n'},
+        [],
+    ),
+    "md defines it": (
+        {
+            "interface/md.gfx": "spriteTypes = {\n"
+            + _sprite("GFX_lost", "gfx/lost.dds")
+            + "}\n",
+            "interface/md_view.gui": _gui_ref("GFX_lost"),
+        },
+        [],
+    ),
+    "another vanilla file loads it": (
+        {"interface/md_view.gui": _gui_ref("GFX_still_loaded")},
+        [],
+    ),
+    "same basename, other path": (
+        {"interface/md_view.gui": _gui_ref("GFX_other_path")},
+        [],
+    ),
+    "engine sprite": (
+        {"interface/engine.gfx": "spriteTypes = {\n}\n"},
+        [("dropped-engine-sprite", "interface/engine.gfx", "GFX_engine")],
+    ),
+    "window and element kept": ({"interface/view.gui": _view("speed")}, []),
+    "engine element dropped": (
+        {"interface/view.gui": _view("other")},
+        [("dropped-engine-gui-element", "interface/view.gui", "element 'speed'")],
+    ),
+    "engine window dropped": (
+        {"interface/view.gui": "guiTypes = {\n}\n"},
+        [("dropped-engine-gui-element", "interface/view.gui", "Window 'view' is")],
+    ),
+    "window moved to another file": (
+        {"interface/view.gui": "guiTypes = {\n}\n", "interface/md.gui": _view("speed")},
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "files, expected", _DROPPED_CASES.values(), ids=_DROPPED_CASES.keys()
+)
+def test_dropped_vanilla_ui(tmp_path, monkeypatch, files, expected):
+    monkeypatch.setattr(vg, "_load_vanilla_ui_paths", lambda: _UI_PATHS)
+    monkeypatch.setattr(vg, "validation_config", lambda *_: {"view legacy": ""})
+    _write(tmp_path / "interface" / "topbar.gfx", _TOPBAR_GFX)
+    for relative, body in files.items():
+        _write(tmp_path / relative, body)
+
+    validator = run_validator(GfxReferenceValidator, tmp_path)
+
+    found = [i for i in validator._issues if i.category.startswith("dropped-")]
+    assert [(i.category, i.file) for i in found] == [(c, f) for c, f, _ in expected]
+    for issue, (_category, _file, needle) in zip(found, expected):
+        assert needle in issue.message
+
+
+def test_dropped_vanilla_ui_is_skipped_under_staged(tmp_path, monkeypatch):
+    monkeypatch.setattr(vg, "_load_vanilla_ui_paths", lambda: _UI_PATHS)
+    _write(tmp_path / "interface" / "topbar.gfx", _TOPBAR_GFX)
+    _write(tmp_path / "interface" / "md_view.gui", _gui_ref("GFX_lost"))
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [str(tmp_path / "interface" / "topbar.gfx")]
+    monkeypatch.setattr(
+        validator, "_collect_script_refs", lambda: pytest.fail("script refs collected")
+    )
+
+    validator.run_validations()
+
+    assert not [i for i in validator._issues if i.category.startswith("dropped-")]
 
 
 # --- raw icon paths ---------------------------------------------------------

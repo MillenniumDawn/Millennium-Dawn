@@ -9,7 +9,7 @@ Usage:
 
 Prerequisites
 -------------
-- Python 3.12+
+- Python 3.14+
 - Git
 - ImageMagick (magick or convert on PATH)
 - (Optional for --docs) Node.js 24+ and Bun (https://bun.sh/)
@@ -18,8 +18,8 @@ The script will auto-create a local ``.venv`` if your system Python is
 externally managed (PEP 668 on Debian/Ubuntu and similar).
 
 Run this after cloning the repo. It will:
-  1. Check Python version (3.12+ required)
-  2. Install pre-commit and set up git hooks
+  1. Check Python version (3.14+ required)
+  2. Install pre-commit and set up the pre-commit and pre-push git hooks
   3. Install Python tool dependencies (requests, pillow)
   4. Install Python dev/test and static-analysis dependencies so tests and
      Python quality checks work locally
@@ -52,7 +52,7 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 # Packages whose import name differs from their distribution name.
 _IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml", "pytest-xdist": "xdist"}
 
-MIN_PYTHON = (3, 12)
+MIN_PYTHON = (3, 14)
 MIN_NODE = 24
 
 
@@ -183,21 +183,21 @@ def check_hooks_installed() -> bool:
     except FileNotFoundError:
         pass
 
-    hook_file = REPO_ROOT / ".git" / "hooks" / "pre-commit"
-    if not hook_file.exists():
-        print(f"  Git hooks: {check_mark(False)}")
-        return False
-    text = hook_file.read_text(errors="replace")
-    has_pre_commit = "pre-commit" in text
-    # When using a local venv the hook should point to our python so that
-    # commits work even when the venv is not activated.
-    if in_virtualenv() and venv_python_path():
-        points_to_us = sys.executable in text
-        ok = has_pre_commit and points_to_us
-    else:
-        ok = has_pre_commit
+    ok = all(_hook_installed(name) for name in ("pre-commit", "pre-push"))
     print(f"  Git hooks: {check_mark(ok)}")
     return ok
+
+
+def _hook_installed(name: str) -> bool:
+    hook_file = REPO_ROOT / ".git" / "hooks" / name
+    if not hook_file.exists():
+        return False
+    text = hook_file.read_text(errors="replace")
+    # When using a local venv the hook should point to our python so that
+    # commits work even when the venv is not activated.
+    if in_virtualenv() and venv_python_path() and sys.executable not in text:
+        return False
+    return "pre-commit" in text
 
 
 def _group_packages(group: str) -> list[str]:

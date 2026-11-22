@@ -304,6 +304,29 @@ _SCRIPT_READ_CASES = {
         "}\n",
         set(),
     ),
+    "sorted country scores": (
+        "common/e.txt",
+        "x = {\n"
+        "\tget_sorted_scored_countries_temp = {\n"
+        "\t\tscorer = scorer_id\n"
+        "\t\tarray = ranked\n"
+        "\t\tscores = ranked_scores\n"
+        "\t}\n"
+        "\tcheck_variable = { ranked_scores^0 > 0 }\n"
+        "\tcheck_variable = { ranked > 0 }\n"
+        "\tcheck_variable = { country_list_scores > 0 }\n"
+        "}\n",
+        {"country_list_scores"},
+    ),
+    "sorted country score defaults": (
+        "common/e.txt",
+        "x = {\n"
+        "\tget_sorted_scored_countries = { scorer = scorer_id }\n"
+        "\tcheck_variable = { sorted_country_list > 0 }\n"
+        "\tcheck_variable = { country_list_scores > 0 }\n"
+        "}\n",
+        set(),
+    ),
     "token compare": (
         "common/e.txt",
         "x = {\n"

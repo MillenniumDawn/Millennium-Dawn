@@ -3,27 +3,61 @@
 build_intelligence_agency = {
 	allowed = { has_dlc = "La Resistance" }
 	enable = {
-		num_of_civilian_factories > 25
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { ##Factory Usage
-		type = intelligence_agency_usable_factories
-		value = 5
-	}
-}
-
-upgrade_intelligence_agency = {
-	allowed = { has_dlc = "La Resistance" }
-	enable = {
-		num_of_civilian_factories > 75
-		date > 2000.1.1
+		has_intelligence_agency = no
+		num_of_civilian_factories > 9
+		ai_can_afford_agency_upgrade = yes
+		OR = {
+			has_war = yes
+			is_in_faction = yes
+			has_at_least_regional_power_status = yes
+		}
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
 		type = intelligence_agency_usable_factories
-		value = 3
+		value = 5
+	}
+	ai_strategy = {
+		type = agency_ai_base_num_factories_factor
+		value = -100
+	}
+}
+
+# MD upgrades cost treasury, not factories, so money paces them instead of the factory defines
+upgrade_intelligence_agency = {
+	allowed = { has_dlc = "La Resistance" }
+	enable = {
+		has_intelligence_agency = yes
+		ai_can_afford_agency_upgrade = yes
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = intelligence_agency_usable_factories
+		value = 5
+	}
+	ai_strategy = {
+		type = agency_ai_base_num_factories_factor
+		value = -100
+	}
+	ai_strategy = {
+		type = agency_ai_per_upgrade_factories_factor
+		value = -100
+	}
+}
+
+hold_intelligence_agency_upgrades = {
+	allowed = { has_dlc = "La Resistance" }
+	enable = {
+		has_intelligence_agency = yes
+		ai_can_afford_agency_upgrade = no
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = intelligence_agency_usable_factories
+		value = -50
 	}
 }
 
@@ -70,12 +104,17 @@ addintelligence_agency_normal_upgrade_prio = {
 	ai_strategy = {
 		type = intelligence_agency_branch_desire_factor
 		id = branch_operative
-		value = 100
+		value = 1000
 	}
 	ai_strategy = {
 		type = intelligence_agency_branch_desire_factor
 		id = branch_crypto
 		value = 2000
+	}
+	ai_strategy = {
+		type = intelligence_agency_branch_desire_factor
+		id = branch_cyber
+		value = 500
 	}
 }
 
@@ -112,16 +151,11 @@ enable_operative_missions = {
 		value = 100
 	}
 
-	ai_strategy = {
-		type = operative_mission
-		mission = control_trade
-		value = 100
-	}
-
 	##Removed
 	#mission = boost_ideology
 	#mission = diplomatic_pressure
 	#mission = propaganda
+	#mission = control_trade, its vanilla scorer lists no targets so the engine ignores it
 }
 
 ##Generic Operation Running AI
@@ -185,6 +219,30 @@ run_generic_operation_add_more_operatives = {
 		value = 800
 		mission_target = var:generic_operation_target
 		num_operatives = 2
+	}
+}
+
+# Set by update_operation_ai once the network meets the chosen operation's requirement
+run_generic_operation_quiet_network = {
+	allowed = { has_dlc = "La Resistance" }
+	enable = {
+		NOT = { check_variable = { generic_operation_target = 0 } }
+		has_country_flag = generic_operation_network_ready
+
+		var:generic_operation_target = {
+			exists = yes
+			has_capitulated = no
+			NOT = { is_ally_with = PREV }
+		}
+	}
+
+	abort_when_not_enabled = yes
+
+	ai_strategy = {
+		type = operative_mission
+		mission = quiet_network
+		value = 900
+		mission_target = var:generic_operation_target
 	}
 }
 

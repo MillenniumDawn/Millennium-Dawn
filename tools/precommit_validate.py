@@ -26,10 +26,11 @@ This dispatcher:
   * runs them concurrently, splitting cores between the outer fan-out and each
     validator's own worker pool so the two layers don't oversubscribe.
 
-Only the commit-stage validators live here. The expensive cross-reference
-validators run in CI only (never on commit), and must stay out of this
-registry, or they would run on every commit — running the full suite on commit
-was measured at ~7s warm, a large regression. `validate_defines` keeps its own
+Only the commit-stage validators live here. That includes a few
+cross-reference validators that are fast enough for a commit (events, ideas,
+oob_units, mios, characters). The slower ones run in CI only and must stay out
+of this registry, or they would run on every commit — running the full suite on
+commit was measured at ~7s warm, a large regression. `validate_defines` keeps its own
 pre-commit hook because it is keyed off `.lua` files, which this dispatcher
 does not route.
 
@@ -56,6 +57,8 @@ from shared_utils import (  # noqa: E402 — needs the path tweak above
 TXT = ".txt"
 YML = ".yml"
 GFX = ".gfx"
+GUI = ".gui"
+CONTENT_EXTENSIONS = (TXT, YML, GFX, GUI)
 
 
 class _Spec:
@@ -81,10 +84,11 @@ class _Spec:
         return False
 
 
-# Only the commit-stage validators belong here. The expensive cross-reference
-# validators (cosmetic_tags, localisation, focus_tree, variables, decisions,
-# modifiers, scripted_params, simplifications, ...) run in CI only — they do NOT
-# run on commit. Folding them in here would drag them onto every commit, so this
+# Only the commit-stage validators belong here, including the cross-reference
+# validators cheap enough for a commit (events, ideas, oob_units, mios,
+# characters). The slower ones (cosmetic_tags, localisation, focus_tree,
+# variables, decisions, modifiers, scripted_params, simplifications, ...) run in
+# CI only — they do NOT run on commit. Folding them in here would drag them onto every commit, so this
 # registry mirrors exactly the run-on-commit validators (their `files:` patterns
 # and --strict flags). Keep in sync when the config changes; the golden test in
 # tools/tests/precommit_validate_test.py guards against drift.
@@ -177,6 +181,16 @@ _REGISTRY = [
         [("common/", TXT), ("events/", TXT), ("history/", TXT)],
     ),
     _Spec(
+        "validate_dynamic_tokens",
+        [
+            ("common/", TXT),
+            ("events/", TXT),
+            ("history/", TXT),
+            ("localisation/english/", YML),
+            ("interface/", GUI),
+        ],
+    ),
+    _Spec(
         "validate_mios",
         [
             ("common/military_industrial_organization/organizations/", TXT),
@@ -205,7 +219,9 @@ def _discover_staged(mod_path, argv_files):
 
     staged = (
         get_staged_files(
-            mod_path, extensions=[TXT, YML, GFX], include_missing=bool(argv_files)
+            mod_path,
+            extensions=list(CONTENT_EXTENSIONS),
+            include_missing=bool(argv_files),
         )
         or []
     )
@@ -227,7 +243,7 @@ def _discover_staged(mod_path, argv_files):
 def _run(spec, mod_path, env, no_color, inner_workers):
     cmd = [
         sys.executable,
-        os.path.join("tools", "validation", f"{spec.script}.py"),
+        os.path.join(_TOOLS_DIR, "validation", f"{spec.script}.py"),
         "--staged",
         "--workers",
         str(inner_workers),
@@ -283,9 +299,9 @@ def main():
 
     mod_path = os.path.abspath(args.path)
     rel_paths = [p.replace("\\", "/") for p in _discover_staged(mod_path, args.files)]
-    rel_paths = [p for p in rel_paths if p.endswith((TXT, YML, GFX))]
+    rel_paths = [p for p in rel_paths if p.endswith(CONTENT_EXTENSIONS)]
     if not rel_paths:
-        print("No staged .txt/.yml/.gfx content files — nothing to validate.")
+        print("No staged .txt/.yml/.gfx/.gui content files — nothing to validate.")
         return 0
 
     selected = [spec for spec in _REGISTRY if spec.matches(rel_paths)]

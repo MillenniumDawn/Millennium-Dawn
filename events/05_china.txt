@@ -1,3 +1,4 @@
+add_namespace = china_varyag
 #Rework Author(s): TheGeneral
 add_namespace = CHI_political_events
 add_namespace = CHI_semiconductor_events
@@ -1396,12 +1397,12 @@ country_event = {
 		name = china_sar.041.a
 		log = "[GetDateText]: [This.GetName]: china_sar.041.a executed"
 		random_owned_state = {
+			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = microchip_plant
 				level = 1
 				instant_build = yes
 			}
-			add_extra_state_shared_building_slots = 1
 		}
 		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_TAI_shared_modifier }
 		add_to_variable = { CHI_TAI_production_factory_efficiency_gain_factor = 0.03 tooltip = production_factory_efficiency_gain_factor_tt }
@@ -1492,6 +1493,7 @@ country_event = {
 		name = china_sar.043.a
 		log = "[GetDateText]: [This.GetName]: china_sar.043.a executed"
 		random_owned_state = {
+			limit = { free_building_slots = { building = infrastructure size > 0 } }
 			add_building_construction = {
 				type = infrastructure
 				level = 1
@@ -1586,6 +1588,7 @@ country_event = {
 		add_to_variable = { party_pop_array^1 = 0.01 }
 		recalculate_party = yes
 		random_owned_state = {
+			limit = { free_building_slots = { building = industrial_complex size > 0 include_constructions = yes } }
 			add_building_construction = {
 				type = industrial_complex
 				level = 1
@@ -1693,7 +1696,14 @@ country_event = {
 				target = TAI
 				autonomy_state = autonomy_special_administrative_region_TAI
 			}
-			TAI = { CHI_SAR_match_ruling_party = yes }
+			TAI = {
+				hidden_effect = {
+					set_temp_variable = { overlord_to_match = CHI.id }
+					effect_puppet_match_ruling_party_to_overlord = yes
+					if = { limit = { has_elections = yes } set_elections_60_months = yes }
+				}
+				CHI_SAR_become_non_state_actor = yes
+			}
 			if = {
 				limit = { has_completed_focus = CHI_SAR_research_sharing }
 				TAI = { add_to_tech_sharing_group = Greater_China_Tech_Share }
@@ -1980,12 +1990,35 @@ country_event = {
 	desc = CHI_sco.30.d
 	picture = GFX_CHI_event_sco_flags
 	is_triggered_only = yes
+	trigger = {
+		has_global_flag = sco_megaproject_energy_grid_pending
+		FROM = { has_country_flag = sco_megaproject_energy_grid_initiator }
+	}
+
+	immediate = {
+		for_each_scope_loop = {
+			array = global.sco_members
+			clr_country_flag = sco_megaproject_energy_grid_initiator
+		}
+		FROM = { set_country_flag = { flag = sco_megaproject_energy_grid_initiator value = 1 days = 27 } }
+	}
 
 	option = {
 		name = CHI_sco.30.a
+		trigger = {
+			has_global_flag = sco_megaproject_energy_grid_pending
+			FROM = {
+				is_sco = yes
+				has_country_flag = sco_megaproject_energy_grid_initiator
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: CHI_sco.30.a executed"
+		clr_global_flag = sco_megaproject_energy_grid_pending
 		set_variable = { global.sco_megaproject_energy_grid_active = 1 }
-		FROM = { set_country_flag = { flag = sco_megaproject_energy_grid_window value = 1 days = 180 } }
+		FROM = {
+			set_country_flag = sco_megaproject_energy_grid_initiator
+			set_country_flag = { flag = sco_megaproject_energy_grid_window value = 1 days = 180 }
+		}
 		CHI = { country_event = { id = CHI_sco.42 days = 180 } }
 		ai_chance = {
 			base = 10
@@ -1999,8 +2032,15 @@ country_event = {
 	option = {
 		name = CHI_sco.30.b
 		log = "[GetDateText]: [This.GetName]: CHI_sco.30.b executed"
-		FROM = { clr_country_flag = sco_megaproject_energy_grid_initiator }
-		add_political_power = 25
+		if = {
+			limit = {
+				has_global_flag = sco_megaproject_energy_grid_pending
+				FROM = { has_country_flag = sco_megaproject_energy_grid_initiator }
+			}
+			clr_global_flag = sco_megaproject_energy_grid_pending
+			FROM = { clr_country_flag = sco_megaproject_energy_grid_initiator }
+			add_political_power = 25
+		}
 		ai_chance = { base = 1 }
 	}
 }
@@ -2011,12 +2051,35 @@ country_event = {
 	desc = CHI_sco.31.d
 	picture = GFX_CHI_event_sco_flags
 	is_triggered_only = yes
+	trigger = {
+		has_global_flag = sco_megaproject_railway_pending
+		FROM = { has_country_flag = sco_megaproject_railway_initiator }
+	}
+
+	immediate = {
+		for_each_scope_loop = {
+			array = global.sco_members
+			clr_country_flag = sco_megaproject_railway_initiator
+		}
+		FROM = { set_country_flag = { flag = sco_megaproject_railway_initiator value = 1 days = 27 } }
+	}
 
 	option = {
 		name = CHI_sco.31.a
+		trigger = {
+			has_global_flag = sco_megaproject_railway_pending
+			FROM = {
+				is_sco = yes
+				has_country_flag = sco_megaproject_railway_initiator
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: CHI_sco.31.a executed"
+		clr_global_flag = sco_megaproject_railway_pending
 		set_variable = { global.sco_megaproject_railway_active = 1 }
-		FROM = { set_country_flag = { flag = sco_megaproject_railway_window value = 1 days = 180 } }
+		FROM = {
+			set_country_flag = sco_megaproject_railway_initiator
+			set_country_flag = { flag = sco_megaproject_railway_window value = 1 days = 180 }
+		}
 		CHI = { country_event = { id = CHI_sco.41 days = 180 } }
 		ai_chance = {
 			base = 10
@@ -2030,8 +2093,15 @@ country_event = {
 	option = {
 		name = CHI_sco.31.b
 		log = "[GetDateText]: [This.GetName]: CHI_sco.31.b executed"
-		FROM = { clr_country_flag = sco_megaproject_railway_initiator }
-		add_political_power = 25
+		if = {
+			limit = {
+				has_global_flag = sco_megaproject_railway_pending
+				FROM = { has_country_flag = sco_megaproject_railway_initiator }
+			}
+			clr_global_flag = sco_megaproject_railway_pending
+			FROM = { clr_country_flag = sco_megaproject_railway_initiator }
+			add_political_power = 25
+		}
 		ai_chance = { base = 1 }
 	}
 }
@@ -2042,12 +2112,35 @@ country_event = {
 	desc = CHI_sco.32.d
 	picture = GFX_CHI_event_sco_flags
 	is_triggered_only = yes
+	trigger = {
+		has_global_flag = sco_megaproject_dev_bank_pending
+		FROM = { has_country_flag = sco_megaproject_dev_bank_initiator }
+	}
+
+	immediate = {
+		for_each_scope_loop = {
+			array = global.sco_members
+			clr_country_flag = sco_megaproject_dev_bank_initiator
+		}
+		FROM = { set_country_flag = { flag = sco_megaproject_dev_bank_initiator value = 1 days = 27 } }
+	}
 
 	option = {
 		name = CHI_sco.32.a
+		trigger = {
+			has_global_flag = sco_megaproject_dev_bank_pending
+			FROM = {
+				is_sco = yes
+				has_country_flag = sco_megaproject_dev_bank_initiator
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: CHI_sco.32.a executed"
+		clr_global_flag = sco_megaproject_dev_bank_pending
 		set_variable = { global.sco_megaproject_dev_bank_active = 1 }
-		FROM = { set_country_flag = { flag = sco_megaproject_dev_bank_window value = 1 days = 180 } }
+		FROM = {
+			set_country_flag = sco_megaproject_dev_bank_initiator
+			set_country_flag = { flag = sco_megaproject_dev_bank_window value = 1 days = 180 }
+		}
 		CHI = { country_event = { id = CHI_sco.43 days = 180 } }
 		ai_chance = {
 			base = 10
@@ -2061,8 +2154,15 @@ country_event = {
 	option = {
 		name = CHI_sco.32.b
 		log = "[GetDateText]: [This.GetName]: CHI_sco.32.b executed"
-		FROM = { clr_country_flag = sco_megaproject_dev_bank_initiator }
-		add_political_power = 25
+		if = {
+			limit = {
+				has_global_flag = sco_megaproject_dev_bank_pending
+				FROM = { has_country_flag = sco_megaproject_dev_bank_initiator }
+			}
+			clr_global_flag = sco_megaproject_dev_bank_pending
+			FROM = { clr_country_flag = sco_megaproject_dev_bank_initiator }
+			add_political_power = 25
+		}
 		ai_chance = { base = 1 }
 	}
 }
@@ -2073,12 +2173,35 @@ country_event = {
 	desc = CHI_sco.33.d
 	picture = GFX_CHI_event_sco_flags
 	is_triggered_only = yes
+	trigger = {
+		has_global_flag = sco_megaproject_air_defense_pending
+		FROM = { has_country_flag = sco_megaproject_air_defense_initiator }
+	}
+
+	immediate = {
+		for_each_scope_loop = {
+			array = global.sco_members
+			clr_country_flag = sco_megaproject_air_defense_initiator
+		}
+		FROM = { set_country_flag = { flag = sco_megaproject_air_defense_initiator value = 1 days = 27 } }
+	}
 
 	option = {
 		name = CHI_sco.33.a
+		trigger = {
+			has_global_flag = sco_megaproject_air_defense_pending
+			FROM = {
+				is_sco = yes
+				has_country_flag = sco_megaproject_air_defense_initiator
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: CHI_sco.33.a executed"
+		clr_global_flag = sco_megaproject_air_defense_pending
 		set_variable = { global.sco_megaproject_air_defense_active = 1 }
-		FROM = { set_country_flag = { flag = sco_megaproject_air_defense_window value = 1 days = 180 } }
+		FROM = {
+			set_country_flag = sco_megaproject_air_defense_initiator
+			set_country_flag = { flag = sco_megaproject_air_defense_window value = 1 days = 180 }
+		}
 		CHI = { country_event = { id = CHI_sco.44 days = 180 } }
 		ai_chance = {
 			base = 10
@@ -2092,8 +2215,15 @@ country_event = {
 	option = {
 		name = CHI_sco.33.b
 		log = "[GetDateText]: [This.GetName]: CHI_sco.33.b executed"
-		FROM = { clr_country_flag = sco_megaproject_air_defense_initiator }
-		add_political_power = 25
+		if = {
+			limit = {
+				has_global_flag = sco_megaproject_air_defense_pending
+				FROM = { has_country_flag = sco_megaproject_air_defense_initiator }
+			}
+			clr_global_flag = sco_megaproject_air_defense_pending
+			FROM = { clr_country_flag = sco_megaproject_air_defense_initiator }
+			add_political_power = 25
+		}
 		ai_chance = { base = 1 }
 	}
 }
@@ -6991,7 +7121,6 @@ country_event = {
 	desc = china_news.boycott_streets.d
 	picture = GFX_CHI_anti_japan_protest
 	is_triggered_only = yes
-	major = yes
 
 	option = { name = china_news.boycott_streets.a }
 }
@@ -7002,7 +7131,6 @@ country_event = {
 	desc = china_news.panda_arrives_tokyo.d
 	picture = GFX_CHI_panda_diplomacy
 	is_triggered_only = yes
-	major = yes
 
 	option = {
 		name = china_news.panda_arrives_tokyo.a
@@ -12640,5 +12768,72 @@ country_event = {
 		effect_tooltip = { add_timed_idea = { idea = CHI_bytedance_editorial_news_group days = 365 } }
 		hidden_effect = { CHI_bytedance_apply_editorial_group = yes }
 		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = china_varyag.1
+	title = china_varyag.1.t
+	desc = china_varyag.1.desc
+	picture = GFX_UKR_varyag_negotiations
+	is_triggered_only = yes
+	trigger = { FROM = { exists = yes } }
+
+	option = {
+		name = china_varyag.1.a
+		log = "[GetDateText]: [This.GetName]: china_varyag.1.a executed"
+		if = {
+			limit = {
+				check_variable = { var = treasury value = 0.2 compare = greater_than_or_equals }
+				check_variable = { UKR_storage_sale_tier_carrier > 0 } # offered by the sale mission
+				NOT = { has_war_with = FROM }
+				FROM = {
+					UKR_storage_has_carrier_aircraft = yes
+					UKR_storage_carrier_aircraft_chinese_buyer = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+			UKR_storage_deliver_carrier_aircraft = yes
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { add_opinion_modifier = { target = FROM modifier = UKR_carrier_aircraft_sold_to_china } }
+			}
+			FROM = {
+				UKR_storage_clear_carrier_aircraft = yes
+				set_temp_variable = { treasury_change = 0.2 }
+				modify_treasury_effect = yes
+				country_event = ukraine_varyag.30
+			}
+		}
+		else = {
+			ROOT = { save_event_target_as = ukr_storage_buyer }
+			FROM = {
+				set_temp_variable = { ukr_sale_item = 19 }
+				UKR_storage_sale_reopen = yes
+				country_event = ukraine_varyag.31
+			}
+		}
+		ai_chance = {
+			base = 75
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0.2 } }
+		}
+	}
+
+	option = {
+		name = china_varyag.1.b
+		log = "[GetDateText]: [This.GetName]: china_varyag.1.b executed"
+		ROOT = { save_event_target_as = ukr_storage_buyer }
+		FROM = {
+			set_temp_variable = { ukr_sale_item = 19 }
+			UKR_storage_sale_reopen = yes
+			country_event = ukraine_varyag.31
+		}
+		ai_chance = {
+			base = 25
+			modifier = { add = 50 ai_has_high_deficit = yes }
+		}
 	}
 }

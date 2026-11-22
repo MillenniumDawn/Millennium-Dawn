@@ -45,20 +45,7 @@ CONTRACTS.update(
         )
     }
 )
-CONTRACTS.update(
-    {
-        name: ("PREV", "THIS")
-        for name in (
-            "prev_is_top3_influencer",
-            "coup_is_available",
-            "target_other_influence_available",
-            "manipulate_politics_action_available",
-            "make_puppet_action_available",
-            "economic_exploitation_available",
-            "economic_aid_available",
-        )
-    }
-)
+CONTRACTS["prev_is_top3_influencer"] = ("PREV", "THIS")
 CONTRACTS.update(
     {f"influence_less_{n}": ("THIS", "ROOT") for n in (5, 10, 20, 30, 40, 60, 70)}
 )
@@ -406,8 +393,8 @@ class Reader:
                     preview or node.key in _CONDITION_LISTS,
                 )
 
-    def _entry(self, path, node, country=True):
-        root = _root(path, node) if country else None
+    def _entry(self, path, node):
+        root = _root(path, node)
         self._walk(path, node.children, Scope(root, root), f"{path}:{node.line}")
 
     def scan(self):
@@ -429,17 +416,7 @@ class Reader:
                 for category in nodes:
                     for decision in category.children:
                         if decision.children:
-                            targeted = any(
-                                child.key
-                                in {
-                                    "target_array",
-                                    "targets",
-                                    "target_trigger",
-                                    "target_root_trigger",
-                                }
-                                for child in decision.children
-                            )
-                            self._entry(path, decision, not targeted)
+                            self._entry(path, decision)
             elif path.startswith("common/on_actions/"):
                 for node in nodes:
                     hooks = node.children if node.key == "on_actions" else (node,)

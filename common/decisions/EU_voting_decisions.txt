@@ -108,31 +108,21 @@ EU_voting_category = {
 	}
 
 	EU_council_determine_serious_breach_of_EU_values = {
-		allowed = { EU_is_potential = yes }
-
-		target_root_trigger = {
-			EU_council_has_breach_authority = yes
-			has_idea = EU_member
-		}
-
 		target_trigger = {
 			FROM = {
 				NOT = { has_country_flag = serious_breach_of_EU_values }
 				NOT = { has_idea = EUU_voting_rights_suspended }
 				check_variable = { THIS.breach_of_EU_value > 3 }
 			}
+			EU_council_has_breach_authority = yes
 		}
 
 		target_array = global.EU_member
 		cost = 100
 
+		# target_trigger only runs daily; this stops a second member acting on the same target that day
 		available = {
-			FROM = {
-				custom_trigger_tooltip = {
-					tooltip = number_of_eu_breaches_greater_than_three
-					check_variable = { THIS.breach_of_EU_value > 3 }
-				}
-			}
+			hidden_trigger = { FROM = { NOT = { has_country_flag = serious_breach_of_EU_values } } }
 		}
 
 		complete_effect = {
@@ -149,12 +139,7 @@ EU_voting_category = {
 	}
 
 	EU_council_revoke_determination_of_serious_breach_of_EU_values = {
-		allowed = { EU_is_potential = yes }
-
-		target_root_trigger = {
-			has_idea = EU_member
-			NOT = { has_idea = EUU_voting_rights_suspended }
-		}
+		target_root_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 
 		target_trigger = {
 			FROM = {
@@ -172,8 +157,9 @@ EU_voting_category = {
 					tooltip = "Level of breach of EU values < 4."
 					check_variable = { THIS.breach_of_EU_value < 4 }
 				}
+				hidden_trigger = { has_country_flag = serious_breach_of_EU_values }
 			}
-			NOT = { has_idea = EUU_voting_rights_suspended }
+			hidden_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 		}
 
 		complete_effect = {
@@ -190,18 +176,14 @@ EU_voting_category = {
 	}
 
 	EU_council_suspend_voting_rights = {
-		allowed = { EU_is_potential = yes }
-
-		target_root_trigger = {
-			has_idea = EU_member
-			NOT = { has_idea = EUU_voting_rights_suspended }
-		}
+		target_root_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 
 		target_trigger = {
 			FROM = {
 				has_country_flag = serious_breach_of_EU_values
 				NOT = { has_idea = EUU_voting_rights_suspended }
 			}
+			EU_council_has_breach_authority = yes
 		}
 
 		target_array = global.EU_member
@@ -213,15 +195,16 @@ EU_voting_category = {
 					tooltip = number_of_eu_breaches_greater_than_four
 					check_variable = { THIS.breach_of_EU_value > 4 }
 				}
+				hidden_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 			}
-			NOT = { has_idea = EUU_voting_rights_suspended }
-			EU_council_has_breach_authority = yes
+			hidden_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EU_council_suspend_voting_rights"
 			FROM = {
 				add_ideas = EUU_voting_rights_suspended
+				hidden_effect = { md_check_eu_council_vote_alert = yes }
 				set_temp_variable = { modify_europeanism = -0.30 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
@@ -232,14 +215,21 @@ EU_voting_category = {
 	}
 
 	EU_council_revoke_voting_rights_suspension = {
-		allowed = { EU_is_potential = yes }
+		target_root_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 
-		target_root_trigger = {
-			has_idea = EU_member
-			NOT = { has_idea = EUU_voting_rights_suspended }
+		target_trigger = {
+			FROM = { has_idea = EUU_voting_rights_suspended }
+			all_of_scopes = {
+				array = global.EU_member
+				OR = {
+					tag = ROOT
+					tag = FROM
+					has_idea = EUU_voting_rights_suspended
+					is_top3_influencer = yes
+				}
+			}
 		}
 
-		target_trigger = { FROM = { has_idea = EUU_voting_rights_suspended } }
 		target_array = global.EU_member
 		cost = 100
 
@@ -249,29 +239,16 @@ EU_voting_category = {
 					tooltip = "Level of breach of EU values < 5."
 					check_variable = { THIS.breach_of_EU_value < 5 }
 				}
-				has_idea = EUU_voting_rights_suspended
+				hidden_trigger = { has_idea = EUU_voting_rights_suspended }
 			}
-			NOT = { has_idea = EUU_voting_rights_suspended }
-			custom_trigger_tooltip = {
-				tooltip = can_determine_a_breach_of_values_FROM
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							NOT = { has_idea = EUU_voting_rights_suspended }
-						}
-						is_top3_influencer = yes
-					}
-				}
-			}
+			hidden_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EU_council_revoke_voting_rights_suspension"
 			FROM = {
 				remove_ideas = EUU_voting_rights_suspended
+				hidden_effect = { md_check_eu_council_vote_alert = yes }
 				set_temp_variable = { modify_europeanism = 0.30 }
 				set_temp_variable = { modify_europeanism_target = THIS }
 				europeanism_change = yes
@@ -283,18 +260,14 @@ EU_voting_category = {
 
 	### budget rights
 	EU_council_suspend_subsidies = {
-		allowed = { EU_is_potential = yes }
-
-		target_root_trigger = {
-			has_idea = EU_member
-			NOT = { has_idea = EUU_voting_rights_suspended }
-		}
+		target_root_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 
 		target_trigger = {
 			FROM = {
 				has_country_flag = serious_breach_of_EU_values
 				NOT = { has_idea = EUU_subsidies_suspended }
 			}
+			EU_council_has_breach_authority = yes
 		}
 
 		target_array = global.EU_member
@@ -306,9 +279,9 @@ EU_voting_category = {
 					tooltip = number_of_eu_breaches_greater_than_three
 					check_variable = { THIS.breach_of_EU_value > 3 }
 				}
+				hidden_trigger = { NOT = { has_idea = EUU_subsidies_suspended } }
 			}
-			NOT = { has_idea = EUU_voting_rights_suspended }
-			EU_council_has_breach_authority = yes
+			hidden_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 		}
 
 		complete_effect = {
@@ -325,12 +298,7 @@ EU_voting_category = {
 	}
 
 	EU_council_revoke_subsidies_suspension = {
-		allowed = { EU_is_potential = yes }
-
-		target_root_trigger = {
-			has_idea = EU_member
-			NOT = { has_idea = EUU_voting_rights_suspended }
-		}
+		target_root_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 
 		target_trigger = { FROM = { has_idea = EUU_subsidies_suspended } }
 		target_array = global.EU_member
@@ -342,9 +310,9 @@ EU_voting_category = {
 					tooltip = "Level of breach of EU values < 4."
 					check_variable = { THIS.breach_of_EU_value < 4 }
 				}
-				has_idea = EUU_subsidies_suspended
+				hidden_trigger = { has_idea = EUU_subsidies_suspended }
 			}
-			NOT = { has_idea = EUU_voting_rights_suspended }
+			hidden_trigger = { NOT = { has_idea = EUU_voting_rights_suspended } }
 		}
 
 		complete_effect = {
@@ -674,7 +642,7 @@ EU_fiscal_category = {
 				add = 20
 				OR = {
 					check_variable = { ruling_party = 1 } ### conservatism
-					check_variable = { ruling_party = 6 } ### Conservative
+					check_variable = { ruling_party = 6 } ### reactionary
 					check_variable = { ruling_party = 14 } ### Neutral_conservatism
 				}
 			}
@@ -773,10 +741,7 @@ EU_fiscal_category = {
 
 EU_exit_category = {
 	EU_Revoke_Article_50 = {
-		visible = {
-			has_idea = EU_member
-			has_country_flag = Article_50
-		}
+		visible = { has_country_flag = Article_50 }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -890,7 +855,7 @@ EU_exit_category = {
 				ROOT = {
 					OR = {
 						check_variable = { ruling_party = 1 } ### conservatism
-						check_variable = { ruling_party = 6 } ### Conservative
+						check_variable = { ruling_party = 6 } ### reactionary
 						check_variable = { ruling_party = 14 } ### Neutral_conservatism
 					}
 				}
@@ -940,7 +905,6 @@ EU_exit_category = {
 
 	EU_extend_Article_50 = {
 		available = {
-			#has_idea = EU_member
 			custom_trigger_tooltip = {
 				tooltip = tooltip_EU_extend_Article_50_available
 				has_country_flag = Article_50
@@ -948,10 +912,7 @@ EU_exit_category = {
 			}
 		}
 
-		visible = {
-			has_idea = EU_member
-			has_country_flag = Article_50
-		}
+		visible = { has_country_flag = Article_50 }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EU_extend_Article_50"
@@ -1034,7 +995,7 @@ EU_exit_category = {
 				ROOT = {
 					OR = {
 						check_variable = { ruling_party = 1 } ### conservatism
-						check_variable = { ruling_party = 6 } ### Conservative
+						check_variable = { ruling_party = 6 } ### reactionary
 						check_variable = { ruling_party = 14 } ### Neutral_conservatism
 					}
 				}
@@ -1085,10 +1046,7 @@ EU_exit_category = {
 	EU_withdrawal_treaty = {
 		available = { EU_influence_on_leader_of_foreign_policy_25_percent = yes }
 
-		visible = {
-			has_idea = EU_member
-			has_country_flag = Article_50
-		}
+		visible = { has_country_flag = Article_50 }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EU_withdrawal_treaty"
@@ -1104,7 +1062,7 @@ EU_exit_category = {
 				add = -10
 				OR = {
 					check_variable = { ruling_party = 1 } ### conservatism
-					check_variable = { ruling_party = 6 } ### Conservative
+					check_variable = { ruling_party = 6 } ### reactionary
 					check_variable = { ruling_party = 14 } ### Neutral_conservatism
 				}
 			}
@@ -1144,10 +1102,7 @@ EU_exit_category = {
 	}
 
 	EU_prepared_no_deal_exit = {
-		visible = {
-			has_idea = EU_member
-			has_country_flag = Article_50
-		}
+		visible = { has_country_flag = Article_50 }
 
 		cost = 150
 
@@ -1163,7 +1118,7 @@ EU_exit_category = {
 				add = -10
 				OR = {
 					check_variable = { ruling_party = 1 } ### conservatism
-					check_variable = { ruling_party = 6 } ### Conservative
+					check_variable = { ruling_party = 6 } ### reactionary
 					check_variable = { ruling_party = 14 } ### Neutral_conservatism
 				}
 			}
@@ -1346,7 +1301,6 @@ EU_defense_category = {
 	}
 
 	EU_military_exercise = {
-		allowed = { EU_is_potential = yes }
 		target_array = neighbors
 
 		target_root_trigger = {
@@ -1355,7 +1309,7 @@ EU_defense_category = {
 		}
 
 		icon = GFX_decision_infiltrate_state
-		days_remove = 90
+		days_re_enable = 90
 		custom_cost_trigger = { command_power > 40 }
 		custom_cost_text = command_power_more_than_40
 
@@ -1380,8 +1334,6 @@ EU_defense_category = {
 				NOT = { has_country_flag = EU_military_exercise_prep }
 			}
 			NOT = { has_war = yes }
-			has_idea = European_Security_Council
-			has_idea = EU_member
 		}
 
 		fixed_random_seed = no
@@ -1403,7 +1355,6 @@ EU_defense_category = {
 	}
 
 	EU_ask_to_host_military_exercise = {
-		allowed = { EU_is_potential = yes }
 		target_array = global.EU_member
 
 		target_root_trigger = {
@@ -1411,12 +1362,12 @@ EU_defense_category = {
 			has_idea = EU_member
 		}
 
-		days_remove = 365
+		days_re_enable = 365
 
 		target_trigger = {
 			FROM = {
 				EU_has_external_border = yes
-				THIS = { any_neighbor_country = { has_country_flag = EU_military_exercise_at_border_from@ROOT } }
+				any_neighbor_country = { has_country_flag = EU_military_exercise_at_border_from@ROOT }
 			}
 		}
 
@@ -1426,7 +1377,6 @@ EU_defense_category = {
 				NOT = { has_country_flag = EU_host_military_exercise@ROOT }
 			}
 			has_country_flag = EU_military_exercise_prep
-			has_idea = EU_member
 		}
 
 		complete_effect = {
@@ -1680,6 +1630,8 @@ EU_apply_for_membership_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete EU_apply_for_membership"
 			add_ideas = EU_member
+			unlock_decision_category_tooltip = EU_voting_category
+			unlock_decision_category_tooltip = EU_exit_category
 			force_update_map_mode = { mapmode = EU_map_mode }
 			if = {
 				limit = {

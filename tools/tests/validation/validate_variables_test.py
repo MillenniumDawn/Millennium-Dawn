@@ -12,6 +12,7 @@ import validator_common
 from shared.suite import checks_called_by_run, variable_scan
 from shared.suite import issue_rows as _issue_rows
 from shared.suite import write_under as _write
+from validate_dynamic_tokens import scan_dynamic_tokens_text
 
 _SHARED_CHECKS = (
     "validate_clamp_range_conflicts",
@@ -138,6 +139,29 @@ def test_flag_scan_collects_set_used_and_cleared(tmp_path):
 )
 def test_scan_returns_nothing_for_an_empty_file(tmp_path, rel, worker):
     assert worker(str(_write(tmp_path, rel, "")), str(tmp_path)) == ({}, {}, {})
+
+
+@pytest.mark.parametrize(
+    ("scan", "text", "expected"),
+    [
+        (V._scan_flags_in_file, "set_global_flag = FOO\n", (["FOO"], [], [])),
+        (V._scan_flags_in_file, "has_global_flag = FOO\r\n", ([], ["FOO"], [])),
+        (
+            V._scan_targets_in_text,
+            "save_event_target_as = FOO\r\n",
+            ({"FOO": "test.txt"}, {}, {}),
+        ),
+        (
+            V._scan_targets_in_text,
+            "event_target:FOO\r\n",
+            ({}, {"FOO": "test.txt"}, {}),
+        ),
+    ],
+    ids=["LF flag set", "CRLF flag read", "CRLF target set", "CRLF target read"],
+)
+def test_names_at_a_crlf_line_end_drop_the_carriage_return(scan, text, expected):
+    context = "global" if scan is V._scan_flags_in_file else "test.txt"
+    assert scan(text, context) == expected
 
 
 def test_flag_pass_scans_only_the_supported_flag_types(tmp_path):
@@ -824,7 +848,7 @@ _REGISTRY = "common/synchronized_dynamic_tokens/MD_tokens.txt"
 def _tokens(text, registered=()):
     return [
         (message.split(" ", 1)[0], line)
-        for message, _rel, line in V._scan_dynamic_tokens_text(
+        for message, _rel, line in scan_dynamic_tokens_text(
             text, "common/scripted_effects/x.txt", frozenset(registered)
         )
     ]
@@ -1627,7 +1651,7 @@ def _unreadable(tmp_path, name="src.txt"):
     return path
 
 
-_SHARED_SECTION_EMPTY = {
+_SHARED_SECTION_EMPTY: dict[str, list[object] | tuple[list[object], list[object]]] = {
     "math": [],
     "treasury": [],
     "clamp_checks": [],

@@ -4,7 +4,6 @@ import disk_cache
 import guard_scan
 import pytest
 import validate_ai_weight_order
-import validate_building_guards
 import validate_dynamic_modifier_guards
 import validate_influence_calls
 
@@ -19,10 +18,10 @@ _CASES = [
     (
         validate_influence_calls,
         "every_country = { change_influence_percentage = yes }",
-        "change_influence_percentage = yes runs inside every_country without a "
-        "per-iteration influence_target; temp variables persist across "
-        "iterations, so every pass after the first re-targets the first "
-        "iterated country",
+        "change_influence_percentage = yes runs inside every_country without "
+        "setting influence_target on every pass; a value left from before "
+        "the loop or an earlier pass carries into this one, so set it "
+        "inside the loop before the call",
         None,
     ),
     (
@@ -31,13 +30,6 @@ _CASES = [
         "ai_chance adds after a factor = 0 modifier, which brings the zeroed "
         "weight back; move the factor = 0 modifiers last",
         None,
-    ),
-    (
-        validate_building_guards,
-        "damage_building = { type = fuel_silo damage = 1 }",
-        "damage_building = { type = fuel_silo ... } is not guarded by a check "
-        "that fuel_silo exists",
-        "unguarded-damage-building",
     ),
 ]
 

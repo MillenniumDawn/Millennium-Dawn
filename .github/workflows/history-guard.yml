@@ -1,0 +1,53 @@
+name: History guard
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  guard:
+    name: Guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject branches built on the pre-cut history
+        env:
+          OLD_MARKER: 56b0cfc609b39d4d0d4666ec20b9fe0fb3008069
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          url="https://x-access-token:${TOKEN}@github.com/${REPO}"
+          git init -q guard
+          git -C guard fetch -q --filter=tree:0 "$url" "$SHA"
+          # Object lookups can lazy-fetch the marker, so only walk ancestry.
+          git -C guard rev-list "$SHA" > commits
+          if grep -qxF "$OLD_MARKER" commits; then
+            echo "::error::This branch predates the history cut."
+            echo "Re-clone and move work with git format-patch and git am."
+            exit 1
+          fi
+          echo "Branch is on the new history."
+
+      # pull_request_target reports on the base tip, so mirror the result onto
+      # the PR head where required status checks are evaluated.
+      - name: Report on the PR head
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          OUTCOME: ${{ job.status }}
+        run: |
+          conclusion=failure
+          if [ "$OUTCOME" = success ]; then
+            conclusion=success
+          fi
+          gh api -X POST "repos/${REPO}/check-runs" \
+            -f name=history-guard \
+            -f head_sha="$SHA" \
+            -f status=completed \
+            -f conclusion="$conclusion"
