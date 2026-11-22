@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 jobs:
   guard:
@@ -29,3 +30,23 @@ jobs:
             exit 1
           fi
           echo "Branch is on the new history."
+
+      # pull_request_target reports on the base tip, so mirror the result onto
+      # the PR head where required status checks are evaluated.
+      - name: Report on the PR head
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          OUTCOME: ${{ job.status }}
+        run: |
+          conclusion=failure
+          if [ "$OUTCOME" = success ]; then
+            conclusion=success
+          fi
+          gh api -X POST "repos/${REPO}/check-runs" \
+            -f name=history-guard \
+            -f head_sha="$SHA" \
+            -f status=completed \
+            -f conclusion="$conclusion"
