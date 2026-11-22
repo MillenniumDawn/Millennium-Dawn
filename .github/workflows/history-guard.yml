@@ -1,0 +1,31 @@
+name: History guard
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: Guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject branches built on the pre-cut history
+        env:
+          OLD_MARKER: 56b0cfc609b39d4d0d4666ec20b9fe0fb3008069
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.number }}
+        run: |
+          url="https://x-access-token:${TOKEN}@github.com/${REPO}"
+          git init -q guard
+          git -C guard fetch -q --filter=tree:0 "$url" "refs/pull/${PR}/head"
+          # Fresh repo, so a present commit is an ancestor.
+          if git -C guard rev-parse -q --verify "$OLD_MARKER" >/dev/null; then
+            echo "::error::This branch predates the history cut."
+            echo "Re-clone and move work with git format-patch and git am."
+            exit 1
+          fi
+          echo "Branch is on the new history."
