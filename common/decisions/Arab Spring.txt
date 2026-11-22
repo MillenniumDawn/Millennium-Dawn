@@ -32,9 +32,8 @@ arab_spring_category = {
 	arab_spring_encourage_supporters = {
 		icon = GFX_decision_generic_civil_support
 
-		visible = {
-			has_country_flag = arab_spring_active
-		}
+		visible = { arab_spring_protests_active = yes }
+		cancel_trigger = { arab_spring_protests_active = no }
 
 		cost = 25
 
@@ -82,6 +81,19 @@ arab_spring_category = {
 			base = 10
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0.5 } }
+			modifier = { factor = 0 arab_spring_ai_can_start_response = no }
+			modifier = { factor = 0 check_variable = { arab_spring < 200 } }
+			modifier = { factor = 0.25 check_variable = { arab_spring > 230 } }
+			modifier = {
+				factor = 0
+				NOT = {
+					check_variable = { var:days_mission_timeout@arab_spring_protests_1 > 7 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_1 > 7 }
+					check_variable = { var:days_mission_timeout@arab_spring_protests_2 > 7 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_2 > 7 }
+				}
+			}
 		}
 	}
 
@@ -92,26 +104,38 @@ arab_spring_category = {
 		cost = 50
 
 		visible = {
-			has_country_flag = arab_spring_active
+			arab_spring_protests_active = yes
 			has_idea = idea_gcc_member_state
 			NOT = { has_country_flag = gcc_dominant_member }
 		}
+		cancel_trigger = { arab_spring_protests_active = no }
 
 		remove_effect = {
 			log = "[GetDateText]: [This.GetName]: decision arab_spring_request_crackdown executed"
 			# FIXME: Tooltip here
 			random_scope_in_array = {
 				array = global.gcc_member_state
-				limit = { has_country_flag = gcc_dominant_member }
+				limit = { exists = yes has_country_flag = gcc_dominant_member }
 				country_event = arab_spring.19
 			}
 		}
 
 		ai_will_do = {
-			base = 0
+			base = 6
+			modifier = { factor = 0 arab_spring_ai_can_start_response = no }
+			modifier = { factor = 0 NOT = { check_variable = { arab_spring > 239 } } }
 			modifier = {
-				add = 100
-				check_variable = { arab_spring > 100 }
+				factor = 0
+				NOT = { any_of_scopes = { array = global.gcc_member_state exists = yes has_country_flag = gcc_dominant_member } }
+			}
+			modifier = {
+				factor = 0
+				NOT = {
+					check_variable = { var:days_mission_timeout@arab_spring_protests_1 > 21 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_1 > 21 }
+					check_variable = { var:days_mission_timeout@arab_spring_protests_2 > 21 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_2 > 21 }
+				}
 			}
 		}
 	}
@@ -120,9 +144,10 @@ arab_spring_category = {
 		icon = GFX_decision_generic_tank
 
 		visible = {
-			has_country_flag = arab_spring_active
+			arab_spring_protests_active = yes
 			NOT = { has_country_flag = arab_spring_military_deployed }
 		}
+		cancel_trigger = { arab_spring_protests_active = no }
 
 		cost = 50
 
@@ -144,7 +169,19 @@ arab_spring_category = {
 		}
 
 		ai_will_do = {
-			base = 10
+			base = 4
+			modifier = { factor = 0 arab_spring_ai_can_start_response = no }
+			modifier = { factor = 0 check_variable = { arab_spring < 200 } }
+			modifier = { factor = 0 check_variable = { the_military_opinion < 56 } }
+			modifier = {
+				factor = 0
+				NOT = {
+					check_variable = { var:days_mission_timeout@arab_spring_protests_1 > 2 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_1 > 2 }
+					check_variable = { var:days_mission_timeout@arab_spring_protests_2 > 2 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_2 > 2 }
+				}
+			}
 		}
 	}
 
@@ -152,9 +189,10 @@ arab_spring_category = {
 		icon = GFX_decision_generic_tank
 
 		visible = {
-			has_country_flag = arab_spring_active
+			arab_spring_protests_active = yes
 			has_country_flag = arab_spring_military_deployed
 		}
+		cancel_trigger = { arab_spring_protests_active = no }
 
 		cost = 50
 
@@ -175,9 +213,8 @@ arab_spring_category = {
 	arab_spring_reshuffle_government = {
 		icon = GFX_decision_generic_political_discourse
 
-		visible = {
-			has_country_flag = arab_spring_active
-		}
+		visible = { arab_spring_protests_active = yes }
+		cancel_trigger = { arab_spring_protests_active = no }
 
 		cost = 100
 
@@ -228,16 +265,26 @@ arab_spring_category = {
 		}
 
 		ai_will_do = {
-			base = 10
+			base = 3
+			modifier = { factor = 0 arab_spring_ai_can_start_response = no }
+			modifier = { factor = 0 NOT = { check_variable = { arab_spring > 230 } } }
+			modifier = {
+				factor = 0
+				NOT = {
+					check_variable = { var:days_mission_timeout@arab_spring_protests_1 > 20 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_1 > 20 }
+					check_variable = { var:days_mission_timeout@arab_spring_protests_2 > 20 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_2 > 20 }
+				}
+			}
 		}
 	}
 
 	arab_spring_amend_the_constitution = {
 		icon = eng_trade_unions_support
 
-		visible = {
-			has_country_flag = arab_spring_active
-		}
+		visible = { arab_spring_protests_active = yes }
+		cancel_trigger = { arab_spring_protests_active = no }
 
 		cost = 100
 
@@ -292,6 +339,17 @@ arab_spring_category = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 0 arab_spring_ai_can_start_response = no }
+			modifier = { factor = 0 NOT = { check_variable = { arab_spring > 230 } } }
+			modifier = {
+				factor = 0
+				NOT = {
+					check_variable = { var:days_mission_timeout@arab_spring_protests_1 > 10 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_1 > 10 }
+					check_variable = { var:days_mission_timeout@arab_spring_protests_2 > 10 }
+					check_variable = { var:days_mission_timeout@syr_arab_spring_protests_2 > 10 }
+				}
+			}
 		}
 	}
 
@@ -384,10 +442,8 @@ arab_spring_category = {
 
 		activation = {
 			has_global_flag = global_arab_spring_started
-			NOT = { has_country_flag = AS_arab_spring_completed }
-
-			# Global Arab Spring has started... our own protests can begin
-			check_variable = { arab_spring > 199 }
+			arab_spring_eligible = yes
+			check_variable = { var = arab_spring value = 200 compare = greater_than_or_equals }
 			NOT = { neutrality_neutral_muslim_brotherhood_are_in_power = yes }
 			has_war = no
 		}
@@ -412,8 +468,7 @@ arab_spring_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision arab_spring_protests_2 complete executed"
-			clr_country_flag = arab_spring_active
-			country_event = arab_spring.18
+			country_event = { id = arab_spring.18 hours = 1 }
 		}
 	}
 
@@ -429,8 +484,8 @@ arab_spring_category = {
 
 		activation = {
 			has_global_flag = global_arab_spring_started
-			NOT = { has_country_flag = AS_arab_spring_completed }
-			check_variable = { arab_spring > 199 }
+			arab_spring_eligible = yes
+			check_variable = { var = arab_spring value = 200 compare = greater_than_or_equals }
 			NOT = { neutrality_neutral_muslim_brotherhood_are_in_power = yes }
 			has_war = no
 		}
@@ -456,8 +511,7 @@ arab_spring_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [This.GetName]: decision syr_arab_spring_protests_2 complete executed"
-			clr_country_flag = arab_spring_active
-			country_event = arab_spring.18
+			country_event = { id = arab_spring.18 hours = 1 }
 		}
 	}
 }

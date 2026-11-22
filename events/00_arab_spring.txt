@@ -10,13 +10,17 @@ country_event = {
 
 	trigger = {
 		is_in_array = { global.arabic_countries = THIS.id }
-		NOT = { has_country_flag = AS_arab_spring_completed }
+		arab_spring_eligible = yes
 	}
 
 	option = {
 		name = arab_spring.0.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.0.a executed"
-		activate_mission_tooltip = arab_spring_protests_1
+		if = {
+			limit = { original_tag = SYR }
+			activate_mission_tooltip = syr_arab_spring_protests_1
+		}
+		else = { activate_mission_tooltip = arab_spring_protests_1 }
 		if = { limit = { NOT = { has_country_flag = arab_spring_active } }
 			set_country_flag = arab_spring_active
 		}
@@ -223,7 +227,7 @@ country_event = {
 	trigger = {
 		NOT = { has_country_flag = AS_arab_spring_completed }
 		has_country_flag = arab_spring_military_deployed
-		has_country_flag = arab_spring_active
+		arab_spring_protests_active = yes
 		check_variable = { the_military_opinion < 51 }
 	}
 
@@ -249,7 +253,7 @@ country_event = {
 
 	trigger = {
 		has_country_flag = arab_spring_military_deployed
-		has_country_flag = arab_spring_active
+		arab_spring_protests_active = yes
 	}
 
 	# This does not reflect well on us...
@@ -304,7 +308,7 @@ country_event = {
 	picture = GFX_politics_speak
 	is_triggered_only = yes
 
-	trigger = { NOT = { has_country_flag = AS_arab_spring_completed } }
+	trigger = { arab_spring_eligible = yes }
 
 	immediate = { set_country_flag = AS_arab_spring_completed }
 
@@ -418,6 +422,10 @@ country_event = {
 						}
 						ingame_startup_nations_effect = yes
 						annex_country = { target = PREV transfer_troops = yes }
+						set_country_flag = AS_arab_spring_completed
+						set_variable = { social_conservatism_government = SYR.social_conservatism_government }
+						set_variable = { social_conservatism_society = SYR.social_conservatism_society }
+						update_social_conservatism_modifier = yes
 						every_state = {
 							limit = { is_core_of = ROOT }
 							add_core_of = FSA
@@ -467,6 +475,10 @@ country_event = {
 					add_core_of = NUS
 				}
 				NUS = {
+					set_country_flag = AS_arab_spring_completed
+					set_variable = { social_conservatism_government = 100 }
+					set_variable = { social_conservatism_society = SYR.social_conservatism_society }
+					update_social_conservatism_modifier = yes
 					hidden_effect = {
 						add_civil_war_debuff = yes
 					}
@@ -698,7 +710,7 @@ country_event = {
 
 	trigger = {
 		is_in_array = { global.arabic_countries = THIS.id }
-		NOT = { has_country_flag = AS_arab_spring_completed }
+		arab_spring_eligible = yes
 	}
 
 	# We Must Mitigate This Crisis!
@@ -709,9 +721,13 @@ country_event = {
 			limit = { check_variable = { arab_spring < 200 } }
 			country_event = { id = arab_spring.18 days = 7 random_days = 14 }
 		}
-		else = {
-			set_country_flag = arab_spring_active
-			activate_mission_tooltip = arab_spring_protests_2
+		else_if = {
+			limit = { arab_spring_protests_active = yes }
+			if = {
+				limit = { original_tag = SYR }
+				activate_mission_tooltip = syr_arab_spring_protests_2
+			}
+			else = { activate_mission_tooltip = arab_spring_protests_2 }
 			if = {
 				limit = {
 					var:influence_array^0 = {
@@ -744,7 +760,10 @@ country_event = {
 	picture = GFX_politics_protest
 	is_triggered_only = yes
 
-	trigger = { NOT = { has_country_flag = AS_arab_spring_completed } }
+	trigger = {
+		arab_spring_eligible = yes
+		arab_spring_protests_active = no
+	}
 
 	immediate = { set_country_flag = AS_arab_spring_completed }
 
@@ -851,6 +870,8 @@ country_event = {
 	desc = arab_spring.20.d
 	picture = GFX_politics_talks
 	is_triggered_only = yes
+
+	trigger = { arab_spring_protests_active = yes }
 
 	option = {
 		name = arab_spring.20.a
