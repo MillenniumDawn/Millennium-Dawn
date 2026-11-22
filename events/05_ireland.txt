@@ -1,0 +1,391 @@
+add_namespace = IRE_metrolink
+
+# Route objections, fired during planning
+country_event = {
+	id = IRE_metrolink.1
+	title = IRE_metrolink.1.t
+	desc = IRE_metrolink.1.d
+	picture = GFX_IRE_railway_order_hearing
+	is_triggered_only = yes
+
+	trigger = {
+		check_variable = { IRE_metrolink_stage = 1 }
+		NOT = { has_country_flag = IRE_metrolink_route_settled }
+	}
+
+	immediate = { set_country_flag = IRE_metrolink_route_settled }
+
+	option = {
+		name = IRE_metrolink.1.a
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.1.a executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.003 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.1.b
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.1.b executed"
+		set_country_flag = IRE_metrolink_route_delayed
+		custom_effect_tooltip = IRE_metrolink_hearing_delay_effect_tt
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = IRE_metrolink.1.c
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.1.c executed"
+		set_country_flag = IRE_metrolink_cut_scope
+		custom_effect_tooltip = IRE_metrolink_cut_scope_tt
+		hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = -90 } }
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 ai_is_fiscally_stressed = yes }
+		}
+	}
+}
+
+# Fiscal crisis deferral, scheduled by planning and construction
+country_event = {
+	id = IRE_metrolink.2
+	title = IRE_metrolink.2.t
+	desc = IRE_metrolink.2.d
+	picture = GFX_IRE_metro_deferred
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = IRE_metrolink_deferral_done }
+		OR = {
+			check_variable = { IRE_metrolink_stage = 1 }
+			check_variable = { IRE_metrolink_stage = 3 }
+		}
+		OR = {
+			ai_is_fiscally_stressed = yes
+			has_active_mission = bankruptcy_incoming_collapse
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.2.a
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.2.a executed"
+		set_country_flag = IRE_metrolink_deferral_done
+		if = {
+			limit = { check_variable = { IRE_metrolink_stage = 3 } }
+			set_variable = { IRE_metrolink_resume_stage = 2 }
+		}
+		else = {
+			set_variable = { IRE_metrolink_resume_stage = 0 }
+		}
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = 0.001 }
+		modify_treasury_effect = yes
+		set_variable = { IRE_metrolink_stage = 0 }
+		set_country_flag = IRE_metrolink_deferred
+		set_country_flag = { flag = IRE_metrolink_deferral_cooldown days = 365 value = 1 }
+		custom_effect_tooltip = IRE_metrolink_deferred_tt
+		unlock_decision_tooltip = IRE_metrolink_revival
+		ai_chance = {
+			base = 5
+			modifier = { add = 10 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.2.b
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.2.b executed"
+		add_stability = -0.03
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.005 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.35 }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Dublin Airport station, fired during planning
+country_event = {
+	id = IRE_metrolink.3
+	title = IRE_metrolink.3.t
+	desc = IRE_metrolink.3.d
+	picture = GFX_IRE_airport_station
+	is_triggered_only = yes
+
+	trigger = {
+		check_variable = { IRE_metrolink_stage = 1 }
+		NOT = { has_country_flag = IRE_metrolink_cut_scope }
+		NOT = { has_country_flag = IRE_metrolink_airport_decided }
+	}
+
+	immediate = { set_country_flag = IRE_metrolink_airport_decided }
+
+	option = {
+		name = IRE_metrolink.3.a
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.3.a executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.01 }
+		modify_treasury_effect = yes
+		set_country_flag = IRE_metrolink_airport_integrated
+		custom_effect_tooltip = IRE_metrolink_airport_bore_tt
+		hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = 60 } }
+		custom_effect_tooltip = IRE_metrolink_reward_later
+		effect_tooltip = {
+			27 = {
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = rail_terminal
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.3.b
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.3.b executed"
+		custom_effect_tooltip = IRE_metrolink_no_extra_reward_tt
+		ai_chance = { base = 5 }
+	}
+}
+
+# City-centre interchange with DART Underground, fired during planning
+country_event = {
+	id = IRE_metrolink.4
+	title = IRE_metrolink.4.t
+	desc = IRE_metrolink.4.d
+	picture = GFX_IRE_city_interchange
+	is_triggered_only = yes
+
+	trigger = {
+		check_variable = { IRE_metrolink_stage = 1 }
+		NOT = { has_country_flag = IRE_metrolink_cut_scope }
+		NOT = { has_country_flag = IRE_metrolink_interchange_decided }
+	}
+
+	immediate = { set_country_flag = IRE_metrolink_interchange_decided }
+
+	option = {
+		name = IRE_metrolink.4.a
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.4.a executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.015 }
+		modify_treasury_effect = yes
+		set_country_flag = IRE_metrolink_interchange
+		custom_effect_tooltip = IRE_metrolink_interchange_bore_tt
+		hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = 90 } }
+		custom_effect_tooltip = IRE_metrolink_reward_later
+		effect_tooltip = {
+			27 = {
+				add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+				add_building_construction = { type = rail_terminal level = 1 instant_build = yes }
+			}
+		}
+		ai_chance = {
+			base = 3
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.4.b
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.4.b executed"
+		custom_effect_tooltip = IRE_metrolink_no_extra_reward_tt
+		ai_chance = { base = 10 }
+	}
+}
+
+# Southern terminus, fired during planning
+country_event = {
+	id = IRE_metrolink.5
+	title = IRE_metrolink.5.t
+	desc = IRE_metrolink.5.d
+	picture = GFX_IRE_southern_terminus
+	is_triggered_only = yes
+
+	trigger = {
+		check_variable = { IRE_metrolink_stage = 1 }
+		NOT = { has_country_flag = IRE_metrolink_cut_scope }
+		NOT = { has_country_flag = IRE_metrolink_terminus_decided }
+	}
+
+	immediate = { set_country_flag = IRE_metrolink_terminus_decided }
+
+	option = {
+		name = IRE_metrolink.5.a
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.5.a executed"
+		custom_effect_tooltip = IRE_metrolink_charlemont_reward_tt
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = IRE_metrolink.5.b
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.5.b executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.012 }
+		modify_treasury_effect = yes
+		set_country_flag = IRE_metrolink_sandyford
+		custom_effect_tooltip = IRE_metrolink_sandyford_reward_tt
+		hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = 120 } }
+		hidden_effect = { country_event = { id = IRE_metrolink.6 days = 30 random_days = 15 } }
+		ai_chance = {
+			base = 3
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Ranelagh protest against the Green Line closure
+country_event = {
+	id = IRE_metrolink.6
+	title = IRE_metrolink.6.t
+	desc = IRE_metrolink.6.d
+	picture = GFX_IRE_ranelagh_protest
+	is_triggered_only = yes
+
+	trigger = {
+		check_variable = { IRE_metrolink_stage > 0 }
+		check_variable = { IRE_metrolink_stage < 4 }
+		has_country_flag = IRE_metrolink_sandyford
+	}
+
+	option = {
+		name = IRE_metrolink.6.a
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.6.a executed"
+		add_stability = -0.03
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0 has_stability < 0.35 }
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.6.b
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.6.b executed"
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.003 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.6.c
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.6.c executed"
+		clr_country_flag = IRE_metrolink_sandyford
+		if = {
+			limit = { check_variable = { IRE_metrolink_stage < 3 } }
+			custom_effect_tooltip = IRE_metrolink_drop_extension_tt
+			hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = -120 } }
+		}
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = 0.006 }
+		modify_treasury_effect = yes
+		custom_effect_tooltip = IRE_metrolink_charlemont_reward_tt
+		ai_chance = { base = 2 }
+	}
+}
+
+# Cost overrun, may be scheduled by construction
+country_event = {
+	id = IRE_metrolink.7
+	title = IRE_metrolink.7.t
+	desc = IRE_metrolink.7.d
+	picture = GFX_IRE_cost_overrun
+	is_triggered_only = yes
+
+	trigger = {
+		check_variable = { IRE_metrolink_stage = 3 }
+		NOT = { has_country_flag = IRE_metrolink_overrun_done }
+	}
+
+	immediate = {
+		set_country_flag = IRE_metrolink_overrun_done
+		set_country_flag = IRE_metrolink_overrun_pending
+	}
+
+	option = {
+		name = IRE_metrolink.7.a
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.7.a executed"
+		clr_country_flag = IRE_metrolink_overrun_pending
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.01 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.7.b
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.7.b executed"
+		clr_country_flag = IRE_metrolink_overrun_pending
+		set_temp_variable = { debt_change = gdp_total }
+		multiply_temp_variable = { debt_change = 0.015 }
+		modify_debt_effect = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = IRE_metrolink.7.c
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.7.c executed"
+		clr_country_flag = IRE_metrolink_overrun_pending
+		if = {
+			limit = { check_variable = { IRE_metrolink_stage > 3 } }
+			set_country_flag = { flag = IRE_metrolink_overrun_delay days = 120 value = 1 }
+		}
+		else = {
+			set_country_flag = IRE_metrolink_overrun_delayed
+		}
+		custom_effect_tooltip = IRE_metrolink_overrun_delay_tt
+		ai_chance = { base = 5 }
+	}
+}
+
+# MetroLink opens
+country_event = {
+	id = IRE_metrolink.8
+	title = IRE_metrolink.8.t
+	desc = IRE_metrolink.8.d
+	picture = GFX_IRE_metrolink_opens
+	is_triggered_only = yes
+
+	option = {
+		name = IRE_metrolink.8.a
+		log = "[GetDateText]: [This.GetName]: IRE_metrolink.8.a executed"
+		if = {
+			limit = { 27 = { is_owned_and_controlled_by = ROOT } }
+			IRE_metrolink_opening_effect = yes
+		}
+		else = {
+			set_variable = { IRE_metrolink_stage = 4 }
+			custom_effect_tooltip = IRE_metrolink_opening_postponed_tt
+		}
+	}
+}
