@@ -1155,9 +1155,7 @@ _TITLE_DESC_INLINE_RE = {
 _LOC_REF_PATTERN = re.compile(r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE)
 
 
-# Option name values are read from the same text the brace scan uses, so a quoted
-# `name = "foo.1.a"` keeps its interior instead of arriving blanked.
-_QUOTED_NAME_QUOTE_RE = re.compile(r'\bname\s*=\s*(")')
+_OPTION_LABEL_RE = re.compile(r'name\s*=\s*("[^"]*"|[^\s{}"]+)')
 
 
 def find_untriggered_duplicate_option_names(
@@ -1170,9 +1168,7 @@ def find_untriggered_duplicate_option_names(
     so its twin's label appears beside it.
     """
     source = strip_comments(text)
-    code = blank_quoted_strings(
-        source, keep_start={m.start(1) for m in _QUOTED_NAME_QUOTE_RE.finditer(source)}
-    )
+    code = blank_quoted_strings(source)
     line = _line_lookup(code)
     out: List[Tuple[str, int]] = []
     for event_id, body, start in _iter_event_bodies(code):
@@ -1182,17 +1178,19 @@ def find_untriggered_duplicate_option_names(
             end = find_unquoted_brace_close(body, match.end() - 1)
             if end == -1:
                 continue
-            option = body[match.end() : end]
-            name_match = _OPTION_NAME_RE.search(option)
+            option = body[match.end() - 1 : end + 1]
+            name_match = first_flat_match(option, _OPTION_LABEL_RE)
             if name_match is None:
                 continue
+            offset = base + match.end()
+            # Match on masked text, then recover the entire scripted label at its span.
+            left, right = name_match.span(1)
+            name = source[offset + left : offset + right].strip('"')
             gated = any(
                 key == "trigger" and block is not None
-                for key, _value, block in iter_statements(option)
+                for key, _value, block in iter_statements(option[1:-1])
             )
-            by_name[name_match.group(1)].append(
-                (gated, line(base + match.end() + name_match.start()))
-            )
+            by_name[name].append((gated, line(offset + name_match.start())))
         for name, options in by_name.items():
             if len(options) < 2:
                 continue

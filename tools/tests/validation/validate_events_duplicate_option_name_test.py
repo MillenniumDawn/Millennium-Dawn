@@ -24,8 +24,8 @@ def _event(*options, event_id="foo.1"):
     return _TITLE.replace("foo.1", event_id) + "".join(options) + "}\n"
 
 
-def _finding(line):
-    return f"event foo.1: option foo.1.a {_MESSAGE}", line
+def _finding(line, name="foo.1.a"):
+    return f"event foo.1: option {name} {_MESSAGE}", line
 
 
 # case: (event source, (message, option line) findings)
@@ -49,6 +49,22 @@ _SCAN_CASES = {
     "quoted name values are compared": (
         _event(_option('"foo.1.a"'), _option('"foo.1.a"', effects="\t\tfoo = yes\n")),
         [_finding(6), _finding(9)],
+    ),
+    "identical scripted labels": (
+        _event(_option('"[GetChoice]"'), _option('"[GetChoice]"')),
+        [_finding(6, "[GetChoice]"), _finding(9, "[GetChoice]")],
+    ),
+    "same prefix but distinct scripted labels": (
+        _event(_option('"choice [GetFirst]"'), _option('"choice [GetSecond]"')),
+        [],
+    ),
+    "effect name before option name": (
+        _event(
+            "option = { set_province_name = { id = 1 name = town }\n"
+            "name = foo.1.a }\n",
+            _option(),
+        ),
+        [_finding(6), _finding(8)],
     ),
     # The same name in two events is not a collision.
     "same name in separate events": (
