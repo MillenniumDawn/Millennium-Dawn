@@ -7,30 +7,56 @@
 #        forked from main before 2026
 #
 # It replays the branch's own commits on top of the matching new commit.
-# Merge commits inside the branch are flattened.
+# Merge commits inside the branch are flattened. If that changes the files,
+# nothing is pushed.
 set -euo pipefail
 
 ARCHIVE=${ARCHIVE:-https://github.com/MillenniumDawn/millennium-dawn-archive}
 OLD_MARKER=56b0cfc609b39d4d0d4666ec20b9fe0fb3008069
+REMOTE=migrate-archive
 MAP=${MAP:-}
-branch=${1:?usage: migrate_branch.sh BRANCH [--push]}
+usage="usage: migrate_branch.sh BRANCH [--push]"
+branch=${1:?$usage}
 push=${2:-}
 die() { echo "error: $*" >&2; exit 1; }
-has_old_history() { [ "$(git rev-list "$1" | grep -c "^$OLD_MARKER$" || true)" != 0 ]; }
+assert_new_history() {
+  local message=$1 commits
+  shift
+  commits=$(git rev-list "$@") || die "cannot read the history of $*"
+  if [[ $commits == *"$OLD_MARKER"* ]]; then die "$message"; fi
+}
+drop_archive() {
+  git remote remove "$REMOTE" 2>/dev/null || true
+  git update-ref -d refs/migrate/branch
+  git update-ref -d refs/migrate/main
+}
+review_help() {
+  echo "  git diff --stat HEAD $want"
+  echo "For a branch that forked in 2026 or later, any difference is a lost edit. To restore:"
+  echo "  git restore --source=$want --staged --worktree :/"
+  echo "  git commit -m 'Restore merge edits from the archive'"
+  echo "Then: git push -u origin $branch && git switch $start"
+}
 
-[ -z "$(git status --porcelain)" ] || die "working tree is not clean"
+[ -z "$push" ] || [ "$push" = "--push" ] || die "$usage"
+dirty=$(git status --porcelain) || die "cannot read the working tree"
+[ -z "$dirty" ] || die "working tree is not clean"
+start=$(git symbolic-ref -q --short HEAD) || die "HEAD is detached. Finish the last migration or switch to main."
 git show-ref --verify --quiet "refs/heads/$branch" && die "local branch $branch already exists"
+[ -n "${SKIP_FETCH:-}" ] || git fetch -q origin main
+assert_new_history "this clone is on the old history. Re-clone first." HEAD origin/main --branches --tags --remotes
+
 if [ -z "${SKIP_FETCH:-}" ]; then
-  git fetch -q origin main
-  git remote get-url archive >/dev/null 2>&1 || git remote add archive "$ARCHIVE"
-  git fetch -q --filter=blob:none --no-tags archive \
+  trap drop_archive EXIT
+  git remote remove "$REMOTE" 2>/dev/null || true
+  git remote add --no-tags "$REMOTE" "$ARCHIVE"
+  git fetch -q --filter=blob:none --no-tags "$REMOTE" \
     "+refs/heads/$branch:refs/migrate/branch" "+refs/heads/main:refs/migrate/main"
 fi
-if has_old_history origin/main; then
-  die "this clone is on the old history. Re-clone first."
-fi
 
-base=$(git merge-base refs/migrate/branch refs/migrate/main)
+tip=$(git rev-parse "refs/migrate/branch^{commit}")
+want=$(git rev-parse "$tip^{tree}")
+base=$(git merge-base "$tip" refs/migrate/main)
 new=""
 if [ -n "$MAP" ]; then new=$(awk -v m="$base" '$1==m {print $2}' "$MAP"); fi
 if [ -z "$new" ]; then
@@ -41,29 +67,44 @@ fi
 git merge-base --is-ancestor "$new" origin/main || die "$new is not on the new main"
 
 echo "branch forked from main at: $(git log -1 --format='%cs %s' "$base")"
-echo "commits to replay: $(git rev-list --count --no-merges "$base..refs/migrate/branch")"
+echo "commits to replay: $(git rev-list --count --no-merges "$base..$tip")"
 
-if ! git rebase --onto "$new" "$base" "refs/migrate/branch^{commit}"; then
+# The archive remote is removed before the rebase, so fetch the blobs it needs now.
+{
+  git log --no-merges --format= --raw --no-abbrev --no-renames "$base..$tip"
+  git diff-tree -r "$base" "$tip"
+} | awk '/^:/ {if ($3 !~ /^0+$/) print $3; if ($4 !~ /^0+$/) print $4}' |
+  git pack-objects -q --window=0 --stdout >/dev/null
+drop_archive
+trap - EXIT
+
+if ! git rebase --onto "$new" "$base" "$tip"; then
+  if [ ! -d "$(git rev-parse --git-path rebase-merge)" ] && [ ! -d "$(git rev-parse --git-path rebase-apply)" ]; then
+    die "the rebase did not start. See the git error above."
+  fi
   echo
   echo "Conflict. Fix the files, then: git add -A && git rebase --continue"
+  echo "To give up: git rebase --quit && git switch --discard-changes $start"
   echo "When it finishes: git switch -c $branch, then run the checks by hand:"
   echo "  git rev-list HEAD | grep -c $OLD_MARKER     (must print 0)"
+  review_help
   exit 1
 fi
-git switch -q -c "$branch"
 
-if has_old_history HEAD; then
-  die "result still contains the old history. Do not push."
-fi
+assert_new_history "result still contains the old history. Do not push." HEAD
+git switch -q -c "$branch"
 echo "ok: branch is on the new history"
-if git diff --quiet HEAD refs/migrate/branch; then
-  echo "ok: files are identical to the archive branch"
-else
-  echo "note: files differ from the archive branch in $(git diff --name-only HEAD refs/migrate/branch | wc -l) paths."
-  echo "      Expected for a branch that forked before 2026. Review: git diff --stat HEAD refs/migrate/branch"
+
+got=$(git rev-parse "HEAD^{tree}")
+if [ "$got" != "$want" ]; then
+  echo "note: files differ from the archive branch in $(git diff-tree -r --name-only "$got" "$want" | wc -l) paths. Not pushed. Review:"
+  review_help
+  [ "$push" != "--push" ] || die "refusing to push files that differ from the archive branch"
+  exit 0
 fi
-git update-ref -d refs/migrate/branch
-git update-ref -d refs/migrate/main
+echo "ok: files are identical to the archive branch"
+# The migrated branch may predate this script.
+git switch -q "$start"
 
 if [ "$push" = "--push" ]; then
   git push -u origin "$branch"
