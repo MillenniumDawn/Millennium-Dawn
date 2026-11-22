@@ -659,6 +659,46 @@ on_actions = {
 		}
 	}
 
+	# Civil war breakaways do not inherit society variables or dynamic modifiers.
+	on_war_relation_added = {
+		effect = {
+			if = {
+				limit = {
+					has_dynamic_modifier = social_conservatism_modifier
+					FROM = {
+						is_dynamic_country = yes
+						original_tag = ROOT
+						NOT = { has_dynamic_modifier = social_conservatism_modifier }
+					}
+				}
+				FROM = {
+					set_variable = { social_conservatism_government = ROOT.social_conservatism_government }
+					set_variable = { social_conservatism_society = ROOT.social_conservatism_society }
+					if = {
+						limit = { ROOT = { has_country_flag = society_shia_drift } }
+						set_country_flag = society_shia_drift
+					}
+					update_social_conservatism_modifier = yes
+				}
+			}
+			else_if = {
+				limit = {
+					is_dynamic_country = yes
+					original_tag = FROM
+					NOT = { has_dynamic_modifier = social_conservatism_modifier }
+					FROM = { has_dynamic_modifier = social_conservatism_modifier }
+				}
+				set_variable = { social_conservatism_government = FROM.social_conservatism_government }
+				set_variable = { social_conservatism_society = FROM.social_conservatism_society }
+				if = {
+					limit = { FROM = { has_country_flag = society_shia_drift } }
+					set_country_flag = society_shia_drift
+				}
+				update_social_conservatism_modifier = yes
+			}
+		}
+	}
+
 	#ROOT is winner #FROM gets annexed
 	on_civil_war_end = {
 		effect = {
