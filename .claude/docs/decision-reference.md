@@ -103,6 +103,8 @@ A decision is AI-only when a human can never see it:
 `is_ai = yes` nested in `OR`, `AND`, `if`, or a tag scope is conditional, and the
 decision is not AI-only.
 
+A category's `is_ai = yes` goes in its `allowed`. The game logs no error for it there.
+
 An AI-only decision or category takes no localisation and no tooltip wrappers. Nothing
 renders them, and a key would still have to be translated. Write the trigger bare:
 

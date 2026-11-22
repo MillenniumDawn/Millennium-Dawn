@@ -84,6 +84,14 @@ Your International Investments total grows every time a project completes. The s
 
 Your current investment total and weekly return are displayed in the Economy window. If your country is annexed by another nation, your entire investment portfolio transfers to the annexing power.
 
+### Selling Investments
+
+Right-click the investment total in the top bar to sell $1 billion in foreign investments. Hold **Ctrl** to sell $10 billion or **Shift** to sell $100 billion. The treasury receives a share of the investment value sold, not the full amount. The tooltip shows the current recovery rate.
+
+- **Base recovery:** 60% at corruption level 5. Each tier of lower corruption adds 1 percentage point. Each tier of higher corruption subtracts 1 point.
+- **Banking factions:** Opinion of 50 is neutral. International Bankers change the rate by up to 5 percentage points in either direction. Wall Street, their U.S. counterpart, changes it by up to 10 points in either direction.
+- **Hard cap:** Even if bonuses stack, you can never recover more than 80% through a sale. Selling investments does not change the annual return rate on your remaining balance.
+
 ### Cost Modifiers
 
 The monetary cost per building is calculated when you initiate a project:

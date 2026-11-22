@@ -120,10 +120,9 @@ See the [Economy Guide](/player-tutorials/economy-guide/), the [Investments Guid
 
 ## Custom Scenarios
 
-- **Enable Zombie Game Mode**: No (default), Yes.
+- **Zombie Game Mode**: Disabled (default), Enabled (spawns at game start), Delayed: 1 Year, Delayed: 2 Years, Delayed: 3 Years.
 - **Zombie Game Mode Difficulty**: Normal (default), Hard, Extreme, Insane.
 - **Zombie Spawn Location**: India (default), Central Africa, East Asia, Multiple Locations.
-- **Zombie Spawn Delay**: No Delay (default), 1 Year, 2 Years, 3 Years.
 - **Anti-Zombie Coalition Faction**: Enabled (default), Disabled.
 - **Anti-Zombie Coalition Joining Faction**: Default Faction Behavior (default), No Majors, All Majors join the Coalition.
 - **Event Horizon Scenario**: Deactivated (default), Blitz - 2001, Casual - 2012, Delayed - 2020. Once the megacountries form, your focus tree is replaced with the scenario tree.

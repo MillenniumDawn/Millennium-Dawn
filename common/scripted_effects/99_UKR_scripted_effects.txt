@@ -2004,9 +2004,11 @@ UKR_republic_army_templates = {
 			Arm_Inf_Bat = { x = 0 y = 1 }
 			Arm_Inf_Bat = { x = 0 y = 2 }
 		}
-		support = {
+		regimental_support = {
 			SP_arty_battery = { x = 0 y = 0 }
-			L_Engi_Comp = { x = 0 y = 1 }
+		}
+		support = {
+			L_Engi_Comp = { x = 0 y = 0 }
 		}
 	}
 	UKR_ensure_kazachya_brigada_template = yes
@@ -2657,8 +2659,8 @@ UKR_HUR_battalion_template = {
 				Mech_Inf_Bat = { x = 0 y = 1 }
 				Mech_Inf_Bat = { x = 0 y = 2 }
 			}
-			support = {
-				Arty_Battery = { x = 0 y = 0 }
+			regimental_support = {
+				SP_arty_battery = { x = 0 y = 0 }
 			}
 			priority = 2
 		}
@@ -4814,6 +4816,218 @@ UKR_update_verkhovna_dirty_variable = {
 	}
 	else = {
 		set_variable = { UKR_verkhovna_ui_dirty_var = 1 }
+	}
+}
+
+UKR_verkhovna_count_budget_decisions = {
+	# Each budget topic has one open or close decision.
+	set_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 0 }
+	set_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 6 }
+	set_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 6 }
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_bureu_laws has_decision = UKR_increase_bureu } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_increase_bureu } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_increase_bureu_available = yes NOT = { has_country_flag = UKR_increase_bureu_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_bureu_laws has_decision = UKR_decrease_bureu } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_decrease_bureu } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_decrease_bureu_available = yes NOT = { has_country_flag = UKR_decrease_bureu_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_military_laws has_decision = UKR_increase_military_spend } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_increase_military_spend } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_increase_military_spend_available = yes NOT = { has_country_flag = UKR_increase_military_spend_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_military_laws has_decision = UKR_decrease_military_spend } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_decrease_military_spend } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_decrease_military_spend_available = yes NOT = { has_country_flag = UKR_decrease_military_spend_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_police_laws has_decision = UKR_increase_policing } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_increase_policing } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_increase_policing_available = yes NOT = { has_country_flag = UKR_increase_policing_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_police_laws has_decision = UKR_decrease_policing } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_decrease_policing } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_decrease_policing_available = yes NOT = { has_country_flag = UKR_decrease_policing_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_education_laws has_decision = UKR_increase_education } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_increase_education } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_increase_education_available = yes NOT = { has_country_flag = UKR_increase_education_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_education_laws has_decision = UKR_decrease_education } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_decrease_education } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_decrease_education_available = yes NOT = { has_country_flag = UKR_decrease_education_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_medical_laws has_decision = UKR_increase_health } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_increase_health } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_increase_health_available = yes NOT = { has_country_flag = UKR_increase_health_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_medical_laws has_decision = UKR_decrease_health } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_decrease_health } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_decrease_health_available = yes NOT = { has_country_flag = UKR_decrease_health_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_pension_laws has_decision = UKR_increase_pension } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_increase_pension } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_increase_pension_available = yes NOT = { has_country_flag = UKR_increase_pension_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { has_country_flag = UKR_open_pension_laws has_decision = UKR_decrease_pension } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_decrease_pension } add_to_temp_variable = { UKR_verkhovna_budget_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_decrease_pension_available = yes NOT = { has_country_flag = UKR_decrease_pension_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { UKR_verkhovna_has_open_budget_debate = yes }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = {
+			limit = { UKR_lobby_the_deputies_available = yes NOT = { has_country_flag = UKR_lobby_the_deputies_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { NOT = { has_country_flag = UKR_dissolved_verkhovna } }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = {
+			limit = { UKR_verkhovna_can_change_rada_status = yes NOT = { has_country_flag = UKR_dissolve_rada_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_dissolved_verkhovna }
+		add_to_temp_variable = { UKR_verkhovna_budget_decisions_total_count = 1 }
+		if = {
+			limit = { UKR_verkhovna_can_change_rada_status = yes NOT = { has_country_flag = UKR_restore_rada_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_budget_decisions_ready_count = 1 }
+		}
+	}
+}
+
+UKR_verkhovna_count_foreign_finance_decisions = {
+	set_temp_variable = { UKR_verkhovna_foreign_finance_decisions_active_count = 0 }
+	set_temp_variable = { UKR_verkhovna_foreign_finance_decisions_ready_count = 0 }
+	set_temp_variable = { UKR_verkhovna_foreign_finance_decisions_total_count = 4 }
+	if = { limit = { has_decision = UKR_privatize_resource } add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_active_count = 1 } }
+	else_if = {
+		limit = { is_full_state = yes NOT = { has_country_flag = UKR_privatize_resource_cooldown } }
+		add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_ready_count = 1 }
+	}
+	if = { limit = { has_decision = UKR_restructure_debt } add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_active_count = 1 } }
+	else_if = {
+		limit = { is_full_state = yes NOT = { has_country_flag = UKR_restructure_debt_cooldown } }
+		add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_ready_count = 1 }
+	}
+	if = { limit = { has_decision = UKR_ask_western_loans } add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_active_count = 1 } }
+	else_if = {
+		limit = { UKR_ask_western_loans_available = yes NOT = { has_country_flag = UKR_ask_western_loans_cooldown } }
+		add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_ready_count = 1 }
+	}
+	if = { limit = { has_decision = UKR_ask_eastern_loans } add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_active_count = 1 } }
+	else_if = {
+		limit = { UKR_ask_eastern_loans_available = yes NOT = { has_country_flag = UKR_ask_eastern_loans_cooldown } }
+		add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_ready_count = 1 }
+	}
+	if = {
+		limit = { OR = { UKR_promote_russian_interests_shown = yes has_decision = UKR_promote_russian_interests } }
+		add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_promote_russian_interests } add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_promote_russian_interests_available = yes NOT = { has_country_flag = UKR_promote_russian_interests_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_ready_count = 1 }
+		}
+	}
+	if = {
+		limit = { OR = { UKR_promote_western_interests_shown = yes has_decision = UKR_promote_western_interests } }
+		add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_total_count = 1 }
+		if = { limit = { has_decision = UKR_promote_western_interests } add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_active_count = 1 } }
+		else_if = {
+			limit = { UKR_promote_western_interests_available = yes NOT = { has_country_flag = UKR_promote_western_interests_cooldown } }
+			add_to_temp_variable = { UKR_verkhovna_foreign_finance_decisions_ready_count = 1 }
+		}
+	}
+}
+
+UKR_verkhovna_refresh_decision_counts = {
+	if = {
+		limit = { is_ai = no }
+		UKR_verkhovna_count_budget_decisions = yes
+		UKR_verkhovna_count_foreign_finance_decisions = yes
+		if = {
+			limit = {
+				NOT = {
+					AND = {
+						check_variable = { UKR_verkhovna_budget_decisions_active = UKR_verkhovna_budget_decisions_active_count }
+						check_variable = { UKR_verkhovna_budget_decisions_ready = UKR_verkhovna_budget_decisions_ready_count }
+						check_variable = { UKR_verkhovna_budget_decisions_total = UKR_verkhovna_budget_decisions_total_count }
+						check_variable = { UKR_verkhovna_foreign_finance_decisions_active = UKR_verkhovna_foreign_finance_decisions_active_count }
+						check_variable = { UKR_verkhovna_foreign_finance_decisions_ready = UKR_verkhovna_foreign_finance_decisions_ready_count }
+						check_variable = { UKR_verkhovna_foreign_finance_decisions_total = UKR_verkhovna_foreign_finance_decisions_total_count }
+					}
+				}
+			}
+			set_variable = { UKR_verkhovna_budget_decisions_active = UKR_verkhovna_budget_decisions_active_count }
+			set_variable = { UKR_verkhovna_budget_decisions_ready = UKR_verkhovna_budget_decisions_ready_count }
+			set_variable = { UKR_verkhovna_budget_decisions_total = UKR_verkhovna_budget_decisions_total_count }
+			set_variable = { UKR_verkhovna_foreign_finance_decisions_active = UKR_verkhovna_foreign_finance_decisions_active_count }
+			set_variable = { UKR_verkhovna_foreign_finance_decisions_ready = UKR_verkhovna_foreign_finance_decisions_ready_count }
+			set_variable = { UKR_verkhovna_foreign_finance_decisions_total = UKR_verkhovna_foreign_finance_decisions_total_count }
+			UKR_update_verkhovna_dirty_variable = yes
+		}
 	}
 }
 
@@ -13353,6 +13567,14 @@ UKR_storage_sell_mig23mld = {
 UKR_storage_sell_mig25rb_donors = {
 	subtract_from_variable = { ukraine_has_mig25rb_stockpile = ukr_sov_amount tooltip = ukraine_storage_mig25rb_sold_tt }
 	UKR_storage_sale_payment = yes
+	event_target:ukr_storage_buyer = {
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			add_ideas = ALG_mig25rb_spare_parts
+		}
+		else = { add_ideas = ALG_mig25rb_spare_parts_legacy }
+		add_timed_idea = { idea = ALG_mig25rb_air_readiness days = 365 }
+	}
 }
 
 UKR_storage_vietnam_sale_backlash = {
@@ -13456,22 +13678,17 @@ UKR_old_gear_deliver_ml20 = {
 }
 
 UKR_storage_sell_support_weapons = {
-	set_temp_variable = { ukr_sale_price = 0 }
+	UKR_storage_old_gear_prices = yes
+	set_temp_variable = { ukr_sale_price = ukr_old_gear_support_weapons_price }
 	if = {
 		limit = { check_variable = { ukraine_has_spg9_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_spg9_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 15 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_spg9_stockpile = ukr_sov_amount tooltip = ukraine_storage_spg9_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_spg9 = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_strela2_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_strela2_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 150 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_strela2_stockpile = ukr_sov_amount tooltip = ukraine_storage_strela2_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_strela2 = yes }
 	}
@@ -14353,14 +14570,50 @@ UKR_old_gear_deliver_strela2 = {
 		add_equipment_to_stockpile = { type = Anti_Air_0 amount = ukr_sov_amount producer = SOV }
 	}
 }
+# Prices in thousands of dollars so the sale and buyer quote use the same totals.
+UKR_storage_old_gear_prices = {
+	set_temp_variable = { ukr_old_gear_brdm1_price = { value = ukraine_has_brdm1_stockpile multiply = 150 } }
+	set_temp_variable = { ukr_old_gear_artillery_price = {
+			value = ukraine_has_m46_stockpile
+			multiply = 200
+			add = { value = ukraine_has_d1_stockpile multiply = 100 }
+			add = { value = ukraine_has_m30_stockpile multiply = 80 }
+			add = { value = ukraine_has_ml20_stockpile multiply = 120 }
+		} }
+	set_temp_variable = { ukr_old_gear_small_arms_price = {
+			value = ukraine_has_mosin_stockpile
+			multiply = 1
+			add = { value = ukraine_has_sks_stockpile multiply = 1 }
+			add = { value = ukraine_has_ak47_stockpile multiply = 1 }
+		} }
+	set_temp_variable = { ukr_old_gear_support_weapons_price = {
+			value = ukraine_has_spg9_stockpile
+			multiply = 15
+			add = { value = ukraine_has_strela2_stockpile multiply = 150 }
+		} }
+}
+
+# The receiving country is ROOT and the seller is FROM.
+UKR_storage_old_gear_buyer_quote = {
+	FROM = {
+		UKR_storage_old_gear_prices = yes
+	}
+	set_variable = { UKR_storage_quote_brdm1_count = FROM.ukraine_has_brdm1_stockpile }
+	set_variable = { UKR_storage_quote_brdm1_price = { value = ukr_old_gear_brdm1_price divide = 1000 } }
+	set_variable = { UKR_storage_quote_artillery_count = FROM.UKR_storage_total_7 }
+	set_variable = { UKR_storage_quote_artillery_price = { value = ukr_old_gear_artillery_price divide = 1000 } }
+	set_variable = { UKR_storage_quote_small_arms_count = FROM.UKR_storage_total_8 }
+	set_variable = { UKR_storage_quote_small_arms_price = { value = ukr_old_gear_small_arms_price divide = 1000 } }
+	set_variable = { UKR_storage_quote_support_weapons_count = FROM.UKR_storage_total_9 }
+	set_variable = { UKR_storage_quote_support_weapons_price = { value = ukr_old_gear_support_weapons_price divide = 1000 } }
+}
+
 UKR_storage_sell_vehicles = {
-	set_temp_variable = { ukr_sale_price = 0 }
+	UKR_storage_old_gear_prices = yes
+	set_temp_variable = { ukr_sale_price = ukr_old_gear_brdm1_price }
 	if = {
 		limit = { check_variable = { ukraine_has_brdm1_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_brdm1_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 150 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_brdm1_stockpile = ukr_sov_amount tooltip = ukraine_storage_brdm1_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_brdm1 = yes }
 	}
@@ -14369,40 +14622,29 @@ UKR_storage_sell_vehicles = {
 	UKR_storage_sanctioned_sale_backlash = yes
 }
 UKR_storage_sell_artillery = {
-	set_temp_variable = { ukr_sale_price = 0 }
+	UKR_storage_old_gear_prices = yes
+	set_temp_variable = { ukr_sale_price = ukr_old_gear_artillery_price }
 	if = {
 		limit = { check_variable = { ukraine_has_m46_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_m46_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 200 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_m46_stockpile = ukr_sov_amount tooltip = ukraine_storage_m46_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_m46 = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_d1_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_d1_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 100 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_d1_stockpile = ukr_sov_amount tooltip = ukraine_storage_d1_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_d1 = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_m30_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_m30_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 80 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_m30_stockpile = ukr_sov_amount tooltip = ukraine_storage_m30_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_m30 = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_ml20_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_ml20_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 120 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_ml20_stockpile = ukr_sov_amount tooltip = ukraine_storage_ml20_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_ml20 = yes }
 	}
@@ -14411,31 +14653,23 @@ UKR_storage_sell_artillery = {
 	UKR_storage_sanctioned_sale_backlash = yes
 }
 UKR_storage_sell_small_arms = {
-	set_temp_variable = { ukr_sale_price = 0 }
+	UKR_storage_old_gear_prices = yes
+	set_temp_variable = { ukr_sale_price = ukr_old_gear_small_arms_price }
 	if = {
 		limit = { check_variable = { ukraine_has_mosin_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_mosin_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 1 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_mosin_stockpile = ukr_sov_amount tooltip = ukraine_storage_mosin_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_mosin = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_sks_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_sks_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 1 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_sks_stockpile = ukr_sov_amount tooltip = ukraine_storage_sks_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_sks = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_ak47_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 1 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_ak47_stockpile = ukr_sov_amount tooltip = ukraine_storage_ak47_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_ak47 = yes }
 	}
@@ -15041,12 +15275,11 @@ UKR_varyag_run_combat_trials = {
 	else = { custom_effect_tooltip = UKR_varyag_trials_unavailable_tt }
 }
 
-
 # Stored equipment sales: the offer to a buyer is a mission (UKR_storage_sale_<TAG>_<equipment>), one per buyer country and equipment, so the same equipment
 # can go to several countries at once. Every effect below takes the buyer saved as event target ukr_storage_buyer and temp variable ukr_sale_item:
 # 1 = BTR-50, 2 = PT-76B, 3 = Tu-16, 4 = Tu-22, 5 = MiG-25, 6 = Su-17, 7 = 2K11 Krug, 8 = 9P148 Konkurs, 9 = MiG-23, 10 = S-75, 11 = S-125, 12 = old equipment, 13 = MiG-21, 14 = MiG-23MLD (Angola), 15 = Su-17M4, 16 = MiG-25RB,
 # 17 = ZSU-57-2, 18 = S-200, 19 = carrier aircraft.
-# The buyer's variable UKR_storage_sale_talks counts its running missions; the help decisions (UKR_storage_help_*) target countries where it is above 0.
+# The buyer's UKR_storage_sale_talks array contains one item ID per active sale mission.
 UKR_storage_sale_start = {
 	if = {
 		limit = { check_variable = { ukr_sale_item = 1 } }
@@ -15056,7 +15289,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_ind_btr50 } }
 				activate_mission = UKR_storage_sale_ind_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_ind_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15065,7 +15298,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_egy_btr50 } }
 				activate_mission = UKR_storage_sale_egy_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_egy_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15074,7 +15307,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_hun_btr50 } }
 				activate_mission = UKR_storage_sale_hun_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_hun_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15083,7 +15316,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_rom_btr50 } }
 				activate_mission = UKR_storage_sale_rom_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_rom_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15092,7 +15325,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_cro_btr50 } }
 				activate_mission = UKR_storage_sale_cro_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_cro_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15103,7 +15336,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_ind_pt76 } }
 				activate_mission = UKR_storage_sale_ind_pt76
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15111,7 +15344,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_cro_pt76 } }
 				activate_mission = UKR_storage_sale_cro_pt76
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15119,7 +15352,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_bos_pt76 } }
 				activate_mission = UKR_storage_sale_bos_pt76
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15130,7 +15363,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_egy_tu16 } }
 				activate_mission = UKR_storage_sale_egy_tu16
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15138,7 +15371,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_chi_tu16 } }
 				activate_mission = UKR_storage_sale_chi_tu16
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15149,7 +15382,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_tu22 } }
 				activate_mission = UKR_storage_sale_lba_tu22
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15160,7 +15393,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_mig25 } }
 				activate_mission = UKR_storage_sale_arm_mig25
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15168,7 +15401,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_trk_mig25 } }
 				activate_mission = UKR_storage_sale_trk_mig25
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15176,7 +15409,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_mig25 } }
 				activate_mission = UKR_storage_sale_lba_mig25
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15188,7 +15421,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_pol_su17 } }
 				activate_mission = UKR_storage_sale_pol_su17
 				set_country_flag = { flag = UKR_storage_sale_wait_pol_su17_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15200,7 +15433,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_geo_2k11 } }
 				activate_mission = UKR_storage_sale_geo_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_geo_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15209,7 +15442,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_aze_2k11 } }
 				activate_mission = UKR_storage_sale_aze_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_aze_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15218,7 +15451,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_2k11 } }
 				activate_mission = UKR_storage_sale_arm_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_arm_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15227,7 +15460,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_kaz_2k11 } }
 				activate_mission = UKR_storage_sale_kaz_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_kaz_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15236,7 +15469,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_trk_2k11 } }
 				activate_mission = UKR_storage_sale_trk_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_trk_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15245,7 +15478,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_kyr_2k11 } }
 				activate_mission = UKR_storage_sale_kyr_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_kyr_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15257,7 +15490,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_geo_9p148 } }
 				activate_mission = UKR_storage_sale_geo_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_geo_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15266,7 +15499,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_aze_9p148 } }
 				activate_mission = UKR_storage_sale_aze_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_aze_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15275,7 +15508,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_9p148 } }
 				activate_mission = UKR_storage_sale_arm_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_arm_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15284,7 +15517,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_sud_9p148 } }
 				activate_mission = UKR_storage_sale_sud_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_sud_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15293,7 +15526,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_eth_9p148 } }
 				activate_mission = UKR_storage_sale_eth_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_eth_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15302,7 +15535,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_cha_9p148 } }
 				activate_mission = UKR_storage_sale_cha_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_cha_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15314,7 +15547,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_mig23 } }
 				activate_mission = UKR_storage_sale_lba_mig23
 				set_country_flag = { flag = UKR_storage_sale_wait_lba_mig23_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15323,7 +15556,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_sud_mig23 } }
 				activate_mission = UKR_storage_sale_sud_mig23
 				set_country_flag = { flag = UKR_storage_sale_wait_sud_mig23_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15334,7 +15567,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_egy_s75 } }
 				activate_mission = UKR_storage_sale_egy_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15342,7 +15575,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_s75 } }
 				activate_mission = UKR_storage_sale_lba_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15350,7 +15583,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_s75 } }
 				activate_mission = UKR_storage_sale_arm_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15358,7 +15591,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_aze_s75 } }
 				activate_mission = UKR_storage_sale_aze_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15366,7 +15599,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_geo_s75 } }
 				activate_mission = UKR_storage_sale_geo_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15377,7 +15610,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_egy_s125 } }
 				activate_mission = UKR_storage_sale_egy_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15385,7 +15618,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_s125 } }
 				activate_mission = UKR_storage_sale_lba_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15393,7 +15626,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_s125 } }
 				activate_mission = UKR_storage_sale_arm_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15401,7 +15634,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_aze_s125 } }
 				activate_mission = UKR_storage_sale_aze_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15409,7 +15642,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_geo_s125 } }
 				activate_mission = UKR_storage_sale_geo_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15420,7 +15653,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_usa_old_gear } }
 				activate_mission = UKR_storage_sale_usa_old_gear
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15428,7 +15661,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_sud_old_gear } }
 				activate_mission = UKR_storage_sale_sud_old_gear
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15436,7 +15669,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_eth_old_gear } }
 				activate_mission = UKR_storage_sale_eth_old_gear
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15447,7 +15680,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_yem_mig21 } }
 				activate_mission = UKR_storage_sale_yem_mig21
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15455,7 +15688,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_moz_mig21 } }
 				activate_mission = UKR_storage_sale_moz_mig21
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15466,7 +15699,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_agl_mig23mld } }
 				activate_mission = UKR_storage_sale_agl_mig23mld
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15477,7 +15710,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_vie_su17m4 } }
 				activate_mission = UKR_storage_sale_vie_su17m4
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -15485,7 +15718,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_yem_su17m4 } }
 				activate_mission = UKR_storage_sale_yem_su17m4
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15496,7 +15729,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_alg_mig25rb } }
 				activate_mission = UKR_storage_sale_alg_mig25rb
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15507,7 +15740,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_vie_zsu57 } }
 				activate_mission = UKR_storage_sale_vie_zsu57
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15518,7 +15751,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_pol_s200 } }
 				activate_mission = UKR_storage_sale_pol_s200
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15529,7 +15762,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_chi_carrier } }
 				activate_mission = UKR_storage_sale_chi_carrier
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -15538,8 +15771,7 @@ UKR_storage_sale_start = {
 # A mission or smaller-order decision has ended: one negotiation fewer with the buyer.
 UKR_storage_sale_close = {
 	event_target:ukr_storage_buyer = {
-		subtract_from_variable = { UKR_storage_sale_talks = 1 }
-		clamp_variable = { var = UKR_storage_sale_talks min = 0 }
+		remove_from_array = { array = UKR_storage_sale_talks value = ukr_sale_item }
 	}
 }
 
@@ -15653,10 +15885,18 @@ UKR_storage_sale_dispatch = {
 	}
 }
 
-# The mission ended without the requirement: only a player-led buyer still gets the offer (and decides for itself); an AI buyer turns it down on the spot.
+# A player-led buyer gets a fallback offer unless it declined an agreement covering this sale.
 UKR_storage_sale_failed = {
 	if = {
-		limit = { event_target:ukr_storage_buyer = { is_ai = no } }
+		limit = {
+			event_target:ukr_storage_buyer = {
+				is_ai = no
+				OR = {
+					NOT = { has_country_flag = UKR_storage_deal_declined }
+					NOT = { is_in_array = { UKR_storage_deal_sales = ukr_sale_item } }
+				}
+			}
+		}
 		if = {
 			limit = { check_variable = { ukr_sale_item = 1 } }
 			event_target:ukr_storage_buyer = { set_variable = { UKR_storage_sale_tier_btr50 = 2 } }
@@ -15998,5 +16238,1408 @@ UKR_storage_sale_reopen = {
 				set_country_flag = { flag = UKR_storage_sale_cooldown_carrier_china_flag value = 1 days = 180 }
 			}
 		}
+
+		event_target:ukr_storage_buyer = {
+			if = {
+				limit = { is_in_array = { UKR_storage_deal_sales = ukr_sale_item } }
+				remove_from_array = { array = UKR_storage_deal_sales value = ukr_sale_item }
+			}
+		}
 	}
+}
+
+# Rocket artillery plants
+UKR_mrls_launch_kharkiv = {
+	# Opens a production line of every design that waits at this plant, then clears the waiting flags.
+	# The first design of a family starts at 15% (Grad) or 10% (Uragan and Smerch); every next design of the same plant adds 5%
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_bm21k_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21K"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21K"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21K"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21K"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21K"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21K"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_kharkiv_grad_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_bm21k_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_bm21u_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21U 'Hrad-M'"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21U 'Hrad-M'"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21U 'Hrad-M'"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21U 'Hrad-M'"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21U 'Hrad-M'"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21U 'Hrad-M'"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_kharkiv_grad_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_bm21u_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_verba_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Verba"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Verba"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Verba"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Verba"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Verba"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Verba"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_kharkiv_grad_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_verba_flag
+	}
+	clr_country_flag = UKR_mrls_expanding_kharkiv_flag
+}
+
+UKR_mrls_expand_kharkiv = {
+	# Pays for the new military factory and schedules the event that finishes it
+	set_temp_variable = { treasury_change = -0.3 }
+	modify_treasury_effect = yes
+	set_country_flag = UKR_mrls_expanding_kharkiv_flag
+	custom_effect_tooltip = UKR_mrls_expand_tt
+	hidden_effect = {
+		country_event = { id = ukraine_develop_or_modernize_mrl_system.9 days = 360 random_days = 30 }
+	}
+}
+
+UKR_mrls_build_kharkiv = {
+	696 = {
+		add_extra_state_shared_building_slots = 1
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+UKR_mrls_clear_kharkiv = {
+	clr_country_flag = UKR_mrls_plant_bm21k_flag
+	clr_country_flag = UKR_mrls_plant_bm21u_flag
+	clr_country_flag = UKR_mrls_plant_verba_flag
+	clr_country_flag = UKR_mrls_expanding_kharkiv_flag
+}
+
+UKR_mrls_launch_shepetivka = {
+	# Opens a production line of every design that waits at this plant, then clears the waiting flags.
+	# The first design of a family starts at 15% (Grad) or 10% (Uragan and Smerch); every next design of the same plant adds 5%
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_bastion01_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Bastion-01"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Bastion-01"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Bastion-01"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Bastion-01"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Bastion-01"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Bastion-01"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_shepetivka_grad_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_bastion01_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_bastion02_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Bastion-02"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Bastion-02"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Bastion-02"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Bastion-02"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "Bastion-02"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "Bastion-02"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_shepetivka_grad_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_bastion02_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_berest_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21UM Berest"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21UM Berest"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21UM Berest"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21UM Berest"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_0
+						version_name = "BM-21UM Berest"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_0
+						version_name = "BM-21UM Berest"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_shepetivka_grad_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_berest_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_bastion03_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_1
+						version_name = "Bastion-03"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_1
+						version_name = "Bastion-03"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_1
+						version_name = "Bastion-03"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_1
+						version_name = "Bastion-03"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_1
+						version_name = "Bastion-03"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_1
+						version_name = "Bastion-03"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_shepetivka_heavy_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_bastion03_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_bureviy_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_1
+						version_name = "Bureviy"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_1
+						version_name = "Bureviy"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_1
+						version_name = "Bureviy"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_1
+						version_name = "Bureviy"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_1
+						version_name = "Bureviy"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_1
+						version_name = "Bureviy"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_shepetivka_heavy_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_bureviy_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_bastion04_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Bastion-04"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Bastion-04"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Bastion-04"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Bastion-04"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines > 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Bastion-04"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Bastion-04"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_shepetivka_heavy_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_bastion04_flag
+	}
+	clr_country_flag = UKR_mrls_expanding_shepetivka_flag
+}
+
+UKR_mrls_expand_shepetivka = {
+	# Pays for the new military factory and schedules the event that finishes it
+	set_temp_variable = { treasury_change = -0.3 }
+	modify_treasury_effect = yes
+	set_country_flag = UKR_mrls_expanding_shepetivka_flag
+	custom_effect_tooltip = UKR_mrls_expand_tt
+	hidden_effect = {
+		country_event = { id = ukraine_develop_or_modernize_mrl_system.10 days = 360 random_days = 30 }
+	}
+}
+
+UKR_mrls_build_shepetivka = {
+	1250 = {
+		add_extra_state_shared_building_slots = 1
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+UKR_mrls_clear_shepetivka = {
+	clr_country_flag = UKR_mrls_plant_bastion01_flag
+	clr_country_flag = UKR_mrls_plant_bastion02_flag
+	clr_country_flag = UKR_mrls_plant_bastion03_flag
+	clr_country_flag = UKR_mrls_plant_berest_flag
+	clr_country_flag = UKR_mrls_plant_bureviy_flag
+	clr_country_flag = UKR_mrls_plant_bastion04_flag
+	clr_country_flag = UKR_mrls_expanding_shepetivka_flag
+}
+
+UKR_mrls_launch_dnipro = {
+	# Opens a production line of every design that waits at this plant, then clears the waiting flags.
+	# The first design of a family starts at 15% (Grad) or 10% (Uragan and Smerch); every next design of the same plant adds 5%
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_typhoon4_flag }
+		if = {
+			limit = { always = yes }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_3
+						version_name = "Typhoon-4"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Typhoon-4"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+		}
+		clr_country_flag = UKR_mrls_plant_typhoon4_flag
+	}
+	clr_country_flag = UKR_mrls_expanding_dnipro_flag
+}
+
+UKR_mrls_expand_dnipro = {
+	# Pays for the new military factory and schedules the event that finishes it
+	set_temp_variable = { treasury_change = -0.3 }
+	modify_treasury_effect = yes
+	set_country_flag = UKR_mrls_expanding_dnipro_flag
+	custom_effect_tooltip = UKR_mrls_expand_tt
+	hidden_effect = {
+		country_event = { id = ukraine_develop_or_modernize_mrl_system.11 days = 360 random_days = 30 }
+	}
+}
+
+UKR_mrls_build_dnipro = {
+	1087 = {
+		add_extra_state_shared_building_slots = 1
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+UKR_mrls_clear_dnipro = {
+	clr_country_flag = UKR_mrls_plant_typhoon4_flag
+	clr_country_flag = UKR_mrls_expanding_dnipro_flag
+}
+
+UKR_mrls_launch_kyiv = {
+	# Opens a production line of every design that waits at this plant, then clears the waiting flags.
+	# The first design of a family starts at 15% (Grad) or 10% (Uragan and Smerch); every next design of the same plant adds 5%
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_vilkha_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 2 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines > 2 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_kyiv_heavy_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_vilkha_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_vilkha_m_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 2 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines > 2 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_kyiv_heavy_lines = 1 }
+		clr_country_flag = UKR_mrls_plant_vilkha_m_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_vilkha_kraz_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 2 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines > 2 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M KrAZ"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_kyiv_heavy_lines = 2 }
+		clr_country_flag = UKR_mrls_plant_vilkha_kraz_flag
+	}
+	if = {
+		limit = { has_country_flag = UKR_mrls_plant_vilkha_tatra_flag }
+		if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 0 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha Tatra"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M Tatra"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha Tatra"
+					}
+					requested_factories = 1
+					efficiency = 10
+				}
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M Tatra"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 1 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha Tatra"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M Tatra"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha Tatra"
+					}
+					requested_factories = 1
+					efficiency = 15
+				}
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M Tatra"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 2 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha Tatra"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M Tatra"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha Tatra"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M Tatra"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines > 2 } }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha Tatra"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+				add_equipment_production = {
+					equipment = {
+						type = medium_tank_rocket_chassis_2
+						version_name = "Vilkha-M Tatra"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_2
+						version_name = "Vilkha Tatra"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+				add_equipment_production = {
+					equipment = {
+						type = SP_R_arty_3
+						version_name = "Vilkha-M Tatra"
+					}
+					requested_factories = 1
+					efficiency = 25
+				}
+			}
+		}
+		add_to_variable = { UKR_mrls_kyiv_heavy_lines = 2 }
+		clr_country_flag = UKR_mrls_plant_vilkha_tatra_flag
+	}
+	clr_country_flag = UKR_mrls_expanding_kyiv_flag
+}
+
+UKR_mrls_expand_kyiv = {
+	# Pays for the new military factory and schedules the event that finishes it
+	set_temp_variable = { treasury_change = -0.3 }
+	modify_treasury_effect = yes
+	set_country_flag = UKR_mrls_expanding_kyiv_flag
+	custom_effect_tooltip = UKR_mrls_expand_tt
+	hidden_effect = {
+		country_event = { id = ukraine_develop_or_modernize_mrl_system.12 days = 360 random_days = 30 }
+	}
+}
+
+UKR_mrls_build_kyiv = {
+	698 = {
+		add_extra_state_shared_building_slots = 1
+		add_building_construction = {
+			type = arms_factory
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+UKR_mrls_clear_kyiv = {
+	clr_country_flag = UKR_mrls_plant_vilkha_flag
+	clr_country_flag = UKR_mrls_plant_vilkha_m_flag
+	clr_country_flag = UKR_mrls_plant_vilkha_kraz_flag
+	clr_country_flag = UKR_mrls_plant_vilkha_tatra_flag
+	clr_country_flag = UKR_mrls_expanding_kyiv_flag
 }

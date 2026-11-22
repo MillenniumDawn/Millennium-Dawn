@@ -295,6 +295,33 @@ EU_update_AI_focus_voting_modifier = {
 	EU_update_AI_general_voting_modifiers = yes
 }
 
+# Shared by the Council ballot buttons and the EUvote.5 popup, so a country is never on both lists.
+EU_cast_council_support_vote = {
+	add_to_array = { global.EU_active_vote_supporters = THIS }
+	set_temp_variable = { add_ratio_value = THIS.EU_pop_ratio }
+	add_to_variable = { global.EU_pop_ratio_yes = add_ratio_value }
+	if = {
+		limit = { is_in_array = { array = global.EU_active_vote_rejecters value = THIS } }
+		remove_from_array = { array = global.EU_active_vote_rejecters value = THIS }
+		subtract_from_variable = { global.EU_pop_ratio_no = add_ratio_value }
+	}
+	md_check_eu_council_vote_alert = yes
+	update_eu_dirty_variable = yes
+}
+
+EU_cast_council_reject_vote = {
+	add_to_array = { global.EU_active_vote_rejecters = THIS }
+	set_temp_variable = { add_ratio_value = THIS.EU_pop_ratio }
+	add_to_variable = { global.EU_pop_ratio_no = add_ratio_value }
+	if = {
+		limit = { is_in_array = { array = global.EU_active_vote_supporters value = THIS } }
+		remove_from_array = { array = global.EU_active_vote_supporters value = THIS }
+		subtract_from_variable = { global.EU_pop_ratio_yes = add_ratio_value }
+	}
+	md_check_eu_council_vote_alert = yes
+	update_eu_dirty_variable = yes
+}
+
 
 # QMV Results Section
 
@@ -402,6 +429,7 @@ focus_EU111_QMV_result = {
 		set_temp_variable = { rival_endgame_id = 112 }
 		EU_drop_rival_endgame = yes
 		set_variable = { global.current_active_vote_disp = 0 }
+		md_refresh_eu_council_vote_alerts = yes
 
 		# Snapshot members before annexing: annex_country fires on_annex, which removes each
 		# annexed member from global.EU_member. Looping global.EU_member live would mutate it
@@ -1225,6 +1253,7 @@ cleanup_european_union_voting = {
 			clr_country_flag = current_vote_influenced
 		}
 	}
+	hidden_effect = { md_refresh_eu_council_vote_alerts = yes }
 }
 
 EU_show_display_effects_for_law = {
@@ -1511,4 +1540,5 @@ EU_emergency_vote_clear = {
 	set_variable = { global.EU_pop_ratio_yes = 0 }
 	clear_array = global.EU_active_vote_supporters
 	clear_array = global.EU_active_vote_rejecters
+	hidden_effect = { md_refresh_eu_council_vote_alerts = yes }
 }

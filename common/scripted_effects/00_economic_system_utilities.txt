@@ -261,6 +261,20 @@ repay_manual_debt_effect = {
 	}
 }
 
+# Effect: sell_international_investments
+# Purpose: Sells foreign investments and adds the recovered value to the treasury
+# Parameters:
+# - investment_sale_amount: Principal to sell, in billions
+sell_international_investments = {
+	if = { limit = { check_variable = { int_investments > investment_sale_amount } }
+		# The topbar tooltip previews the same rate.
+		set_temp_variable = { investment_sale_recovery_rate = { value = 0.60 add = modifier@investment_sale_recovery_modifier clamp = { min = 0 max = 0.80 } } }
+		subtract_from_variable = { int_investments = investment_sale_amount }
+		add_to_variable = { treasury = { value = investment_sale_amount multiply = investment_sale_recovery_rate } }
+		ingame_update_setup = yes
+	}
+}
+
 enable_automatic_debt_repayment_effect = {
 	if = {
 		limit = {
