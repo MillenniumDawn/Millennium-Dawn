@@ -517,7 +517,7 @@ Inflation applies a dynamic modifier that scales with the inflation rate. The ef
 | Corruption costs             | Scaled by inflation                 | Increased                |
 | Productivity growth          | 1.3× inflation rate (penalty)       | -13% productivity growth |
 | Construction speed           | 2.0× inflation rate (bonus to cost) | +20% construction costs  |
-| Factory/dockyard output      | -1.25× inflation rate               | -12.5% output            |
+| Factory/dockyard output      | -1.35× inflation rate               | -13.5% output            |
 | Political power              | -1.3× inflation rate                | -13% PP generation       |
 | Consumer goods               | -0.5× inflation rate                | +5% consumer goods need  |
 | Trade law change costs       | 1.5× inflation rate                 | +15% trade law costs     |
