@@ -431,6 +431,21 @@ def test_gfx_icon_check_flags_an_undefined_sprite(tmp_path):
     assert validator._issues[0].line == 4
 
 
+def test_gfx_icon_check_accepts_a_vanilla_sprite(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        V, "_load_vanilla_sprite_manifest", lambda: frozenset({"GFX_vanilla_icon"})
+    )
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "icons.gfx").write_text("spriteTypes = {\n}\n")
+    _write_sloc(tmp_path, "icons.txt", "localization_key = GFX_vanilla_icon\n")
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_gfx_icons()
+
+    assert validator._issues == []
+
+
 def test_gfx_icon_check_in_staged_mode_reads_only_staged_files(tmp_path):
     interface = tmp_path / "interface"
     interface.mkdir()

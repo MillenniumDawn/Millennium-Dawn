@@ -280,9 +280,9 @@ def test_reexec_with_hands_the_argv_tail_to_the_new_interpreter(monkeypatch, cap
 @pytest.mark.parametrize(
     ("version", "ok"),
     [
-        ((3, 13, 1), True),
-        ((3, 12, 0), True),
-        ((3, 11, 4), False),
+        ((3, 15, 1), True),
+        ((3, 14, 0), True),
+        ((3, 13, 4), False),
     ],
 )
 def test_check_python_grades_the_interpreter(version, ok, monkeypatch, capsys):
