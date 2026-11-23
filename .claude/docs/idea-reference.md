@@ -29,6 +29,9 @@ BRA_idea_higher_minimum_wage_1 = {
   `removal_cost = -1`, so nothing else frees the slot. Precedent: the doctrine-gated
   office spirits in `common/ideas/zzz_{army,navy,air}_spirits.txt`.
 - Remove `cancel = { always = no }`. It is checked hourly and is never true.
+- The idea tooltip never shows `cancel`. Every visible idea with a `cancel` block states
+  its removal condition in a `_desc` footer. See
+  [Removable spirit footer](localisation-rules.md#removable-spirit-footer).
 - Drop an `on_add` or `on_remove` whose only statement is a log.
 - Tiered ideas use suffix numbering (`TAG_idea_name_1`, `TAG_idea_name_2`) with a shared
   `name = TAG_idea_name`.

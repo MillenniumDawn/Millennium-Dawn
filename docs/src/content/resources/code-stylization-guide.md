@@ -307,15 +307,16 @@ BRA_idea_higher_minimum_wage_1 = {
 
 ## Removable Spirit Footer
 
-Every starting national spirit the player can fix ends its description with a footer that says how. Good examples are Armenia, Transnistria, and Iran.
+Every starting national spirit the player can fix ends its description with a footer that says how. So does every visible idea with a `cancel` block, because the game never shows `cancel` in the idea tooltip. Good examples are Armenia, Transnistria, and Iran.
 
 ```yaml
-TAG_spirit_desc: "Last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §Y$TAG_focus_id$§! focus."
+TAG_spirit_desc: "Last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §H$TAG_focus_id$§! focus."
 ```
 
 - Use the fixed wording: `will be §RRemoved§!`, `will §GImprove§!`, `will §RWorsen§!`, or `will never be §RRemoved§!`
-- Name the source as `the §Y$focus_id$§! focus`, `the §Y$decision_id$§! decision`, or a `§Y<threshold>§!` for a variable. An event fired by a focus names the focus
+- Name the source as `the §H$focus_id$§! focus`, `the §H$decision_id$§! decision`, or a `§H<threshold>§!` for a variable or `cancel` threshold. An event fired by a focus names the focus
 - List up to three sources. With more, name the branch by its root focus
+- A spirit removed by a changing value gets two blocks: what drives it, then the removal condition. See `PER_us_sanctions_desc`
 - Tiered spirits get the footer on every tier
 - Skip the footer on spirits nothing ever changes: permanent spirits, positive flavour spirits, hidden ideas, and dynamic modifiers that only give bonuses
 
