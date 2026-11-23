@@ -7416,6 +7416,125 @@ UKR_sevastopol_naval_base_category = {
 }
 
 UKR_modernize_sov_category = {
+	UKR_heavy_helicopter_retirement = {
+		icon = GFX_UKR_HELI_Mi_26
+		fire_only_once = yes
+		ai_will_do = { base = 0 }
+
+		visible = {
+			OR = {
+				has_equipment = { transport_helicopter_1 > 0 }
+				has_equipment = { transport_helicopter_2 > 0 }
+				check_variable = { num_equipment_in_armies@transport_helicopter_1 > 0 }
+				check_variable = { num_equipment_in_armies@transport_helicopter_2 > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_heavy_helicopter_retirement"
+			country_event = ukraine_develop_light_helicopters.10
+		}
+	}
+
+	UKR_heavy_helicopter_retirement_mission = {
+		icon = GFX_UKR_HELI_Mi_26
+		activation = { always = no }
+		days_mission_timeout = 60
+		days_remove = 1
+		selectable_mission = yes
+		is_good = yes
+		ai_will_do = { base = 0 }
+
+		available = {
+			if = {
+				limit = { NOT = { check_variable = { UKR_heavy_helicopter_retirement_plan = 3 } } }
+				custom_trigger_tooltip = {
+					tooltip = UKR_heavy_helicopter_retirement_mi6a_required_tt
+					has_equipment = { transport_helicopter_1 > 49 }
+				}
+			}
+			if = {
+				limit = { NOT = { check_variable = { UKR_heavy_helicopter_retirement_plan = 2 } } }
+				custom_trigger_tooltip = {
+					tooltip = UKR_heavy_helicopter_retirement_mi26_required_tt
+					has_equipment = { transport_helicopter_2 > 9 }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UKR_heavy_helicopter_retirement_mission"
+			custom_effect_tooltip = UKR_heavy_helicopter_retirement_complete_tt
+			hidden_effect = {
+				set_temp_variable = { ukr_retired_mi6a = 0 }
+				if = {
+					limit = { NOT = { check_variable = { UKR_heavy_helicopter_retirement_plan = 3 } } }
+					UKR_storage_retire_mi6a = yes
+				}
+				set_temp_variable = { ukr_retired_mi26 = 0 }
+				if = {
+					limit = { NOT = { check_variable = { UKR_heavy_helicopter_retirement_plan = 2 } } }
+					UKR_storage_retire_mi26 = yes
+				}
+				if = {
+					limit = {
+						OR = {
+							check_variable = { UKR_heavy_helicopter_retirement_plan = 3 }
+							check_variable = { ukr_retired_mi6a > 49 }
+						}
+						OR = {
+							check_variable = { UKR_heavy_helicopter_retirement_plan = 2 }
+							check_variable = { ukr_retired_mi26 > 9 }
+						}
+					}
+					add_ideas = UKR_heavy_helicopter_retirement_savings
+					add_stability = -0.01
+					add_war_support = -0.025
+					if = {
+						limit = { NOT = { check_variable = { UKR_heavy_helicopter_retirement_plan = 3 } } }
+						add_to_variable = { ukraine_has_mi6a_stockpile = ukr_retired_mi6a }
+						UKR_storage_mi6a_mark_serviced = yes
+					}
+					if = {
+						limit = { NOT = { check_variable = { UKR_heavy_helicopter_retirement_plan = 2 } } }
+						add_to_variable = { ukraine_has_mi26_stockpile = ukr_retired_mi26 }
+						UKR_storage_mi26_mark_serviced = yes
+					}
+					clear_variable = UKR_heavy_helicopter_retirement_plan
+					UKR_storage_refresh = yes
+				}
+				else = {
+					if = {
+						limit = { check_variable = { ukr_retired_mi6a > 0 } }
+						if = {
+							limit = { has_dlc = "No Step Back" }
+							add_equipment_to_stockpile = { type = transport_helicopter_1 variant_name = "Mil Mi-6A" amount = ukr_retired_mi6a producer = SOV }
+						}
+						else = {
+							add_equipment_to_stockpile = { type = transport_helicopter_1 amount = ukr_retired_mi6a producer = SOV }
+						}
+					}
+					if = {
+						limit = { check_variable = { ukr_retired_mi26 > 0 } }
+						if = {
+							limit = { has_dlc = "No Step Back" }
+							add_equipment_to_stockpile = { type = transport_helicopter_2 variant_name = "Mil Mi-26" amount = ukr_retired_mi26 producer = SOV }
+						}
+						else = {
+							add_equipment_to_stockpile = { type = transport_helicopter_2 amount = ukr_retired_mi26 producer = SOV }
+						}
+					}
+					country_event = { id = ukraine_develop_light_helicopters.12 days = 2 }
+				}
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_heavy_helicopter_retirement_mission"
+			country_event = { id = ukraine_develop_light_helicopters.12 days = 2 }
+		}
+	}
+
 	UKR_develop_light_helicopters_restore_mi34 = {
 		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
 		fire_only_once = yes
@@ -17552,7 +17671,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -17601,7 +17720,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_reactivation_program
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -17685,7 +17804,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_next_modernization
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -17795,7 +17914,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_development_cancel
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -17842,7 +17961,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_procurement_program
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -17990,7 +18109,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_peru_tender
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -18051,7 +18170,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_tifon_development
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -18149,7 +18268,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_tifon_development_own_tech
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -18270,7 +18389,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_peru_contract_company
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -18363,7 +18482,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t55_peru_contract_battalion
 				}
 				check_variable = { UKR_storage_selected_row = 11 }
@@ -18461,7 +18580,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -18509,7 +18628,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_modernization
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -18569,7 +18688,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_procurement_program
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -18706,7 +18825,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_t62_egypt_independent_development
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -18768,7 +18887,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_egypt_5tdf_offer
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -18827,7 +18946,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_egypt_5tdf_contract_company
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -18931,7 +19050,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_egypt_5tdf_contract_battalion
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -19041,7 +19160,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_egypt_6td2_offer
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -19128,7 +19247,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_egypt_6td2_offer_own_tech
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -19216,7 +19335,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_egypt_6td2_contract_company
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -19326,7 +19445,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_t62_egypt_6td2_contract_battalion
 				}
 				check_variable = { UKR_storage_selected_row = 12 }
@@ -19441,7 +19560,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_btr50_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -19484,7 +19603,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_btr50_indonesia_offer
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -19518,7 +19637,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_btr50_egypt_offer
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -19552,7 +19671,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_btr50_europe_offer
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -19588,7 +19707,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_btr50_kmdb_modernization
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -19660,7 +19779,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_pt76_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 13 }
@@ -19703,7 +19822,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_pt76_indonesia_offer
 				}
 				check_variable = { UKR_storage_selected_row = 13 }
@@ -19737,7 +19856,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_pt76_europe_offer
 				}
 				check_variable = { UKR_storage_selected_row = 13 }
@@ -19773,7 +19892,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_zsu57_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 36 }
@@ -19816,7 +19935,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_zsu57_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 36 }
@@ -19855,7 +19974,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_zsu57_vietnam_offer
 				}
 				check_variable = { UKR_storage_selected_row = 36 }
@@ -19896,7 +20015,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_2k11_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -19939,7 +20058,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_2k11_caucasus_offer
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -19973,7 +20092,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_2k11_central_asia_offer
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -20016,7 +20135,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 1 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_pt76_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 13 }
@@ -20079,7 +20198,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_2k11_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -20142,7 +20261,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_9p148_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -20185,7 +20304,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_9p148_caucasus_offer
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -20218,7 +20337,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_9p148_africa_offer
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -20254,7 +20373,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_atgm_barrier_v
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -20341,7 +20460,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_malyutka_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 44 }
@@ -20384,7 +20503,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_malyutka_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 44 }
@@ -20428,7 +20547,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_9p110_barrier_v
 				}
 				check_variable = { UKR_storage_selected_row = 44 }
@@ -20488,7 +20607,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_9p110_restore_brdm
 				}
 				check_variable = { UKR_storage_selected_row = 44 }
@@ -20545,7 +20664,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_9p122_barrier_v
 				}
 				check_variable = { UKR_storage_selected_row = 44 }
@@ -20605,7 +20724,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_9p122_restore_brdm
 				}
 				check_variable = { UKR_storage_selected_row = 44 }
@@ -20662,7 +20781,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_9p148_restore_brdm
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -20719,7 +20838,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 5 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_tu16_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 51 }
@@ -20762,7 +20881,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 5 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_tu16_egypt_offer
 				}
 				check_variable = { UKR_storage_selected_row = 51 }
@@ -20796,7 +20915,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 5 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_tu16_china_offer
 				}
 				check_variable = { UKR_storage_selected_row = 51 }
@@ -20835,7 +20954,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 5 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_tu16_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 51 }
@@ -20900,7 +21019,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 5 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_tu22_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 52 }
@@ -20943,7 +21062,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 5 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_tu22_libya_offer
 				}
 				check_variable = { UKR_storage_selected_row = 52 }
@@ -20982,7 +21101,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 5 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_tu22_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 52 }
@@ -21107,7 +21226,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig21_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 65 }
@@ -21150,7 +21269,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig21_yemen_offer
 				}
 				check_variable = { UKR_storage_selected_row = 65 }
@@ -21187,7 +21306,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_su17_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 64 }
@@ -21230,7 +21349,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_su17_vietnam_offer
 				}
 				check_variable = { UKR_storage_selected_row = 64 }
@@ -21269,7 +21388,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig23_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 61 }
@@ -21312,7 +21431,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig23_angola_offer
 				}
 				check_variable = { UKR_storage_selected_row = 61 }
@@ -21344,7 +21463,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_su17_yemen_offer
 				}
 				check_variable = { UKR_storage_selected_row = 64 }
@@ -21376,7 +21495,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig21_mozambique_offer
 				}
 				check_variable = { UKR_storage_selected_row = 65 }
@@ -21413,7 +21532,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig25_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 63 }
@@ -21456,7 +21575,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig25rb_algeria_offer
 				}
 				check_variable = { UKR_storage_selected_row = 63 }
@@ -21488,7 +21607,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig21_croatia_overhaul
 				}
 				check_variable = { UKR_storage_selected_row = 65 }
@@ -21518,7 +21637,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig21_croatia_upgrade
 				}
 				check_variable = { UKR_storage_selected_row = 65 }
@@ -21550,7 +21669,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig23_libya_offer
 				}
 				check_variable = { UKR_storage_selected_row = 61 }
@@ -21585,7 +21704,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig23_sudan_offer
 				}
 				check_variable = { UKR_storage_selected_row = 61 }
@@ -21625,7 +21744,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig23_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 61 }
@@ -21684,7 +21803,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig25_offer
 				}
 				check_variable = { UKR_storage_selected_row = 63 }
@@ -21723,7 +21842,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig25_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 63 }
@@ -21783,7 +21902,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_su17_poland_offer
 				}
 				check_variable = { UKR_storage_selected_row = 64 }
@@ -21821,7 +21940,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_su17_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 64 }
@@ -21883,7 +22002,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 10 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_varyag_restore_yak38
 				}
 				check_variable = { UKR_storage_selected_row = 69 }
@@ -21930,10 +22049,10 @@ UKR_reactivate_sov_category = {
 		visible = {
 			OR = {
 				is_ai = yes
-				check_variable = { UKR_storage_selected_row = 10 }
+				check_variable = { UKR_storage_selected_row = 100 }
 				check_variable = { UKR_storage_selected_row = 70 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_modernize_mi2msb
 				}
 			}
@@ -22007,16 +22126,366 @@ UKR_reactivate_sov_category = {
 		}
 	}
 
+	UKR_storage_mi6a_upkeep = {
+		icon = GFX_UKR_HELI_Mi_6
+		days_remove = 60
+		visible = {
+			check_variable = { ukraine_has_mi6a_stockpile > 0 }
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 76 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi6a_storage_ready = yes
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_mi6a_maintenance_due_tt
+				NOT = { has_country_flag = UKR_storage_mi6a_kept_flag }
+			}
+		}
+
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.02 } } }
+		custom_cost_text = cost_0_02
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi6a_upkeep"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_mi6a_upkeep"
+			custom_effect_tooltip = UKR_storage_mi6a_kept_tt
+			hidden_effect = { UKR_storage_mi6a_mark_serviced = yes }
+		}
+	}
+
+	UKR_storage_mi6a_sell_section = {
+		icon = GFX_UKR_HELI_Mi_6
+		visible = {
+			check_variable = { ukraine_has_mi6a_stockpile > 0 }
+			country_exists = VIE
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 76 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi6a_can_offer_section = yes
+		}
+
+		ai_will_do = { base = 5 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi6a_sell_section"
+			custom_effect_tooltip = UKR_storage_mi6a_offer_tt
+			hidden_effect = {
+				set_variable = { UKR_storage_mi6a_offer_quantity = 4 }
+				set_variable = { UKR_storage_mi6a_offer_price = 0.04 }
+				set_country_flag = { flag = UKR_storage_mi6a_offer_pending_flag days = 60 value = 1 }
+				VIE = { country_event = ukraine_develop_light_helicopters.13 }
+				UKR_storage_refresh = yes
+			}
+		}
+	}
+
+	UKR_storage_mi6a_sell_squadron = {
+		icon = GFX_UKR_HELI_Mi_6
+		visible = {
+			check_variable = { ukraine_has_mi6a_stockpile > 0 }
+			country_exists = VIE
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 76 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi6a_can_offer_squadron = yes
+		}
+
+		ai_will_do = { base = 5 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi6a_sell_squadron"
+			custom_effect_tooltip = UKR_storage_mi6a_offer_tt
+			hidden_effect = {
+				set_variable = { UKR_storage_mi6a_offer_quantity = 12 }
+				set_variable = { UKR_storage_mi6a_offer_price = 0.12 }
+				set_country_flag = { flag = UKR_storage_mi6a_offer_pending_flag days = 60 value = 1 }
+				VIE = { country_event = ukraine_develop_light_helicopters.13 }
+				UKR_storage_refresh = yes
+			}
+		}
+	}
+
+	UKR_storage_mi6a_monuments = {
+		icon = GFX_UKR_HELI_Mi_6
+		days_remove = 60
+		visible = {
+			check_variable = { ukraine_has_mi6a_stockpile > 0 }
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 76 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi6a_storage_ready = yes
+		}
+
+		ai_will_do = { base = 1 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi6a_monuments"
+			custom_effect_tooltip = UKR_storage_mi6a_consume_tt
+			hidden_effect = {
+				set_variable = { ukraine_has_mi6a_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_mi6a_monuments"
+			set_country_flag = { flag = UKR_storage_mi6a_museum_active_flag days = 365 value = 1 }
+			UKR_storage_heavy_helicopter_museum_update = yes
+		}
+	}
+
+	UKR_storage_mi6a_scrap = {
+		icon = GFX_UKR_HELI_Mi_6
+		days_remove = 30
+		visible = {
+			check_variable = { ukraine_has_mi6a_stockpile > 0 }
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 76 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi6a_storage_ready = yes
+			controls_state = 694
+		}
+
+		ai_will_do = { base = 1 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi6a_scrap"
+			custom_effect_tooltip = UKR_storage_mi6a_consume_tt
+			hidden_effect = {
+				set_variable = { ukraine_has_mi6a_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_mi6a_scrap"
+			694 = {
+				if = {
+					limit = { is_controlled_by = ROOT }
+					add_dynamic_modifier = { modifier = UKR_mi6a_scrap_aluminium days = 180 }
+				}
+			}
+		}
+	}
+
+	UKR_storage_mi26_upkeep = {
+		icon = GFX_UKR_HELI_Mi_26
+		days_remove = 60
+		visible = {
+			check_variable = { ukraine_has_mi26_stockpile > 0 }
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 77 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi26_storage_ready = yes
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_mi26_maintenance_due_tt
+				NOT = { has_country_flag = UKR_storage_mi26_kept_flag }
+			}
+		}
+
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.03 } } }
+		custom_cost_text = cost_0_03
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi26_upkeep"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.03 }
+				modify_treasury_effect = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_mi26_upkeep"
+			custom_effect_tooltip = UKR_storage_mi26_kept_tt
+			hidden_effect = { UKR_storage_mi26_mark_serviced = yes }
+		}
+	}
+
+	UKR_storage_mi26_sell_section = {
+		icon = GFX_UKR_HELI_Mi_26
+		visible = {
+			check_variable = { ukraine_has_mi26_stockpile > 0 }
+			country_exists = RAJ
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 77 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi26_can_offer_section = yes
+		}
+
+		ai_will_do = { base = 5 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi26_sell_section"
+			custom_effect_tooltip = UKR_storage_mi26_offer_tt
+			hidden_effect = {
+				set_variable = { UKR_storage_mi26_offer_quantity = 4 }
+				set_variable = { UKR_storage_mi26_offer_price = 0.08 }
+				set_country_flag = { flag = UKR_storage_mi26_offer_pending_flag days = 60 value = 1 }
+				RAJ = { country_event = ukraine_develop_light_helicopters.14 }
+				UKR_storage_refresh = yes
+			}
+		}
+	}
+
+	UKR_storage_mi26_sell_squadron = {
+		icon = GFX_UKR_HELI_Mi_26
+		visible = {
+			check_variable = { ukraine_has_mi26_stockpile > 0 }
+			country_exists = RAJ
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 77 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi26_can_offer_squadron = yes
+		}
+
+		ai_will_do = { base = 5 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi26_sell_squadron"
+			custom_effect_tooltip = UKR_storage_mi26_offer_tt
+			hidden_effect = {
+				set_variable = { UKR_storage_mi26_offer_quantity = 12 }
+				set_variable = { UKR_storage_mi26_offer_price = 0.24 }
+				set_country_flag = { flag = UKR_storage_mi26_offer_pending_flag days = 60 value = 1 }
+				RAJ = { country_event = ukraine_develop_light_helicopters.14 }
+				UKR_storage_refresh = yes
+			}
+		}
+	}
+
+	UKR_storage_mi26_monuments = {
+		icon = GFX_UKR_HELI_Mi_26
+		days_remove = 60
+		visible = {
+			check_variable = { ukraine_has_mi26_stockpile > 0 }
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 77 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi26_storage_ready = yes
+		}
+
+		ai_will_do = { base = 1 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi26_monuments"
+			custom_effect_tooltip = UKR_storage_mi26_consume_tt
+			hidden_effect = {
+				set_variable = { ukraine_has_mi26_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_mi26_monuments"
+			set_country_flag = { flag = UKR_storage_mi26_museum_active_flag days = 365 value = 1 }
+			UKR_storage_heavy_helicopter_museum_update = yes
+		}
+	}
+
+	UKR_storage_mi26_scrap = {
+		icon = GFX_UKR_HELI_Mi_26
+		days_remove = 30
+		visible = {
+			check_variable = { ukraine_has_mi26_stockpile > 0 }
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 77 }
+			}
+		}
+
+		available = {
+			UKR_storage_mi26_storage_ready = yes
+			controls_state = 694
+		}
+
+		ai_will_do = { base = 1 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_mi26_scrap"
+			custom_effect_tooltip = UKR_storage_mi26_consume_tt
+			hidden_effect = {
+				set_variable = { ukraine_has_mi26_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_mi26_scrap"
+			694 = {
+				if = {
+					limit = { is_controlled_by = ROOT }
+					add_dynamic_modifier = { modifier = UKR_mi26_scrap_aluminium days = 180 }
+				}
+			}
+		}
+	}
+
 	UKR_storage_ka25_sell_to_bulgaria = {
 		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
 
 		visible = {
 			OR = {
 				is_ai = yes
-				check_variable = { UKR_storage_selected_row = 10 }
+				check_variable = { UKR_storage_selected_row = 100 }
 				check_variable = { UKR_storage_selected_row = 75 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_ka25_sell_to_bulgaria
 				}
 			}
@@ -22055,10 +22524,10 @@ UKR_reactivate_sov_category = {
 		visible = {
 			OR = {
 				is_ai = yes
-				check_variable = { UKR_storage_selected_row = 10 }
+				check_variable = { UKR_storage_selected_row = 100 }
 				check_variable = { UKR_storage_selected_row = 75 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_ka25_museum
 				}
 			}
@@ -22104,10 +22573,10 @@ UKR_reactivate_sov_category = {
 		visible = {
 			OR = {
 				is_ai = yes
-				check_variable = { UKR_storage_selected_row = 10 }
+				check_variable = { UKR_storage_selected_row = 100 }
 				check_variable = { UKR_storage_selected_row = 75 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_ka25_scrap
 				}
 			}
@@ -22150,7 +22619,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 10 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_yak38_monuments
 				}
 				check_variable = { UKR_storage_selected_row = 69 }
@@ -22205,7 +22674,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 10 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_yak38_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 69 }
@@ -22244,7 +22713,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 10 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_scrap_carrier_aircraft
 				}
 				check_variable = { UKR_storage_selected_row = 67 }
@@ -22275,7 +22744,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 10 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_exchange_carrier_aircraft
 				}
 				check_variable = { UKR_storage_selected_row = 67 }
@@ -22309,7 +22778,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 10 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sell_carrier_aircraft_to_china
 				}
 				check_variable = { UKR_storage_selected_row = 67 }
@@ -22344,7 +22813,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 10 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_prepare_carrier_aircraft
 				}
 				check_variable = { UKR_storage_selected_row = 67 }
@@ -22402,7 +22871,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig27_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 62 }
@@ -22447,7 +22916,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig27_sri_lanka_interest
 				}
 				check_variable = { UKR_storage_selected_row = 62 }
@@ -22485,7 +22954,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig27_sri_lanka_contract
 				}
 				check_variable = { UKR_storage_selected_row = 62 }
@@ -22534,7 +23003,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation
 				}
 				check_variable = { UKR_storage_selected_row = 62 }
@@ -22597,7 +23066,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig27_sri_lanka_delivery
 				}
 				check_variable = { UKR_storage_selected_row = 62 }
@@ -22654,7 +23123,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mig27_restoration
 				}
 				check_variable = { UKR_storage_selected_row = 62 }
@@ -22731,7 +23200,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s75_offer
 				}
 				check_variable = { UKR_storage_selected_row = 35 }
@@ -22778,7 +23247,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s75_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 35 }
@@ -22832,7 +23301,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s200_fate
 				}
 				check_variable = { UKR_storage_selected_row = 34 }
@@ -22871,7 +23340,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s200_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 34 }
@@ -22914,7 +23383,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s200_poland_offer
 				}
 				check_variable = { UKR_storage_selected_row = 34 }
@@ -22948,7 +23417,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s200_reactivate
 				}
 				check_variable = { UKR_storage_selected_row = 34 }
@@ -23007,7 +23476,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s200_missiles
 				}
 				check_variable = { UKR_storage_selected_row = 34 }
@@ -23058,7 +23527,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s125_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 33 }
@@ -23107,7 +23576,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_modernize_s125_spaa
 				}
 				check_variable = { UKR_storage_selected_row = 33 }
@@ -23216,7 +23685,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_modernize_s125m_spaa
 				}
 				check_variable = { UKR_storage_selected_row = 33 }
@@ -23318,7 +23787,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s125_reactivate_site
 				}
 				check_variable = { UKR_storage_selected_row = 33 }
@@ -23390,7 +23859,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s125_reactivate_battery
 				}
 				check_variable = { UKR_storage_selected_row = 33 }
@@ -23441,7 +23910,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s125_reactivate_modernized_site
 				}
 				check_variable = { UKR_storage_selected_row = 33 }
@@ -23513,7 +23982,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s125_reactivate_modernized_battery
 				}
 				check_variable = { UKR_storage_selected_row = 33 }
@@ -23559,7 +24028,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_s125_offer
 				}
 				check_variable = { UKR_storage_selected_row = 33 }
@@ -23669,7 +24138,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_brdm1_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 23 }
@@ -23717,7 +24186,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mtlb_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 24 }
@@ -23765,7 +24234,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mtlbu_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 25 }
@@ -23813,7 +24282,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_brdm1_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 23 }
@@ -23876,7 +24345,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 7 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_m46_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 71 }
@@ -23924,7 +24393,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 7 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_d1_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 72 }
@@ -23972,7 +24441,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 7 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_m30_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 73 }
@@ -24020,7 +24489,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 7 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_ml20_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 74 }
@@ -24067,7 +24536,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 7 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_old_artillery_reactivation
 				}
 				check_variable = { UKR_storage_selected_row = 71 }
@@ -24119,7 +24588,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 7 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_old_artillery_reactivation_neglected
 				}
 				check_variable = { UKR_storage_selected_row = 71 }
@@ -24172,7 +24641,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 8 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_mosin_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 81 }
@@ -24220,7 +24689,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 8 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_sks_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 82 }
@@ -24268,7 +24737,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 8 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_ak47_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 86 }
@@ -24311,7 +24780,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 8 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_old_small_arms_issue
 				}
 				check_variable = { UKR_storage_selected_row = 81 }
@@ -24352,7 +24821,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 8 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_old_small_arms_issue_neglected
 				}
 				check_variable = { UKR_storage_selected_row = 81 }
@@ -24396,7 +24865,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 9 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_spg9_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 91 }
@@ -24444,7 +24913,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 9 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_strela2_upkeep
 				}
 				check_variable = { UKR_storage_selected_row = 92 }
@@ -24487,7 +24956,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 9 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_old_support_weapons_issue
 				}
 				check_variable = { UKR_storage_selected_row = 91 }
@@ -24525,7 +24994,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 9 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_old_support_weapons_issue_neglected
 				}
 				check_variable = { UKR_storage_selected_row = 91 }
@@ -24568,7 +25037,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_gtmu_tractors
 				}
 				check_variable = { UKR_storage_selected_row = 22 }
@@ -24630,7 +25099,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = ukr_modernize_sov_equipment_gtmu_scrap
 				}
 				check_variable = { UKR_storage_selected_row = 22 }
@@ -24734,7 +25203,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_ind_btr50
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -24815,7 +25284,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_egy_btr50
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -24896,7 +25365,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_hun_btr50
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -24977,7 +25446,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_rom_btr50
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -25058,7 +25527,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 2 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_cro_btr50
 				}
 				check_variable = { UKR_storage_selected_row = 21 }
@@ -25508,7 +25977,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_pol_su17
 				}
 				check_variable = { UKR_storage_selected_row = 64 }
@@ -25589,7 +26058,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_geo_2k11
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -25670,7 +26139,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_aze_2k11
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -25751,7 +26220,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_arm_2k11
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -25832,7 +26301,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_kaz_2k11
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -25913,7 +26382,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_trk_2k11
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -25994,7 +26463,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 3 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_kyr_2k11
 				}
 				check_variable = { UKR_storage_selected_row = 31 }
@@ -26075,7 +26544,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_geo_9p148
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -26156,7 +26625,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_aze_9p148
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -26237,7 +26706,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_arm_9p148
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -26318,7 +26787,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_sud_9p148
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -26399,7 +26868,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_eth_9p148
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -26480,7 +26949,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 4 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_cha_9p148
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
@@ -26561,7 +27030,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_lba_mig23
 				}
 				check_variable = { UKR_storage_selected_row = 61 }
@@ -26642,7 +27111,7 @@ UKR_reactivate_sov_category = {
 				is_ai = yes
 				check_variable = { UKR_storage_selected_row = 6 }
 				AND = {
-					check_variable = { UKR_storage_selected_row < 11 }
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
 					has_decision = UKR_storage_sale_lite_sud_mig23
 				}
 				check_variable = { UKR_storage_selected_row = 61 }
