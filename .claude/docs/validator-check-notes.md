@@ -583,6 +583,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `equipment_bonus` naming a type category (`carrier`) and a child archetype of that type
   with the same modifier stacks twice. Helicopter operators are `type = carrier`.
   Distinct stats on the child are allowed.
+- `equipment-bonus-overlap` (WARNING): an idea's `equipment_bonus` or an
+  `add_equipment_bonus` effect grants the same stat to an archetype and its descendant
+  in one bonus block. This includes `duplicate_archetypes`, such as amphibious chassis.
+  Effects also warn on overlapping type categories and their children. Sibling targets
+  and entries that share only `instant` do not stack.
 
 ## validate_localisation.py and validate_scripted_localisation.py
 
