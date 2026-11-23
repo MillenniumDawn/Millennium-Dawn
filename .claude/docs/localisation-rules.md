@@ -69,16 +69,20 @@ Tests cannot prove that dynamic text renders. After changing it, run the
 
 ## Color Codes
 
-A color code is `§X`, closed by `§!`. The mod uses three, chosen by meaning:
+A color code is `§X`, closed by `§!`. Colors are defined under `textcolors` in
+`interface/core.gfx`. Choose by meaning:
 
-| Code | Use for                                                                      |
-| ---- | ---------------------------------------------------------------------------- |
-| `§Y` | a key term, proper noun, programme name, or a `[TAG.GetNameWithFlag]` getter |
-| `§G` | a positive outcome: a gain, a bonus, a granted capability                    |
-| `§R` | a negative outcome: a cost, a malus, or a mechanical warning                 |
+| Code | Use for                                                                                          |
+| ---- | ------------------------------------------------------------------------------------------------ |
+| `§Y` | a key term, proper noun, programme name, or a `[TAG.GetNameWithFlag]` getter                     |
+| `§H` | a name or threshold in a spirit footer (see [Removable spirit footer](#removable-spirit-footer)) |
+| `§G` | a positive outcome: a gain, a bonus, a granted capability                                        |
+| `§R` | a negative outcome: a cost, a malus, or a mechanical warning                                     |
+| `§W` | the `§W--------------§!` separator line in a spirit footer                                       |
 
 - Focus titles take no color. Color belongs in the description and the tooltip.
-- `§H` renders the same color as `§Y`. Write `§Y`.
+- `§H` (Header) and `§Y` (Yellow) are the same color, `{ 255 189 0 }`. Both are correct.
+  Do not churn existing text from one to the other.
 - The `§0` to `§9` gradient codes are for graph series, never prose.
 - A literal section sign is `§§`. A single `§` always starts a color code, even before a
   space, and floods `error.log` when the next character is not a color.
@@ -113,17 +117,27 @@ TAG.ideology_desc: "(Dominant Ideology) - Party Name (Language: Native Name, ABB
 
 ### Removable spirit footer
 
-Every starting national spirit the player can fix ends its `_desc` with a footer:
+The idea tooltip never shows a `cancel` block, so the `_desc` is the only place a player
+can learn how a spirit ends. Two kinds of idea end their `_desc` with a footer:
 
-`...last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §Y$TAG_focus_id$§! focus."`
+- every starting national spirit the player can fix, and
+- every visible idea with a `cancel` block (not `hidden_ideas`), wherever it is granted
+  (focus, decision, event, or history).
+
+`...last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §H$TAG_focus_id$§! focus."`
+
+A spirit removed by a changing value (a `cancel` threshold, a weekly check, a variable)
+gets two blocks: what drives it, then the removal condition. Model:
+`PER_us_sanctions_desc` in `MD_focus_PER_l_english.yml`.
+
+`...last flavour sentence.\n§W--------------§!\nThese bonuses depend on keeping our army lean. Every division we deploy counts toward the §H500K§! manpower limit.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we have more than §H500K§! manpower in divisions in the field."`
 
 - Vocabulary: `will be §RRemoved§!`, `will §GImprove§!`, `will §RWorsen§!`, `will never be §RRemoved§!`. Use `§RRemoved§! and replaced by <short label>` when a swap target is neither clearly better nor a tier of the same chain.
-- Sources: `the §Y$focus_id$§! focus`, `the §Y$decision_id$§! decision`, `§Y<threshold>§!` for variables. Events fired by a focus name the focus, not the event.
-- Up to three sources: list them all. More: name the branch by its root focus (`in the §Y$root_id$§! branch`) or the theme with up to three `such as` examples.
+- Sources: `the §H$focus_id$§! focus`, `the §H$decision_id$§! decision`, `§H<threshold>§!` for variables and `cancel` thresholds. State a `cancel` condition in player terms that match the trigger exactly (`more than §H500K§!` for `size > 500000`). Events fired by a focus name the focus, not the event.
+- Up to three sources: list them all. More: name the branch by its root focus (`in the §H$root_id$§! branch`) or the theme with up to three `such as` examples.
 - Tiered chains get the footer on every tier. The last tier before removal says `will be §RRemoved§! by the next ...`. Chains that improve but never clear say `will never be §RRemoved§!` plus what still changes.
-- Weekly or variable-driven spirits explain the driver, then the removal condition, in that order (see `PER_us_sanctions_desc`).
 - No footer for anything nothing ever changes: permanent spirits, the economy and military-branch dynamic modifiers (`TAG_economy_modifier`, `TAG_artesh_modifier`), positive flavour spirits, hidden ideas. A dynamic modifier qualifies only when it has penalties and a focus, decision, or event removes or improves it.
-- First person collective, no em dashes, `§Y` never `§H`.
+- First person collective, no em dashes. Footers follow the Iranian spirits and use `§H` for names and thresholds.
 
 ## Typos and prose warnings
 
