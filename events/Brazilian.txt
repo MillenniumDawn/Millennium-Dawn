@@ -1708,7 +1708,20 @@ country_event = {
 		set_temp_variable = { treasury_change = -2 }
 		modify_treasury_effect = yes
 		set_temp_variable = { skip_payment = 1 }
-		883 = { one_state_infrastructure = yes }
+		883 = {
+			one_state_infrastructure = yes
+			if = {
+				limit = { has_dynamic_modifier = { modifier = BRA_favela_modifier } }
+				custom_effect_tooltip = { localization_key = adds_dynamic_modifier_tt MODIFIER = BRA_favela_improving_modifier }
+				remove_dynamic_modifier = { modifier = BRA_favela_modifier }
+				add_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
+			}
+			else_if = {
+				limit = { has_dynamic_modifier = { modifier = BRA_favela_improving_modifier } }
+				custom_effect_tooltip = BRA_favela_cleared_tt
+				remove_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
+			}
+		}
 		add_stability = 0.02
 		ai_chance = {
 			base = 3
@@ -3120,7 +3133,7 @@ country_event = {
 					emerging_anarchist_communism_are_in_power = yes
 				}
 			}
-			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 0.5 has_stability < 0.6 }
 		}
 	}
 }
@@ -3325,7 +3338,8 @@ country_event = {
 				}
 			}
 			modifier = { factor = 2 ai_has_high_deficit = yes }
-			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 2 check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0.5 has_stability < 0.6 }
 		}
 	}
 
@@ -3358,6 +3372,7 @@ country_event = {
 					nationalist_monarchists_are_in_power = yes
 				}
 			}
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.4 } }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
@@ -4157,7 +4172,7 @@ country_event = {
 					nationalist_monarchists_are_in_power = yes
 				}
 			}
-			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 0.5 has_stability < 0.6 }
 		}
 	}
 }
@@ -4207,7 +4222,7 @@ country_event = {
 				}
 			}
 			modifier = { factor = 2 ai_has_high_deficit = yes }
-			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 0.5 has_stability < 0.6 }
 		}
 	}
 
@@ -4235,6 +4250,411 @@ country_event = {
 					western_social_democrats_are_in_power = yes
 					emerging_communist_state_are_in_power = yes
 					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# The PCC's attacks on Sao Paulo
+country_event = {
+	id = brazil.90
+	title = brazil.90.t
+	desc = brazil.90.d
+	picture = GFX_terrorist_attack
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_full_control_of_state = 882
+		has_cartels_penalties = yes
+	}
+
+	# Crack down on the gang's leadership
+	option = {
+		name = brazil.90.a
+		log = "[GetDateText]: [This.GetName]: brazil.90.a executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.003 } }
+		modify_treasury_effect = yes
+		add_stability = -0.02
+		set_temp_variable = { cart_strength_change = -6 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					western_autocrats_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Negotiate with the prisoners' leaders
+	option = {
+		name = brazil.90.b
+		log = "[GetDateText]: [This.GetName]: brazil.90.b executed"
+		add_stability = 0.03
+		set_temp_variable = { cart_strength_change = 5 }
+		set_temp_variable = { cart_influence_change = 3 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 1
+			modifier = { factor = 2 has_stability < 0.4 }
+		}
+	}
+
+	# Fund prison intelligence and new prisons
+	option = {
+		name = brazil.90.c
+		log = "[GetDateText]: [This.GetName]: brazil.90.c executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.005 } }
+		modify_treasury_effect = yes
+		set_temp_variable = { cart_strength_change = -3 }
+		set_temp_variable = { cart_influence_change = -2 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# The occupation of the Alemao complex in Rio
+country_event = {
+	id = brazil.91
+	title = brazil.91.t
+	desc = brazil.91.d
+	picture = GFX_crime_fighting
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_full_control_of_state = 883
+		has_cartels_penalties = yes
+	}
+
+	# Keep the army in the complex
+	option = {
+		name = brazil.91.a
+		log = "[GetDateText]: [This.GetName]: brazil.91.a executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.003 } }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		set_temp_variable = { cart_strength_change = -8 }
+		set_temp_variable = { cart_influence_change = -2 }
+		modify_cartel_variables_effect = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					western_autocrats_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Hand the complex to the state police
+	option = {
+		name = brazil.91.b
+		log = "[GetDateText]: [This.GetName]: brazil.91.b executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		set_temp_variable = { cart_strength_change = -4 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Declare victory and withdraw
+	option = {
+		name = brazil.91.c
+		log = "[GetDateText]: [This.GetName]: brazil.91.c executed"
+		add_stability = 0.02
+		set_temp_variable = { cart_strength_change = 4 }
+		set_temp_variable = { cart_influence_change = 2 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 1
+			modifier = { factor = 2 has_stability < 0.4 }
+		}
+	}
+}
+
+# The January prison massacres
+country_event = {
+	id = brazil.92
+	title = brazil.92.t
+	desc = brazil.92.d
+	picture = GFX_BRA_event_putim_prison
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_full_control_of_state = 892
+		has_cartels_penalties = yes
+	}
+
+	# Draw up a federal prison security plan
+	option = {
+		name = brazil.92.a
+		log = "[GetDateText]: [This.GetName]: brazil.92.a executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.004 } }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		set_temp_variable = { cart_strength_change = -4 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Send soldiers and federal police into the prisons
+	option = {
+		name = brazil.92.b
+		log = "[GetDateText]: [This.GetName]: brazil.92.b executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
+		modify_treasury_effect = yes
+		add_stability = -0.02
+		set_temp_variable = { cart_strength_change = -6 }
+		modify_cartel_variables_effect = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					western_autocrats_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Let the factions settle it behind the walls
+	option = {
+		name = brazil.92.c
+		log = "[GetDateText]: [This.GetName]: brazil.92.c executed"
+		add_stability = -0.03
+		set_temp_variable = { cart_strength_change = 8 }
+		set_temp_variable = { cart_influence_change = 3 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+}
+
+# The state inquiry into Rio's militias
+country_event = {
+	id = brazil.93
+	title = brazil.93.t
+	desc = brazil.93.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_full_control_of_state = 883
+		has_cartels_penalties = yes
+	}
+
+	# Back the prosecutions
+	option = {
+		name = brazil.93.a
+		log = "[GetDateText]: [This.GetName]: brazil.93.a executed"
+		add_political_power = -25
+		add_stability = -0.01
+		set_temp_variable = { cart_strength_change = -3 }
+		set_temp_variable = { cart_influence_change = -7 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Shelve the report
+	option = {
+		name = brazil.93.b
+		log = "[GetDateText]: [This.GetName]: brazil.93.b executed"
+		set_temp_variable = { cart_strength_change = 2 }
+		set_temp_variable = { cart_influence_change = 5 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+		}
+	}
+
+	# Raise police pay and oversight
+	option = {
+		name = brazil.93.c
+		log = "[GetDateText]: [This.GetName]: brazil.93.c executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.003 } }
+		modify_treasury_effect = yes
+		set_temp_variable = { cart_strength_change = -4 }
+		set_temp_variable = { cart_influence_change = -3 }
+		modify_cartel_variables_effect = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					western_autocrats_are_in_power = yes
 				}
 			}
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
