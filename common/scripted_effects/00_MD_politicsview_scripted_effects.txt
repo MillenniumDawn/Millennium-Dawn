@@ -1176,13 +1176,49 @@ AI_setup_government = {
 		#switch to ruling
 		hidden_effect = {
 			set_leader = yes
+			set_variable = { current_term = 1 }
 		}
 	}
+	else = { advance_elected_term = yes }
 	IP_idea_configuration = yes
 	# Logs the AI Setup_government
 	if = {
 		limit = { is_debug = yes }
 		log = "[GetDateText]: [Root.GetName]: AI finished setup government [?political_power]"
+	}
+}
+
+advance_elected_term = {
+	add_to_variable = { current_term = 1 }
+	if = {
+		limit = {
+			check_variable = { term_limit > 0 }
+			check_variable = { current_term > term_limit }
+		}
+		set_leader = yes
+	}
+}
+
+# Effect: form_timeout_government
+# Purpose: Rebuilds the coalition without retiring a returning incumbent
+# Parameters:
+# - rul_party_temp: party slot 0-23, the selected coalition leader
+form_timeout_government = {
+	set_temp_variable = { retain_coalition_leader = { value = ruling_party equals = rul_party_temp } }
+	set_temp_variable = { disable_elections = 0 }
+	change_ruling_party_effect = yes
+	if = {
+		limit = { check_variable = { retain_coalition_leader = 0 } }
+		set_variable = { current_term = 0 }
+	}
+	set_temp_variable = { retain_coalition_leader = 0 }
+}
+
+settle_coalition_term = {
+	if = {
+		limit = { has_country_flag = coalition_election_term_pending }
+		clr_country_flag = coalition_election_term_pending
+		advance_elected_term = yes
 	}
 }
 
@@ -2000,7 +2036,8 @@ remove_coalition_members_effect = {
 # - col_three (optional): party slot 0-23, a coalition partner
 # - col_four (optional): party slot 0-23, a coalition partner
 # - col_five (optional): party slot 0-23, a coalition partner
-# - change_leader_temp (optional): 1 keeps the current leader from retiring
+# - change_leader_temp (optional): 1 holds the successor roster index
+# - retain_coalition_leader (optional): 1 keeps the sitting leader during coalition formation
 # - disable_elections: 1 turns elections off, 0 allows them
 change_ruling_party_effect = {
 	# Do Not Retire Section
@@ -2064,7 +2101,10 @@ change_ruling_party_effect = {
 
 	hidden_effect = {
 		update_government_coalition_strength = yes
-		set_leader = yes
+		if = { limit = { check_variable = { retain_coalition_leader = 1 } }
+			update_set_politics = yes
+		}
+		else = { set_leader = yes }
 		# INFO: This is here to offload from the weekly tick and instead call it whenever this is called.
 		IP_idea_configuration = yes
 		mb_refresh_relations_effect = yes
