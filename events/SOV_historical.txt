@@ -1,0 +1,224 @@
+add_namespace = sov_historical
+
+country_event = {
+	id = sov_historical.1
+	title = sov_historical.1.t
+	desc = sov_historical.1.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+
+	trigger = { SOV_historical_government = yes }
+
+	immediate = {
+		set_variable = {
+			SOV_debt_repayment_offer = {
+				value = debt
+				multiply = 0.05
+				clamp = { min = 0 max = 50 }
+				clamp = { max = treasury }
+			}
+		}
+	}
+
+	option = {
+		name = sov_historical.1.a
+		trigger = {
+			SOV_historical_government = yes
+			NOT = { has_country_flag = SOV_kasyanov_repayment_made }
+			check_variable = { SOV_debt_repayment_offer > 0 }
+			check_variable = { var = treasury value = SOV_debt_repayment_offer compare = greater_than_or_equals }
+			check_variable = { var = debt value = SOV_debt_repayment_offer compare = greater_than_or_equals }
+		}
+		log = "[GetDateText]: [Root.GetName]: sov_historical.1.a executed"
+		if = {
+			limit = {
+				SOV_historical_government = yes
+				NOT = { has_country_flag = SOV_kasyanov_repayment_made }
+				check_variable = { SOV_debt_repayment_offer > 0 }
+				check_variable = { var = treasury value = SOV_debt_repayment_offer compare = greater_than_or_equals }
+				check_variable = { var = debt value = SOV_debt_repayment_offer compare = greater_than_or_equals }
+			}
+			set_temp_variable = { treasury_change = { value = SOV_debt_repayment_offer multiply = -1 } }
+			set_temp_variable = { debt_change = treasury_change }
+			modify_treasury_effect = yes
+			modify_debt_effect = yes
+			set_country_flag = SOV_kasyanov_repayment_made
+		}
+		clear_variable = SOV_debt_repayment_offer
+		ai_chance = {
+			base = 100
+			modifier = { factor = 0 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = sov_historical.1.b
+		log = "[GetDateText]: [Root.GetName]: sov_historical.1.b executed"
+		clear_variable = SOV_debt_repayment_offer
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = {
+	id = sov_historical.2
+	title = sov_historical.2.t
+	desc = sov_historical.2.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { SOV_historical_government = yes }
+
+	option = {
+		name = sov_historical.2.a
+		trigger = { has_idea = SOV_stab_fund_idea SOV_historical_government = yes }
+		log = "[GetDateText]: [Root.GetName]: sov_historical.2.a executed"
+		if = {
+			limit = { has_idea = SOV_stab_fund_idea SOV_historical_government = yes }
+			remove_ideas = SOV_stab_fund_idea
+			set_temp_variable = { treasury_change = 20 }
+			modify_treasury_effect = yes
+			increase_economic_growth = yes
+		}
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = sov_historical.2.b
+		log = "[GetDateText]: [Root.GetName]: sov_historical.2.b executed"
+		if = {
+			limit = { SOV_historical_government = yes }
+			add_timed_idea = { idea = SOV_crisis_austerity days = 180 }
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = {
+	id = sov_historical.3
+	title = sov_historical.3.t
+	desc = sov_historical.3.d
+	picture = GFX_treaty
+	is_triggered_only = yes
+
+	trigger = { tag = GEO FROM = { SOV_caucasus_mediation_available = yes } }
+
+	option = {
+		name = sov_historical.3.a
+		trigger = { FROM = { SOV_caucasus_mediation_available = yes } }
+		log = "[GetDateText]: [Root.GetName]: sov_historical.3.a executed"
+		if = {
+			limit = { FROM = { SOV_caucasus_mediation_available = yes } }
+			add_opinion_modifier = { target = FROM modifier = supports_us }
+			reverse_add_opinion_modifier = { target = FROM modifier = supports_us }
+			diplomatic_relation = { country = FROM relation = non_aggression_pact }
+		}
+		ai_chance = {
+			base = 50
+			modifier = { factor = 0.2 has_opinion = { target = FROM value < -25 } }
+		}
+	}
+
+	option = {
+		name = sov_historical.3.b
+		ai_chance = { base = 25 }
+	}
+}
+
+country_event = {
+	id = sov_historical.4
+	title = sov_historical.4.t
+	desc = sov_historical.4.d
+	picture = GFX_medvedev_obama
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { tag = USA FROM = { tag = SOV } NOT = { has_war_with = SOV } }
+
+	option = {
+		name = sov_historical.4.a
+		trigger = { NOT = { has_war_with = SOV } }
+		log = "[GetDateText]: [Root.GetName]: sov_historical.4.a executed"
+		if = {
+			limit = { country_exists = SOV NOT = { has_war_with = SOV } }
+			diplomatic_relation = { country = FROM relation = non_aggression_pact }
+			add_opinion_modifier = { target = FROM modifier = supports_us }
+			reverse_add_opinion_modifier = { target = FROM modifier = supports_us }
+		}
+		ai_chance = {
+			base = 75
+			modifier = { factor = 0.2 has_opinion = { target = FROM value < -25 } }
+		}
+	}
+
+	option = {
+		name = sov_historical.4.b
+		ai_chance = { base = 25 }
+	}
+}
+
+country_event = {
+	id = sov_historical.5
+	title = sov_historical.5.t
+	desc = sov_historical.5.d
+	picture = GFX_treaty
+	is_triggered_only = yes
+
+	trigger = { FROM = { tag = SOV } NOT = { has_war_with = SOV } }
+
+	option = {
+		name = sov_historical.5.a
+		trigger = { NOT = { has_war_with = SOV } }
+		log = "[GetDateText]: [Root.GetName]: sov_historical.5.a executed"
+		if = {
+			limit = { country_exists = SOV NOT = { has_war_with = SOV } }
+			add_opinion_modifier = { target = FROM modifier = economic_mission }
+			reverse_add_opinion_modifier = { target = FROM modifier = economic_mission }
+		}
+		ai_chance = {
+			base = 60
+			modifier = { factor = 0.2 has_opinion = { target = FROM value < -25 } }
+		}
+	}
+
+	option = {
+		name = sov_historical.5.b
+		ai_chance = { base = 25 }
+	}
+}
+
+country_event = {
+	id = sov_historical.6
+	title = sov_historical.6.t
+	desc = sov_historical.6.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+
+	trigger = { tag = SYR FROM = { SOV_syrian_assistance_available = yes } }
+
+	option = {
+		name = sov_historical.6.a
+		trigger = { FROM = { SOV_syrian_assistance_available = yes } }
+		log = "[GetDateText]: [Root.GetName]: sov_historical.6.a executed"
+		if = {
+			limit = { FROM = { SOV_syrian_assistance_available = yes } }
+			FROM = {
+				send_equipment = {
+					target = ROOT
+					type = infantry_weapons_type
+					amount = 500
+				}
+				air_experience = 25
+			}
+			air_experience = 15
+			add_opinion_modifier = { target = FROM modifier = supports_us }
+		}
+		ai_chance = { base = 75 }
+	}
+
+	option = {
+		name = sov_historical.6.b
+		ai_chance = { base = 25 }
+	}
+}

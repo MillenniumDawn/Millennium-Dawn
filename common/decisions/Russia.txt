@@ -6068,34 +6068,6 @@ SOV_economy_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
-	###########STABILIZATION FUND MECHANIC###########
-	###########RESTORE STABILIZATION FUND###########
-	SOV_againg_stabfund = {
-		icon = GFX_decision_sov_ruble_button
-		days_remove = 275
-		custom_cost_trigger = {
-			check_variable = { treasury > 150 }
-		}
-		custom_cost_text = cost_150_0
-		visible = {
-			NOT = { has_idea = SOV_stab_fund_idea }
-			has_completed_focus = SOV_stabilisation_fund
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SOV_againg_stabfund"
-			set_temp_variable = { treasury_change = -150 }
-			modify_treasury_effect = yes
-		}
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SOV_againg_stabfund"
-			add_ideas = SOV_stab_fund_idea
-		}
-		ai_will_do = {
-			base = 1000
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
-		}
-	}
 	###########BROKEN ECONOMY MECHANIC###########
 	###########BROKEN ECONOMY: PHAZE 1###########
 	SOV_first_broken_destroy = {
@@ -9777,5 +9749,261 @@ SOV_ai_path_category = {
 		}
 
 		ai_will_do = { base = 100 }
+	}
+}
+
+SOV_historical_agenda = {
+	SOV_offer_debt_repayment = {
+		icon = GFX_decision_sov_ruble_button
+		visible = {
+			has_completed_focus = SOV_kasyanov_govern
+			NOT = { has_country_flag = SOV_kasyanov_repayment_made }
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SOV_debt_repayment_available_tt
+				SOV_historical_government = yes
+				check_variable = { treasury > 0 }
+				check_variable = { var = debt value = 0.02 compare = greater_than_or_equals }
+				check_variable = { SOV_debt_repayment_offer = 0 }
+			}
+			hidden_trigger = {
+				if = {
+					limit = { is_ai = yes }
+					ai_has_high_deficit = no
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_offer_debt_repayment"
+			country_event = sov_historical.1
+		}
+		ai_will_do = { base = 15 }
+	}
+
+	SOV_againg_stabfund = {
+		icon = GFX_decision_sov_ruble_button
+		fire_only_once = yes
+		custom_cost_trigger = { check_variable = { var = treasury value = 20 compare = greater_than_or_equals } }
+		custom_cost_text = cost_20_0
+		visible = {
+			has_completed_focus = SOV_stabilisation_fund
+			NOT = { has_completed_focus = SOV_mitigate_financial_crisis }
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SOV_historical_government_tt
+				SOV_historical_government = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_againg_stabfund"
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			add_ideas = SOV_stab_fund_idea
+			set_temp_variable = { SOV_modify_economic = 2 }
+			SOV_modify_economic_support = yes
+		}
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 0 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	SOV_offer_caucasus_mediation = {
+		icon = generic_political_discourse
+		fire_only_once = yes
+		visible = { has_completed_focus = SOV_rokirovka }
+		available = {
+			date > 2008.8.7
+			custom_trigger_tooltip = {
+				tooltip = SOV_caucasus_mediation_available_tt
+				SOV_caucasus_mediation_available = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_offer_caucasus_mediation"
+			GEO = { country_event = sov_historical.3 }
+		}
+		ai_will_do = { base = 15 }
+	}
+
+	SOV_eurasian_customs_talks = {
+		icon = generic_political_discourse
+		fire_only_once = yes
+		targets = { BLR KAZ ARM KYR }
+		target_root_trigger = {
+			has_completed_focus = SOV_go_russia
+			date > 2014.12.31
+			SOV_historical_government = yes
+		}
+		target_trigger = {
+			exists = yes
+			NOT = { has_war_with = ROOT }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_eurasian_customs_talks"
+			FROM = { country_event = sov_historical.5 }
+		}
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 FROM = { has_opinion = { target = ROOT value < 0 } } }
+		}
+	}
+
+	SOV_offer_syrian_assistance = {
+		icon = generic_political_discourse
+		fire_only_once = yes
+		visible = { has_completed_focus = SOV_go_russia }
+		available = {
+			date > 2015.9.29
+			custom_trigger_tooltip = {
+				tooltip = SOV_syrian_assistance_available_tt
+				SOV_syrian_assistance_available = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_offer_syrian_assistance"
+			SYR = { country_event = sov_historical.6 }
+		}
+		ai_will_do = { base = 10 }
+	}
+
+	SOV_apply_presidential_term_limits = {
+		icon = generic_political_discourse
+		fire_only_once = yes
+		visible = { has_completed_focus = SOV_preserve_term_limits }
+		available = {
+			date > 2024.5.6
+			custom_trigger_tooltip = {
+				tooltip = SOV_presidential_transition_tt
+				SOV_historical_government = yes
+				SOV_putin_incumbent = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_apply_presidential_term_limits"
+			retire_country_leader = yes
+			create_country_leader = {
+				name = "Vyacheslav Volodin"
+				picture = "Vyacheslav_Volodin.dds"
+				ideology = reactionary
+				traits = { emerging_reactionary }
+			}
+			set_variable = { reactionary_leader = 2 }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = SOV_putin_politic_modifier } }
+				remove_dynamic_modifier = { modifier = SOV_putin_politic_modifier }
+			}
+			add_stability = 0.03
+		}
+		ai_will_do = { base = 25 }
+	}
+}
+
+SOV_stribog_category = {
+	SOV_stribog_commission = {
+		icon = generic_decision
+		days_remove = 90
+		fire_only_once = yes
+		custom_cost_trigger = { check_variable = { var = treasury value = 12 compare = greater_than_or_equals } }
+		custom_cost_text = cost_12_0
+		visible = { check_variable = { SOV_stribog_disposition = 0 } }
+		available = {
+			date > 2029.12.31
+			custom_trigger_tooltip = {
+				tooltip = SOV_stribog_facility_tt
+				SOV_stribog_has_facility = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_commission"
+			set_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+			set_variable = { SOV_stribog_disposition = -1 }
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_commission"
+			if = {
+				limit = { SOV_stribog_enabled = yes check_variable = { SOV_stribog_disposition = -1 } }
+				set_variable = { SOV_stribog_disposition = 1 }
+				custom_effect_tooltip = { localization_key = SP_UNLOCK_PROJECT PROJECT = SOV_stribog_testbed }
+			}
+		}
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 0 ai_for_units_is_not_disabled = no }
+			modifier = { factor = 0 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	SOV_stribog_review_results = {
+		icon = generic_decision
+		fire_only_once = yes
+		visible = {
+			check_variable = { SOV_stribog_disposition = 1 }
+			is_special_project_completed = sp:SOV_stribog_testbed
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_review_results"
+			country_event = sov_stribog.1
+		}
+		ai_will_do = { base = 50 }
+	}
+
+	SOV_stribog_accept_interceptor = {
+		icon = generic_decision
+		fire_only_once = yes
+		custom_cost_trigger = { check_variable = { var = treasury value = 15 compare = greater_than_or_equals } }
+		custom_cost_text = cost_15_0
+		visible = {
+			check_variable = { SOV_stribog_disposition = 2 }
+			is_special_project_completed = sp:SOV_stribog_interceptor
+			NOT = { has_tech = SOV_stribog_production_authorized }
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SOV_stribog_acceptance_available_tt
+				SOV_stribog_ready_for_acceptance = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_accept_interceptor"
+			if = {
+				limit = { SOV_stribog_ready_for_acceptance = yes check_variable = { var = treasury value = 15 compare = greater_than_or_equals } }
+				set_temp_variable = { treasury_change = -15 }
+				modify_treasury_effect = yes
+				hidden_effect = {
+					set_technology = { SOV_stribog_production_authorized = 1 }
+					country_event = sov_stribog.3
+				}
+				custom_effect_tooltip = SOV_stribog_production_tt
+			}
+		}
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0 ai_for_units_is_not_disabled = no }
+			modifier = { factor = 0 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	SOV_stribog_close_program = {
+		icon = generic_decision
+		fire_only_once = yes
+		visible = {
+			check_variable = { SOV_stribog_disposition = 2 }
+			NOT = { has_tech = SOV_stribog_production_authorized }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_close_program"
+			set_variable = { SOV_stribog_disposition = 3 }
+			clr_country_flag = SOV_stribog_review_hold
+			custom_effect_tooltip = SOV_stribog_closure_tt
+		}
+		ai_will_do = { base = 0 }
 	}
 }

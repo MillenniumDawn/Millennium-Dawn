@@ -188,18 +188,21 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	# We shall stand down.
+	trigger = { SOV_crimea_cession_authorized = yes }
+
 	option = {
 		name = russia.7.o1
+		trigger = { SOV_crimea_cession_authorized = yes }
 		log = "[GetDateText]: [This.GetName]: russia.7.o1 executed"
-		SOV = {
-			country_event = { id = russia.8 days = 1 }
-			transfer_state = 669
-			669 = { add_core_of = SOV }
-			if = {
-				limit = { ROOT = { owns_state = 1112 } }
-				transfer_state = 1112
+		if = {
+			limit = { SOV_crimea_cession_authorized = yes }
+			FROM = {
+				transfer_state = 669
+				669 = { add_core_of = SOV }
+				country_event = { id = russia.8 days = 1 }
 			}
+			add_opinion_modifier = { target = FROM modifier = annexed_ukraine }
+			add_opinion_modifier = { target = FROM modifier = annexed_ukraine_trade }
 		}
 		ai_chance = {
 			base = 60
@@ -214,22 +217,14 @@ country_event = {
 		}
 	}
 
-	option = { #We will stand and fight!
+	option = {
 		name = russia.7.o2
+		trigger = { SOV_crimea_cession_authorized = yes }
 		log = "[GetDateText]: [This.GetName]: russia.7.o2 executed"
-		FROM = {
-			country_event = { id = russia.9 days = 1 }
+		if = {
+			limit = { SOV_crimea_cession_authorized = yes }
+			FROM = { country_event = { id = russia.9 days = 1 } }
 		}
-		effect_tooltip = {
-			FROM = {
-				declare_war_on = {
-					target = ROOT
-					type = take_state_focus
-					generator = { 669 }
-				}
-			}
-		}
-		# Army strength, NATO and each Ukrainian deterrent shift weight from backing down to fighting
 		ai_chance = {
 			base = 10
 			modifier = {
@@ -282,6 +277,12 @@ country_event = {
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
+
+	option = {
+		name = SOV_crimea_demand_lapsed
+		trigger = { SOV_crimea_cession_authorized = no }
+		ai_chance = { base = 100 }
+	}
 }
 
 #Russia: Ukraine folds Crimea.
@@ -293,32 +294,14 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	option = { #Excellent
+	trigger = { tag = SOV owns_state = 669 }
+
+	option = {
 		name = russia.8.o1
 		log = "[GetDateText]: [This.GetName]: russia.8.o1 executed"
-		effect_tooltip = {
-			SOV = {
-				transfer_state = 669
-				add_state_core = 669
-			}
-		}
-		add_named_threat = {
-			threat = 6
-			name = threat_SOV_annexiation_of_crimea
-		}
-		hidden_effect = {
-			add_opinion_modifier = {
-				target = SOV
-				modifier = annexed_ukraine
-			}
-			add_opinion_modifier = {
-				target = SOV
-				modifier = annexed_ukraine_trade
-			}
-			add_opinion_modifier = {
-				target = FROM
-				modifier = annexed_ukraine_trade
-			}
+		if = {
+			limit = { owns_state = 669 }
+			add_named_threat = { threat = 6 name = threat_SOV_annexiation_of_crimea }
 		}
 	}
 }
@@ -331,27 +314,30 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	option = { #They know very well what the consequence is.
+	trigger = { tag = SOV }
+
+	option = {
 		name = russia.9.o1
+		trigger = { SOV_crimea_demand_valid = yes }
 		log = "[GetDateText]: [This.GetName]: russia.9.o1 executed"
 		if = {
-			limit = { FROM = { owns_state = 1112 } }
-			declare_war_on = {
-				target = FROM
-				type = take_state_focus
-				generator = { 669 1112 }
-			}
-		}
-		else = {
-			declare_war_on = {
-				target = FROM
-				type = take_state_focus
-				generator = { 669 }
-			}
+			limit = { SOV_crimea_demand_valid = yes }
+			create_wargoal = { target = UKR type = take_state_focus generator = { 669 } }
+			set_temp_variable = { wargoal_on = UKR }
+			add_threat_from_wargoal_effect = yes
 		}
 		ai_chance = {
-			base = 100
+			base = 20
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 UKR = { OR = { has_idea = NATO_member has_idea = EU_member } } }
+			modifier = { factor = 0 strength_ratio = { tag = UKR ratio < 1.5 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
+	}
+
+	option = {
+		name = russia.9.o2
+		ai_chance = { base = 10 }
 	}
 }
 
@@ -3401,29 +3387,38 @@ news_event = {
 country_event = {
 	id = sov_vybory.1
 	title = sov_vybory.1.t
-	desc = sov_vybory.1.d
+	desc = {
+		text = sov_vybory.1.d
+		trigger = { SOV_putin_incumbent = yes }
+	}
+	desc = {
+		text = SOV_medvedev_unavailable
+		trigger = { SOV_putin_incumbent = no }
+	}
 	picture = GFX_medvedev_obama
 	is_triggered_only = yes
+	fire_only_once = yes
 
-	trigger = { tag = SOV }
+	trigger = { SOV_historical_government = yes }
 
 	option = {
 		name = sov_vybory.1.a
 		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
-		set_temp_variable = { rul_party_temp = 6 }
-		set_temp_variable = { disable_elections = 1 }
-		if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
-		set_temp_variable = { change_leader_temp = 1 }
-		change_ruling_party_effect = yes
-		create_country_leader = {
-			name = "Dmitriy Medvedev"
-			picture = "Dimitry_Medvedev.dds"
-			ideology = reactionary
-			traits = {
-				emerging_reactionary
-				political_dancer
-				western_liberalism
+		if = {
+			limit = { SOV_historical_government = yes }
+			if = {
+				limit = {
+					SOV_putin_incumbent = yes
+				}
+				retire_country_leader = yes
+				create_country_leader = {
+					name = "Dmitry Medvedev"
+					picture = "Dimitry_Medvedev.dds"
+					ideology = reactionary
+					traits = { emerging_reactionary political_dancer western_liberalism }
+				}
 			}
+			add_power_balance_value = { id = SOV_west_east_bop value = -0.20 tooltip_side = SOV_west_east_bop_left_side }
 		}
 	}
 }
@@ -3449,53 +3444,49 @@ country_event = {
 country_event = {
 	id = sov_vybory.2
 	title = sov_vybory.2.t
-	desc = sov_vybory.2.d
+	desc = {
+		text = sov_vybory.2.d
+		trigger = { SOV_medvedev_incumbent = yes }
+	}
+	desc = {
+		text = SOV_putin_unavailable
+		trigger = { SOV_medvedev_incumbent = no }
+	}
 	picture = GFX_vladimir_putin
 	is_triggered_only = yes
+	fire_only_once = yes
 
-	trigger = { tag = SOV }
+	trigger = { SOV_historical_government = yes }
 
 	option = {
 		name = sov_vybory.2.a
 		log = "[GetDateText]: [This.GetName]: sov_vybory.2.a executed"
-		retire_country_leader = yes
-		set_temp_variable = { rul_party_temp = 6 }
-		set_temp_variable = { disable_elections = 0 }
-		set_temp_variable = { col_one = 0 }
-		set_temp_variable = { col_two = 15 }
-		change_ruling_party_effect = yes
-		set_politics = {
-			ruling_party = communism
-			election_frequency = 72
-		}
-		create_country_leader = {
-			name = "Vladimir V.Putin"
-			picture = "Vladimir_Putin_older.dds"
-			ideology = reactionary
-			traits = {
-				spy emerging_reactionary geopolitical_thinker political_dancer likeable sly rational
+		if = {
+			limit = { SOV_historical_government = yes }
+			if = {
+				limit = {
+					SOV_medvedev_incumbent = yes
+				}
+				retire_country_leader = yes
+				create_country_leader = {
+					name = "Vladimir Putin"
+					picture = "Vladimir_Putin_older.dds"
+					ideology = reactionary
+					traits = { spy emerging_reactionary geopolitical_thinker political_dancer likeable sly rational }
+				}
+			}
+			set_politics = { election_frequency = 72 }
+			add_ideas = SOV_idea_go_russia
+			set_temp_variable = { threshold_change = 0.05 }
+			modify_election_threshold = yes
+			add_power_balance_value = { id = SOV_west_east_bop value = 0.20 tooltip_side = SOV_west_east_bop_right_side }
+			add_stability = -0.1
+			hidden_effect = {
+				if = { limit = { is_ai = yes } ai_russian_popularity_assistant = yes }
+				country_event = { id = rusboloto.1 days = 14 }
+				country_event = { id = sov_other.38 days = 30 }
 			}
 		}
-		add_stability = -0.1
-		country_event = { id = rusboloto.1 days = 14 }
-	}
-}
-###Meme Pikalyovo Trip Event
-country_event = {
-	id = russia_med.2
-	title = russia_med.2.t
-	desc = russia_med.2.d
-	picture = GFX_vladimir_putin
-	is_triggered_only = yes
-
-	trigger = { tag = SOV }
-
-	option = {
-		name = russia_med.2.a
-		log = "[GetDateText]: [This.GetName]: russia_med.2.a executed"
-		add_stability = 0.01
-		set_temp_variable = { temp_opinion = -1 }
-		change_oligarchs_opinion = yes
 	}
 }
 
