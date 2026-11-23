@@ -85,6 +85,91 @@ BRA_public_policy_category = {
 			modifier = { factor = 2 ai_has_high_deficit = yes }
 		}
 	}
+
+	BRA_decision_carajas_s11d = {
+		icon = steel
+		cost = 35
+		fire_only_once = yes
+
+		visible = { has_completed_focus = BRA_energy_mining_ministry }
+
+		available = {
+			has_full_control_of_state = 891
+			891 = { infrastructure > 1 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_carajas_s11d"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_resource = { type = steel amount = 8 state = 891 }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { add = 10 check_variable = { resource_imported@steel > 5 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_decision_carajas_mineral_processing = {
+		icon = generic_construction
+		cost = 25
+		fire_only_once = yes
+
+		visible = { has_completed_focus = BRA_energy_mining_ministry }
+
+		available = {
+			has_full_control_of_state = 891
+			custom_trigger_tooltip = {
+				tooltip = BRA_can_staff_industrial_complex_tt
+				can_staff_an_industrial_complex = yes
+			}
+			891 = { free_building_slots = { building = industrial_complex size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_carajas_mineral_processing"
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			set_temp_variable = { skip_payment = 1 }
+			891 = { one_state_industrial_complex = yes }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_decision_scale_sugarcane_ethanol = {
+		icon = oil
+		cost = 25
+		fire_only_once = yes
+
+		visible = { has_completed_focus = BRA_expand_commercialized_sugar_cane }
+
+		available = {
+			has_idea = sp_biofuel_flexfuel_butanol_idea
+			has_full_control_of_state = 882
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_scale_sugarcane_ethanol"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = BRA_idea_sugarcane_ethanol days = 1095 }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { add = 10 check_variable = { resource_imported@oil > 0 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
 }
 
 BRA_amazon_conservation_system_decision_category = {
@@ -125,7 +210,6 @@ BRA_amazon_conservation_system_decision_category = {
 		cost = 50
 		days_remove = 50
 		days_re_enable = 50
-		available = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_plant_additional_trees"
@@ -173,7 +257,6 @@ BRA_amazon_conservation_system_decision_category = {
 		days_re_enable = 60
 
 		available = {
-			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 			set_temp_variable = { needed_acreage = 15 }
 			BRA_has_wild_acreage_x = yes
 		}
@@ -222,7 +305,6 @@ BRA_amazon_conservation_system_decision_category = {
 		cost = 100
 		days_remove = 60
 		fire_only_once = yes
-		available = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
 		visible = { NOT = { has_country_flag = BRA_established_amazon_park_service } }
 
 		complete_effect = {
@@ -424,7 +506,7 @@ BRA_amazon_conservation_system_decision_category = {
 	}
 
 	BRA_decision_fund_reforestation_grants = {
-		icon = GFX_decision_tree
+		icon = GFX_decision_generic_forestry
 		cost = 40
 		days_re_enable = 365
 
@@ -834,17 +916,7 @@ BRA_amazon_conservation_system_decision_category = {
 			modifier = {
 				add = 5
 				neutrality_neutral_green_are_in_power = yes
-				NOT = {
-					OR = {
-						has_global_flag = BRA_HISTORICAL_FOCUS_PATH
-						has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
-						has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
-						has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
-						has_global_flag = BRA_LIBERALS_FOCUS_PATH
-						has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
-						has_global_flag = BRA_MONARCHY_FOCUS_PATH
-					}
-				}
+				BRA_ai_has_focus_path = no
 			}
 			modifier = {
 				factor = 0
@@ -861,13 +933,17 @@ BRA_amazon_conservation_system_decision_category = {
 	BRA_decision_initial_investment = {
 		cost = 100
 		days_remove = 120
+		days_re_enable = 380
 
 		visible = {
 			has_completed_focus = BRA_amazonian_development_project
 			has_idea = BRA_idea_amazonian_development_project
 			NOT = {
 				AND = {
-					has_country_flag = BRA_the_road_to_el_dorado
+					OR = {
+						has_country_flag = BRA_the_road_to_el_dorado
+						892 = { infrastructure > 4 }
+					}
 					has_country_flag = BRA_increase_the_military_production
 					check_variable = { BRA_mining_industry_uses > 2 }
 					check_variable = { BRA_oil_production_uses > 2 }
@@ -1262,90 +1338,6 @@ BRA_amazon_conservation_system_decision_category = {
 
 # Major Development Projects
 BRA_major_development_projects_decision_category = {
-	BRA_decision_carajas_s11d = {
-		icon = steel
-		cost = 35
-		fire_only_once = yes
-
-		visible = { has_completed_focus = BRA_energy_mining_ministry }
-
-		available = {
-			has_full_control_of_state = 891
-			891 = { infrastructure > 1 }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_carajas_s11d"
-			set_temp_variable = { treasury_change = -6 }
-			modify_treasury_effect = yes
-			add_resource = { type = steel amount = 8 state = 891 }
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = { add = 10 check_variable = { resource_imported@steel > 5 } }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
-		}
-	}
-
-	BRA_decision_carajas_mineral_processing = {
-		icon = generic_construction
-		cost = 25
-		fire_only_once = yes
-
-		visible = { has_completed_focus = BRA_energy_mining_ministry }
-
-		available = {
-			has_full_control_of_state = 891
-			custom_trigger_tooltip = {
-				tooltip = BRA_can_staff_industrial_complex_tt
-				can_staff_an_industrial_complex = yes
-			}
-			891 = { free_building_slots = { building = industrial_complex size > 0 } }
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_carajas_mineral_processing"
-			set_temp_variable = { treasury_change = -4 }
-			modify_treasury_effect = yes
-			891 = { one_state_industrial_complex = yes }
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
-		}
-	}
-
-	BRA_decision_scale_sugarcane_ethanol = {
-		icon = oil
-		cost = 25
-		fire_only_once = yes
-
-		visible = { has_completed_focus = BRA_expand_commercialized_sugar_cane }
-
-		available = {
-			has_idea = sp_biofuel_flexfuel_butanol_idea
-			has_full_control_of_state = 882
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_scale_sugarcane_ethanol"
-			set_temp_variable = { treasury_change = -3 }
-			modify_treasury_effect = yes
-			add_timed_idea = { idea = BRA_idea_sugarcane_ethanol days = 1095 }
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = { add = 10 check_variable = { resource_imported@oil > 0 } }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
-		}
-	}
-
 	BRA_decision_transposition_saofrancisco = {
 		icon = GFX_decision_generic_reorganize_irregulars
 		cost = 100
@@ -1354,7 +1346,7 @@ BRA_major_development_projects_decision_category = {
 
 		available = {
 			has_full_control_of_state = 887
-			NOT = { has_command_power < 5 }
+			NOT = { command_power < 5 }
 			has_manpower > 5000
 		}
 
@@ -1382,14 +1374,7 @@ BRA_major_development_projects_decision_category = {
 		ai_will_do = {
 			base = 40
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = {
-				factor = 0
-				political_power_daily < 0.5
-			}
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -1409,7 +1394,7 @@ BRA_major_development_projects_decision_category = {
 		available = {
 			has_full_control_of_state = 890
 			has_full_control_of_state = 885
-			NOT = { has_command_power < 5 }
+			NOT = { command_power < 5 }
 			has_manpower > 5000
 		}
 
@@ -1490,7 +1475,7 @@ BRA_major_development_projects_decision_category = {
 		available = {
 			has_full_control_of_state = 890
 			has_full_control_of_state = 885
-			NOT = { has_command_power < 5 }
+			NOT = { command_power < 5 }
 			has_manpower > 5000
 		}
 
@@ -1550,7 +1535,7 @@ BRA_major_development_projects_decision_category = {
 		available = {
 			has_full_control_of_state = 890
 			has_full_control_of_state = 885
-			NOT = { has_command_power < 5 }
+			NOT = { command_power < 5 }
 			has_manpower > 5000
 			OR = {
 				890 = {
@@ -1686,7 +1671,7 @@ BRA_major_development_projects_decision_category = {
 
 		available = {
 			has_full_control_of_state = 892
-			NOT = { has_command_power < 15 }
+			NOT = { command_power < 15 }
 			has_manpower > 5000
 			set_temp_variable = { needed_acreage = 8 }
 			BRA_has_conserved_acreage_x = yes
@@ -1824,7 +1809,6 @@ BRA_workers_party_alignment_decision_category = {
 		ai_will_do = {
 			base = 0
 			modifier = { add = 10 has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH }
-			modifier = { factor = 0 check_variable = { BRA_brazilian_party_alignment < 1 } }
 		}
 	}
 
@@ -1855,7 +1839,6 @@ BRA_workers_party_alignment_decision_category = {
 					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
 				}
 			}
-			modifier = { factor = 0 check_variable = { BRA_brazilian_party_alignment > 99 } }
 		}
 	}
 }
@@ -1891,17 +1874,7 @@ BRA_bolsonaro_alignment_decision_category = {
 			}
 			modifier = {
 				add = 1
-				NOT = {
-					OR = {
-						has_global_flag = BRA_HISTORICAL_FOCUS_PATH
-						has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
-						has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
-						has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
-						has_global_flag = BRA_LIBERALS_FOCUS_PATH
-						has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
-						has_global_flag = BRA_MONARCHY_FOCUS_PATH
-					}
-				}
+				BRA_ai_has_focus_path = no
 			}
 			modifier = { factor = 0 has_global_flag = BRA_LIBERALS_FOCUS_PATH }
 		}
@@ -1933,17 +1906,7 @@ BRA_bolsonaro_alignment_decision_category = {
 			}
 			modifier = {
 				add = 1
-				NOT = {
-					OR = {
-						has_global_flag = BRA_HISTORICAL_FOCUS_PATH
-						has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
-						has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
-						has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
-						has_global_flag = BRA_LIBERALS_FOCUS_PATH
-						has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
-						has_global_flag = BRA_MONARCHY_FOCUS_PATH
-					}
-				}
+				BRA_ai_has_focus_path = no
 			}
 			modifier = {
 				factor = 0
@@ -1980,17 +1943,7 @@ BRA_bolsonaro_alignment_decision_category = {
 			}
 			modifier = {
 				add = 1
-				NOT = {
-					OR = {
-						has_global_flag = BRA_HISTORICAL_FOCUS_PATH
-						has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
-						has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
-						has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
-						has_global_flag = BRA_LIBERALS_FOCUS_PATH
-						has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
-						has_global_flag = BRA_MONARCHY_FOCUS_PATH
-					}
-				}
+				BRA_ai_has_focus_path = no
 			}
 			modifier = {
 				factor = 0
@@ -2030,17 +1983,7 @@ BRA_bolsonaro_alignment_decision_category = {
 			}
 			modifier = {
 				add = 1
-				NOT = {
-					OR = {
-						has_global_flag = BRA_HISTORICAL_FOCUS_PATH
-						has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
-						has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
-						has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
-						has_global_flag = BRA_LIBERALS_FOCUS_PATH
-						has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
-						has_global_flag = BRA_MONARCHY_FOCUS_PATH
-					}
-				}
+				BRA_ai_has_focus_path = no
 			}
 			modifier = { factor = 0 has_global_flag = BRA_LIBERALS_FOCUS_PATH }
 		}
