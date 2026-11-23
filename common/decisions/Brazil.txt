@@ -4,7 +4,13 @@ BRA_public_policy_category = {
 		cost = 40
 		fire_only_once = yes
 
-		visible = { has_idea = BRA_idea_brazilian_knack }
+		visible = {
+			OR = {
+				has_idea = BRA_idea_brazilian_knack
+				has_idea = BRA_idea_brazilian_knack_2
+				has_idea = BRA_idea_brazilian_knack_3
+			}
+		}
 
 		available = {
 			has_education_law_at_least_3 = yes
@@ -17,9 +23,26 @@ BRA_public_policy_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_jeitinho_formalization"
-			swap_ideas = {
-				remove_idea = BRA_idea_brazilian_knack
-				add_idea = BRA_idea_jeitinho_formalization
+			if = {
+				limit = { has_idea = BRA_idea_brazilian_knack }
+				swap_ideas = {
+					remove_idea = BRA_idea_brazilian_knack
+					add_idea = BRA_idea_jeitinho_formalization
+				}
+			}
+			else_if = {
+				limit = { has_idea = BRA_idea_brazilian_knack_2 }
+				swap_ideas = {
+					remove_idea = BRA_idea_brazilian_knack_2
+					add_idea = BRA_idea_jeitinho_formalization
+				}
+			}
+			else_if = {
+				limit = { has_idea = BRA_idea_brazilian_knack_3 }
+				swap_ideas = {
+					remove_idea = BRA_idea_brazilian_knack_3
+					add_idea = BRA_idea_jeitinho_formalization
+				}
 			}
 		}
 
@@ -108,7 +131,12 @@ BRA_public_policy_category = {
 		ai_will_do = {
 			base = 30
 			modifier = { add = 15 check_variable = { resource_imported@steel > 5 } }
-			modifier = { factor = 0 check_variable = { treasury < 6 } check_variable = { debt_ratio > 0.4 } }
+			modifier = {
+				factor = 0
+				check_variable = { resource_imported@steel < 1 }
+				NOT = { check_variable = { resource@steel < 0 } }
+			}
+			modifier = { factor = 0 check_variable = { treasury < 10 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -140,7 +168,63 @@ BRA_public_policy_category = {
 
 		ai_will_do = {
 			base = 40
-			modifier = { add = 10 check_variable = { total_unemployed_percentage_display > 0.05 } }
+			modifier = { add = 10 check_variable = { total_unemployed_percentage_display > 0.08 } }
+			modifier = { factor = 0 NOT = { check_variable = { total_unemployed_percentage_display > 0.05 } } }
+			modifier = { factor = 0 check_variable = { treasury < 8 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_decision_flex_fuel_conversion = {
+		icon = oil
+		cost = 40
+		fire_only_once = yes
+
+		visible = { has_completed_focus = BRA_expand_commercialized_sugar_cane }
+
+		available = {
+			is_special_project_completed = sp:sp_biofuel_e10_blend
+			has_full_control_of_state = 882
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_flex_fuel_conversion"
+			set_temp_variable = { treasury_change = -4 }
+			modify_treasury_effect = yes
+			add_ideas = BRA_idea_flex_fuel_fleet
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0.5
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { add = 10 check_variable = { resource_imported@oil > 0 } }
+			modifier = { add = 10 has_idea = no_fuel_penalties_modifier }
 			modifier = { factor = 0 check_variable = { treasury < 4 } check_variable = { debt_ratio > 0.4 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
@@ -155,7 +239,7 @@ BRA_public_policy_category = {
 		visible = { has_completed_focus = BRA_expand_commercialized_sugar_cane }
 
 		available = {
-			has_idea = sp_biofuel_flexfuel_butanol_idea
+			has_idea = BRA_idea_flex_fuel_fleet
 			has_full_control_of_state = 882
 		}
 
@@ -168,6 +252,96 @@ BRA_public_policy_category = {
 
 		ai_will_do = {
 			base = 25
+			modifier = { add = 10 check_variable = { resource_imported@oil > 0 } }
+			modifier = { factor = 0 check_variable = { treasury < 3 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_decision_ethanol_export_push = {
+		icon = GFX_decision_export_button
+		cost = 35
+		fire_only_once = yes
+
+		visible = { has_completed_focus = BRA_expand_commercialized_sugar_cane }
+
+		available = {
+			has_idea = BRA_idea_flex_fuel_fleet
+			has_full_control_of_state = 882
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_ethanol_export_push"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = BRA_idea_ethanol_exports days = 1095 }
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+			modifier = {
+				add = 10
+				OR = {
+					has_global_flag = USA_iraqi_energy_crisis
+					has_global_flag = HORMUZ_BLOCKED
+				}
+			}
+			modifier = { factor = 0 check_variable = { treasury < 3 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_decision_ethanol_fuel_emergency = {
+		icon = GFX_decision_crisis
+		cost = 50
+		days_remove = 365
+		days_re_enable = 730
+
+		visible = { has_idea = BRA_idea_flex_fuel_fleet }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = BRA_oil_shock_tt
+				OR = {
+					has_global_flag = USA_iraqi_energy_crisis
+					has_global_flag = HORMUZ_BLOCKED
+					check_variable = { global.oil_price > 10 }
+					has_idea = no_fuel_penalties_modifier
+				}
+			}
+		}
+
+		modifier = { non_electric_fuel_consumption_modifier = -0.10 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_ethanol_fuel_emergency"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = { add = 25 has_idea = no_fuel_penalties_modifier }
 			modifier = { add = 10 check_variable = { resource_imported@oil > 0 } }
 			modifier = { factor = 0 check_variable = { treasury < 3 } check_variable = { debt_ratio > 0.4 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -191,7 +365,7 @@ BRA_public_policy_category = {
 
 		ai_will_do = {
 			base = 0
-			modifier = { add = 25 has_stability < 0.6 }
+			modifier = { add = 30 has_stability < 0.7 }
 			modifier = { add = 10 has_stability < 0.5 }
 			modifier = { add = 10 has_stability < 0.4 }
 			modifier = {
@@ -271,7 +445,12 @@ BRA_public_policy_category = {
 			base = 25
 			modifier = { add = 15 check_variable = { resource_imported@chromium > 5 } }
 			modifier = { add = 10 check_variable = { resource@chromium < 2 } }
-			modifier = { factor = 0 check_variable = { treasury < 4 } check_variable = { debt_ratio > 0.4 } }
+			modifier = {
+				factor = 0
+				check_variable = { resource_imported@chromium < 1 }
+				NOT = { check_variable = { resource@chromium < 2 } }
+			}
+			modifier = { factor = 0 check_variable = { treasury < 8 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -295,6 +474,11 @@ BRA_public_policy_category = {
 		ai_will_do = {
 			base = 25
 			modifier = { add = 15 check_variable = { resource_imported@tungsten > 5 } }
+			modifier = {
+				factor = 0
+				check_variable = { resource_imported@tungsten < 1 }
+				NOT = { check_variable = { resource@tungsten < 0 } }
+			}
 		}
 	}
 
@@ -347,7 +531,8 @@ BRA_public_policy_category = {
 			modifier = { add = 10 check_variable = { resource_imported@microchips > 0 } }
 			modifier = { factor = 0 can_staff_an_microchip_plant = no }
 			modifier = { factor = 0 check_variable = { resource@chromium < 2 } }
-			modifier = { factor = 0 check_variable = { treasury < 5 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 check_variable = { resource@tungsten < 3 } }
+			modifier = { factor = 0 check_variable = { treasury < 9 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -388,7 +573,7 @@ BRA_public_policy_category = {
 				}
 			}
 			modifier = { add = 5 check_variable = { microchip_plant_total > 0 } }
-			modifier = { factor = 0 check_variable = { treasury < 4 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 check_variable = { treasury < 8 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -440,7 +625,7 @@ BRA_public_policy_category = {
 			modifier = { add = 10 check_variable = { resource@composites < 0 } }
 			modifier = { factor = 0 can_staff_an_composite_plant = no }
 			modifier = { factor = 0 check_variable = { resource@chromium < 1 } }
-			modifier = { factor = 0 check_variable = { treasury < 9 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -665,7 +850,7 @@ BRA_amazon_conservation_system_decision_category = {
 		ai_will_do = {
 			base = 5
 			modifier = { add = 10 check_variable = { BRA_wild_acreage_ratio > 0.6 } }
-			modifier = { add = 20 has_stability < 0.6 }
+			modifier = { add = 25 has_stability < 0.7 }
 			modifier = { add = 5 has_stability < 0.25 }
 			modifier = {
 				factor = 3
@@ -925,6 +1110,14 @@ BRA_amazon_conservation_system_decision_category = {
 			base = 5
 			modifier = { add = 5 check_variable = { resource_imported@aluminium > 6 } }
 			modifier = {
+				factor = 0
+				check_variable = { resource_imported@aluminium < 1 }
+				NOT = { check_variable = { resource@aluminium < 0 } }
+			}
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
+			modifier = {
 				factor = 3
 				OR = {
 					has_global_flag = BRA_LIBERALS_FOCUS_PATH
@@ -1000,6 +1193,14 @@ BRA_amazon_conservation_system_decision_category = {
 			base = 5
 			modifier = { add = 5 check_variable = { resource_imported@chromium > 6 } }
 			modifier = {
+				factor = 0
+				check_variable = { resource_imported@chromium < 1 }
+				NOT = { check_variable = { resource@chromium < 0 } }
+			}
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
+			modifier = {
 				factor = 3
 				OR = {
 					has_global_flag = BRA_LIBERALS_FOCUS_PATH
@@ -1074,6 +1275,14 @@ BRA_amazon_conservation_system_decision_category = {
 		ai_will_do = {
 			base = 5
 			modifier = { add = 5 check_variable = { resource_imported@rubber > 6 } }
+			modifier = {
+				factor = 0
+				check_variable = { resource_imported@rubber < 1 }
+				NOT = { check_variable = { resource@rubber < 0 } }
+			}
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
 			modifier = {
 				factor = 3
 				OR = {
@@ -1189,6 +1398,7 @@ BRA_amazon_conservation_system_decision_category = {
 				}
 			}
 			modifier = { add = 5 check_variable = { BRA_wild_acreage_ratio > 0.6 } }
+			modifier = { add = 25 has_stability < 0.7 }
 			modifier = {
 				add = 5
 				neutrality_neutral_green_are_in_power = yes
@@ -1254,6 +1464,17 @@ BRA_amazon_conservation_system_decision_category = {
 					check_variable = { resource_imported@rubber > 6 }
 				}
 			}
+			modifier = {
+				factor = 0
+				check_variable = { resource_imported@tungsten < 1 }
+				check_variable = { resource_imported@oil < 1 }
+				check_variable = { resource_imported@chromium < 1 }
+				check_variable = { resource_imported@steel < 1 }
+				check_variable = { resource_imported@rubber < 1 }
+				check_variable = { resource_imported@aluminium < 1 }
+			}
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -1306,6 +1527,9 @@ BRA_amazon_conservation_system_decision_category = {
 		ai_will_do = {
 			base = 1
 			modifier = { add = 5 892 = { infrastructure < 5 } }
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 19 } }
 			modifier = { factor = 5 has_decision = BRA_decision_initial_investment }
 			modifier = {
 				factor = 3
@@ -1373,6 +1597,14 @@ BRA_amazon_conservation_system_decision_category = {
 		ai_will_do = {
 			base = 6
 			modifier = { add = 5 check_variable = { resource_imported@aluminium > 6 } }
+			modifier = {
+				factor = 0
+				check_variable = { resource_imported@aluminium < 1 }
+				NOT = { check_variable = { resource@aluminium < 0 } }
+			}
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
 			modifier = { factor = 5 has_decision = BRA_decision_initial_investment }
 			modifier = {
 				factor = 3
@@ -1442,6 +1674,14 @@ BRA_amazon_conservation_system_decision_category = {
 		ai_will_do = {
 			base = 6
 			modifier = { add = 5 is_currently_importing_oil = yes }
+			modifier = {
+				factor = 0
+				is_currently_importing_oil = no
+				NOT = { check_variable = { resource@oil < 0 } }
+			}
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
 			modifier = { factor = 5 has_decision = BRA_decision_initial_investment }
 			modifier = {
 				factor = 3
@@ -1518,6 +1758,10 @@ BRA_amazon_conservation_system_decision_category = {
 			base = 6
 			modifier = { add = 10 has_war = yes }
 			modifier = { add = 15 threat > 0.25 }
+			modifier = { factor = 0 num_of_military_factories > 30 }
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
 			modifier = { factor = 5 has_decision = BRA_decision_initial_investment }
 			modifier = {
 				factor = 3
@@ -1587,6 +1831,14 @@ BRA_amazon_conservation_system_decision_category = {
 		ai_will_do = {
 			base = 6
 			modifier = { add = 5 check_variable = { resource_imported@tungsten > 6 } }
+			modifier = {
+				factor = 0
+				check_variable = { resource_imported@tungsten < 1 }
+				NOT = { check_variable = { resource@tungsten < 0 } }
+			}
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 13 } }
 			modifier = { factor = 5 has_decision = BRA_decision_initial_investment }
 			modifier = {
 				factor = 3
@@ -1649,7 +1901,8 @@ BRA_major_development_projects_decision_category = {
 
 		ai_will_do = {
 			base = 40
-			modifier = { factor = 0 check_variable = { treasury < 15 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -1738,7 +1991,8 @@ BRA_major_development_projects_decision_category = {
 					890 = { infrastructure < 5 }
 				}
 			}
-			modifier = { factor = 0 check_variable = { treasury < 10 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 20 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -1799,7 +2053,9 @@ BRA_major_development_projects_decision_category = {
 				factor = 1.5
 				num_of_available_military_factories < 60
 			}
-			modifier = { factor = 0 check_variable = { treasury < 15 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 num_of_military_factories > 40 }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -1937,7 +2193,8 @@ BRA_major_development_projects_decision_category = {
 
 		ai_will_do = {
 			base = 40
-			modifier = { factor = 0 check_variable = { treasury < 16 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 26 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -1999,7 +2256,9 @@ BRA_major_development_projects_decision_category = {
 				}
 			}
 			modifier = { factor = 0.25 check_variable = { BRA_conserved_acreage_ratio < 0.2 } }
-			modifier = { factor = 0 check_variable = { treasury < 10 } check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 20 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -2331,6 +2590,15 @@ BRA_favela_policy_decision_category = {
 			modifier = { factor = 1.5 FROM = { has_dynamic_modifier = { modifier = BRA_favela_modifier } } }
 			modifier = { factor = 1.5 FROM = { OR = { state = 882 state = 883 } } }
 			modifier = { factor = 1.5 check_variable = { strength_of_cartels > 40 } }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.005
+					add = 5
+					greater_than = { value = treasury }
+				}
+			}
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -2393,7 +2661,16 @@ BRA_favela_policy_decision_category = {
 			modifier = { factor = 1.5 check_variable = { strength_of_cartels > 40 } }
 			modifier = { factor = 1.5 check_variable = { strength_of_cartels > 60 } }
 			modifier = { factor = 0.5 883 = { has_dynamic_modifier = { modifier = BRA_favela_improving_modifier } } }
-			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 0.5 has_stability < 0.7 }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.003
+					add = 5
+					greater_than = { value = treasury }
+				}
+			}
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}

@@ -55,14 +55,6 @@ country_event = {
 				has_idea = fossil_fuel_industry
 			}
 			modifier = {
-				add = 5
-				has_stability > 0.50
-			}
-			modifier = {
-				factor = 0.5
-				has_stability < 0.4
-			}
-			modifier = {
 				factor = 3
 				OR = {
 					has_global_flag = BRA_LIBERALS_FOCUS_PATH
@@ -79,6 +71,8 @@ country_event = {
 					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
 				}
 			}
+			modifier = { factor = 0.2 has_stability < 0.7 }
+			modifier = { factor = 0.2 check_variable = { debt_ratio > 0.42 } }
 		}
 	}
 
@@ -96,10 +90,8 @@ country_event = {
 		change_industrial_conglomerates_opinion = yes
 		ai_chance = {
 			base = 1
-			modifier = {
-				add = 5
-				has_stability < 0.30
-			}
+			modifier = { add = 25 has_stability < 0.7 }
+			modifier = { add = 15 check_variable = { debt_ratio > 0.42 } }
 			modifier = {
 				add = 5
 				has_active_mission = bankruptcy_incoming_collapse
@@ -506,7 +498,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				has_stability < 0.4
+				has_stability < 0.7
 			}
 		}
 	}
@@ -1813,7 +1805,7 @@ country_event = {
 		add_stability = -0.03
 		ai_chance = {
 			base = 1
-			modifier = { factor = 0.5 has_stability < 0.4 }
+			modifier = { factor = 0.2 has_stability < 0.7 }
 		}
 	}
 }
@@ -2847,14 +2839,15 @@ country_event = {
 	option = {
 		name = brazil.73.c
 		log = "[GetDateText]: [This.GetName]: brazil.73.c executed"
-		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.004 } }
-		modify_treasury_effect = yes
 		if = {
 			limit = { owns_state = 883 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.004 } }
+			modify_treasury_effect = yes
 			add_resource = { type = oil amount = 6 state = 883 }
 		}
 		ai_chance = {
 			base = 2
+			modifier = { factor = 0 NOT = { owns_state = 883 } }
 			modifier = { factor = 2 is_currently_importing_oil = yes }
 			modifier = {
 				factor = 2
@@ -3339,7 +3332,6 @@ country_event = {
 			}
 			modifier = { factor = 2 ai_has_high_deficit = yes }
 			modifier = { factor = 2 check_variable = { debt_ratio > 0.4 } }
-			modifier = { factor = 0.5 has_stability < 0.6 }
 		}
 	}
 
@@ -3372,7 +3364,7 @@ country_event = {
 					nationalist_monarchists_are_in_power = yes
 				}
 			}
-			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.4 } }
+			modifier = { factor = 0 check_variable = { debt_ratio > 0.4 } }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
@@ -3465,6 +3457,15 @@ country_event = {
 		ai_chance = {
 			base = 2
 			modifier = { factor = 3 has_global_flag = BRA_HISTORICAL_FOCUS_PATH }
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
@@ -4189,6 +4190,7 @@ country_event = {
 		original_tag = BRA
 		owns_state = 879
 		NOT = { has_completed_focus = BRA_expand_ceitec }
+		NOT = { focus_progress = { focus = BRA_expand_ceitec progress > 0 } }
 		NOT = { has_completed_focus = BRA_privatize_ceitec }
 	}
 
@@ -4221,8 +4223,17 @@ country_event = {
 					nationalist_monarchists_are_in_power = yes
 				}
 			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
 			modifier = { factor = 2 ai_has_high_deficit = yes }
-			modifier = { factor = 0.5 has_stability < 0.6 }
+			modifier = { factor = 0.5 has_stability < 0.7 }
 		}
 	}
 
@@ -4316,7 +4327,24 @@ country_event = {
 		modify_cartel_variables_effect = yes
 		ai_chance = {
 			base = 1
-			modifier = { factor = 2 has_stability < 0.4 }
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 has_stability < 0.7 }
 		}
 	}
 
@@ -4453,7 +4481,16 @@ country_event = {
 		modify_cartel_variables_effect = yes
 		ai_chance = {
 			base = 1
-			modifier = { factor = 2 has_stability < 0.4 }
+			modifier = { factor = 2 has_global_flag = BRA_LIBERALS_FOCUS_PATH }
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 has_stability < 0.7 }
 		}
 	}
 }
@@ -4624,6 +4661,15 @@ country_event = {
 					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
 					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
 					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					western_autocrats_are_in_power = yes
 				}
 			}
 		}
@@ -5238,7 +5284,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 0.5
-				has_stability < 0.4
+				has_stability < 0.7
 			}
 		}
 	}
