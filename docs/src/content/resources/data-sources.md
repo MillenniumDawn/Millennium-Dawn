@@ -33,28 +33,14 @@ not December-to-December inflation.
   a starting zero is not evidence that their real-world inflation was zero.
 - Each country's starting rate fills the four-quarter tracker at startup. Later quarterly
   calculations replace one entry at a time, smoothing the first updates.
+- Angola and the Democratic Republic of the Congo have reported rates above **200%**. Their
+  historical seeds are retained, but the quarterly calculation clamps inflation to **200%**.
+- Belarus previously used a **32.6%** end-of-period rate instead of the 1999 annual average.
+  Its starting rate is now **20%**; Russia starts at **21.5%** after a **36.5%** seed.
+- Iran starts at **17%** after a **20.071%** seed, and Turkey starts at **35%** after a
+  **64.867%** seed. These four lower rates are gameplay adjustments to output penalties.
 - The World Bank's Serbia series is not copied to Kosovo or Montenegro. Its combined West Bank
   and Gaza series is used for Palestine, not Israel or a separate Gaza tag.
-
-### Gameplay adjustments
-
-Starting inflation cannot exceed **50%**. The limit applies before the four-quarter tracker is
-filled, not to later gameplay. Each point of starting inflation takes 1.35 percentage points
-of output from both military factories and dockyards. A country can need a lower starting rate
-if corruption, stability, or other modifiers would otherwise stop production.
-
-| Country  | Previous game start | New game start |
-| -------- | ------------------: | -------------: |
-| Angola   |              48.20% |         40.97% |
-| DRC      |              55.48% |            22% |
-| Ecuador  |             52.242% |            30% |
-| Malawi   |             44.804% |            12% |
-| Suriname |             98.773% |            50% |
-| Zambia   |             26.788% |             8% |
-
-These are gameplay rates, not corrections to the CPI series. Angola and the DRC both had
-reported rates above 200%. Earlier gameplay adjustments also put Belarus at 20%, Russia at
-21.5%, Iran at 12.6%, and Turkey at 35%. Belarus previously used a 32.6% end-of-period rate.
 
 ## Starting policy rate
 

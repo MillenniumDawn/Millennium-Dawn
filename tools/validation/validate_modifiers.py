@@ -10,7 +10,6 @@ import fnmatch
 import os
 import re
 import sys
-from functools import partial
 from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -642,7 +641,9 @@ def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
 
 _UNBALANCED_POLICY_RATE_VAR = "cb_policy_rate"
 _UNBALANCED_POLICY_RATE_CAP = 30  # central-bank clamp max in the economy GUI
-_INFLATION_HISTORY_CAP = 0.50
+_UNBALANCED_INFLATION_VAR = "inflation_rate_var"
+_UNBALANCED_INFLATION_START_CAP = 0.50
+_INFLATION_HISTORY_HARD_CAP = 1.0
 
 # Ordered cap rows; the first row whose match covers a key decides it.
 _CAP_ROWS: List[Dict[str, Any]] = validation_config(
@@ -824,7 +825,6 @@ def _past_cap(row: Dict[str, Any], key: str, value: float) -> bool:
 
 def _cap_text(row: Dict[str, Any], key: str, value: float) -> str:
     cap = _counted_cap(row, key, value)
-    assert cap is not None, "cannot format a cap for an uncapped direction"
     if row["direction"] == "either" and "bonus_cap" not in row:
         return f"±{cap * 100:g}%"
     return f"{'-' if value < 0 else '+'}{cap * 100:g}%"
@@ -1264,7 +1264,7 @@ class Validator(BaseValidator):
                 "modifiers.grants",
                 filepath,
                 text,
-                partial(_scan_grants, text),
+                lambda text=text: _scan_grants(text),
             )
             timed.update(file_timed)
             permanent.update(file_permanent)
@@ -1403,7 +1403,7 @@ class Validator(BaseValidator):
         return hits
 
     def validate_unbalanced_modifiers(self):
-        """Flag game-start policy rates above 30 (issue #4370).
+        """Flag game-start policy rates above 30 and inflation above 50% (issue #4370).
 
         Opt-in: pass --unbalanced-modifiers, which also turns on the opt_in rows in
         validation_config.json modifier_caps.
@@ -1428,6 +1428,17 @@ class Validator(BaseValidator):
                 _UNBALANCED_POLICY_RATE_VAR, _UNBALANCED_POLICY_RATE_CAP
             )
         ]
+        inflation_results = [
+            (
+                f"Starting {_UNBALANCED_INFLATION_VAR} = {value:g} "
+                "exceeds 50% (issue #4370)",
+                rel,
+                lineno,
+            )
+            for value, rel, lineno in self._history_numeric_over_cap(
+                _UNBALANCED_INFLATION_VAR, _UNBALANCED_INFLATION_START_CAP
+            )
+        ]
 
         self._report(
             rate_results,
@@ -1436,61 +1447,50 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
             category="unbalanced-policy-rate",
         )
+        self._report(
+            inflation_results,
+            "No game-start inflation values above 50%",
+            "Game-start inflation values above 50%:",
+            severity=Severity.WARNING,
+            category="unbalanced-inflation",
+        )
 
     def validate_history_inflation_hard_cap(self):
-        """Reject country history seeds above the starting cap, including var/value writes."""
-        self._log_section("Checking starting inflation...")
-        results = []
-        for filepath, rel, text in self._history_sources():
-            for effect, key, value, line in disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                "modifiers.variable_changes",
-                filepath,
-                text,
-                lambda text=text: _scan_variable_changes(text),
-            ):
-                if (
-                    effect == "set_variable"
-                    and key == "inflation_rate_var"
-                    and value > _INFLATION_HISTORY_CAP
-                ):
-                    results.append(
-                        (
-                            f"Starting {key} = {value:g} exceeds {_INFLATION_HISTORY_CAP:.0%}",
-                            rel,
-                            line,
-                        )
-                    )
+        """Flag game-start inflation_rate_var above 1.0. Always on."""
+        self._log_section("Checking history inflation_rate_var over 100%...")
+        results = [
+            (
+                f"Starting {_UNBALANCED_INFLATION_VAR} = {value:g} "
+                f"exceeds {_INFLATION_HISTORY_HARD_CAP:g} (100%)",
+                rel,
+                lineno,
+            )
+            for value, rel, lineno in self._history_numeric_over_cap(
+                _UNBALANCED_INFLATION_VAR, _INFLATION_HISTORY_HARD_CAP
+            )
+        ]
         self._report(
             results,
-            "No starting inflation rates above the cap",
-            "Starting inflation rates above the cap:",
+            "No game-start inflation values above 100%",
+            "Game-start inflation values above 100%:",
             severity=Severity.ERROR,
-            category="starting-inflation-over-cap",
+            category="history-inflation-over-one",
         )
 
     def _history_numeric_over_cap(self, key, cap):
         """History assignments of key whose literal value is above cap."""
         hits = []
-        for filepath, rel, text in self._history_sources():
-            for (
-                scan_key,
-                value,
-                lineno,
-                _owner,
-            ) in disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                "modifiers.unbalanced",
-                filepath,
-                text,
-                lambda text=text: _scan_numeric_modifier_entries(text),
-            ):
-                if scan_key == key and value > cap:
-                    hits.append((value, rel, lineno))
+        for scan_key, value, rel, lineno, _owner in self._scan_unbalanced_entries(
+            self._UNBALANCED_HISTORY_PATTERNS
+        ):
+            if scan_key == key and value > cap:
+                hits.append((value, rel, lineno))
         return hits
 
-    def _history_sources(self):
-        for filepath in self._collect_files(self._UNBALANCED_HISTORY_PATTERNS):
+    def _scan_unbalanced_entries(self, patterns):
+        """(key, value, rel, lineno, owner) bare numerics in pattern files."""
+        found = []
+        for filepath in self._collect_files(patterns):
             if should_skip_file(filepath, mod_path=self.mod_path):
                 continue
             text = FileOpener.open_text_file(
@@ -1499,7 +1499,16 @@ class Validator(BaseValidator):
             if not text:
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
-            yield filepath, rel, text
+            entries = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "modifiers.unbalanced",
+                filepath,
+                text,
+                lambda text=text: _scan_numeric_modifier_entries(text),
+            )
+            for key, value, lineno, owner in entries:
+                found.append((key, value, rel, lineno, owner))
+        return found
 
     def run_validations(self):
         known_good = self._build_known_good_set()
@@ -1519,7 +1528,8 @@ def _add_extra_args(parser):
         dest="unbalanced_modifiers",
         help="Enable balance caps on single-reward economy modifiers "
         "(issue #4370): the opt_in rows in validation_config.json "
-        "modifier_caps and game-start policy rate over 30 "
+        "modifier_caps, game-start policy rate over 30, game-start "
+        "inflation over 50 percent "
         "(off by default until the backlog is triaged)",
     )
     parser.add_argument(

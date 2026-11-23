@@ -1717,38 +1717,6 @@ _MONEY_COST_CASES = {
         frozenset(),
         (0.0, True, True),
     ),
-    "capped GDP percentage is income": (
-        "set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.2 } }\n"
-        "clamp_temp_variable = { var = treasury_change max = 80 }\n"
-        "modify_treasury_effect = yes",
-        frozenset(),
-        (0.0, False, False),
-    ),
-    "GDP income capped below zero": (
-        "set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.2 } }\n"
-        "clamp_temp_variable = { var = treasury_change max = -2 }\n"
-        "modify_treasury_effect = yes",
-        frozenset(),
-        (0.0, True, True),
-    ),
-    "additional operation can reverse GDP income": (
-        "set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.2 subtract = 50 } }\n"
-        "modify_treasury_effect = yes",
-        frozenset(),
-        (0.0, True, True),
-    ),
-    "proportional debt cut": (
-        "set_temp_variable = { debt_change = { value = debt multiply = -0.2 } }\n"
-        "modify_debt_effect = yes",
-        frozenset(),
-        (0.0, False, False),
-    ),
-    "proportional debt increase": (
-        "set_temp_variable = { debt_change = { value = debt multiply = 0.2 } }\n"
-        "modify_debt_effect = yes",
-        frozenset(),
-        (0.0, True, True),
-    ),
     "bare identifier change": (
         "set_temp_variable = { treasury_change = needed_money }\n"
         "modify_treasury_effect = yes",

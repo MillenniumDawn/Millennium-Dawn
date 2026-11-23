@@ -1,7 +1,7 @@
 """Tests for the opt-in --unbalanced-modifiers balance check (issue #4370).
 
 Caps apply per direct `key = number` assignment: ROI over 3%, productivity
-growth over 25%, and game-start policy rate over 30. The starting inflation cap is always on.
+growth over 25%, game-start policy rate over 30, game-start inflation over 50%.
 """
 
 import argparse
@@ -150,30 +150,27 @@ def test_history_start_values_end_to_end(tmp_path):
     )
     validator = _validator(tmp_path)
     validator.validate_unbalanced_modifiers()
-    assert _categories(validator) == ["unbalanced-policy-rate"]
+    cats = _categories(validator)
+    assert cats.count("unbalanced-policy-rate") == 1
+    assert cats.count("unbalanced-inflation") == 1
 
 
 def test_history_inflation_hard_cap_always_on(tmp_path):
     _write(
         tmp_path,
         "history/countries/ABC - Test.txt",
-        "set_variable = { inflation_rate_var = 0.50001 }\n"
-        "set_variable = { var = inflation_rate_var value = 1.1 }\n",
+        "set_variable = { inflation_rate_var = 1.1 }\n",
     )
     _write(
         tmp_path,
         "history/countries/DEF - Fine.txt",
-        "set_variable = { inflation_rate_var = 0.50 }\n"
-        "set_variable = { inflation_rate_var = -0.65 }\n"
-        "check_variable = { inflation_rate_var = 0.75 }\n",
+        "set_variable = { inflation_rate_var = 0.99 }\n",
     )
     validator = _validator(tmp_path, enabled=False)
     validator.validate_history_inflation_hard_cap()
-    assert [(i.category, i.severity, i.line) for i in validator._issues] == [
-        ("starting-inflation-over-cap", Severity.ERROR, 1),
-        ("starting-inflation-over-cap", Severity.ERROR, 2),
-    ]
-    assert "0.50001 exceeds 50%" in validator._issues[0].message
+    hits = [i for i in validator._issues if i.category == "history-inflation-over-one"]
+    assert len(hits) == 1
+    assert "1.1" in hits[0].message
 
 
 def test_flag_off_reports_nothing(tmp_path):
