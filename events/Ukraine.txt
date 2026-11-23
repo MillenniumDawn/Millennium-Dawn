@@ -20703,6 +20703,12 @@ country_event = {
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
+		custom_effect_tooltip = {
+			localization_key = UKR_utility_vehicle_tender_option_image_manufacturer_name_image_tt
+			MANUFACTURER_NAME = UKR_utility_vehicle_tender_manufacturer_tasco
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_tasco"
+		}
+
 		set_temp_variable = { treasury_change = -0.3 }
 		modify_treasury_effect = yes
 
@@ -23827,6 +23833,305 @@ country_event = {
 		hidden_effect = {
 			FROM = { clr_country_flag = UKR_utility_vehicle_tender_oncilla_talks_flag } # the later offer decision can try again
 		}
+	}
+}
+
+# Bohdan pickup (decisions UKR_utility_vehicle_tender_bohdan_pickup*): choose the model, then the plant
+country_event = {
+	id = ukraine_utility_vehicle_tender.27
+	title = ukraine_utility_vehicle_tender.27.name
+	desc = ukraine_utility_vehicle_tender.27.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.27.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.27.a"
+
+		trigger = { UKR_bohdan_2351_partner = yes }
+
+		ai_chance = { base = 50 }
+
+		custom_effect_tooltip = {
+			localization_key = UKR_utility_vehicle_tender_option_image_model_name_image_tt
+			MODEL_NAME = UKR_utility_vehicle_tender_model_bohdan_2351
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bohdan_2351"
+		}
+
+		hidden_effect = {
+			set_country_flag = UKR_utility_vehicle_tender_bohdan_2351_flag
+			country_event = ukraine_utility_vehicle_tender.28
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.27.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.27.b"
+
+		trigger = { UKR_bohdan_km450_partner = yes }
+
+		ai_chance = { base = 50 }
+
+		custom_effect_tooltip = {
+			localization_key = UKR_utility_vehicle_tender_option_image_model_name_image_tt
+			MODEL_NAME = UKR_utility_vehicle_tender_model_bohdan_km450
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bohdan_km450"
+		}
+
+		hidden_effect = {
+			set_country_flag = UKR_utility_vehicle_tender_bohdan_km450_flag
+			country_event = ukraine_utility_vehicle_tender.28
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.28
+	title = ukraine_utility_vehicle_tender.28.name
+	desc = ukraine_utility_vehicle_tender.28.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.28.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.28.a"
+
+		trigger = { UKR_bohdan_lutsk_free = yes }
+
+		ai_chance = { base = 50 }
+
+		custom_effect_tooltip = UKR_utility_vehicle_tender_bohdan_pickup_wait_tt
+		hidden_effect = {
+			set_country_flag = UKR_utility_vehicle_tender_bohdan_lutsk_site_flag
+			country_event = { id = ukraine_utility_vehicle_tender.29 days = 80 random_days = 10 }
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.28.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.28.b"
+
+		trigger = { UKR_bohdan_cherkasy_free = yes }
+
+		ai_chance = { base = 50 }
+
+		custom_effect_tooltip = UKR_utility_vehicle_tender_bohdan_pickup_wait_tt
+		hidden_effect = {
+			set_country_flag = UKR_utility_vehicle_tender_bohdan_cherkasy_site_flag
+			country_event = { id = ukraine_utility_vehicle_tender.29 days = 80 random_days = 10 }
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.29
+	title = ukraine_utility_vehicle_tender.29.name
+	desc = {
+		text = ukraine_utility_vehicle_tender.29.desc
+		trigger = { UKR_bohdan_pickup_site_controlled = yes }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.29.no_site.desc
+		trigger = { UKR_bohdan_pickup_site_controlled = no }
+	}
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.29.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.29.a"
+
+		ai_chance = { base = 100 }
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = { NOT = { has_tech = util_vehicle_4 } }
+			set_technology = { util_vehicle_4 = 1 }
+		}
+		if = {
+			limit = { NOT = { has_tech = util_vehicle_5 } }
+			set_technology = { util_vehicle_5 = 1 }
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_bohdan_2351_flag }
+			create_equipment_variant = {
+				name = "Bohdan-2351"
+				type = util_vehicle_5
+				parent_version = 0
+				allow_without_tech = yes
+				upgrades = {
+					util_mobility = 2
+				}
+				icon = "GFX_UKR_LAND_Utility_Light_Bohdan_2351"
+			}
+			if = {
+				limit = { UKR_bohdan_pickup_site_controlled = yes }
+				add_equipment_to_stockpile = {
+					type = util_vehicle_5
+					variant_name = "Bohdan-2351"
+					amount = 30
+					producer = UKR
+				}
+				if = {
+					limit = {
+						OR = {
+							AND = {
+								has_country_flag = UKR_utility_vehicle_tender_bohdan_lutsk_site_flag
+								1110 = { arms_factory > 0 }
+							}
+							AND = {
+								has_country_flag = UKR_utility_vehicle_tender_bohdan_cherkasy_site_flag
+								1091 = { arms_factory > 0 }
+							}
+						}
+					}
+					add_equipment_production = {
+						equipment = {
+							type = util_vehicle_5
+							version_name = "Bohdan-2351"
+						}
+						requested_factories = 1
+						efficiency = 20
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_bohdan_km450_flag }
+			create_equipment_variant = {
+				name = "Bohdan KM-450"
+				type = util_vehicle_5
+				parent_version = 0
+				allow_without_tech = yes
+				upgrades = {
+					util_mobility = 1
+					util_infantry_help_upgrade = 1
+				}
+				icon = "GFX_UKR_LAND_Utility_Light_Bohdan_KM_450"
+			}
+			if = {
+				limit = { UKR_bohdan_pickup_site_controlled = yes }
+				add_equipment_to_stockpile = {
+					type = util_vehicle_5
+					variant_name = "Bohdan KM-450"
+					amount = 30
+					producer = UKR
+				}
+				if = {
+					limit = {
+						OR = {
+							AND = {
+								has_country_flag = UKR_utility_vehicle_tender_bohdan_lutsk_site_flag
+								1110 = { arms_factory > 0 }
+							}
+							AND = {
+								has_country_flag = UKR_utility_vehicle_tender_bohdan_cherkasy_site_flag
+								1091 = { arms_factory > 0 }
+							}
+						}
+					}
+					add_equipment_production = {
+						equipment = {
+							type = util_vehicle_5
+							version_name = "Bohdan KM-450"
+						}
+						requested_factories = 1
+						efficiency = 20
+					}
+				}
+			}
+		}
+		if = {
+			limit = { UKR_bohdan_pickup_site_controlled = no }
+			custom_effect_tooltip = UKR_utility_vehicle_tender_bohdan_no_batch_tt
+		}
+
+		hidden_effect = { set_country_flag = UKR_utility_vehicle_tender_bohdan_pickup_done_flag }
+	}
+}
+
+# Bohdan-2251 ambulance (decision UKR_utility_vehicle_tender_bohdan_2251)
+country_event = {
+	id = ukraine_utility_vehicle_tender.30
+	title = ukraine_utility_vehicle_tender.30.name
+	desc = {
+		text = ukraine_utility_vehicle_tender.30.desc
+		trigger = { UKR_bohdan_pickup_site_controlled = yes }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.30.no_site.desc
+		trigger = { UKR_bohdan_pickup_site_controlled = no }
+	}
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.30.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.30.a"
+
+		ai_chance = { base = 100 }
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = { NOT = { has_tech = util_vehicle_4 } }
+			set_technology = { util_vehicle_4 = 1 }
+		}
+		if = {
+			limit = { NOT = { has_tech = util_vehicle_5 } }
+			set_technology = { util_vehicle_5 = 1 }
+		}
+		create_equipment_variant = {
+			name = "Bohdan-2251"
+			type = util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+			upgrades = {
+				util_mobility = 1
+			}
+			icon = "GFX_UKR_LAND_Utility_Light_Bohdan_2251"
+		}
+		if = {
+			limit = { UKR_bohdan_pickup_site_controlled = yes }
+			add_equipment_to_stockpile = {
+				type = util_vehicle_5
+				variant_name = "Bohdan-2251"
+				amount = 10
+				producer = UKR
+			}
+		}
+		else = {
+			custom_effect_tooltip = UKR_utility_vehicle_tender_bohdan_no_batch_tt
+		}
+
+		# Unit part: CSS companies get +4 vehicles (more upkeep), a little more morale, longer training and more casualty trickleback
+		add_unit_bonus = {
+			name = ukr_bohdan_2251_ambulances
+			combat_service_support_company = {
+				default_morale = 0.02
+				training_time = 10
+				casualty_trickleback = 0.05
+				need = {
+					util_vehicle_type = 4
+				}
+			}
+		}
+		custom_effect_tooltip = UKR_utility_vehicle_tender_bohdan_2251_upkeep_tt
+
+		# Country part: +5% casualty trickleback for every division
+		add_dynamic_modifier = { modifier = UKR_bohdan_2251_medical_evacuation }
 	}
 }
 
