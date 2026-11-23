@@ -408,10 +408,12 @@ def test_iter_stacks_reports_the_child_key_offset():
         "\thelicopter_operator = { build_cost_ic = -0.25 }\n"
         "}\n"
     )
-    hits = list(S.iter_type_archetype_stacks(text, index))
+    hits = list(S.iter_equipment_bonus_stacks(text, index, ideas=True))
     assert len(hits) == 1
-    offset, type_key, child, shared = hits[0]
-    assert (type_key, child, shared) == (
+    offset, form, relation, type_key, child, shared = hits[0]
+    assert (form, relation, type_key, child, shared) == (
+        "equipment_bonus",
+        "type",
         "carrier",
         "helicopter_operator",
         frozenset({"build_cost_ic"}),
