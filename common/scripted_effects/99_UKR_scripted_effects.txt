@@ -15372,6 +15372,25 @@ UKR_tender1_finish = {
 	UKR_tender1_clear_flags = yes
 }
 
+UKR_tender1_launch_uaz_production = {
+	# Expects UKR_tender1_stage: 1 for an existing factory, 2 for a paid expansion.
+	if = {
+		limit = { UKR_tender1_peace_with_russia = yes }
+		UKR_tender1_launch_production = yes
+	}
+	else = {
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { UKR_tender1_stage = 2 } }
+				country_event = ukraine_utility_vehicle_tender.4
+			}
+			else = {
+				country_event = ukraine_utility_vehicle_tender.3
+			}
+		}
+	}
+}
+
 UKR_tender1_launch_production = {
 	# Expects the temporary variable UKR_tender1_stage: 1 = launch in a plant that already has a factory, 2 = launch after the expansion
 	# UAZ-3151 uses the starting Soviet licence.
@@ -15744,34 +15763,40 @@ UKR_tender1_launch_production = {
 }
 
 UKR_tender1_expand_plant = {
-	# Charges the cost of the expansion and schedules the event that finishes it (about a year)
 	if = {
-		limit = { UKR_tender1_has_domestic_luaz_model = yes }
-		set_temp_variable = { treasury_change = -0.2 }
+		limit = { UKR_tender1_uaz_production_blocked = yes }
+		hidden_effect = { country_event = ukraine_utility_vehicle_tender.3 }
 	}
-	if = {
-		limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_avtoahrehat_flag }
-		set_temp_variable = { treasury_change = -0.1 }
-	}
-	if = {
-		limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_luaz_flag }
-		set_temp_variable = { treasury_change = -0.3 }
-	}
-	if = {
-		limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_krasz_flag }
-		set_temp_variable = { treasury_change = -0.4 }
-	}
-	if = {
-		limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_flag }
-		set_temp_variable = { treasury_change = -0.4 }
-	}
-	modify_treasury_effect = yes
-	custom_effect_tooltip = UKR_utility_vehicle_tender_1_expand_tt
-	hidden_effect = {
-		country_event = {
-			id = ukraine_utility_vehicle_tender.4
-			days = 365
-			random_days = 30
+	else = {
+		# Charges the cost of the expansion and schedules the event that finishes it (about a year)
+		if = {
+			limit = { UKR_tender1_has_domestic_luaz_model = yes }
+			set_temp_variable = { treasury_change = -0.2 }
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_avtoahrehat_flag }
+			set_temp_variable = { treasury_change = -0.1 }
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_luaz_flag }
+			set_temp_variable = { treasury_change = -0.3 }
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_krasz_flag }
+			set_temp_variable = { treasury_change = -0.4 }
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_flag }
+			set_temp_variable = { treasury_change = -0.4 }
+		}
+		modify_treasury_effect = yes
+		custom_effect_tooltip = UKR_utility_vehicle_tender_1_expand_tt
+		hidden_effect = {
+			country_event = {
+				id = ukraine_utility_vehicle_tender.4
+				days = 365
+				random_days = 30
+			}
 		}
 	}
 }
@@ -15874,11 +15899,10 @@ UKR_kraz_6316_open_plant_event = {
 	if = {
 		limit = {
 			UKR_kraz_trucks_waiting = yes
-			NOT = {
-				OR = {
-					has_country_flag = UKR_utility_vehicle_tender_kraz_6316_plant_event_open_flag
-					has_country_flag = UKR_utility_vehicle_tender_kraz_6316_expansion_pending_flag
-				}
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_plant_event_open_flag }
+			OR = {
+				UKR_kraz_trucks_has_ready_lines = yes
+				NOT = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_expansion_pending_flag }
 			}
 		}
 		set_country_flag = UKR_utility_vehicle_tender_kraz_6316_plant_event_open_flag
@@ -15953,7 +15977,10 @@ UKR_kraz_6316_start_line = {
 				efficiency = 20
 			}
 			if = {
-				limit = { country_exists = SOV }
+				limit = {
+					country_exists = SOV
+					UKR_at_war_with_russia_or_proxies = no
+				}
 				create_production_license = {
 					target = SOV
 					cost_factor = 0
