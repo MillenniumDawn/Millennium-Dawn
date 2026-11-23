@@ -58,6 +58,19 @@ _RANDOM_SLOT_CASES = {
         "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
         1,
     ),
+    "negative level does not consume a slot": (
+        "random_owned_state = { add_building_construction = "
+        "{ type = offices level = -1 instant_build = yes } }",
+        0,
+    ),
+    "zero levels do not consume a slot": (
+        "random_owned_state = { add_building_construction = { type = offices level = 0 } }",
+        0,
+    ),
+    "unknown level still requires a guard": (
+        "random_owned_state = { add_building_construction = { type = offices level = var:amount } }",
+        1,
+    ),
     "scripted guard": (
         "random_owned_state = { limit = { infrastructure_random_build_loc = yes } "
         "add_building_construction = { type = infrastructure level = 1 } }",

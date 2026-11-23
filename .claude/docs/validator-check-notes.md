@@ -368,6 +368,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `event-option-log-id` (ERROR): log the option's own id, not a neighboring option's.
   Version strings and dotted scopes are not event ids. Exemptions live in
   `validation_config.json` `option_log_id_exempt`.
+- `event-option-duplicate-name` (ERROR): an option with no `trigger` always
+  displays, so reusing a sibling option's `name` shows two identical labels (or
+  two labels for one choice). Options with mutually exclusive triggers may share
+  a name on purpose; that case is not reported.
 - `event-ai-chance-ignores-cost` (WARNING): authoring rules and cost kinds are in
   `event-reference.md`, "Cost-aware AI weights". A literal country scope is the
   receiver when a conjunctive event trigger requires `tag = TAG`, even with other
@@ -983,6 +987,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Known gaps: tooltips in events, decisions, and scripted effects are not read, and a
   tooltip inside a conditional `if` counts as shown. The DLC guard of a tooltip is
   not checked.
+- `sp-inherit-missing` (ERROR): a project any country can research has no line in
+  `inherit_special_projects_from_prev`
+  (`common/scripted_effects/00_special_project_effects.txt`). Add the line when adding
+  a project. A project is open when its `allowed` holds only `always = yes`, `has_dlc`,
+  and `has_game_rule`, alone or under `NOT`, `OR`, and `AND`. Any other trigger, a
+  comparison, or `always = no` anywhere, even under `NOT`, ties it to a country or
+  scenario.
+- `sp-inherit-locked` (ERROR): the effect names a project that is not open.
+- `sp-inherit-unknown` (ERROR): the effect names a project that does not exist.
+- `sp-inherit-effect-missing` (ERROR): the effect or its file is gone.
+- Known gap: a project id defined in two files is checked once per definition.
 
 ## validate_scripted_params.py
 
