@@ -55,6 +55,7 @@ from equipment_module_slots import (
     blank_comments,
     build_indexes,
 )
+from shared_utils import find_matching_brace
 
 EQUIPMENT_DIR = os.path.join("common", "units", "equipment")
 EQUIPMENT_GROUP_DIR = os.path.join("common", "equipment_groups")
@@ -137,7 +138,7 @@ class _Entry:
     types: Set[str]
 
 
-_BONUS_OPEN_RE = re.compile(r"(?<![A-Za-z0-9_])equipment_bonus\s*=\s*\{")
+_BONUS_OPEN_RE = re.compile(r"\b(add_equipment_bonus|equipment_bonus)\s*=\s*\{")
 _BONUS_STAT_RE = re.compile(r"([A-Za-z_]\w*)[^\S\n]*=[^\S\n]*([^\s{}]+)")
 _NON_STACKING_BONUS_KEYS = frozenset({"instant"})
 
@@ -153,6 +154,7 @@ class EquipmentStatIndex:
     # Variant or generated clone -> the archetype a MIO ``equipment_type`` names.
     archetypes: Dict[str, str]
     roots: FrozenSet[str]
+    clone_bases: Dict[str, str]
 
     def resolve(self, token: str) -> Optional[FrozenSet[str]]:
         """Stats *token* declares a base for, or None when nothing defines it."""
@@ -393,6 +395,7 @@ def build_index(
         types={k: frozenset(v) for k, v in types.items()},
         archetypes=archetypes,
         roots=frozenset(roots),
+        clone_bases={k: v.archetype for k, v in duplicates.items() if v.archetype},
     )
 
 
@@ -416,32 +419,46 @@ def build_equipment_stat_index(mod_path: str) -> EquipmentStatIndex:
     return build_index(equipment_texts, module_texts, group_texts)
 
 
-def iter_type_archetype_stacks(
-    text: str, index: EquipmentStatIndex
-) -> Iterator[Tuple[int, str, str, FrozenSet[str]]]:
-    """Yield ``(child_offset, type_key, child_key, shared)`` for stacked bonuses."""
+def _bonus_bodies(text: str, ideas: bool) -> Iterator[Tuple[str, int, int]]:
     for match in _BONUS_OPEN_RE.finditer(text):
-        start = match.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        if depth:
+        form = match.group(1)
+        if not ideas and form == "equipment_bonus":
             continue
-        block = text[start : i - 1]
+        start = match.end()
+        end = find_matching_brace(text, start - 1)
+        if end == -1:
+            continue
+        if form == "equipment_bonus":
+            yield form, start, end
+        else:
+            for key, lo, hi, _ in _iter_blocks(text, start, end):
+                if key == "bonus":
+                    yield form, lo, hi
+
+
+def iter_equipment_bonus_stacks(
+    text: str, index: EquipmentStatIndex, *, ideas: bool
+) -> Iterator[Tuple[int, str, str, str, str, FrozenSet[str]]]:
+    """Yield the child offset, bonus form, relationship, parent, child and stats."""
+    for form, start, end in _bonus_bodies(text, ideas):
         keyed: Dict[str, Set[str]] = {}
         child_at: Dict[str, int] = {}
-        for name, blo, bhi, header in _iter_blocks(block, 0, len(block)):
-            stats = {
+        for name, blo, bhi, header in _iter_blocks(text, start, end):
+            keyed.setdefault(name, set()).update(
                 key
-                for key, _value in _BONUS_STAT_RE.findall(_depth0_text(block, blo, bhi))
-                if key not in _NON_STACKING_BONUS_KEYS
-            }
-            keyed[name] = stats
-            child_at[name] = start + header
-        for type_key, child, shared in index.type_archetype_overlaps(keyed):
-            yield child_at[child], type_key, child, shared
+                for key, value in _BONUS_STAT_RE.findall(_depth0_text(text, blo, bhi))
+                if key not in _NON_STACKING_BONUS_KEYS and _is_nonzero(value)
+            )
+            child_at[name] = header
+        for category, child, shared in index.type_archetype_overlaps(keyed):
+            yield child_at[child], form, "type", category, child, shared
+        for child, stats in keyed.items():
+            seen = {child}
+            parent = index.clone_bases.get(child) or index.archetype_of(child)
+            while parent and parent not in seen:
+                seen.add(parent)
+                if parent in keyed and parent not in index.types.get(child, ()):
+                    shared = frozenset(stats & keyed[parent])
+                    if shared:
+                        yield child_at[child], form, "archetype", parent, child, shared
+                parent = index.clone_bases.get(parent) or index.archetypes.get(parent)
