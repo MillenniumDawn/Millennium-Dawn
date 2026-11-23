@@ -4,19 +4,27 @@ add_namespace = arab_spring
 country_event = {
 	id = arab_spring.0
 	title = arab_spring.0.t
-	desc = arab_spring.0.d
+	desc = {
+		text = arab_spring.0.d_tunisia
+		trigger = { date > 2010.12.17 arab_spring_ben_ali_in_power = yes }
+	}
+	desc = { text = arab_spring.0.d }
 	picture = GFX_politics_protest
 	is_triggered_only = yes
 
 	trigger = {
 		is_in_array = { global.arabic_countries = THIS.id }
-		NOT = { has_country_flag = AS_arab_spring_completed }
+		arab_spring_eligible = yes
 	}
 
 	option = {
 		name = arab_spring.0.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.0.a executed"
-		activate_mission_tooltip = arab_spring_protests_1
+		if = {
+			limit = { original_tag = SYR }
+			activate_mission_tooltip = syr_arab_spring_protests_1
+		}
+		else = { activate_mission_tooltip = arab_spring_protests_1 }
 		if = { limit = { NOT = { has_country_flag = arab_spring_active } }
 			set_country_flag = arab_spring_active
 		}
@@ -223,7 +231,7 @@ country_event = {
 	trigger = {
 		NOT = { has_country_flag = AS_arab_spring_completed }
 		has_country_flag = arab_spring_military_deployed
-		has_country_flag = arab_spring_active
+		arab_spring_protests_active = yes
 		check_variable = { the_military_opinion < 51 }
 	}
 
@@ -249,7 +257,7 @@ country_event = {
 
 	trigger = {
 		has_country_flag = arab_spring_military_deployed
-		has_country_flag = arab_spring_active
+		arab_spring_protests_active = yes
 	}
 
 	# This does not reflect well on us...
@@ -267,7 +275,11 @@ country_event = {
 country_event = {
 	id = arab_spring.9
 	title = arab_spring.9.t
-	desc = arab_spring.9.d
+	desc = {
+		text = arab_spring.9.d_morocco
+		trigger = { tag = MOR date > 2011.7.1 has_idea = constitutional_reform }
+	}
+	desc = { text = arab_spring.9.d }
 	picture = GFX_politics_protest
 	is_triggered_only = yes
 
@@ -304,14 +316,21 @@ country_event = {
 	picture = GFX_politics_speak
 	is_triggered_only = yes
 
-	trigger = { NOT = { has_country_flag = AS_arab_spring_completed } }
+	trigger = { arab_spring_eligible = yes }
 
-	immediate = { set_country_flag = AS_arab_spring_completed }
+	immediate = {
+		set_country_flag = AS_arab_spring_completed
+		start_arab_spring_wave = yes
+	}
 
 	# We Must Accept Defeat...
 	option = {
 		name = arab_spring.11.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.11.a executed"
+		if = {
+			limit = { arab_spring_ben_ali_in_power = yes }
+			set_country_flag = TUN_arab_spring_ben_ali_departed
+		}
 		news_event = arab_spring.12
 		hidden_effect = {
 			set_leader = yes
@@ -353,6 +372,8 @@ country_event = {
 				original_tag = SYR
 				SYR_ai_historical_path = yes
 			}
+			modifier = { factor = 0 arab_spring_egyptian_handover = yes EGY_ai_historical_path = yes }
+			modifier = { factor = 0 is_historical_focus_on = yes date > 2011.1.27 arab_spring_saleh_in_power = yes }
 		}
 	}
 
@@ -411,13 +432,17 @@ country_event = {
 				}
 				random_country_with_original_tag = {
 					original_tag_to_check = SYR
-					limit = { has_government = neutrality }
+					limit = { is_dynamic_country = yes has_government = neutrality has_war_with = SYR }
 					FSA = {
 						hidden_effect = {
 							add_civil_war_debuff = yes
 						}
-						ingame_startup_nations_effect = yes
 						annex_country = { target = PREV transfer_troops = yes }
+						ingame_startup_nations_effect = yes
+						set_country_flag = AS_arab_spring_completed
+						set_variable = { social_conservatism_government = SYR.social_conservatism_government }
+						set_variable = { social_conservatism_society = SYR.social_conservatism_society }
+						update_social_conservatism_modifier = yes
 						every_state = {
 							limit = { is_core_of = ROOT }
 							add_core_of = FSA
@@ -460,25 +485,6 @@ country_event = {
 						}
 					}
 				}
-				190 = { add_core_of = NUS }
-				release = NUS
-				190 = { add_core_of = ROOT }
-				every_core_state = {
-					add_core_of = NUS
-				}
-				NUS = {
-					hidden_effect = {
-						add_civil_war_debuff = yes
-					}
-					set_cosmetic_tag = NUSRA
-					ingame_startup_nations_effect = yes
-					if = { limit = { has_dlc = "No Step Back" }
-						load_oob = NUS_2000_nsb
-					}
-					else = {
-						load_oob = NUS_2000_nonnsb
-					}
-				}
 				if = {
 					limit = {
 						country_exists = FSA
@@ -489,16 +495,7 @@ country_event = {
 						type = annex_everything
 					}
 				}
-				if = {
-					limit = {
-						country_exists = NUS
-						NOT = { has_war_with = NUS }
-					}
-					declare_war_on = {
-						target = NUS
-						type = annex_everything
-					}
-				}
+				set_country_flag = SYR_arab_spring_nusra_pending
 				capital_scope = {
 					create_unit = {
 						division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"
@@ -539,7 +536,35 @@ country_event = {
 				is_historical_focus_on = yes
 				NOT = { original_tag = SYR }
 			}
+			modifier = { factor = 0 arab_spring_egyptian_handover = yes EGY_ai_historical_path = yes }
 		}
+	}
+
+	option = {
+		name = arab_spring.11.c
+		trigger = { arab_spring_egyptian_handover = yes }
+		log = "[GetDateText]: [This.GetName]: arab_spring.11.c executed"
+		set_country_flag = { flag = EGY_arab_spring_caretaker days = 480 value = 1 }
+		set_temp_variable = { rul_party_temp = 22 }
+		set_temp_variable = { disable_elections = 1 }
+		change_ruling_party_effect = yes
+		country_event = { id = arab_spring.24 days = 450 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 10 EGY_ai_historical_path = yes }
+		}
+	}
+
+	option = {
+		name = arab_spring.11.e
+		trigger = { date > 2011.1.27 arab_spring_saleh_in_power = yes }
+		log = "[GetDateText]: [This.GetName]: arab_spring.11.e executed"
+		set_country_flag = YEM_arab_spring_transition_agreed
+		if = {
+			limit = { NOT = { date < 2012.2.21 } }
+			country_event = { id = arab_spring.25 hours = 1 }
+		}
+		ai_chance = { base = 1 }
 	}
 
 }
@@ -550,43 +575,19 @@ news_event = {
 	title = arab_spring.12.t
 	desc = {
 		text = arab_spring.12.d1
-		trigger = { FROM = { NOT = { original_tag = TUN } } }
+		trigger = { FROM = { NOT = { has_country_flag = TUN_arab_spring_ben_ali_departed } } }
 	}
 	desc = {
 		text = arab_spring.12.d2
-		trigger = { FROM = { original_tag = TUN } }
+		trigger = { FROM = { has_country_flag = TUN_arab_spring_ben_ali_departed } }
 	}
 	picture = GFX_news_arab_spring2
 	is_triggered_only = yes
 	major = yes
 
-	# Viva la Revolution!
 	option = {
 		trigger = { tag = FROM }
 		name = arab_spring.12.a
-		log = "[GetDateText]: [This.GetName]: arab_spring.12.a executed"
-		if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
-			set_global_flag = global_arab_spring_started
-			hidden_effect = {
-				if = { limit = { FROM = { NOT = { original_tag = TUN } } } TUN = { country_event = { id = arab_spring.17 days = 1 } } }
-				if = { limit = { FROM = { NOT = { original_tag = ALG } } } ALG = { country_event = { id = arab_spring.17 days = 1 } } }
-				if = { limit = { FROM = { NOT = { original_tag = JOR } } } JOR = { country_event = { id = arab_spring.17 days = 1 } } }
-				if = { limit = { FROM = { NOT = { original_tag = OMA } } } OMA = { country_event = { id = arab_spring.17 days = 4 } } }
-				if = { limit = { FROM = { NOT = { original_tag = EGY } } } EGY = { country_event = { id = arab_spring.17 days = 12 } } }
-				if = { limit = { FROM = { NOT = { original_tag = SYR } } } SYR = { country_event = { id = arab_spring.17 days = 13 } } }
-				if = { limit = { FROM = { NOT = { original_tag = YEM } } } YEM = { country_event = { id = arab_spring.17 days = 14 } } }
-				if = { limit = { FROM = { NOT = { original_tag = SUD } } } SUD = { country_event = { id = arab_spring.17 days = 17 } } }
-				if = { limit = { FROM = { NOT = { original_tag = PAL } } } PAL = { country_event = { id = arab_spring.17 days = 28 } } }
-				if = { limit = { FROM = { NOT = { original_tag = IRQ } } } IRQ = { country_event = { id = arab_spring.17 days = 30 } } }
-				if = { limit = { FROM = { NOT = { original_tag = BHR } } } BHR = { country_event = { id = arab_spring.17 days = 32 } } }
-				if = { limit = { FROM = { NOT = { original_tag = KUW } } } KUW = { country_event = { id = arab_spring.17 days = 37 } } }
-				if = { limit = { FROM = { NOT = { original_tag = MOR } } } MOR = { country_event = { id = arab_spring.17 days = 38 } } }
-				if = { limit = { FROM = { NOT = { original_tag = MAU } } } MAU = { country_event = { id = arab_spring.17 days = 43 } } }
-				if = { limit = { FROM = { NOT = { original_tag = LEB } } } LEB = { country_event = { id = arab_spring.17 days = 45 } } }
-				if = { limit = { FROM = { NOT = { original_tag = SAU } } } SAU = { country_event = { id = arab_spring.17 days = 57 } } }
-			}
-			news_event = { id = arab_spring.13 days = 5 }
-		}
 	}
 
 	# A Worrying Development...
@@ -692,13 +693,29 @@ news_event = {
 country_event = {
 	id = arab_spring.17
 	title = arab_spring.17.t
-	desc = arab_spring.17.d
+	desc = {
+		text = arab_spring.17.d_bahrain
+		trigger = { tag = BHR date > 2011.2.14 }
+	}
+	desc = {
+		text = arab_spring.17.d_morocco
+		trigger = { tag = MOR date > 2011.2.20 }
+	}
+	desc = {
+		text = arab_spring.17.d_oman
+		trigger = { tag = OMA date > 2011.2.25 }
+	}
+	desc = {
+		text = arab_spring.17.d_syria
+		trigger = { tag = SYR date > 2011.3.18 has_country_leader = { name = "Bashar al-Assad" ruling_only = yes } }
+	}
+	desc = { text = arab_spring.17.d }
 	picture = GFX_politics_protest
 	is_triggered_only = yes
 
 	trigger = {
 		is_in_array = { global.arabic_countries = THIS.id }
-		NOT = { has_country_flag = AS_arab_spring_completed }
+		arab_spring_eligible = yes
 	}
 
 	# We Must Mitigate This Crisis!
@@ -709,9 +726,13 @@ country_event = {
 			limit = { check_variable = { arab_spring < 200 } }
 			country_event = { id = arab_spring.18 days = 7 random_days = 14 }
 		}
-		else = {
-			set_country_flag = arab_spring_active
-			activate_mission_tooltip = arab_spring_protests_2
+		else_if = {
+			limit = { arab_spring_protests_active = yes }
+			if = {
+				limit = { original_tag = SYR }
+				activate_mission_tooltip = syr_arab_spring_protests_2
+			}
+			else = { activate_mission_tooltip = arab_spring_protests_2 }
 			if = {
 				limit = {
 					var:influence_array^0 = {
@@ -744,7 +765,10 @@ country_event = {
 	picture = GFX_politics_protest
 	is_triggered_only = yes
 
-	trigger = { NOT = { has_country_flag = AS_arab_spring_completed } }
+	trigger = {
+		arab_spring_eligible = yes
+		arab_spring_protests_active = no
+	}
 
 	immediate = { set_country_flag = AS_arab_spring_completed }
 
@@ -852,6 +876,8 @@ country_event = {
 	picture = GFX_politics_talks
 	is_triggered_only = yes
 
+	trigger = { arab_spring_protests_active = yes }
+
 	option = {
 		name = arab_spring.20.a
 		log = "[GetDateText]: [This.GetName]: arab_spring.20.a executed"
@@ -890,4 +916,108 @@ news_event = {
 
 	option = { name = arab_spring.22.a }
 
+}
+
+country_event = {
+	id = arab_spring.23
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		is_historical_focus_on = yes
+		arab_spring_ben_ali_in_power = yes
+		arab_spring_eligible = yes
+		arab_spring_first_wave_available = yes
+		has_war = no
+		check_variable = { var = arab_spring value = 200 compare = greater_than_or_equals }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: arab_spring.23 executed"
+		set_country_flag = arab_spring_active
+		country_event = arab_spring.0
+	}
+}
+
+country_event = {
+	id = arab_spring.24
+	title = arab_spring.24.t
+	desc = arab_spring.24.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+
+	trigger = {
+		tag = EGY
+		has_country_flag = EGY_arab_spring_caretaker
+		nationalist_military_junta_are_in_power = yes
+	}
+
+	option = {
+		name = arab_spring.24.a
+		log = "[GetDateText]: [This.GetName]: arab_spring.24.a executed"
+		set_temp_variable = { party_index = 12 }
+		unban_party_scripted_call = yes
+		enable_elections_with_no_leader_change = yes
+	}
+}
+
+country_event = {
+	id = arab_spring.25
+	title = arab_spring.25.t
+	desc = arab_spring.25.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+
+	trigger = {
+		has_country_flag = YEM_arab_spring_transition_agreed
+		arab_spring_saleh_in_power = yes
+		NOT = { date < 2012.2.21 }
+	}
+
+	option = {
+		name = arab_spring.25.a
+		log = "[GetDateText]: [This.GetName]: arab_spring.25.a executed"
+		clr_country_flag = YEM_arab_spring_transition_agreed
+		set_variable = { Western_Autocracy_leader = 0 }
+		set_leader = yes
+	}
+}
+
+country_event = {
+	id = arab_spring.26
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		tag = SYR
+		has_war_with = FSA
+		owns_state = 190
+		controls_state = 190
+		NOT = { country_exists = NUS }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: arab_spring.26 executed"
+		190 = { add_core_of = NUS }
+		release = NUS
+		every_core_state = { add_core_of = NUS }
+		NUS = {
+			set_country_flag = AS_arab_spring_completed
+			set_variable = { social_conservatism_government = 100 }
+			set_variable = { social_conservatism_society = SYR.social_conservatism_society }
+			update_social_conservatism_modifier = yes
+			add_civil_war_debuff = yes
+			set_cosmetic_tag = NUSRA
+			ingame_startup_nations_effect = yes
+			if = { limit = { has_dlc = "No Step Back" } load_oob = NUS_2000_nsb }
+			else = { load_oob = NUS_2000_nonnsb }
+		}
+		if = {
+			limit = { country_exists = NUS NOT = { has_war_with = NUS } }
+			declare_war_on = {
+				target = NUS
+				type = annex_everything
+			}
+		}
+	}
 }
