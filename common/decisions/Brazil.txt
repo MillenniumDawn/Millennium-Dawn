@@ -443,6 +443,54 @@ BRA_public_policy_category = {
 		}
 	}
 
+	BRA_neighbor_trade_agreement = {
+		icon = generic_political_discourse
+		cost = 25
+		days_re_enable = 365
+
+		targets = { SUR CHL }
+		target_root_trigger = { date > 2003.1.1 }
+		target_trigger = {
+			FROM = { NOT = { is_in_array = { trade_agreement_partners = ROOT } } }
+		}
+
+		available = {
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_neighbor_trade_agreement target: [From.GetName]"
+			FROM = { country_event = brazil.94 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			set_temp_variable = { sender_nation = ROOT.id }
+			set_temp_variable = { receiver_nation = FROM.id }
+			effect_tooltip = { set_improved_trade_agreement = yes }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 2 FROM = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0 has_war = yes }
+		}
+	}
+
 	BRA_embraer_export_deal = {
 		icon = jet_aircraft
 		cost = 25
