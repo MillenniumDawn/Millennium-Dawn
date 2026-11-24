@@ -784,7 +784,13 @@ country_event = {
 		name = brazil.19.a
 		log = "[GetDateText]: [This.GetName]: brazil.19.a executed"
 		add_ideas = BRA_idea_car_wash1
-		hidden_effect = { country_event = { id = brazil.68 days = 2520 } }
+		hidden_effect = {
+			country_event = { id = brazil.68 days = 2520 }
+			if = {
+				limit = { has_country_flag = BRA_interoceanic_highway_funded }
+				country_event = { id = brazil.111 days = 120 }
+			}
+		}
 	}
 }
 country_event = {
@@ -8949,5 +8955,977 @@ country_event = {
 			base = 1
 			modifier = { add = 3 has_opinion = { target = BRA value < 0 } }
 		}
+	}
+}
+
+# Brazil offers to finance the Takutu River Bridge and the road to Georgetown. ROOT = Guyana, FROM = Brazil.
+country_event = {
+	id = brazil.103
+	title = brazil.103.t
+	desc = {
+		text = brazil.103.d
+		trigger = { date < 2019.1.1 }
+	}
+	desc = {
+		text = brazil.103.d_oil
+		trigger = { NOT = { date < 2019.1.1 } }
+	}
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = GUY
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_guyana_link_funded } }
+	}
+
+	# Accept the financing
+	option = {
+		name = brazil.103.a
+		log = "[GetDateText]: [This.GetName]: brazil.103.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = BRA.id }
+		change_influence_percentage = yes
+		BRA = {
+			set_temp_variable = { treasury_change = -12.5 }
+			modify_treasury_effect = yes
+			set_country_flag = BRA_guyana_link_funded
+			country_event = { id = brazil.104 days = 270 }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 40 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = {
+				factor = 0.5
+				BRA = { OR = { has_government = fascism has_government = communism } }
+				NOT = { OR = { has_government = fascism has_government = communism } }
+			}
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.103.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# The Takutu River Bridge and the Lethem to Georgetown road open. ROOT = Brazil.
+country_event = {
+	id = brazil.104
+	title = brazil.104.t
+	desc = brazil.104.d
+	picture = GFX_amazon_road_paving
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = GUY
+		NOT = { has_war_with = GUY }
+		GUY = { owns_state = 877 }
+	}
+
+	# Cut the ribbon
+	option = {
+		name = brazil.104.a
+		log = "[GetDateText]: [This.GetName]: brazil.104.a executed"
+		1023 = { BRA_add_funded_infrastructure = yes }
+		1005 = { BRA_add_funded_infrastructure = yes }
+		877 = { BRA_add_funded_infrastructure = yes }
+		build_railway = {
+			level = 1
+			path = { 5214 8107 12400 4982 }
+		}
+		set_temp_variable = { sender_nation = BRA.id }
+		set_temp_variable = { receiver_nation = GUY.id }
+		set_improved_trade_agreement = yes
+		GUY = {
+			add_opinion_modifier = { target = BRA modifier = friendship }
+			reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { influence_target = GUY.id }
+		change_influence_percentage = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+		add_to_variable = { BRA_econ_resource_exports = 0.015 tooltip = resource_export_multiplier_modifier_tt }
+		if = {
+			limit = { NOT = { date < 2019.1.1 } }
+			add_resource = {
+				type = oil
+				amount = 3
+				state = 1023
+			}
+		}
+	}
+}
+
+# Brazil asks Paraguay to host the bridge and the Chaco road of the Bioceanic Road Corridor. ROOT = Paraguay, FROM = Brazil.
+country_event = {
+	id = brazil.105
+	title = brazil.105.t
+	desc = brazil.105.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = PAR
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_bioceanic_funded } }
+	}
+
+	# Sign the corridor agreement
+	option = {
+		name = brazil.105.a
+		log = "[GetDateText]: [This.GetName]: brazil.105.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = BRA.id }
+		change_influence_percentage = yes
+		BRA = { BRA_start_bioceanic_corridor = yes }
+		ai_chance = {
+			base = 7
+			modifier = { factor = 2 has_opinion = { target = BRA value > 40 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 1.5 is_in_array = { trade_agreement_partners = BRA } }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.105.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# Brazil asks Argentina to pave the Salta section of the Bioceanic Road Corridor. ROOT = Argentina, FROM = Brazil.
+country_event = {
+	id = brazil.106
+	title = brazil.106.t
+	desc = brazil.106.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = ARG
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = {
+			has_country_flag = BRA_bioceanic_funded
+			NOT = { has_country_flag = BRA_bioceanic_arg }
+		}
+	}
+
+	# Join the corridor
+	option = {
+		name = brazil.106.a
+		log = "[GetDateText]: [This.GetName]: brazil.106.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = BRA.id }
+		change_influence_percentage = yes
+		BRA = {
+			if = {
+				limit = { NOT = { has_country_flag = BRA_bioceanic_open } }
+				set_temp_variable = { treasury_change = -3.5 }
+				modify_treasury_effect = yes
+				set_country_flag = BRA_bioceanic_arg
+			}
+		}
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = BRA value > 25 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.106.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 3 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# Brazil asks Chile to upgrade the road to Antofagasta for the Bioceanic Road Corridor. ROOT = Chile, FROM = Brazil.
+country_event = {
+	id = brazil.107
+	title = brazil.107.t
+	desc = brazil.107.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CHL
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = {
+			has_country_flag = BRA_bioceanic_funded
+			NOT = { has_country_flag = BRA_bioceanic_chl }
+		}
+	}
+
+	# Join the corridor
+	option = {
+		name = brazil.107.a
+		log = "[GetDateText]: [This.GetName]: brazil.107.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = BRA.id }
+		change_influence_percentage = yes
+		BRA = {
+			if = {
+				limit = { NOT = { has_country_flag = BRA_bioceanic_open } }
+				set_temp_variable = { treasury_change = -3.5 }
+				modify_treasury_effect = yes
+				set_country_flag = BRA_bioceanic_chl
+			}
+		}
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = BRA value > 25 } }
+			modifier = { factor = 1.5 is_in_array = { trade_agreement_partners = BRA } }
+			modifier = {
+				factor = 0.5
+				BRA = { OR = { has_government = fascism has_government = communism } }
+				NOT = { OR = { has_government = fascism has_government = communism } }
+			}
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.107.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 3 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# The Porto Murtinho bridge opens, and the corridor reaches the Pacific if Argentina or Chile joined. ROOT = Brazil.
+country_event = {
+	id = brazil.108
+	title = brazil.108.t
+	desc = {
+		text = brazil.108.d_full
+		trigger = {
+			OR = {
+				has_country_flag = BRA_bioceanic_arg
+				has_country_flag = BRA_bioceanic_chl
+			}
+		}
+	}
+	desc = {
+		text = brazil.108.d_bridge
+		trigger = {
+			NOT = { has_country_flag = BRA_bioceanic_arg }
+			NOT = { has_country_flag = BRA_bioceanic_chl }
+		}
+	}
+	picture = GFX_amazon_rainforest_infrastructure
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = PAR
+		NOT = { has_war_with = PAR }
+		PAR = { owns_state = 896 }
+	}
+
+	# Open the corridor
+	option = {
+		name = brazil.108.a
+		log = "[GetDateText]: [This.GetName]: brazil.108.a executed"
+		set_country_flag = BRA_bioceanic_open
+		954 = { BRA_add_funded_infrastructure = yes }
+		896 = { BRA_add_funded_infrastructure = yes }
+		if = {
+			limit = { has_country_flag = BRA_bioceanic_arg }
+			446 = { BRA_add_funded_infrastructure = yes }
+		}
+		if = {
+			limit = { has_country_flag = BRA_bioceanic_chl }
+			949 = { BRA_add_funded_infrastructure = yes }
+		}
+		PAR = {
+			add_opinion_modifier = { target = BRA modifier = friendship }
+			reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { influence_target = PAR.id }
+		change_influence_percentage = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = BRA_bioceanic_arg
+					has_country_flag = BRA_bioceanic_chl
+				}
+			}
+			add_to_variable = { BRA_econ_resource_exports = 0.025 tooltip = resource_export_multiplier_modifier_tt }
+			add_to_variable = { BRA_econ_trade_opinion = 0.05 tooltip = trade_opinion_factor_tt }
+		}
+		else = {
+			add_to_variable = { BRA_econ_resource_exports = 0.01 tooltip = resource_export_multiplier_modifier_tt }
+		}
+	}
+}
+
+# Brazil offers to pay for the Interoceanic Highway. ROOT = Peru, FROM = Brazil.
+country_event = {
+	id = brazil.109
+	title = brazil.109.t
+	desc = brazil.109.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = PRU
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_interoceanic_highway_funded } }
+	}
+
+	# Accept the highway
+	option = {
+		name = brazil.109.a
+		log = "[GetDateText]: [This.GetName]: brazil.109.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = BRA.id }
+		change_influence_percentage = yes
+		BRA = {
+			set_temp_variable = { treasury_change = -10.5 }
+			modify_treasury_effect = yes
+			set_country_flag = BRA_interoceanic_highway_funded
+			country_event = { id = brazil.110 days = 365 }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 40 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 1.5 check_variable = { gdp_per_capita < 15 } }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.109.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# The Interoceanic Highway opens. ROOT = Brazil.
+country_event = {
+	id = brazil.110
+	title = brazil.110.t
+	desc = brazil.110.d
+	picture = GFX_amazon_road_paving
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = PRU
+		NOT = { has_war_with = PRU }
+		PRU = {
+			owns_state = 901
+			owns_state = 902
+		}
+	}
+
+	# Open the highway
+	option = {
+		name = brazil.110.a
+		log = "[GetDateText]: [This.GetName]: brazil.110.a executed"
+		1022 = { BRA_add_funded_infrastructure = yes }
+		901 = { BRA_add_funded_infrastructure = yes }
+		902 = { BRA_add_funded_infrastructure = yes }
+		set_temp_variable = { sender_nation = BRA.id }
+		set_temp_variable = { receiver_nation = PRU.id }
+		set_improved_trade_agreement = yes
+		PRU = {
+			add_opinion_modifier = { target = BRA modifier = friendship }
+			reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { influence_target = PRU.id }
+		change_influence_percentage = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+		add_to_variable = { BRA_econ_resource_exports = 0.01 tooltip = resource_export_multiplier_modifier_tt }
+	}
+}
+
+# Operation Car Wash reaches Odebrecht's Peruvian contracts. ROOT = Brazil.
+country_event = {
+	id = brazil.111
+	title = brazil.111.t
+	desc = brazil.111.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = PRU
+		BRA_car_wash_is_open = yes
+	}
+
+	# Send the records to Lima
+	option = {
+		name = brazil.111.a
+		log = "[GetDateText]: [This.GetName]: brazil.111.a executed"
+		add_political_power = -25
+		BRA_operation_car_wash_switch = yes
+		PRU = { country_event = brazil.46 }
+		custom_effect_tooltip = BRA_odebrecht_records_tt
+		ai_chance = {
+			base = 4
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Shield the contractors
+	option = {
+		name = brazil.111.b
+		log = "[GetDateText]: [This.GetName]: brazil.111.b executed"
+		increase_corruption = yes
+		add_political_power = 25
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+		}
+	}
+}
+
+# Brazil offers Peru a railway to the Pacific. ROOT = Peru, FROM = Brazil. The offer is joint when Brazil carries the Chinese consortium's flag.
+country_event = {
+	id = brazil.112
+	title = brazil.112.t
+	desc = {
+		text = brazil.112.d_joint
+		trigger = { BRA = { has_country_flag = BRA_twin_ocean_joint } }
+	}
+	desc = {
+		text = brazil.112.d
+		trigger = { BRA = { NOT = { has_country_flag = BRA_twin_ocean_joint } } }
+	}
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = PRU
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_twin_ocean_funded } }
+	}
+
+	# Accept the railway
+	option = {
+		name = brazil.112.a
+		log = "[GetDateText]: [This.GetName]: brazil.112.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			if = {
+				limit = { has_country_flag = BRA_twin_ocean_joint }
+				set_temp_variable = { treasury_change = -5.5 }
+			}
+			else = {
+				set_temp_variable = { treasury_change = -11 }
+			}
+			modify_treasury_effect = yes
+			set_country_flag = BRA_twin_ocean_funded
+			country_event = { id = brazil.113 days = 540 }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 40 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = {
+				factor = 1.5
+				BRA = { has_country_flag = BRA_twin_ocean_joint }
+				has_opinion = { target = CHI value > 20 }
+			}
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.112.b
+		log = "[GetDateText]: [This.GetName]: brazil.112.b executed"
+		BRA = {
+			clr_country_flag = BRA_twin_ocean_joint
+			clr_country_flag = BRA_twin_ocean_offer_pending
+		}
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# The Twin-Ocean Railway is finished. ROOT = Brazil.
+country_event = {
+	id = brazil.113
+	title = brazil.113.t
+	desc = {
+		text = brazil.113.d_joint
+		trigger = { has_country_flag = BRA_twin_ocean_joint }
+	}
+	desc = {
+		text = brazil.113.d
+		trigger = { NOT = { has_country_flag = BRA_twin_ocean_joint } }
+	}
+	picture = GFX_generic_train_event
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = PRU
+		NOT = { has_war_with = PRU }
+		PRU = {
+			owns_state = 901
+			owns_state = 902
+			owns_state = 904
+		}
+	}
+
+	# Run the first train
+	option = {
+		name = brazil.113.a
+		log = "[GetDateText]: [This.GetName]: brazil.113.a executed"
+		build_railway = {
+			level = 1
+			path = { 3891 8191 7641 5166 14087 8213 7657 12997 }
+		}
+		1022 = { BRA_add_funded_infrastructure = yes }
+		901 = { BRA_add_funded_infrastructure = yes }
+		PRU = {
+			add_opinion_modifier = { target = BRA modifier = friendship }
+			reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+		}
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+		if = {
+			limit = { has_country_flag = BRA_twin_ocean_joint }
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { influence_target = PRU.id }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = CHI.id }
+			set_temp_variable = { influence_target = PRU.id }
+			change_influence_percentage = yes
+			CHI = {
+				add_opinion_modifier = { target = BRA modifier = friendship }
+				reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+			}
+			add_to_variable = { BRA_econ_resource_exports = 0.01 tooltip = resource_export_multiplier_modifier_tt }
+		}
+		else = {
+			set_temp_variable = { percent_change = 6 }
+			set_temp_variable = { influence_target = PRU.id }
+			change_influence_percentage = yes
+			if = {
+				limit = {
+					country_exists = CHI
+					CHI = { has_completed_focus = CHI_Five_Stars_Highway }
+				}
+				CHI = { add_opinion_modifier = { target = BRA modifier = small_decrease } }
+			}
+			add_to_variable = { BRA_econ_resource_exports = 0.02 tooltip = resource_export_multiplier_modifier_tt }
+		}
+	}
+}
+
+# Congress opens an inquiry into BNDES loans to a corrupt borrower. ROOT = Brazil.
+country_event = {
+	id = brazil.114
+	title = brazil.114.t
+	desc = brazil.114.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = { original_tag = BRA }
+
+	# Let the prosecutors follow the money
+	option = {
+		name = brazil.114.a
+		log = "[GetDateText]: [This.GetName]: brazil.114.a executed"
+		if = {
+			limit = { BRA_car_wash_is_open = yes }
+			BRA_operation_car_wash_switch = yes
+		}
+		else = {
+			decrease_corruption = yes
+		}
+		add_political_power = -20
+		ai_chance = {
+			base = 4
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Protect the contractors
+	option = {
+		name = brazil.114.b
+		log = "[GetDateText]: [This.GetName]: brazil.114.b executed"
+		increase_corruption = yes
+		add_political_power = 20
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+		}
+	}
+}
+
+# Brazil offers to pay for the Oyapock River Bridge. ROOT = the owner of French Guiana, FROM = Brazil.
+country_event = {
+	id = brazil.115
+	title = brazil.115.t
+	desc = brazil.115.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		owns_state = 67
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_oyapock_funded } }
+	}
+
+	# Accept the bridge
+	option = {
+		name = brazil.115.a
+		log = "[GetDateText]: [This.GetName]: brazil.115.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			set_temp_variable = { treasury_change = -7 }
+			modify_treasury_effect = yes
+			set_country_flag = BRA_oyapock_funded
+			country_event = { id = brazil.116 days = 300 }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 30 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 1.5 is_in_array = { trade_agreement_partners = BRA } }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.115.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# The Oyapock River Bridge opens. ROOT = Brazil.
+country_event = {
+	id = brazil.116
+	title = brazil.116.t
+	desc = brazil.116.d
+	picture = GFX_amazon_road_paving
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		67 = {
+			NOT = { is_owned_by = BRA }
+			OWNER = { NOT = { has_war_with = BRA } }
+		}
+	}
+
+	# Open the bridge
+	option = {
+		name = brazil.116.a
+		log = "[GetDateText]: [This.GetName]: brazil.116.a executed"
+		1024 = { BRA_add_funded_infrastructure = yes }
+		67 = {
+			BRA_add_funded_infrastructure = yes
+			OWNER = {
+				add_opinion_modifier = { target = BRA modifier = friendship }
+				reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+			}
+		}
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+		add_to_variable = { BRA_econ_trade_opinion = 0.03 tooltip = trade_opinion_factor_tt }
+	}
+}
+
+# Brazil offers to link Rivera and Jaguarão by rail. ROOT = Uruguay, FROM = Brazil.
+country_event = {
+	id = brazil.117
+	title = brazil.117.t
+	desc = brazil.117.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = URG
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_uruguay_link_funded } }
+	}
+
+	# Accept the rail link
+	option = {
+		name = brazil.117.a
+		log = "[GetDateText]: [This.GetName]: brazil.117.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_country_flag = BRA_uruguay_link_funded
+			country_event = { id = brazil.118 days = 240 }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 40 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 1.5 has_dynamic_modifier = { modifier = mercosur_member_state_modifier } }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.117.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# The Rivera and Jaguarão rail links open. ROOT = Brazil.
+country_event = {
+	id = brazil.118
+	title = brazil.118.t
+	desc = brazil.118.d
+	picture = GFX_generic_train_event
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = URG
+		NOT = { has_war_with = URG }
+		URG = { owns_state = 894 }
+	}
+
+	# Run the first train
+	option = {
+		name = brazil.118.a
+		log = "[GetDateText]: [This.GetName]: brazil.118.a executed"
+		build_railway = {
+			level = 1
+			path = { 4575 12440 1613 }
+		}
+		build_railway = {
+			level = 1
+			path = { 7638 1641 12481 }
+		}
+		879 = { BRA_add_funded_infrastructure = yes }
+		894 = { BRA_add_funded_infrastructure = yes }
+		set_temp_variable = { sender_nation = BRA.id }
+		set_temp_variable = { receiver_nation = URG.id }
+		set_improved_trade_agreement = yes
+		URG = {
+			add_opinion_modifier = { target = BRA modifier = friendship }
+			reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { influence_target = URG.id }
+		change_influence_percentage = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+		add_to_variable = { BRA_econ_trade_opinion = 0.05 tooltip = trade_opinion_factor_tt }
+	}
+}
+
+# Brazil offers Argentina a share of the Garabí and Panambi dams. ROOT = Argentina, FROM = Brazil.
+country_event = {
+	id = brazil.119
+	title = brazil.119.t
+	desc = brazil.119.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = ARG
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_garabi_funded } }
+	}
+
+	# Accept the dams
+	option = {
+		name = brazil.119.a
+		log = "[GetDateText]: [This.GetName]: brazil.119.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			set_temp_variable = { treasury_change = -17 }
+			modify_treasury_effect = yes
+			set_country_flag = BRA_garabi_funded
+			set_country_flag = BRA_garabi_sharing
+			country_event = { id = brazil.120 days = 540 }
+		}
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = BRA value > 20 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 1.5 check_variable = { unfulfilled_energy_demand_var < -0.02 } }
+		}
+	}
+
+	# Hold out for a higher price
+	option = {
+		name = brazil.119.b
+		log = "[GetDateText]: [This.GetName]: brazil.119.b executed"
+		set_temp_variable = { treasury_change = 2 }
+		modify_treasury_effect = yes
+		add_opinion_modifier = { target = BRA modifier = small_increase }
+		reverse_add_opinion_modifier = { target = BRA modifier = small_decrease }
+		BRA = {
+			set_temp_variable = { treasury_change = -19 }
+			modify_treasury_effect = yes
+			set_country_flag = BRA_garabi_funded
+			set_country_flag = BRA_garabi_sharing
+			country_event = { id = brazil.120 days = 540 }
+		}
+		ai_chance = {
+			base = 4
+			modifier = { factor = 2 has_opinion = { target = BRA value < 20 } }
+			modifier = { factor = 1.5 has_government = nationalist }
+		}
+	}
+
+	# Refuse and keep the river as it is
+	option = {
+		name = brazil.119.c
+		log = "[GetDateText]: [This.GetName]: brazil.119.c executed"
+		reverse_add_opinion_modifier = { target = BRA modifier = small_decrease }
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < -20 } }
+			modifier = { factor = 0.25 sender_influence_higher_10 = yes }
+		}
+	}
+}
+
+# The Garabí and Panambi dams come online. ROOT = Brazil.
+country_event = {
+	id = brazil.120
+	title = brazil.120.t
+	desc = brazil.120.d
+	picture = GFX_amazon_rainforest_dam
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = ARG
+		NOT = { has_war_with = ARG }
+		ARG = { owns_state = 448 }
+	}
+
+	# Open the dams
+	option = {
+		name = brazil.120.a
+		log = "[GetDateText]: [This.GetName]: brazil.120.a executed"
+		879 = {
+			if = {
+				limit = { free_building_slots = { building = renewable_energy_infra size > 0 } }
+				add_building_construction = {
+					type = renewable_energy_infra
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		448 = {
+			if = {
+				limit = { free_building_slots = { building = renewable_energy_infra size > 0 } }
+				add_building_construction = {
+					type = renewable_energy_infra
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ARG = {
+			add_opinion_modifier = { target = BRA modifier = friendship }
+			reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+			if = {
+				limit = { BRA = { has_country_flag = BRA_garabi_sharing } }
+				BRA_receive_energy_load_sharing_from_this = yes
+			}
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { influence_target = ARG.id }
+		change_influence_percentage = yes
 	}
 }

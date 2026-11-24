@@ -55,6 +55,70 @@ BRA_receive_energy_load_sharing_from_this = {
 	}
 }
 
+# THIS = a state. Brazil paid the standard infrastructure price when the partner accepted, so the controller pays nothing
+BRA_add_funded_infrastructure = {
+	if = {
+		limit = { free_building_slots = { building = infrastructure size > 0 } }
+		add_building_construction = {
+			type = infrastructure
+			level = 1
+			instant_build = yes
+		}
+	}
+}
+
+# THIS = Brazil. Paraguay agreed: Brazil pays for the bridge and the Chaco road, then asks Argentina and Chile
+BRA_start_bioceanic_corridor = {
+	set_temp_variable = { treasury_change = -7 }
+	modify_treasury_effect = yes
+	set_country_flag = BRA_bioceanic_funded
+	country_event = { id = brazil.108 days = 300 }
+	if = {
+		limit = {
+			country_exists = ARG
+			NOT = { has_war_with = ARG }
+		}
+		ARG = { country_event = brazil.106 }
+	}
+	if = {
+		limit = {
+			country_exists = CHL
+			NOT = { has_war_with = CHL }
+		}
+		CHL = { country_event = brazil.107 }
+	}
+}
+
+# THIS = the borrower, ROOT = Brazil. Offers one BNDES-funded project through the international investment system
+BRA_stage_bndes_project = {
+	if = {
+		limit = { original_tag = CUB }
+		capital_scope = {
+			set_temp_variable = { scripted_investment_type = 1 }
+			send_scripted_investment = yes
+		}
+	}
+	else_if = {
+		limit = { original_tag = VEN }
+		capital_scope = {
+			set_temp_variable = { scripted_investment_type = 4 }
+			send_scripted_investment = yes
+		}
+	}
+	else_if = {
+		limit = { original_tag = ECU }
+		set_temp_variable = { investment_slot_building = 11 }
+		random_owned_controlled_state = {
+			limit = {
+				NOT = { is_in_array = { projects_in_state = ROOT } }
+				investment_single_building_slot_available = yes
+			}
+			set_temp_variable = { scripted_investment_type = 11 }
+			send_scripted_investment = yes
+		}
+	}
+}
+
 BRA_update_brazil_energy_idea = {
 	if = {
 		limit = {

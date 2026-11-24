@@ -490,6 +490,112 @@ BRA_public_policy_category = {
 			modifier = { factor = 0.5 has_war = yes }
 		}
 	}
+
+	BRA_bndes_export_credit = {
+		icon = attract_foreign_investor
+		cost = 20
+		days_re_enable = 180
+		fixed_random_seed = no
+
+		targets = { CUB VEN ECU }
+		target_root_trigger = {
+			date > 2003.1.1
+			NOT = { has_country_flag = investments_ai_pending }
+			NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+		}
+		target_trigger = {
+			FROM = { BRA_bndes_project_available = yes }
+		}
+
+		available = {
+			investment_project_slot_available = yes
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_bndes_export_credit target: [From.GetName]"
+			set_country_flag = { flag = investments_ai_pending days = 7 value = 1 }
+			FROM = { BRA_stage_bndes_project = yes }
+			custom_effect_tooltip = BRA_bndes_export_credit_tt
+			if = {
+				limit = { FROM = { BRA_has_high_corruption = yes } }
+				custom_effect_tooltip = BRA_bndes_scandal_risk_tt
+				hidden_effect = {
+					random = {
+						chance = 30
+						country_event = { id = brazil.114 days = 120 random_days = 120 }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+				FROM = {
+					OR = {
+						original_tag = CUB
+						original_tag = VEN
+					}
+				}
+			}
+			modifier = {
+				factor = 0.25
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+				FROM = {
+					OR = {
+						original_tag = CUB
+						original_tag = VEN
+					}
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+				FROM = {
+					OR = {
+						original_tag = CUB
+						original_tag = VEN
+					}
+				}
+			}
+			modifier = { factor = 1.5 FROM = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = {
+				factor = 0
+				FROM = { original_tag = CUB }
+				check_variable = { treasury < 12.5 }
+			}
+			modifier = {
+				factor = 0
+				FROM = { original_tag = VEN }
+				check_variable = { treasury < 6 }
+			}
+			modifier = {
+				factor = 0
+				FROM = { original_tag = ECU }
+				check_variable = { treasury < 14 }
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
 }
 
 BRA_national_development_category = {
@@ -1664,6 +1770,493 @@ BRA_national_development_category = {
 			modifier = { factor = 0 check_variable = { BRA_current_target_ratio < 1.05 } }
 			modifier = { factor = 0 check_variable = { debt_ratio > 0.42 } }
 			modifier = { factor = 0 check_variable = { treasury < 20 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_guyana_takutu_link = {
+		icon = highway_dec
+		cost = 25
+		days_re_enable = 365
+
+		visible = {
+			country_exists = GUY
+			NOT = { has_country_flag = BRA_guyana_link_funded }
+		}
+
+		available = {
+			date > 2006.1.1
+			NOT = { has_war_with = GUY }
+			has_full_control_of_state = 1023
+			GUY = { owns_state = 877 }
+			1023 = { free_building_slots = { building = infrastructure size > 0 } }
+			877 = { free_building_slots = { building = infrastructure size > 0 } }
+			1005 = { free_building_slots = { building = infrastructure size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_guyana_takutu_link"
+			GUY = { country_event = brazil.103 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_guyana_takutu_link_tt
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 GUY = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = { add = 8 date > 2019.1.1 }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 12.5 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_bioceanic_corridor = {
+		icon = highway_dec
+		cost = 40
+		days_re_enable = 365
+
+		visible = {
+			country_exists = PAR
+			NOT = { has_country_flag = BRA_bioceanic_funded }
+		}
+
+		available = {
+			date > 2015.12.1
+			NOT = { has_war_with = PAR }
+			has_full_control_of_state = 954
+			PAR = { owns_state = 896 }
+			954 = { free_building_slots = { building = infrastructure size > 0 } }
+			896 = { free_building_slots = { building = infrastructure size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_bioceanic_corridor"
+			PAR = { country_event = brazil.105 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_bioceanic_corridor_tt
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 1.5
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 PAR = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = { add = 8 date > 2021.1.1 }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 14 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_interoceanic_highway = {
+		icon = highway_dec
+		cost = 30
+		days_re_enable = 365
+
+		visible = {
+			country_exists = PRU
+			NOT = { has_country_flag = BRA_interoceanic_highway_funded }
+		}
+
+		available = {
+			date > 2005.6.1
+			NOT = { has_war_with = PRU }
+			has_full_control_of_state = 1022
+			PRU = {
+				owns_state = 901
+				owns_state = 902
+			}
+			1022 = { free_building_slots = { building = infrastructure size > 0 } }
+			901 = { free_building_slots = { building = infrastructure size > 0 } }
+			902 = { free_building_slots = { building = infrastructure size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_interoceanic_highway"
+			PRU = { country_event = brazil.109 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_interoceanic_highway_tt
+		}
+
+		ai_will_do = {
+			base = 14
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 1.5
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 PRU = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 10.5 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_twin_ocean_railway = {
+		icon = generic_construction
+		cost = 40
+		days_re_enable = 365
+
+		visible = {
+			country_exists = PRU
+			NOT = { has_country_flag = BRA_twin_ocean_funded }
+			NOT = { has_country_flag = BRA_twin_ocean_offer_pending }
+		}
+
+		available = {
+			date > 2015.5.1
+			NOT = { has_war_with = PRU }
+			has_full_control_of_state = 1022
+			PRU = {
+				owns_state = 901
+				owns_state = 902
+				owns_state = 904
+			}
+			1022 = { free_building_slots = { building = infrastructure size > 0 } }
+			901 = { free_building_slots = { building = infrastructure size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_twin_ocean_railway"
+			clr_country_flag = BRA_twin_ocean_joint
+			set_country_flag = { flag = BRA_twin_ocean_offer_pending days = 60 value = 1 }
+			PRU = { country_event = brazil.112 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_twin_ocean_railway_tt
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+			modifier = {
+				factor = 0.5
+				OR = {
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 11 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_twin_ocean_joint_railway = {
+		icon = generic_construction
+		cost = 40
+		days_re_enable = 365
+
+		visible = {
+			country_exists = PRU
+			country_exists = CHI
+			NOT = { has_country_flag = BRA_twin_ocean_funded }
+			NOT = { has_country_flag = BRA_twin_ocean_offer_pending }
+			CHI = { has_completed_focus = CHI_Five_Stars_Highway }
+		}
+
+		available = {
+			date > 2015.5.1
+			NOT = { has_war_with = PRU }
+			has_full_control_of_state = 1022
+			PRU = {
+				owns_state = 901
+				owns_state = 902
+				owns_state = 904
+			}
+			1022 = { free_building_slots = { building = infrastructure size > 0 } }
+			901 = { free_building_slots = { building = infrastructure size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_twin_ocean_joint_railway"
+			set_country_flag = BRA_twin_ocean_joint
+			set_country_flag = { flag = BRA_twin_ocean_offer_pending days = 60 value = 1 }
+			PRU = { country_event = brazil.112 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_twin_ocean_joint_railway_tt
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+				}
+			}
+			modifier = {
+				factor = 0.25
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 1.5 CHI = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 5.5 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_oyapock_bridge = {
+		icon = highway_dec
+		cost = 25
+		days_re_enable = 365
+
+		targets = { FRA FGU }
+		target_root_trigger = {
+			date > 2005.1.1
+			NOT = { has_country_flag = BRA_oyapock_funded }
+			has_full_control_of_state = 1024
+		}
+		target_trigger = {
+			FROM = { owns_state = 67 }
+		}
+
+		available = {
+			NOT = { has_war_with = FROM }
+			1024 = { free_building_slots = { building = infrastructure size > 0 } }
+			67 = { free_building_slots = { building = infrastructure size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_oyapock_bridge target: [From.GetName]"
+			FROM = { country_event = brazil.115 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_oyapock_bridge_tt
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 FROM = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = { add = 8 date > 2014.1.1 }
+			modifier = { factor = 0 check_variable = { treasury < 7 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_uruguay_rail_link = {
+		icon = generic_construction
+		cost = 25
+		days_re_enable = 365
+
+		visible = {
+			country_exists = URG
+			NOT = { has_country_flag = BRA_uruguay_link_funded }
+		}
+
+		available = {
+			date > 2006.1.1
+			NOT = { has_war_with = URG }
+			has_full_control_of_state = 879
+			URG = { owns_state = 894 }
+			879 = { free_building_slots = { building = infrastructure size > 0 } }
+			894 = { free_building_slots = { building = infrastructure size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_uruguay_rail_link"
+			URG = { country_event = brazil.117 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_uruguay_rail_link_tt
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 URG = { has_opinion = { target = ROOT value > 30 } } }
+			modifier = { add = 6 URG = { is_in_array = { trade_agreement_partners = BRA } } }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 10 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_garabi_panambi_dams = {
+		icon = generic_electricity
+		cost = 40
+		days_re_enable = 365
+
+		visible = {
+			country_exists = ARG
+			NOT = { has_country_flag = BRA_garabi_funded }
+		}
+
+		available = {
+			date > 2008.1.1
+			NOT = { has_war_with = ARG }
+			has_full_control_of_state = 879
+			ARG = { owns_state = 448 }
+			879 = { free_building_slots = { building = renewable_energy_infra size > 0 } }
+			448 = { free_building_slots = { building = renewable_energy_infra size > 0 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_garabi_panambi_dams"
+			ARG = { country_event = brazil.119 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_garabi_panambi_dams_tt
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { add = 10 has_an_energy_deficit = yes }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 17 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
