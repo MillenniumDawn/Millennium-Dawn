@@ -57,13 +57,16 @@ GUY_resources_category = {
 		fire_only_once = yes
 		days_remove = 900
 
-		visible = {
-			has_country_flag = GUY_liza_phase_1_online
-			NOT = { has_country_flag = GUY_liza_phase_2_online }
-		}
+		visible = { has_country_flag = GUY_liza_phase_1_online }
 
 		available = {
-			has_tech = excavation2
+			OR = {
+				has_tech = excavation2
+				custom_trigger_tooltip = {
+					tooltip = GUY_has_stabroek_partner_tt
+					has_country_flag = GUY_stabroek_partner
+				}
+			}
 			has_full_control_of_state = 877
 		}
 
@@ -107,13 +110,16 @@ GUY_resources_category = {
 		fire_only_once = yes
 		days_remove = 1100
 
-		visible = {
-			has_country_flag = GUY_liza_phase_2_online
-			NOT = { has_country_flag = GUY_yellowtail_online }
-		}
+		visible = { has_country_flag = GUY_liza_phase_2_online }
 
 		available = {
-			has_tech = excavation3
+			OR = {
+				has_tech = excavation3
+				custom_trigger_tooltip = {
+					tooltip = GUY_has_stabroek_partner_tt
+					has_country_flag = GUY_stabroek_partner
+				}
+			}
 			has_full_control_of_state = 877
 		}
 
@@ -128,7 +134,6 @@ GUY_resources_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_yellowtail"
-			set_country_flag = GUY_yellowtail_online
 			if = {
 				limit = { owns_state = 877 }
 				add_resource = { type = oil amount = 5 state = 877 }
@@ -151,16 +156,67 @@ GUY_resources_category = {
 		}
 	}
 
+	GUY_decision_stabroek_partner = {
+		icon = oil
+		cost = 25
+
+		targets = { USA CHI BRA }
+		target_root_trigger = {
+			has_country_flag = GUY_stabroek_discovered
+			NOT = { has_country_flag = GUY_stabroek_partner }
+			NOT = { has_tech = excavation3 }
+		}
+
+		available = {
+			NOT = { has_war_with = FROM }
+			custom_trigger_tooltip = {
+				tooltip = GUY_stabroek_partner_asked_tt
+				NOT = { has_country_flag = GUY_stabroek_partner_asked }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_stabroek_partner target: [From.GetName]"
+			set_country_flag = { flag = GUY_stabroek_partner_asked days = 90 value = 1 }
+			if = {
+				limit = { FROM = { original_tag = USA } }
+				FROM = { country_event = { id = guyana.8 days = 1 } }
+			}
+			else_if = {
+				limit = { FROM = { original_tag = CHI } }
+				FROM = { country_event = { id = guyana.9 days = 1 } }
+			}
+			else = { FROM = { country_event = { id = guyana.10 days = 1 } } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = GUY_stabroek_partner_tt
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 NOT = { has_tech = excavation2 } }
+			modifier = { factor = 2 FROM = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = { factor = 0.5 FROM = { has_opinion = { target = ROOT value < 0 } } }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.006
+					greater_than = { value = treasury }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
 	GUY_decision_natural_resource_fund = {
 		icon = generic_fundraising
 		cost = 30
 		fire_only_once = yes
 		days_remove = 120
 
-		visible = {
-			has_country_flag = GUY_stabroek_discovered
-			NOT = { has_country_flag = GUY_natural_resource_fund }
-		}
+		visible = { has_country_flag = GUY_stabroek_discovered }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_natural_resource_fund"

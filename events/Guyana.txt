@@ -153,11 +153,22 @@ country_event = {
 	}
 }
 
-# ROOT = Guyana, no FROM. Fired by guyana.4 for 2 August 2020. Installs the PPP/C government if the simulated election has not already done so.
+# ROOT = Guyana, no FROM. Fired by guyana.4 for 2 August 2020. Installs the PPP/C government for an AI Guyana if the simulated election has not already done so.
 country_event = {
 	id = guyana.5
 	title = guyana.5.t
-	desc = guyana.5.d
+	desc = {
+		text = guyana.5.d
+		trigger = {
+			OR = {
+				is_ai = yes
+				check_variable = { ruling_party = 5 }
+			}
+		}
+	}
+	desc = {
+		text = guyana.5.d_held
+	}
 	picture = GFX_election_day
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -174,7 +185,10 @@ country_event = {
 		clr_country_flag = GUY_no_confidence_contested
 		add_stability = 0.03
 		if = {
-			limit = { NOT = { check_variable = { ruling_party = 5 } } }
+			limit = {
+				is_ai = yes
+				NOT = { check_variable = { ruling_party = 5 } }
+			}
 			set_temp_variable = { party_index = 5 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			change_relative_party_popularity = yes
@@ -241,6 +255,7 @@ country_event = {
 	id = guyana.7
 	title = guyana.7.t
 	desc = guyana.7.d
+	picture = GFX_election_day
 	is_triggered_only = yes
 	fire_only_once = yes
 
@@ -251,5 +266,150 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: guyana.7.a executed"
 		set_country_flag = GUY_win_formed
 		update_party_name = yes
+	}
+}
+
+# ROOT = the United States, FROM = Guyana. Fired by GUY_decision_stabroek_partner. Acceptance pays us a share of Guyana's GDP and lets it approve the later Stabroek phases without the excavation techs.
+country_event = {
+	id = guyana.8
+	title = guyana.8.t
+	desc = guyana.8.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = USA
+		country_exists = GUY
+		NOT = { has_war_with = GUY }
+		GUY = { NOT = { has_country_flag = GUY_stabroek_partner } }
+	}
+
+	# Back ExxonMobil and Hess in the block
+	option = {
+		name = guyana.8.a
+		log = "[GetDateText]: [This.GetName]: guyana.8.a executed"
+		add_opinion_modifier = { target = GUY modifier = medium_increase }
+		reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
+		set_temp_variable = { treasury_change = GUY.gdp_total }
+		multiply_temp_variable = { treasury_change = 0.006 }
+		modify_treasury_effect = yes
+		GUY = {
+			set_country_flag = GUY_stabroek_partner
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.006 } }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 60
+			modifier = { factor = 1.5 has_opinion = { target = GUY value > 20 } }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.4 has_opinion = { target = GUY value < -20 } }
+		}
+	}
+
+	# Decline the request
+	option = {
+		name = guyana.8.b
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_opinion = { target = GUY value < -20 } }
+			modifier = { factor = 1.5 has_war = yes }
+		}
+	}
+}
+
+# ROOT = China, FROM = Guyana. Fired by GUY_decision_stabroek_partner. Acceptance pays us a share of Guyana's GDP and lets it approve the later Stabroek phases without the excavation techs.
+country_event = {
+	id = guyana.9
+	title = guyana.9.t
+	desc = guyana.9.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CHI
+		country_exists = GUY
+		NOT = { has_war_with = GUY }
+		GUY = { NOT = { has_country_flag = GUY_stabroek_partner } }
+	}
+
+	# Back CNOOC in the block
+	option = {
+		name = guyana.9.a
+		log = "[GetDateText]: [This.GetName]: guyana.9.a executed"
+		add_opinion_modifier = { target = GUY modifier = medium_increase }
+		reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
+		set_temp_variable = { treasury_change = GUY.gdp_total }
+		multiply_temp_variable = { treasury_change = 0.006 }
+		modify_treasury_effect = yes
+		GUY = {
+			set_country_flag = GUY_stabroek_partner
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.006 } }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 60
+			modifier = { factor = 1.5 has_opinion = { target = GUY value > 20 } }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.4 has_opinion = { target = GUY value < -20 } }
+		}
+	}
+
+	# Decline the request
+	option = {
+		name = guyana.9.b
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_opinion = { target = GUY value < -20 } }
+			modifier = { factor = 1.5 has_war = yes }
+		}
+	}
+}
+
+# ROOT = Brazil, FROM = Guyana. Fired by GUY_decision_stabroek_partner. Acceptance pays us a share of Guyana's GDP and lets it approve the later Stabroek phases without the excavation techs.
+country_event = {
+	id = guyana.10
+	title = guyana.10.t
+	desc = guyana.10.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = GUY
+		NOT = { has_war_with = GUY }
+		GUY = { NOT = { has_country_flag = GUY_stabroek_partner } }
+	}
+
+	# Send Petrobras into the block
+	option = {
+		name = guyana.10.a
+		log = "[GetDateText]: [This.GetName]: guyana.10.a executed"
+		add_opinion_modifier = { target = GUY modifier = medium_increase }
+		reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
+		set_temp_variable = { treasury_change = GUY.gdp_total }
+		multiply_temp_variable = { treasury_change = 0.006 }
+		modify_treasury_effect = yes
+		GUY = {
+			set_country_flag = GUY_stabroek_partner
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.006 } }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 60
+			modifier = { factor = 1.5 has_opinion = { target = GUY value > 20 } }
+			modifier = { factor = 1.5 has_country_flag = BRA_guyana_link_funded }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.4 has_opinion = { target = GUY value < -20 } }
+		}
+	}
+
+	# Decline the request
+	option = {
+		name = guyana.10.b
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_opinion = { target = GUY value < -20 } }
+			modifier = { factor = 1.5 has_war = yes }
+		}
 	}
 }
