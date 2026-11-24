@@ -215,6 +215,15 @@ _TREASURY_SCALE_VERBS = frozenset({"multiply_temp_variable", "multiply_variable"
 # Matched on the bare name: a source may be read out of another country
 # (GER.gdp_per_capita), and the scope qualifier does not change its sign.
 _TREASURY_NONNEGATIVE_VARIABLES = frozenset({"gdp_total", "gdp_per_capita"})
+_GDP_INCOME_EXPR = re.compile(
+    r"\{\s*value\s*=\s*(?:gdp_total|gdp_per_capita)\s+multiply\s*=\s*\d+(?:\.\d+)?\s*\}"
+)
+_DEBT_CUT_EXPR = re.compile(
+    r"\{\s*value\s*=\s*debt\s+multiply\s*=\s*-\d+(?:\.\d+)?\s*\}"
+)
+_NONNEGATIVE_TREASURY_CAP = re.compile(
+    r"\{\s*var\s*=\s*treasury_change\s+max\s*=\s*\d+(?:\.\d+)?\s*\}"
+)
 _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
 # which scales the applied amount by a corruption-level idea before adding it to
@@ -423,6 +432,14 @@ def _payment_keys(body: str, waived_at_start: bool) -> Iterator[Tuple[int, str, 
             yield m.start(), m["key"], not waived.isdisjoint(stack)
 
 
+def _cost_operand(match: re.Match[str], free_expr: re.Pattern[str]) -> str | None:
+    # A proven income or debt cut contributes zero spend, not an unknown charge.
+    value = match.group(1)
+    if value == "{" and free_expr.match(match.string, match.start(1)):
+        return "0"
+    return value
+
+
 def _body_money_cost(
     body: str,
     money_effects: FrozenSet[str],
@@ -459,7 +476,12 @@ def _body_money_cost(
     for m in _TREASURY_CHANGE_RE.finditer(body):
         if previewed(m.start()):
             continue
-        verb, _ = _enclosing_block_label(body, m.start())
+        verb, opener = _enclosing_block_label(body, m.start())
+        if verb in {"clamp_temp_variable", "clamp_variable"} and (
+            _NONNEGATIVE_TREASURY_CAP.match(body, opener)
+        ):
+            # A nonnegative ceiling cannot turn income into a charge or change a loss.
+            continue
         if verb in _TREASURY_MUTATE_VERBS:
             val = m.group(1)
             scaled = (
@@ -472,7 +494,7 @@ def _body_money_cost(
             else:
                 events.append((m.start(), "mutate", None))
         elif verb in _TREASURY_SET_VERBS:
-            events.append((m.start(), "set", m.group(1)))
+            events.append((m.start(), "set", _cost_operand(m, _GDP_INCOME_EXPR)))
     for m in _MODIFY_TREASURY_RE.finditer(body):
         if not previewed(m.start()):
             events.append((m.start(), "apply", "variant" if m.group(1) else None))
@@ -571,14 +593,14 @@ def _body_money_cost(
             seg_neg, seg_sign_unknown, seg_var_base = False, False, False
 
     # debt_change carries over between applies like treasury_change. Only a
-    # segment whose every set is a literal cut is known to be free.
+    # segment whose every set is a known cut is free.
     debt_events: List[Tuple[int, str, Optional[str]]] = []
     for m in _DEBT_CHANGE_RE.finditer(body):
         if previewed(m.start()):
             continue
         verb, _ = _enclosing_block_label(body, m.start())
         if verb in _TREASURY_SET_VERBS:
-            debt_events.append((m.start(), "set", m.group(1)))
+            debt_events.append((m.start(), "set", _cost_operand(m, _DEBT_CUT_EXPR)))
         elif verb in _TREASURY_MUTATE_VERBS:
             debt_events.append((m.start(), "set", None))
     for m in _MODIFY_DEBT_RE.finditer(body):
@@ -676,7 +698,7 @@ def _scripted_effect_facts(
     text = _read_scripted_effect_file(filepath, mod_path)
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.scripted_effects",
+        "focus_tree.scripted_effects.v2",
         filepath,
         text,
         lambda: _parse_scripted_effect_file(text),
@@ -1102,7 +1124,7 @@ class _FocusFile:
             ]
         )
         return self._cached(
-            "focus_tree.ai_guards.v11",
+            "focus_tree.ai_guards.v12",
             _scan_ai_guards,
             effects,
             commitments,
