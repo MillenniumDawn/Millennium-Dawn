@@ -504,6 +504,7 @@ Metrics, reference analysis, and review tools.
 | **benchmark_report.py**             | Reports headless runs from game.log and error.log: run comparisons, country series, spreads, wars, decision and option counts, law churn, error shapes           |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                        |
 | **content_coverage.py**             | Reports how much of one tag's focuses, decisions, and events fired in a headless run's game.log, and what never did                                              |
+| **focus_reward_audit.py**           | Reports what one tag's focus rewards grant per focus and per branch: buildings, money, spirits, modifier variables, fork ranges, and spirit stacking             |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags, reading every GDP factor from the `@gdp_*` constants in `00_money_system.txt`                                           |
 | **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                                |
 | **headless_run.py**                 | Turns benchmark logging on without -debug, adds test wars, and saves a run's logs and newest save, using untracked on_actions files                              |
@@ -528,6 +529,22 @@ events' top-level `original_tag` triggers name most often, and `--namespace NS`
 no tag trigger. The log names countries by display name, so lines are matched by id,
 not by who fired them. Events and options with no `log` line never reach the log
 and read as never fired.
+
+`focus_reward_audit.py --tag TAG` reports what a tag's focus rewards grant. Per
+focus it totals buildings by type (direct adds plus the standard effects of
+`00_scripted_effects.txt`, read at run time with their prices), constant treasury
+changes, political power, stability, war support, spirits (permanent, timed,
+swapped), dynamic modifier variable adds, and days (`cost` times 7). Focuses group
+into branches by root ancestor. `mutually_exclusive` forks are never summed: a branch
+total is a min..max range over the valid paths, and `--forks` lists what each
+alternative leads to. Stacking flags a factor-style modifier key (`_factor`,
+`_multiplier`, `_modifier`) whose permanent spirits and variable adds pass
+`--stack-limit` (default 0.20) on the best path. Outliers rank buildings, money
+gained, and PP per day of focus time (`--top` rows), and list spirits with more than
+five modifiers. `--focuses` lists every focus, `--file PATH` reads a named focus
+file, and `--json` gives the same data for machines. Formulas, `if` and
+`random_list` rewards, `every_*_state` loops, and effects the tool does not expand
+are not totaled as constants. The module docstring lists what it misses.
 
 ### Generators (`generators/`)
 
