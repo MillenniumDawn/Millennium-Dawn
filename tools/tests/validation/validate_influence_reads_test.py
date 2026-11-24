@@ -254,13 +254,46 @@ _CASES = {
         },
         [("ROOT[decision]", "ROOT[decision]", "self")],
     ),
-    "targeted decision actor is ROOT, target stays unknown": (
+    "country decision target array binds a country without guessing its tag": (
         {
             "common/decisions/test.txt": "category = { decision = { target_array = subjects available = { is_top3_influencer = yes FROM = { influence_higher_5 = yes } } } }"
         },
         [
             ("ROOT[decision]", "ROOT[decision]", "self"),
-            ("ROOT[decision]", "unknown", "unresolved"),
+            ("ROOT[decision]", "country[FROM; decision]", "resolved"),
+        ],
+    ),
+    "literal decision targets influence the decision actor": (
+        {
+            "common/decisions/test.txt": "category = { decision = { targets = { KOR BRA } ai_will_do = { modifier = { sender_influence_higher_10 = yes } } } }"
+        },
+        [("KOR", "ROOT[decision]", "resolved"), ("BRA", "ROOT[decision]", "resolved")],
+    ),
+    "root-only decision checks do not get FROM": (
+        {
+            "common/decisions/test.txt": "category = { decision = { targets = { KOR } allowed = { sender_influence_higher_5 = yes } target_root_trigger = { sender_influence_higher_10 = yes } } }"
+        },
+        [("unknown", "ROOT[decision]", "unresolved")] * 2,
+    ),
+    "state decision does not bind a country": (
+        {
+            "common/decisions/test.txt": "category = { decision = { state_target = yes targets = { KOR } ai_will_do = { modifier = { sender_influence_higher_10 = yes } } } }"
+        },
+        [("unknown", "ROOT[decision]", "unresolved")],
+    ),
+    "dynamic targets do not bind a literal tag": (
+        {
+            "common/decisions/test.txt": "category = { decision = { targets = { KOR } targets_dynamic = yes ai_will_do = { modifier = { sender_influence_higher_10 = yes } } } }"
+        },
+        [("country[FROM; decision]", "ROOT[decision]", "resolved")],
+    ),
+    "scope loop member is known only under a country-only guard": (
+        {
+            _HISTORY: "for_each_scope_loop = { array = members if = { limit = { exists = yes is_top3_influencer = yes } } else = { if = { limit = { influence_higher_5 = yes } } } }"
+        },
+        [
+            ("CHI", "country[for_each_scope_loop]", "resolved"),
+            ("CHI", "unknown", "unresolved"),
         ],
     ),
     "unsupported root context stays unknown": (

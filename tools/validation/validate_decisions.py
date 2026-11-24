@@ -1754,6 +1754,24 @@ def parse_decision_categories(
 _LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
 _ID_PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]*_")
 _TAG_PREFIX_RE = re.compile(r"^([A-Z][A-Z0-9]{2})_")
+_COUNTRY_SCOPE_RE = re.compile(r"(?<![\w.:@])([A-Z][A-Z0-9]{2})\s*=\s*\{")
+
+
+def _named_country(name: str, country_tags: AbstractSet[str]) -> Optional[str]:
+    """Return the one uppercase country token after an uppercase directive."""
+    prefix = _ID_PREFIX_RE.match(name)
+    if not prefix:
+        return None
+    uppercase = [
+        part for part in name[prefix.end() :].split("_") if part != part.lower()
+    ]
+    if (
+        len(uppercase) == 1
+        and uppercase[0] in country_tags
+        and uppercase[0] != prefix.group()[:-1]
+    ):
+        return uppercase[0]
+    return None
 
 
 def _has_uppercase_after_prefix(name: str) -> bool:
@@ -2369,6 +2387,7 @@ class Validator(BaseValidator):
     def validate_cosmetic_targeting(self) -> None:
         """Warn about static country targeting that may only provide a flag overlay."""
         self._log_section("Checking decisions for cosmetic country targeting...")
+        country_tags = self._country_tags()
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
@@ -2392,19 +2411,21 @@ class Validator(BaseValidator):
             ):
                 continue
 
+            if re.search(r"\bFROM\b", blank_quoted_strings(body), re.IGNORECASE):
+                continue
+            if any(
+                fields.get(f"war_with_target_on_{when}") == "yes"
+                for when in ("complete", "remove", "timeout")
+            ):
+                continue
+            if targets == [_named_country(d.token, country_tags)]:
+                continue
             if len(targets) == 1:
                 advice = (
                     f"single country target {targets[0]}; consider a normal decision"
                     " with a custom icon"
                 )
             else:
-                if re.search(r"\bFROM\b", blank_quoted_strings(body), re.IGNORECASE):
-                    continue
-                if any(
-                    fields.get(f"war_with_target_on_{when}") == "yes"
-                    for when in ("complete", "remove", "timeout")
-                ):
-                    continue
                 advice = (
                     f"{len(targets)} country targets but no explicit FROM use;"
                     " use FROM for target-dependent behavior, or review whether"
@@ -3366,31 +3387,59 @@ class Validator(BaseValidator):
             category="unannounced-decision-category",
         )
 
-    def validate_id_case(self):
-        """Flag decision and category ids with uppercase after the tag prefix.
-
-        Opt-in: hundreds of existing ids predate the rule and are not renamed, so CI
-        enables it as a warning and the baseline comparison reports only new ids.
-        """
-        self._log_section("Checking decision and category id case...")
-        results = [
-            (
-                f"Decision {d.token} is not lowercase after its prefix",
-                d.source_path,
-                d.line,
+    def _country_tags(self) -> Set[str]:
+        tags = set()
+        for path in self._collect_files(
+            ["common/country_tags/*.txt"], ignore_staged=True
+        ):
+            tags.update(
+                COUNTRY_TAG_ASSIGNMENT_LINE_RE.findall(
+                    FileOpener.open_text_file(path, strip_comments_flag=True)
+                )
             )
-            for d in parse_all_decision_factories(self.mod_path)
-            if _has_uppercase_after_prefix(d.token)
-        ]
+        return tags
+
+    def validate_id_case(self):
+        """Flag uppercase words after the directive, except explicit country tags."""
+        self._log_section("Checking decision and category id case...")
+        country_tags = self._country_tags()
+        results = []
+        for d in parse_all_decision_factories(self.mod_path):
+            if not _has_uppercase_after_prefix(d.token):
+                continue
+            named = _named_country(d.token, country_tags)
+            if named:
+                raw = blank_quoted_strings(strip_comments(d.raw))
+                body = raw[raw.index("{") + 1 : -1]
+                targets = direct_child_block(body, "targets")[1:-1].split()
+                if (
+                    not d.state_target
+                    and not d.target_array
+                    and (
+                        targets == [named]
+                        or (not targets and named in _COUNTRY_SCOPE_RE.findall(body))
+                    )
+                ):
+                    continue
+            results.append(
+                (
+                    f"Decision {d.token} is not lowercase after its prefix",
+                    d.source_path,
+                    d.line,
+                )
+            )
         for path in self._collect_files(
             ["common/decisions/categories/**/*.txt"], ignore_staged=True
         ):
             text = FileOpener.open_text_file(path, strip_comments_flag=True)
             for m in _LINE_OPENER_RE.finditer(text):
-                if _has_uppercase_after_prefix(m.group(1)):
+                name = m.group(1)
+                if _has_uppercase_after_prefix(name) and not _named_country(
+                    name, country_tags
+                ):
                     results.append(
                         (
-                            f"Category {m.group(1)} is not lowercase after its prefix",
+                            f"Category {name} is not lowercase after its prefix",
                             os.path.relpath(path, self.mod_path),
                             line_of(text, m.start()),
                         )
@@ -3416,15 +3465,7 @@ class Validator(BaseValidator):
             for dec in decs
         }
         cat_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
-        country_tags = set()
-        for path in self._collect_files(
-            ["common/country_tags/*.txt"], ignore_staged=True
-        ):
-            country_tags.update(
-                COUNTRY_TAG_ASSIGNMENT_LINE_RE.findall(
-                    FileOpener.open_text_file(path, strip_comments_flag=True)
-                )
-            )
+        country_tags = self._country_tags()
 
         results = []
         for d in parse_all_decision_factories(self.mod_path):
