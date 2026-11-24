@@ -503,6 +503,7 @@ Metrics, reference analysis, and review tools.
 | **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership, killswitch orphans, and the burdens/mechanics the AI must be able to resolve (issue #3162)     |
 | **benchmark_report.py**             | Reports headless runs from game.log and error.log: run comparisons, country series, spreads, wars, decision and option counts, law churn, error shapes           |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                        |
+| **content_coverage.py**             | Reports how much of one tag's focuses, decisions, and events fired in a headless run's game.log, and what never did                                              |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags, reading every GDP factor from the `@gdp_*` constants in `00_money_system.txt`                                           |
 | **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                                |
 | **headless_run.py**                 | Turns benchmark logging on without -debug, adds test wars, and saves a run's logs and newest save, using untracked on_actions files                              |
@@ -513,6 +514,19 @@ Metrics, reference analysis, and review tools.
 | **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup.  |
 | **review_branch.py**                | Generates a diff summary of the current branch vs main                                                                                                           |
 | **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase                                                                                            |
+
+`content_coverage.py --tag TAG --log game.log` answers how much of a country's
+scripted content a headless run reached. Per kind (focuses, decisions, events) it
+prints fired over defined with a percent, the fired ids by first date and count
+(event options are grouped under their event), the never-fired ids, and ids that
+fired but were not in the mod scan, which marks a gap in the scan. `--json` gives
+the same data for machines. Focuses and decisions are matched by their `TAG_`
+prefix. Events are matched by namespace: a namespace belongs to the tag that its
+events' top-level `original_tag` triggers name most often, and `--namespace NS`
+(repeatable) replaces that rule when it misses one, such as a news namespace with
+no tag trigger. The log names countries by display name, so lines are matched by id,
+not by who fired them. Events and options with no `log` line never reach the log
+and read as never fired.
 
 ### Generators (`generators/`)
 
