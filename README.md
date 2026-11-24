@@ -15,6 +15,18 @@ This repo is the source code for [Millennium Dawn: A Modern Day Mod](https://ste
 - [Git Setup Guide](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs) - Repository setup
 - [Contribution Guide](./CONTRIBUTING.md) - Contribution policies
 
+## Getting an older version
+
+For versions released before January 1, 2026, choose the matching tag in the [Millennium Dawn archive](https://github.com/MillenniumDawn/millennium-dawn-archive/tags) and download its ZIP. The tag checkouts and automatic source downloads in this repository are missing historical assets. For newer versions, use [this repository's releases](https://github.com/MillenniumDawn/Millennium-Dawn/releases).
+
+To check out a full old version without downloading every version's assets, use a partial clone. Replace `v1.12.3a` with the tag you want:
+
+```sh
+git clone --filter=blob:none --no-checkout https://github.com/MillenniumDawn/millennium-dawn-archive.git
+cd millennium-dawn-archive
+git switch --detach v1.12.3a
+```
+
 ## Features
 
 - **Economic Systems**: Taxation, debt management, international investment
@@ -57,8 +69,8 @@ docs/            - Development documentation
 
 ## Documentation
 
-| Topic               | Location                                                                                                    |
-| ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Topic               | Location                                                                                                       |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Code Style          | [docs/src/content/resources/code-stylization-guide.md](./docs/src/content/resources/code-stylization-guide.md) |
 | Modifiers & Effects | [docs/src/content/resources/code-resource.md](./docs/src/content/resources/code-resource.md)                   |
 | Game Rules          | [docs/src/content/tutorials/game-rules.md](./docs/src/content/tutorials/game-rules.md)                         |
