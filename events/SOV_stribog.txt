@@ -1,0 +1,94 @@
+add_namespace = sov_stribog
+
+country_event = {
+	id = sov_stribog.1
+	title = sov_stribog.1.t
+	desc = sov_stribog.1.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { SOV_stribog_ready_for_review = yes }
+
+	option = {
+		name = sov_stribog.1.a
+		trigger = { check_variable = { var = treasury value = 10 compare = greater_than_or_equals } }
+		log = "[GetDateText]: [Root.GetName]: sov_stribog.1.a executed"
+		if = {
+			limit = { SOV_stribog_ready_for_review = yes check_variable = { var = treasury value = 10 compare = greater_than_or_equals } }
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_variable = { SOV_stribog_disposition = 2 }
+			set_country_flag = { flag = SOV_stribog_review_hold value = 1 days = 120 }
+			custom_effect_tooltip = SOV_stribog_independent_review_tt
+		}
+		ai_chance = {
+			base = 75
+			modifier = { factor = 0 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = sov_stribog.1.b
+		log = "[GetDateText]: [Root.GetName]: sov_stribog.1.b executed"
+		if = {
+			limit = { SOV_stribog_ready_for_review = yes }
+			set_variable = { SOV_stribog_disposition = 2 }
+			set_country_flag = { flag = SOV_stribog_review_hold value = 1 days = 30 }
+			hidden_effect = { country_event = { id = sov_stribog.2 days = 30 } }
+			custom_effect_tooltip = SOV_stribog_classified_review_tt
+		}
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0 has_stability < 0.35 }
+		}
+	}
+
+	option = {
+		name = sov_stribog.1.c
+		log = "[GetDateText]: [Root.GetName]: sov_stribog.1.c executed"
+		if = {
+			limit = { SOV_stribog_ready_for_review = yes }
+			set_variable = { SOV_stribog_disposition = 3 }
+			custom_effect_tooltip = SOV_stribog_closure_tt
+		}
+		ai_chance = { base = 5 }
+	}
+}
+
+country_event = {
+	id = sov_stribog.2
+	title = sov_stribog.2.t
+	desc = sov_stribog.2.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { SOV_stribog_enabled = yes }
+
+	immediate = {
+		add_stability = -0.05
+	}
+
+	option = {
+		name = sov_stribog.2.a
+		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = sov_stribog.3
+	title = sov_stribog.3.t
+	desc = sov_stribog.3.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { SOV_stribog_enabled = yes has_tech = SOV_stribog_production_authorized }
+
+	option = {
+		name = sov_stribog.3.a
+		ai_chance = { base = 100 }
+	}
+}
