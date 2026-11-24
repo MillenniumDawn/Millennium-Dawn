@@ -1,0 +1,113 @@
+add_namespace = trinidad
+
+# Petrotrin's refinery at Pointe-à-Pierre is closed in 2018. ROOT = Trinidad and Tobago.
+country_event = {
+	id = trinidad.1
+	title = trinidad.1.t
+	desc = trinidad.1.d
+	picture = GFX_oil_refinery
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = TRI
+		owns_state = 869
+		869 = { synthetic_refinery > 0 }
+	}
+
+	# Close the refinery
+	option = {
+		name = trinidad.1.a
+		log = "[GetDateText]: [This.GetName]: trinidad.1.a executed"
+		869 = {
+			if = {
+				limit = { synthetic_refinery > 0 }
+				remove_building = { type = synthetic_refinery level = 1 }
+			}
+		}
+		set_temp_variable = { treasury_change = 3 }
+		modify_treasury_effect = yes
+		add_stability = -0.04
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+
+	# Keep it open
+	option = {
+		name = trinidad.1.b
+		log = "[GetDateText]: [This.GetName]: trinidad.1.b executed"
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 check_variable = { total_unemployed_percentage_display > 0.08 } }
+			modifier = { factor = 2 has_stability < 0.4 }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Trinidad and Tobago asks for a license to develop the Dragon gas field. ROOT = Venezuela, FROM = Trinidad and Tobago.
+country_event = {
+	id = trinidad.2
+	title = trinidad.2.t
+	desc = trinidad.2.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = TRI
+		NOT = { has_war_with = TRI }
+		TRI = {
+			owns_state = 869
+			NOT = { has_country_flag = TRI_dragon_agreed }
+		}
+	}
+
+	# Grant the license
+	option = {
+		name = trinidad.2.a
+		log = "[GetDateText]: [This.GetName]: trinidad.2.a executed"
+		add_opinion_modifier = { target = TRI modifier = gratitude }
+		reverse_add_opinion_modifier = { target = TRI modifier = gratitude }
+		set_temp_variable = { treasury_change = 2 }
+		modify_treasury_effect = yes
+		TRI = {
+			set_country_flag = TRI_dragon_agreed
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			add_resource = { type = oil amount = 4 state = 869 }
+			if = {
+				limit = {
+					country_exists = USA
+					USA = { has_opinion = { target = VEN value < -30 } }
+				}
+				USA = { add_opinion_modifier = { target = TRI modifier = aided_our_enemy } }
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 has_opinion = { target = TRI value > 20 } }
+			modifier = { factor = 0.25 has_opinion = { target = TRI value < -20 } }
+			modifier = {
+				factor = 1.5
+				country_exists = USA
+				USA = { has_opinion = { target = VEN value < -30 } }
+			}
+			modifier = { factor = 0.5 has_war = yes }
+		}
+	}
+
+	# Decline the request
+	option = {
+		name = trinidad.2.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = TRI value < 0 } }
+		}
+	}
+}
