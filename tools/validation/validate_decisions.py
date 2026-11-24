@@ -3097,7 +3097,7 @@ class Validator(BaseValidator):
 
             try:
                 cost_val = int(d.cost) if d.cost else 0
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 cost_val = 0
 
             for block_name, block in (
