@@ -105,7 +105,7 @@ repos:
   # Ruff owns lint (E/F) and import order (I). Config (select, ignores,
   # per-file-ignores, and isort) lives in pyproject.toml.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.17
+    rev: v0.17.5
     hooks:
       - id: ruff
         name: Lint Python (ruff)
@@ -119,23 +119,25 @@ repos:
         name: Format Python (black)
         entry: black
         language: python
-        additional_dependencies: [black==26.5.1]
+        additional_dependencies: [black==26.10.1]
         files: '^tools/.*\.py$'
       - id: pylint-tools
         name: Check Python correctness (pylint)
         # Staged files only. CI's tools-quality job lints the whole tree.
         entry: pylint -j 0 --reports=no --score=no
         language: python
-        additional_dependencies: [pylint==4.0.6]
+        additional_dependencies: [pylint==4.1.4]
         files: '^tools/.*\.py$'
         require_serial: true
       - id: mypy-tools
         name: Type-check typed tools (mypy)
         entry: mypy
         language: python
-        additional_dependencies: [mypy==2.3.0]
+        additional_dependencies: [mypy==2.4.1]
         # Mirrors [tool.mypy] files in pyproject.toml.
-        files: '^(tools/report_lib/.*\.py|tools/shared_utils\.py|tools/validation/(validator_common|disk_cache)\.py|pyproject\.toml)$'
+        files: >-
+          (?x)^(tools/report_lib/.*\.py|tools/shared_utils\.py|
+          tools/validation/(validator_common|disk_cache)\.py|pyproject\.toml)$
         pass_filenames: false
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
@@ -225,7 +227,7 @@ repos:
         # tools/tests/precommit_validate_test.py pins coverage against drift.
         entry: python3 tools/precommit_validate.py --no-color
         language: system
-        files: '\.(txt|yml|gfx)$'
+        files: '\.(txt|yml|gfx|gui)$'
         pass_filenames: true
         # Each run validates the whole staged set, so pre-commit must not
         # split the file list across parallel copies.
@@ -259,9 +261,8 @@ repos:
         pass_filenames: false
       - id: md-validate-asset-data
         name: MD Validate 3D model meshes and texture data
-        # Commit-stage only, like md-validate-mesh-textures. Triangle counts
-        # and texture formats are warnings, so verbose shows them on a
-        # passing run.
+        # CI checks changed DDS headers only. Here verbose also shows the
+        # triangle count and model texture size warnings.
         entry: >-
           python3 tools/validation/validate_asset_data.py --staged --strict
           --no-color

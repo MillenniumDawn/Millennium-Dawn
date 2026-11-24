@@ -1717,6 +1717,38 @@ _MONEY_COST_CASES = {
         frozenset(),
         (0.0, True, True),
     ),
+    "capped GDP percentage is income": (
+        "set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.2 } }\n"
+        "clamp_temp_variable = { var = treasury_change max = 80 }\n"
+        "modify_treasury_effect = yes",
+        frozenset(),
+        (0.0, False, False),
+    ),
+    "GDP income capped below zero": (
+        "set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.2 } }\n"
+        "clamp_temp_variable = { var = treasury_change max = -2 }\n"
+        "modify_treasury_effect = yes",
+        frozenset(),
+        (0.0, True, True),
+    ),
+    "additional operation can reverse GDP income": (
+        "set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.2 subtract = 50 } }\n"
+        "modify_treasury_effect = yes",
+        frozenset(),
+        (0.0, True, True),
+    ),
+    "proportional debt cut": (
+        "set_temp_variable = { debt_change = { value = debt multiply = -0.2 } }\n"
+        "modify_debt_effect = yes",
+        frozenset(),
+        (0.0, False, False),
+    ),
+    "proportional debt increase": (
+        "set_temp_variable = { debt_change = { value = debt multiply = 0.2 } }\n"
+        "modify_debt_effect = yes",
+        frozenset(),
+        (0.0, True, True),
+    ),
     "bare identifier change": (
         "set_temp_variable = { treasury_change = needed_money }\n"
         "modify_treasury_effect = yes",
@@ -2183,6 +2215,99 @@ def test_ai_will_do_guards(tmp_path, effects, extra, reward, modifiers, expected
 
     assert [(i.category, i.message) for i in v._issues] == expected
     assert v.warnings_found == len(expected)
+
+
+# case: (extra scripted effects, reward, AI modifiers, missing-guard category)
+_PAYER_GUARD_CASES = {
+    "foreign literal spend": ("", f"SOV = {{ {_spend(-5)} }}", "", None),
+    "foreign scripted spend": (
+        _SPEND_EFFECT,
+        "SOV = { spend_money_effect = yes }",
+        "",
+        None,
+    ),
+    "explicit owner spends": (
+        "",
+        f"CHE = {{ {_spend(-5)} }}",
+        "",
+        "missing-bankruptcy-guard",
+    ),
+    "foreign spend and owner spend below threshold": (
+        "",
+        f"SOV = {{ {_spend(-5)} }} {_spend(-0.5)}",
+        "",
+        None,
+    ),
+    "foreign guard does not cover owner spend": (
+        "",
+        f"SOV = {{ {_spend(-5)} }} {_spend(-2)}",
+        "modifier = { factor = 0 SOV = { has_active_mission = "
+        "bankruptcy_incoming_collapse } }",
+        "missing-bankruptcy-guard",
+    ),
+    "owner uses temp variable set in another scope": (
+        "",
+        "SOV = { set_temp_variable = { treasury_change = -2 } } "
+        "modify_treasury_effect = yes",
+        "",
+        "missing-bankruptcy-guard",
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "effects, reward, modifiers, expected",
+    _PAYER_GUARD_CASES.values(),
+    ids=_PAYER_GUARD_CASES,
+)
+def test_bankruptcy_guard_counts_owner_spend(
+    tmp_path, effects, reward, modifiers, expected
+):
+    _write_effects_file(tmp_path, effects)
+    text = FOCUS_TEMPLATE.format(extra="", reward=reward, modifiers=modifiers)
+    text = text.replace("id = test_tree", "id = test_tree\n\tcountry = { tag = CHE }")
+    _focus_file(tmp_path, text)
+    validator = _validator(tmp_path)
+    validator.validate_ai_will_do_guards()
+
+    assert [issue.category for issue in validator._issues] == (
+        [expected] if expected else []
+    )
+
+
+@pytest.mark.parametrize(
+    ("modifier", "unneeded"),
+    [
+        (
+            "modifier = { factor = 0 SOV = { has_active_mission = "
+            "bankruptcy_incoming_collapse } }",
+            False,
+        ),
+        (
+            "modifier = { factor = 0 has_active_mission = "
+            "bankruptcy_incoming_collapse }",
+            True,
+        ),
+    ],
+    ids=["guard matches foreign payer", "guard checks another payer"],
+)
+def test_foreign_treasury_guard_matches_its_payer(tmp_path, modifier, unneeded):
+    _write_effects_file(tmp_path)
+    text = FOCUS_TEMPLATE.format(
+        extra="",
+        reward=f"SOV = {{ {_spend(-3)} }}",
+        modifiers=modifier,
+    ).replace("id = test_tree", "id = test_tree\n\tcountry = { tag = CHE }")
+    _focus_file(tmp_path, text)
+    validator = _validator(tmp_path)
+    validator.validate_ai_will_do_guards()
+
+    warnings = [
+        issue
+        for issue in validator._issues
+        if issue.category == "unneeded-treasury-guard"
+    ]
+    assert bool(warnings) is unneeded
 
 
 @pytest.mark.parametrize(

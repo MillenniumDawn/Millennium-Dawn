@@ -17,7 +17,7 @@ branch. If you only want to play, use [Getting Started](/getting-started/) inste
 | Tool            | Version              | Purpose                              |
 | --------------- | -------------------- | ------------------------------------ |
 | **Git**         | Any recent version   | Version control                      |
-| **Python**      | 3.12+                | Dev tools, validators, standardizers |
+| **Python**      | 3.14+                | Dev tools, validators, standardizers |
 | **Text editor** | VS Code recommended  | Editing script files                 |
 | **HOI4**        | Match mod descriptor | Testing changes in-game              |
 
@@ -33,27 +33,21 @@ Optional but useful:
 
 # Cloning the Repository
 
-Clone the repository with GitHub Desktop by following the [Git & GitHub Desktop](/dev-resources/md-git-resources/) guide. It walks through installing GitHub Desktop, cloning over HTTPS, and your first commit and push.
+Open a terminal in your HOI4 mod directory. Use a partial clone to download the current mod without downloading old versions of its art and other files.
 
 - **Team members (write access)**: clone `https://github.com/MillenniumDawn/Millennium-Dawn.git` directly:
 
   ```bash
-  git clone https://github.com/MillenniumDawn/Millennium-Dawn.git
+  git clone --filter=blob:none https://github.com/MillenniumDawn/Millennium-Dawn.git
   ```
-
-  Experienced Git users can save about 9 GB with a partial clone (see [Use a Partial Clone](#use-a-partial-clone)).
 
 - **Outside contributors**: fork the repository first (see [GitHub: Fork a repo](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)), then clone your fork and add the upstream remote. The [Git Workflow](/dev-resources/git-workflow/) guide has the full fork-based walkthrough.
 
 ## Use a Partial Clone
 
-Partial clones are harder to manage and need some Git experience. If you are new to Git, use a full clone (plain `git clone` or GitHub Desktop) instead.
+`--filter=blob:none` keeps the commit history. Checkout downloads the files needed to run the current mod. Git fetches older file contents when an operation such as `git blame` or checking out an old tag needs them, so those operations may need a connection. Existing clones do not shrink.
 
-This is a temporary measure for those who care about download size. It matters less once the one-time history cut in [issue #6523](https://github.com/MillenniumDawn/Millennium-Dawn/issues/6523) is done, which shrinks the clone for everyone.
-
-If you are comfortable with Git, add `--filter=blob:none` when you clone. A new clone is about 11 GB instead of 20 GB. You keep full log and blame, and `.git` is about 3.3 GB because old file versions download only when a command needs them.
-
-Commands that read old binary versions, such as checking out an old tag, download them at that point. Existing clones do not shrink. To get the benefit, re-clone with the flag. For a fork, use your fork's URL.
+To use GitHub Desktop with a partial clone, choose **File > Add local repository** and select the cloned folder. For a full clone through the GUI instead, see [Git & GitHub Desktop](/dev-resources/md-git-resources/).
 
 ## Staying Up to Date
 

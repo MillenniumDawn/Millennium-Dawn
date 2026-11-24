@@ -27,7 +27,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   that directory and check out only the few game files named in the workflow.
 - `.jscpd.json` fails the quality job on one pasted block. Factor shared test setup into
   a helper.
-- The repository ruleset requires the `Test suite gate` check.
+- The `Test suite gate` check waits for validation jobs, not the baseline scan
+  or comparison report. Reporting failures stay visible in Actions but do not
+  fail the gate.
 
 ## Where a check runs
 
@@ -43,16 +45,18 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
   (`tools/precommit_validate.py`), `validate_defines.py`, `validate_mesh_textures.py`
   on any staged `gfx/` path, and `validate_asset_data.py` on
-  staged `.dds` files under `gfx/` or `map/` and `.mesh` files under `gfx/models/`. The
-  model checks never run in CI.
+  staged `.dds` files under `gfx/` or `map/` and `.mesh` files under `gfx/models/`. In CI,
+  the file-path job checks out only DDS additions, edits and rename destinations from
+  the pinned PR head. The shared workspace stays sparse, and mesh audits remain local.
   On a merge commit the dispatcher checks only the conflicted files pre-commit passes,
   plus staged deletions and rename origins.
 - Run a CI-only validator locally with
   `python3 tools/validation/validate_<topic>.py --staged --no-color`. Drop `--staged`
   for a full-repo scan.
 - `--strict` gates on ERROR only. A check with a standing backlog ships as WARNING until
-  the backlog is cleared. A new strict check needs a baseline audit first, see the
-  review checklist in `tools/README.md`.
+  the backlog is cleared. The DDS art-standard check gates only changed textures;
+  a manual scan reports existing art-standard violations as warnings. A new strict
+  check needs a baseline audit first, see the review checklist in `tools/README.md`.
 - The events batch enables `--check-ai-chance-costs` as WARNING while the existing
   backlog is reviewed. It checks relevant AI modifiers, not just their presence, and
   ignores display-only `effect_tooltip` costs. Commit hooks leave this cross-reference
@@ -187,7 +191,7 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 
 ## Refreshing vanilla-derived data
 
-CI has no HOI4 install, so seven checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
+CI has no HOI4 install, so eight checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
 
 Files live under `tools/validation/` except the `docs` target.
 
@@ -200,9 +204,11 @@ Files live under `tools/validation/` except the `docs` target.
 | `gui`      | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
 | `paths`    | `vanilla_paths.txt`            | `validate_file_paths.py`     |
 | `sprites`  | `vanilla_sprites.txt`          | `validate_gfx_references.py` |
+| `ui-paths` | `vanilla_ui_paths.txt`         | `validate_gfx_references.py` |
 
 - `docs` files are verbatim copies of the game's own `documentation/`.
 - `fonts` feeds the undefined-font check; `gui` the MD-authored vs vanilla override split (ERROR/WARNING).
+- `ui-paths` groups vanilla interface files by the path the game loads them from, for the check on what an MD file at the same path drops. It also reads the game binary (`hoi4` or `hoi4.exe`) to mark the names the engine looks up. The validator reads only the manifest, even with an install present.
 - `sprites` is also read by `validate_ideas.py` (names) and `validate_decisions.py` (sizes). Lines are `GFX_name WxH`; the size is the texture's header dimensions and is absent when the sprite has no `texturefile` or the file is unreadable. Names come first so every reader that only wants names keeps working. The refresh reads ~30k texture headers and takes about a minute. Sprites from DLCs the refreshing machine does not own would drop out of the manifest; the ten music-pack sprites (`GFX_sabaton_album_art`, `GFX_*_comintern`, …) were kept by hand for that reason, so check the name diff before committing a refresh.
 
 ```bash

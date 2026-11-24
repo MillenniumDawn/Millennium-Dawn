@@ -9,6 +9,7 @@ from decimal import Decimal
 from functools import cached_property
 from typing import (
     Any,
+    Callable,
     Dict,
     FrozenSet,
     Iterator,
@@ -49,6 +50,9 @@ from validate_events import (
     war_target_payers,
 )
 from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
+from validator_common import (
+    DEFICIT_GUARD_RE as _DEFICIT_GUARD_RE,
+)
 from validator_common import (
     FACTOR_ZERO_RE,
     BaseValidator,
@@ -211,6 +215,15 @@ _TREASURY_SCALE_VERBS = frozenset({"multiply_temp_variable", "multiply_variable"
 # Matched on the bare name: a source may be read out of another country
 # (GER.gdp_per_capita), and the scope qualifier does not change its sign.
 _TREASURY_NONNEGATIVE_VARIABLES = frozenset({"gdp_total", "gdp_per_capita"})
+_GDP_INCOME_EXPR = re.compile(
+    r"\{\s*value\s*=\s*(?:gdp_total|gdp_per_capita)\s+multiply\s*=\s*\d+(?:\.\d+)?\s*\}"
+)
+_DEBT_CUT_EXPR = re.compile(
+    r"\{\s*value\s*=\s*debt\s+multiply\s*=\s*-\d+(?:\.\d+)?\s*\}"
+)
+_NONNEGATIVE_TREASURY_CAP = re.compile(
+    r"\{\s*var\s*=\s*treasury_change\s+max\s*=\s*\d+(?:\.\d+)?\s*\}"
+)
 _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # modify_treasury_effect and its variants (e.g. modify_treasury_effect_corruption,
 # which scales the applied amount by a corruption-level idea before adding it to
@@ -354,6 +367,28 @@ def _is_conjunctive_guard(body: str, pos: int, *, negated: bool = False) -> bool
     return "OR" not in labels and (negated or "NOT" not in labels)
 
 
+def _country_scope_at(body: str, pos: int, own_tags: Optional[FrozenSet[str]]) -> str:
+    """Return the country role enclosing a treasury effect or check."""
+    label, opener = _enclosing_block_label(body, pos)
+    while label is not None:
+        if label == "FROM":
+            return "FROM"
+        if label in {"ROOT", "PREV", "OWNER", "CONTROLLER", "CAPITAL"}:
+            return "ROOT"
+        if _LITERAL_TAG_RE.fullmatch(label) and label not in _NON_TAG_KEYWORDS:
+            return "ROOT" if own_tags and label in own_tags else label
+        if _COUNTRY_ITERATOR_RE.match(label):
+            return "_OTHER"
+        label, opener = _enclosing_block_label(body, opener)
+    return "ROOT"
+
+
+def _may_be_focus_owner(role: str, own_tags: Optional[FrozenSet[str]]) -> bool:
+    return role == "ROOT" or (
+        own_tags is None and bool(_LITERAL_TAG_RE.fullmatch(role))
+    )
+
+
 def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, int]]:
     """Spans of every `effect_tooltip = { }` subtree between *start* and *end*.
 
@@ -397,11 +432,21 @@ def _payment_keys(body: str, waived_at_start: bool) -> Iterator[Tuple[int, str, 
             yield m.start(), m["key"], not waived.isdisjoint(stack)
 
 
+def _cost_operand(match: re.Match[str], free_expr: re.Pattern[str]) -> str | None:
+    # A proven income or debt cut contributes zero spend, not an unknown charge.
+    value = match.group(1)
+    if value == "{" and free_expr.match(match.string, match.start(1)):
+        return "0"
+    return value
+
+
 def _body_money_cost(
     body: str,
     money_effects: FrozenSet[str],
     waivable: FrozenSet[str] = frozenset(),
     waived_at_start: bool = False,
+    *,
+    is_payer: Optional[Callable[[int], bool]] = None,
 ) -> Tuple[float, bool, bool]:
     """Money an effect body spends. Returns (spend, has_cost, unknown).
 
@@ -419,7 +464,8 @@ def _body_money_cost(
     An amount whose sign is still known to be positive after scaling is income,
     not an unknown cost, so it counts as neither.
     Amounts inside effect_tooltip previews (outcomes applied elsewhere) are
-    ignored.
+    ignored. With *is_payer*, only effects at matching positions count, while
+    temp variable writes in every scope can still supply their amounts.
     """
     spans = _effect_tooltip_spans(body, 0, len(body))
 
@@ -430,7 +476,12 @@ def _body_money_cost(
     for m in _TREASURY_CHANGE_RE.finditer(body):
         if previewed(m.start()):
             continue
-        verb, _ = _enclosing_block_label(body, m.start())
+        verb, opener = _enclosing_block_label(body, m.start())
+        if verb in {"clamp_temp_variable", "clamp_variable"} and (
+            _NONNEGATIVE_TREASURY_CAP.match(body, opener)
+        ):
+            # A nonnegative ceiling cannot turn income into a charge or change a loss.
+            continue
         if verb in _TREASURY_MUTATE_VERBS:
             val = m.group(1)
             scaled = (
@@ -443,7 +494,7 @@ def _body_money_cost(
             else:
                 events.append((m.start(), "mutate", None))
         elif verb in _TREASURY_SET_VERBS:
-            events.append((m.start(), "set", m.group(1)))
+            events.append((m.start(), "set", _cost_operand(m, _GDP_INCOME_EXPR)))
     for m in _MODIFY_TREASURY_RE.finditer(body):
         if not previewed(m.start()):
             events.append((m.start(), "apply", "variant" if m.group(1) else None))
@@ -473,7 +524,7 @@ def _body_money_cost(
     seg_neg = False
     seg_sign_unknown = False
     seg_var_base = False
-    for _, kind, val in events:
+    for pos, kind, val in events:
         if kind == "set":
             seg_has_set = True
             if val is not None and _NUMERIC_LITERAL_RE.match(val):
@@ -531,7 +582,7 @@ def _body_money_cost(
                 cur_unknown = True
                 cur_income = False
             # a non-negative applied treasury_change is income, not a cost
-            if not cur_income:
+            if not cur_income and (is_payer is None or is_payer(pos)):
                 if cur_unknown:
                     has_cost = True
                     unknown = True
@@ -542,14 +593,14 @@ def _body_money_cost(
             seg_neg, seg_sign_unknown, seg_var_base = False, False, False
 
     # debt_change carries over between applies like treasury_change. Only a
-    # segment whose every set is a literal cut is known to be free.
+    # segment whose every set is a known cut is free.
     debt_events: List[Tuple[int, str, Optional[str]]] = []
     for m in _DEBT_CHANGE_RE.finditer(body):
         if previewed(m.start()):
             continue
         verb, _ = _enclosing_block_label(body, m.start())
         if verb in _TREASURY_SET_VERBS:
-            debt_events.append((m.start(), "set", m.group(1)))
+            debt_events.append((m.start(), "set", _cost_operand(m, _DEBT_CUT_EXPR)))
         elif verb in _TREASURY_MUTATE_VERBS:
             debt_events.append((m.start(), "set", None))
     for m in _MODIFY_DEBT_RE.finditer(body):
@@ -558,7 +609,7 @@ def _body_money_cost(
     debt_events.sort()
     cut = False  # debt_change set outside this body
     seg_cut, seg_has_set = True, False
-    for _, kind, val in debt_events:
+    for pos, kind, val in debt_events:
         if kind == "set":
             seg_has_set = True
             seg_cut = (
@@ -570,7 +621,7 @@ def _body_money_cost(
             continue
         if seg_has_set:
             cut = seg_cut
-        if not cut:
+        if not cut and (is_payer is None or is_payer(pos)):
             has_cost = True
             unknown = True
             break
@@ -582,6 +633,7 @@ def _body_money_cost(
                 key in money_effects
                 and not previewed(pos)
                 and not (waived and key in waivable)
+                and (is_payer is None or is_payer(pos))
             ):
                 has_cost = True
                 unknown = True
@@ -646,7 +698,7 @@ def _scripted_effect_facts(
     text = _read_scripted_effect_file(filepath, mod_path)
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        "focus_tree.scripted_effects",
+        "focus_tree.scripted_effects.v2",
         filepath,
         text,
         lambda: _parse_scripted_effect_file(text),
@@ -1072,7 +1124,7 @@ class _FocusFile:
             ]
         )
         return self._cached(
-            "focus_tree.ai_guards.v10",
+            "focus_tree.ai_guards.v12",
             _scan_ai_guards,
             effects,
             commitments,
@@ -1124,7 +1176,7 @@ def _scan_ai_guards(
     Returns one dict per focus: id, line, search filters, the staffable
     building types its rewards construct (directly or via a scripted effect
     from *effects*, and never from inside an effect_tooltip, which only
-    previews), the money its rewards spend (spend / unknown), whether an
+    previews), the money its rewards charge the owner (spend / unknown), whether an
     effect_tooltip previews a cost the focus commits to but pays elsewhere
     (a cross-country offer settled in the event), the treasury checks its
     ai_will_do lowers the weight on (see lowering_treasury_checks), and the
@@ -1133,9 +1185,8 @@ def _scan_ai_guards(
     scripted triggers are not recognized).
 
     has_cost, pp_cost (a literal political power loss), and commits_money
-    (validate_events.commits_money) read only what the owner runs, by
-    validate_events.split_roles. The events and scripted effects the rewards
-    start go in fires and calls for the parent to trace.
+    (validate_events.commits_money) consider costs to the owner. The events and
+    scripted effects the rewards start go in fires and calls for the parent to trace.
     """
     staffable_map, money_effects, waivable = effects
     own = source.owner_tags or None
@@ -1148,6 +1199,7 @@ def _scan_ai_guards(
 
         buildings: Set[str] = set()
         spend = 0.0
+        money_cost_roles: Set[str] = set()
         has_cost = False
         unknown_cost = False
         previewed_cost = False
@@ -1191,7 +1243,14 @@ def _scan_ai_guards(
                         if t in _STAFFABLE_TRIGGERS
                     )
                 bpos = bend
-            s, _, u = _body_money_cost(rbody, called_money, waivable)
+            scope_body = blank_quoted_strings(rbody)
+
+            def owner_pays(pos: int, body: str = scope_body) -> bool:
+                return _may_be_focus_owner(_country_scope_at(body, pos, own), own)
+
+            s, owner_cost, u = _body_money_cost(
+                scope_body, called_money, waivable, is_payer=owner_pays
+            )
             spend += s
             unknown_cost = unknown_cost or u
             previewed_cost = previewed_cost or any(
@@ -1200,22 +1259,21 @@ def _scan_ai_guards(
                 )[1]
                 for s0, e0 in spans
             )
-            texts, reward_fires, reward_calls = split_roles(
-                blank_quoted_strings(rbody), own
+            texts, reward_fires, reward_calls = split_roles(scope_body, own)
+            money_cost_roles.update(
+                role
+                for role, text in texts.items()
+                if role != "ROOT" and _body_money_cost(text, called_money, waivable)[1]
             )
             fires += reward_fires
             calls += reward_calls
             owner_text = " ".join(
-                text
-                for role, text in texts.items()
-                if role == "ROOT" or (own is None and _LITERAL_TAG_RE.match(role))
+                text for role, text in texts.items() if _may_be_focus_owner(role, own)
             )
             # A tax rate change moves potential_income, which the bankruptcy
             # mission weighs against debt_rate.
             has_cost = (
-                has_cost
-                or _body_money_cost(owner_text, called_money, waivable)[1]
-                or bool(_TAX_RATE_EFFECT_RE.search(owner_text))
+                has_cost or owner_cost or bool(_TAX_RATE_EFFECT_RE.search(owner_text))
             )
             pp_cost = pp_cost or bool(_PP_MALUS_RE.search(owner_text))
             targets = war_target_payers(texts)
@@ -1231,6 +1289,7 @@ def _scan_ai_guards(
 
         guards: Set[str] = set()
         treasury_checks: Set[str] = set()
+        treasury_checks_by_role: Dict[str, Set[str]] = defaultdict(set)
         am = _AI_WILL_DO_START.search(fbody)
         if am:
             abody, _ = _extract_block(fbody, am.start())
@@ -1256,9 +1315,24 @@ def _scan_ai_guards(
                             if _is_conjunctive_guard(mbody, gm.start(1), negated=True):
                                 guards.add(gm.group(1))
                         for gm in _BANKRUPTCY_GUARD_RE.finditer(mbody):
-                            if _is_conjunctive_guard(mbody, gm.start()):
+                            if _is_conjunctive_guard(
+                                mbody, gm.start()
+                            ) and _may_be_focus_owner(
+                                _country_scope_at(mbody, gm.start(), own), own
+                            ):
                                 guards.add("bankruptcy_incoming_collapse")
-                    treasury_checks |= lowering_treasury_checks(mbody)
+                    lowered_checks = lowering_treasury_checks(mbody)
+                    treasury_checks |= lowered_checks
+                    for check, pattern in (
+                        ("bankruptcy", _BANKRUPTCY_GUARD_RE),
+                        ("deficit", _DEFICIT_GUARD_RE),
+                    ):
+                        if check not in lowered_checks:
+                            continue
+                        for gm in pattern.finditer(mbody):
+                            if _is_conjunctive_guard(mbody, gm.start()):
+                                role = _country_scope_at(mbody, gm.start(), own)
+                                treasury_checks_by_role[role].add(check)
                     mpos = mend
 
         out.append(
@@ -1270,6 +1344,7 @@ def _scan_ai_guards(
                 "buildings": buildings,
                 "guards": guards,
                 "spend": spend,
+                "money_cost_roles": money_cost_roles,
                 "has_cost": has_cost,
                 "unknown": unknown_cost,
                 "previewed_cost": previewed_cost,
@@ -1279,6 +1354,7 @@ def _scan_ai_guards(
                 "calls": tuple(calls),
                 "owner_tags": own,
                 "treasury_checks": treasury_checks,
+                "treasury_checks_by_role": treasury_checks_by_role,
             }
         )
     return out
@@ -2207,7 +2283,7 @@ class Validator(BaseValidator):
         can_staff (issue #2233): a focus whose reward builds a staffable
         building — directly or via a scripted effect — needs the matching
         can_staff_an_* = no modifier so the AI skips it with no free workers.
-        Bankruptcy: a focus whose reward spends money needs a
+        Bankruptcy: a focus whose reward charges its owner needs a
         has_active_mission = bankruptcy_incoming_collapse modifier. Spend is
         the money the reward actually costs (summed negative treasury_change,
         or a money-spending scripted effect), not the focus completion time —
@@ -2277,8 +2353,11 @@ class Validator(BaseValidator):
                     ),
                     bool(d["owner_tags"]),
                 )
+                payer_checks = set()
+                for role in d["money_cost_roles"]:
+                    payer_checks.update(d["treasury_checks_by_role"].get(role, set()))
                 if unneeded_treasury_checks(
-                    d["treasury_checks"],
+                    d["treasury_checks"] - payer_checks,
                     d["has_cost"]
                     or d["previewed_cost"]
                     or d["commits_money"]

@@ -42,6 +42,14 @@ dead weight, or a copy-paste where one copy was meant to differ.
 A `THIS = { ... }` wrapper runs in the scope it is already in, so it is flagged
 to be unwrapped. Bodies that read `PREV` are skipped (see _find_this_wrappers).
 
+Two ladder shapes are flagged as well:
+
+  * three or more adjacent `if` blocks that each compare one variable with a
+    constant and add a constant to another -> one comparator-sum expression
+  * three or more adjacent `if` / `else_if` branches over `has_idea` that only
+    add or set a value, when every idea in that idea group already sets one
+    variable in `on_add` and the values are linear in it -> read the variable
+
 Output is WARNING-only.
 """
 
@@ -50,7 +58,9 @@ import os
 import re
 import sys
 from bisect import bisect_left
-from functools import cached_property
+from fractions import Fraction
+from functools import cached_property, lru_cache
+from itertools import groupby
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -1028,6 +1038,221 @@ def _scan_decision_file(src: _Script) -> list:
     return findings
 
 
+# Two steps still read fine as `if`s; the fold pays off from three.
+_LADDER_MIN = 3
+_IF_BLOCK_RE = _keyword_block_re("if")
+_BRANCH_BLOCK_RE = _keyword_block_re("if", "else_if")
+_ELSE_RE = re.compile(r"\s*else(?:_if)?\s*=\s*\{")
+_NUMBER_RE = re.compile(r"-?\d+(?:\.\d+)?")
+_THRESHOLD_STEP_RE = re.compile(
+    r"\s*limit\s*=\s*\{\s*check_variable\s*=\s*\{([^{}]*)\}\s*\}\s*"
+    r"(add_to_variable|add_to_temp_variable)\s*=\s*\{([^{}]*)\}\s*"
+)
+_IDEA_LIMIT_RE = re.compile(r"\s*limit\s*=\s*\{\s*has_idea\s*=\s*([^\s{}=]+)\s*\}")
+_VALUE_EFFECTS = frozenset(
+    {"add_to_variable", "add_to_temp_variable", "set_variable", "set_temp_variable"}
+)
+
+
+def _adjacent_runs(src: _Script, block_re: re.Pattern[str], parse, chains: bool):
+    """Return one list of (line, parsed) per maximal run of adjacent sibling
+    blocks that *parse(text, start, end)* accepts for the body span (None
+    rejects). An accepted block holds no block of its own kind, so whitespace
+    between two of them proves they are siblings. A block that an `else` /
+    `else_if` follows heads a chain and is rejected unless *chains*."""
+    text = src.text
+    runs: list[list] = []
+    run: list = []
+    prev_end = None
+    for m in block_re.finditer(text):
+        end = src.block_end(m.end() - 1, len(text))
+        if end == -1:
+            continue
+        item = parse(text, m.end(), end - 1)
+        if item is not None and not chains and _ELSE_RE.match(text, end):
+            item = None
+        touching = prev_end is not None and not text[prev_end : m.start()].strip()
+        if item is None or not touching:
+            if run:
+                runs.append(run)
+            run = []
+        if item is not None:
+            run.append((src.line(m.start()), item))
+        prev_end = end if item is not None else None
+    if run:
+        runs.append(run)
+    return runs
+
+
+def _variable_value(body: str):
+    """Return (variable, value) for `{ var = X value = V }` or `{ X = V }`, else
+    None. Any comparator or tooltip beside them is ignored."""
+    fields = [(name, value) for name, value, _ in _iter_direct_assignments(body)]
+    named = dict(fields)
+    if "var" in named:
+        return named["var"], named.get("value", "")
+    return fields[0] if len(fields) == 1 else None
+
+
+def _variable_constant(body: str):
+    """Return (variable, constant) for `_variable_value` bodies with a number."""
+    pair = _variable_value(body)
+    return pair if pair and _NUMBER_RE.fullmatch(pair[1]) else None
+
+
+def _threshold_step(text: str, start: int, end: int):
+    """Return (tested variable, add effect, target) when an `if` body is a
+    limit of one `check_variable` against a constant plus one constant add. A
+    step that adds to the variable it tests is rejected: its later siblings read
+    the changed value, which a comparator sum would not."""
+    m = _THRESHOLD_STEP_RE.fullmatch(text, start, end)
+    if m is None:
+        return None
+    tested = _variable_constant(m.group(1))
+    added = _variable_constant(m.group(3))
+    if tested is None or added is None or tested[0] == added[0]:
+        return None
+    return tested[0], m.group(2), added[0]
+
+
+def _find_threshold_ladders(src: _Script):
+    """Return (line, count, tested variable, target) for each run of 3+ adjacent
+    `if` blocks that test the same variable against constants and add constants
+    to the same target."""
+    if "check_variable" not in src.text or "add_to_" not in src.text:
+        return []
+    results = []
+    for run in _adjacent_runs(src, _IF_BLOCK_RE, _threshold_step, chains=False):
+        for step, group in groupby(run, key=lambda entry: entry[1]):
+            steps = list(group)
+            if len(steps) >= _LADDER_MIN:
+                results.append((steps[0][0], len(steps), step[0], step[2]))
+    return results
+
+
+def _has_idea_branch(text: str, start: int, end: int):
+    """Return (idea, {(effect, variable): value}) when an `if` / `else_if` body
+    is `limit = { has_idea = X }` plus only add or set effects, else None. An
+    assignment `_variable_value` cannot read is kept as an empty variable and
+    value, which `_linear_in_level` rejects as a non-number."""
+    limit = _IDEA_LIMIT_RE.match(text, start, end)
+    if limit is None:
+        return None
+    values = {}
+    for name, value, is_block in _iter_direct_assignments(text[limit.end() : end]):
+        if not is_block or name not in _VALUE_EFFECTS:
+            return None
+        variable, assigned = _variable_value(value) or ("", "")
+        values[name, variable] = assigned
+    if not values:
+        return None
+    return limit.group(1), values
+
+
+def _find_has_idea_chains(src: _Script):
+    """Return (line, [(idea, values)]) for each run of 3+ adjacent `if` /
+    `else_if` branches over `has_idea` that only add or set a value. Whether
+    the ideas already set a variable is decided later, against the idea files."""
+    chains = []
+    for run in _adjacent_runs(src, _BRANCH_BLOCK_RE, _has_idea_branch, chains=True):
+        if len(run) >= _LADDER_MIN:
+            chains.append((run[0][0], [branch for _, branch in run]))
+    return chains
+
+
+def _on_add_level(src: _Script, start: int, end: int):
+    """Return (variable, level) for the one variable an idea body sets to a
+    constant in `on_add`, or None when it sets none or several."""
+    for _, on_add_start, on_add_end in _top_level_blocks(src, {"on_add"}, start, end):
+        sets = [
+            _variable_constant(value)
+            for name, value, is_block in _iter_direct_assignments(
+                src.text[on_add_start:on_add_end]
+            )
+            if is_block and name == "set_variable"
+        ]
+        found = [entry for entry in sets if entry is not None]
+        if len(found) == 1:
+            return found[0]
+    return None
+
+
+def _idea_variable_groups(src: _Script):
+    """Return {idea: (category, variable, level)} for each idea category in which
+    every idea sets the same single variable to a constant in `on_add`."""
+    groups = {}
+    for _, start, end in _top_level_blocks(src, {"ideas"}):
+        for category, cat_start, cat_end in _top_level_blocks(src, None, start, end):
+            levels = {
+                idea: _on_add_level(src, idea_start, idea_end)
+                for idea, idea_start, idea_end in _top_level_blocks(
+                    src, None, cat_start, cat_end
+                )
+            }
+            if (
+                None not in levels.values()
+                and len({v for v, _ in levels.values()}) == 1
+            ):
+                groups.update(
+                    {
+                        idea: (category, var, level)
+                        for idea, (var, level) in levels.items()
+                    }
+                )
+    return groups
+
+
+def _linear_in_level(branches, levels):
+    """True when every variable a branch writes is a number in every branch and
+    the values lie on one line through at least two distinct idea levels, so
+    reading the level variable gives the same value. Constants, variables, and
+    irregular steps need a lookup table, which is not a simplification."""
+    points = {}
+    for (_, values), level in zip(branches, levels):
+        for key, value in values.items():
+            if not _NUMBER_RE.fullmatch(value):
+                return False
+            points.setdefault(key, []).append((Fraction(level), Fraction(value)))
+    for found in points.values():
+        x0, y0 = found[0]
+        x1, y1 = next(((x, y) for x, y in found if x != x0), found[0])
+        if (
+            len(found) < len(branches)
+            or x1 == x0
+            or any((y - y0) * (x1 - x0) != (y1 - y0) * (x - x0) for x, y in found)
+        ):
+            return False
+    return True
+
+
+def _idea_ladder_findings(chains, groups):
+    """Return [(message, line)] for each has_idea chain whose ideas all belong to
+    one group that already sets a variable, with values linear in its level. A
+    chain that writes that variable is its initializer, not a rebuild, and is
+    skipped."""
+    findings = []
+    for line, branches in chains:
+        entries = [groups.get(idea) for idea, _ in branches]
+        owners = {entry[:2] if entry else None for entry in entries}
+        if len(owners) != 1 or None in owners:
+            continue
+        category, variable = next(iter(owners))
+        written = {name for _, values in branches for _, name in values}
+        if variable in written or not _linear_in_level(
+            branches, [entry[2] for entry in entries]
+        ):
+            continue
+        findings.append(
+            (
+                f"{len(branches)} `has_idea` branches over `{category}` ideas only "
+                f"add or set a value, but each of those ideas already sets "
+                f"`{variable}` in `on_add`; read `{variable}` instead",
+                line,
+            )
+        )
+    return findings
+
+
 def _scan_file(src: _Script):
     """Return [(message, line)] for one comment-stripped file."""
     findings = []
@@ -1070,6 +1295,17 @@ def _scan_file(src: _Script):
         findings.append(
             (
                 f"`random_state` limited by `{detail}`; use `random_controlled_state`",
+                line,
+            )
+        )
+    for line, count, tested, target in _find_threshold_ladders(src):
+        findings.append(
+            (
+                f"{count} adjacent `if` blocks compare `{tested}` with constants and "
+                f"each add a constant to `{target}`; use one math expression with "
+                f"a comparator term per step, `add = {{ value = {tested} "
+                "<comparator> = N multiply = V }`, with each step's own comparator "
+                "(`greater_than`, `less_than`, ...)",
                 line,
             )
         )
@@ -1120,6 +1356,10 @@ _DECISION_PATTERNS = [
     "common/decisions/*.txt",
     "common/decisions/**/*.txt",
 ]
+_IDEA_PATTERNS = [
+    "common/ideas/*.txt",
+    "common/ideas/**/*.txt",
+]
 
 _ALL_SCAN_PATTERNS = list(
     dict.fromkeys(
@@ -1149,9 +1389,15 @@ def _matches_relative_pattern(path: str, patterns) -> bool:
     return any(matches(pattern.replace(os.sep, "/").split("/")) for pattern in patterns)
 
 
+@lru_cache(maxsize=1)
+def _script_for(text: str) -> _Script:
+    """Index one file's text once for _scan_composite and _scan_idea_chains."""
+    return _Script(text)
+
+
 def _scan_composite(text: str, path: str):
     """Run the simplification passes after one content read/cache lookup."""
-    src = _Script(text)
+    src = _script_for(text)
     findings = []
     if _matches_relative_pattern(path, _SCAN_PATTERNS):
         findings.extend(_scan_file(src))
@@ -1164,8 +1410,16 @@ def _scan_composite(text: str, path: str):
     return findings
 
 
+def _scan_idea_chains(text: str, path: str):
+    """Return the has_idea chains of one file. They need the idea files to be
+    judged, so they are kept apart from _scan_composite's findings."""
+    if "has_idea" not in text or not _matches_relative_pattern(path, _SCAN_PATTERNS):
+        return []
+    return _find_has_idea_chains(_script_for(text))
+
+
 def _scan_path(args: tuple[str, str]):
-    """Pool worker: content-cached findings for one file."""
+    """Pool worker: content-cached (findings, has_idea chains) for one file."""
     path, mod_path = args
     text = FileOpener.open_text_file(path, strip_comments_flag=True)
     rel = os.path.relpath(path, mod_path)
@@ -1174,13 +1428,37 @@ def _scan_path(args: tuple[str, str]):
         "simplifications.composite",
         path,
         text,
-        lambda: _scan_composite(text, rel),
+        lambda: (_scan_composite(text, rel), _scan_idea_chains(text, rel)),
+    )
+
+
+def _idea_groups_path(args: tuple[str, str]):
+    """Pool worker: content-cached idea groups of one idea file."""
+    path, mod_path = args
+    text = FileOpener.open_text_file(path, strip_comments_flag=True)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "simplifications.ideas",
+        path,
+        text,
+        lambda: _idea_variable_groups(_Script(text)),
     )
 
 
 class Validator(BaseValidator):
     TITLE = "SIMPLIFICATION SUGGESTIONS"
     STAGED_EXTENSIONS = [".txt"]
+
+    def _idea_groups(self):
+        """Map each idea to (category, variable) from every idea file, staged
+        or not: a ladder is judged against ideas the change did not touch."""
+        paths = self._collect_files(_IDEA_PATTERNS, ignore_staged=True)
+        groups = {}
+        for found in self._pool_map(
+            _idea_groups_path, [(path, self.mod_path) for path in paths]
+        ):
+            groups.update(found)
+        return groups
 
     def run_validations(self):
         self._log_section("Scanning for simplification opportunities...")
@@ -1189,12 +1467,13 @@ class Validator(BaseValidator):
         files = list(dict.fromkeys(self._collect_files(_ALL_SCAN_PATTERNS)))
         parsed = self._pool_map(_scan_path, [(path, self.mod_path) for path in files])
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
+        groups = self._idea_groups() if any(chains for _, chains in parsed) else {}
 
         self._log_section("Collecting and reporting results...")
         results = []
-        for path, findings in zip(files, parsed):
+        for path, (findings, chains) in zip(files, parsed):
             rel = os.path.relpath(path, self.mod_path)
-            for message, line in findings:
+            for message, line in findings + _idea_ladder_findings(chains, groups):
                 results.append((message, rel, line))
 
         self._report(

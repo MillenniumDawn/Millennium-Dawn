@@ -20,7 +20,6 @@ coalition_decisions = {
 		activation = { has_country_flag = coalition_forming }
 		is_good = no
 		days_mission_timeout = 30
-		fire_only_once = yes
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout coalition_countdown"
@@ -30,32 +29,47 @@ coalition_decisions = {
 			}
 			if = {
 				limit = { has_country_leader_with_trait = western_technocrat }
-				country_event = MD4_election_campaign.0
+				if = {
+					limit = {
+						is_ai = yes
+						tag = ITA
+					}
+					#the AI never sends invites, so the two largest parties back Italy's technocrat until the next election
+					find_two_highest_parties = yes
+					set_temp_variable = { add_col_one = max_index_1 }
+					add_coalition_members_effect = yes
+					set_temp_variable = { add_col_one = max_index_2 }
+					add_coalition_members_effect = yes
+					calculate_abandon_coalition_threshold = yes
+					#on the historical path the timeline events change the government
+					if = {
+						limit = {
+							check_variable = { government_coalition_strength_elect < majority_threshold }
+							ITA_ai_historical_path = no
+						}
+						country_event = MD4_election_campaign.0
+					}
+				}
+				else = { country_event = MD4_election_campaign.0 }
 			}
 			clr_country_flag = coalition_reshuffling
 			if = {
 				limit = { is_ai = no }
 				add_political_power = -300
-				add_to_variable = { current_term = 1 }
-				if = {
-					limit = {
-						check_variable = { term_limit > 0 } #make sure term limits are a thing
-						check_variable = { current_term > term_limit }
-					}
-					hidden_effect = { set_leader = yes }
-				}
 			}
 			if = {
-				limit = { is_ai = yes }
+				limit = {
+					is_ai = yes
+					NOT = {
+						AND = {
+							tag = ITA
+							has_country_leader_with_trait = western_technocrat
+						}
+					}
+				}
 				custom_effect_tooltip = AI_form_government_TT
 				hidden_effect = {
-					set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
-					subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
-					set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
-					subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
-					make_affinity_arrays = yes
-					reduce_affinity_array_party_1 = yes
-					reduce_affinity_array_party_2 = yes
+					prepare_ai_coalition_candidates = yes
 					if = {
 						limit = {
 							#coalition 1 is preferred - lowest
@@ -66,8 +80,7 @@ coalition_decisions = {
 							}
 						}
 						set_temp_variable = { rul_party_temp = max_index_1 }
-						set_temp_variable = { disable_elections = 0 }
-						change_ruling_party_effect = yes
+						form_timeout_government = yes
 						for_each_loop = {
 							array = party_pop_elect_array
 							index = i1
@@ -83,8 +96,7 @@ coalition_decisions = {
 							check_variable = { cost1 > cost2 } #coalition 2 is prefered - lowest
 						}
 						set_temp_variable = { rul_party_temp = max_index_2 }
-						set_temp_variable = { disable_elections = 0 }
-						change_ruling_party_effect = yes
+						form_timeout_government = yes
 						for_each_loop = {
 							array = party_pop_elect_array
 							index = i2
@@ -97,11 +109,13 @@ coalition_decisions = {
 					}
 				}
 			}
+			settle_coalition_term = yes
 			clr_country_flag = coalition_forming
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision coalition_countdown"
+			settle_coalition_term = yes
 			clr_country_flag = coalition_reshuffling
 			clr_country_flag = coalition_forming
 			if = {
@@ -174,17 +188,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Western_Autocracy_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 0 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^0 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 }
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = democratic } }
-					add_to_variable = { coalition_democratic = party_pop_elect_array^0 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.0
 		}
@@ -200,18 +205,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Western_Autocracy_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 0 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^0 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = democratic } }
-					subtract_from_variable = { coalition_democratic = party_pop_elect_array^0 }
-					reset_democratic_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 0 } #conservatism
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -302,17 +297,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision conservatism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 1 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^1 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = democratic } }
-					add_to_variable = { coalition_democratic = party_pop_elect_array^1 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.1
 		}
@@ -328,18 +314,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision conservatism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 1 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^1 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = democratic } }
-					subtract_from_variable = { coalition_democratic = party_pop_elect_array^1 }
-					reset_democratic_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 1 } #conservatism
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -457,17 +433,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision liberalism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 2 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^2 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = democratic } }
-					add_to_variable = { coalition_democratic = party_pop_elect_array^2 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.2
 		}
@@ -483,18 +450,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision liberalism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 2 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^2 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = democratic } }
-					subtract_from_variable = { coalition_democratic = party_pop_elect_array^2 }
-					reset_democratic_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 2 } #liberalism
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -599,17 +556,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision socialism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 3 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^3 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = democratic } }
-					add_to_variable = { coalition_democratic = party_pop_elect_array^3 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.3
 		}
@@ -625,18 +573,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision socialism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 3 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^3 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = democratic } }
-					subtract_from_variable = { coalition_democratic = party_pop_elect_array^3 }
-					reset_democratic_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 3 } #socialism
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -718,17 +656,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision communist_state_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 4 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^4 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = communism } }
-					add_to_variable = { coalition_communism = party_pop_elect_array^4 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.4
 		}
@@ -744,18 +673,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision communist_state_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 4 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^4 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = communism } }
-					subtract_from_variable = { coalition_communism = party_pop_elect_array^4 }
-					reset_communism_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 4 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -838,17 +757,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision anarchist_communism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 5 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^5 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = communism } }
-					add_to_variable = { coalition_communism = party_pop_elect_array^5 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.5
 		}
@@ -864,18 +774,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision anarchist_communism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 5 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^5 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = communism } }
-					subtract_from_variable = { coalition_communism = party_pop_elect_array^5 }
-					reset_communism_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 5 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -956,17 +856,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision reactionary_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 6 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^6 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = communism } }
-					add_to_variable = { coalition_communism = party_pop_elect_array^6 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.6
 		}
@@ -982,18 +873,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision reactionary_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 6 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^6 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = communism } }
-					subtract_from_variable = { coalition_communism = party_pop_elect_array^6 }
-					reset_communism_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 6 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1050,17 +931,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Autocracy_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 7 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^7 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = communism } }
-					add_to_variable = { coalition_communism = party_pop_elect_array^7 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.7
 		}
@@ -1076,18 +948,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Autocracy_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 7 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^7 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = communism } }
-					subtract_from_variable = { coalition_communism = party_pop_elect_array^7 }
-					reset_communism_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 7 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1161,17 +1023,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision moderate_shiite_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 8 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^8 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = communism } }
-					add_to_variable = { coalition_communism = party_pop_elect_array^8 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.8
 		}
@@ -1187,18 +1040,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision moderate_shiite_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 8 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^8 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = communism } }
-					subtract_from_variable = { coalition_communism = party_pop_elect_array^8 }
-					reset_communism_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 8 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1272,17 +1115,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision hardline_shiite_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 9 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^9 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = communism } }
-					add_to_variable = { coalition_communism = party_pop_elect_array^9 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.9
 		}
@@ -1298,18 +1132,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision hardline_shiite_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 9 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^9 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = communism } }
-					subtract_from_variable = { coalition_communism = party_pop_elect_array^9 }
-					reset_communism_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 9 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1388,17 +1212,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Kingdom_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 10 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^10 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = fascism } }
-					add_to_variable = { coalition_fascism = party_pop_elect_array^10 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.10
 		}
@@ -1414,18 +1229,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Kingdom_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 10 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^10 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = fascism } }
-					subtract_from_variable = { coalition_fascism = party_pop_elect_array^10 }
-					reset_fascism_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 10 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1511,17 +1316,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Caliphate_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 11 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^11 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = fascism } }
-					add_to_variable = { coalition_fascism = party_pop_elect_array^11 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.11
 		}
@@ -1537,18 +1333,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Caliphate_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 11 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^11 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = fascism } }
-					subtract_from_variable = { coalition_fascism = party_pop_elect_array^11 }
-					reset_fascism_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 11 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1628,17 +1414,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Muslim_Brotherhood_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 12 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^12 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					add_to_variable = { coalition_neutrality = party_pop_elect_array^12 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.12
 		}
@@ -1654,18 +1431,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Muslim_Brotherhood_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 12 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^12 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					subtract_from_variable = { coalition_neutrality = party_pop_elect_array^12 }
-					reset_neutrality_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 12 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1720,17 +1487,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Autocracy_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 13 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^13 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					add_to_variable = { coalition_neutrality = party_pop_elect_array^13 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.13
 		}
@@ -1746,18 +1504,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Autocracy_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 13 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^13 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					subtract_from_variable = { coalition_neutrality = party_pop_elect_array^13 }
-					reset_neutrality_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 13 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1834,17 +1582,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_conservatism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 14 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^14 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					add_to_variable = { coalition_neutrality = party_pop_elect_array^14 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.14
 		}
@@ -1860,18 +1599,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_conservatism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 14 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^14 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					subtract_from_variable = { coalition_neutrality = party_pop_elect_array^14 }
-					reset_neutrality_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 14 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -1939,17 +1668,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision oligarchism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 15 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^15 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					add_to_variable = { coalition_neutrality = party_pop_elect_array^15 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.15
 		}
@@ -1965,18 +1685,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision oligarchism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 15 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^15 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					subtract_from_variable = { coalition_neutrality = party_pop_elect_array^15 }
-					reset_neutrality_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 15 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -2065,17 +1775,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Libertarian_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 16 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^16 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					add_to_variable = { coalition_neutrality = party_pop_elect_array^16 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.16
 		}
@@ -2091,18 +1792,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Libertarian_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 16 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^16 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					subtract_from_variable = { coalition_neutrality = party_pop_elect_array^16 }
-					reset_neutrality_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 16 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -2181,17 +1872,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_green_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 17 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^17 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					add_to_variable = { coalition_neutrality = party_pop_elect_array^17 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.17
 		}
@@ -2207,18 +1889,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_green_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 17 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^17 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					subtract_from_variable = { coalition_neutrality = party_pop_elect_array^17 }
-					reset_neutrality_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 17 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -2301,17 +1973,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision neutral_Social_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 18 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^18 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					add_to_variable = { coalition_neutrality = party_pop_elect_array^18 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.18
 		}
@@ -2327,18 +1990,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision neutral_Social_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 18 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^18 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					subtract_from_variable = { coalition_neutrality = party_pop_elect_array^18 }
-					reset_neutrality_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 18 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -2427,17 +2080,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Communism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 19 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^19 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					add_to_variable = { coalition_neutrality = party_pop_elect_array^19 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.19
 		}
@@ -2453,18 +2097,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Neutral_Communism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 19 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^19 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = neutrality } }
-					subtract_from_variable = { coalition_neutrality = party_pop_elect_array^19 }
-					reset_neutrality_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 19 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -2538,17 +2172,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Populism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 20 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^20 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = nationalist } }
-					add_to_variable = { coalition_nationalist = party_pop_elect_array^20 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.20
 		}
@@ -2564,18 +2189,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Populism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 20 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^20 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = nationalist } }
-					subtract_from_variable = { coalition_nationalist = party_pop_elect_array^20 }
-					reset_nationalist_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 20 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -2636,17 +2251,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Fascism_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 21 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^21 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = nationalist } }
-					add_to_variable = { coalition_nationalist = party_pop_elect_array^21 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.21
 		}
@@ -2662,18 +2268,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Fascism_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 21 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^21 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = nationalist } }
-					subtract_from_variable = { coalition_nationalist = party_pop_elect_array^21 }
-					reset_nationalist_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 21 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -2747,17 +2343,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Autocracy_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 22 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^22 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = nationalist } }
-					add_to_variable = { coalition_nationalist = party_pop_elect_array^22 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.22
 		}
@@ -2773,18 +2360,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Nat_Autocracy_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 22 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^22 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = nationalist } }
-					subtract_from_variable = { coalition_nationalist = party_pop_elect_array^22 }
-					reset_nationalist_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 22 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations
@@ -2860,17 +2437,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Monarchist_invite"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 23 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^23 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = -2000 } #negate for deduction
-				#for correct localization of idea
-				if = {
-					limit = { NOT = { has_government = nationalist } }
-					add_to_variable = { coalition_nationalist = party_pop_elect_array^23 }
-				}
+				quote_coalition_invite_cost = yes
 			}
 			country_event = coalition.23
 		}
@@ -2886,18 +2454,8 @@ coalition_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision Monarchist_remove"
 			set_country_flag = coalition_party_negotiations
 			hidden_effect = {
-				set_temp_variable = { pol_dist_source_index = ruling_party }
 				set_temp_variable = { pol_dist_target_index = 23 }
-				get_pol_distance = yes
-				multiply_variable = { pol_distance_current = party_pop_elect_array^23 } #size
-				set_variable = { pp_cost_to_invite = pol_distance_current }
-				multiply_variable = { pp_cost_to_invite = 1500 } #75%
-				add_political_power = pp_cost_to_invite
-				if = {
-					limit = { NOT = { has_government = nationalist } }
-					subtract_from_variable = { coalition_nationalist = party_pop_elect_array^23 }
-					reset_nationalist_coalition_ideas = yes
-				}
+				refund_coalition_partner = yes
 				remove_from_array = { gov_coalition_array = 23 }
 				update_government_coalition_strength = yes
 				clr_country_flag = coalition_party_negotiations

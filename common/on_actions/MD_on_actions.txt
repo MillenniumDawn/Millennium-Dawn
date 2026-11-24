@@ -93,6 +93,8 @@ on_actions = {
 					}
 					automation_economy_weekly = yes
 				}
+				md_check_training_command_alerts = yes
+				md_check_eu_council_vote_alert = yes
 			}
 
 			add_to_variable = { int_investments = int_investments_reinvest_rate }
@@ -212,10 +214,36 @@ on_actions = {
 					}
 					update_operation_ai = yes
 				}
+
+				# AI had no fuel purchase; buy three weeks of population use, which the empty-tank killswitch zeroes in energy_calc_fuel
+				if = {
+					limit = { fuel_ratio < 0.2 }
+					set_temp_variable = {
+						ai_fuel_purchases = {
+							value = gdp_per_capita
+							multiply = 0.02
+							add = 0.1
+							multiply = population_total_m
+							multiply = 19
+							multiply = 504
+							divide = 100000
+							round = yes
+							clamp = { min = 1 max = 20 }
+						}
+					}
+					for_loop_effect = {
+						end = ai_fuel_purchases
+						value = ai_fuel_purchase_index
+						buy_fuel_from_the_market_effect = yes
+					}
+					if = { limit = { OR = { is_debug = yes has_global_flag = GLOBAL_md_benchmark_logging } }
+						log = "[GetDateText]: [THIS.GetTag]: AI Fuel Purchase: Purchases: [?ai_fuel_purchases] Fuel: [?fuel_k]"
+					}
+				}
 			}
 
 			# Arab Spring
-			if = { limit = { has_country_flag = arab_spring_active }
+			if = { limit = { arab_spring_protests_active = yes }
 				if = {
 					limit = {
 						has_country_flag = arab_spring_military_deployed
@@ -615,6 +643,8 @@ on_actions = {
 	on_capitulation_immediate = {
 		effect = {
 			civil_war_cleanup_hooks = yes
+			# Runs before the engine's own hand-off, which can pick a minor member
+			pass_faction_leadership = yes
 
 			if = {
 				limit = {
@@ -625,6 +655,52 @@ on_actions = {
 					NOT = { has_global_flag = GLOBAL_yemeni_civil_war_over }
 				}
 				remove_from_faction = AQY
+			}
+		}
+	}
+
+	# Civil war breakaways do not inherit society variables or dynamic modifiers.
+	on_war_relation_added = {
+		effect = {
+			if = {
+				limit = {
+					has_dynamic_modifier = social_conservatism_modifier
+					FROM = {
+						is_dynamic_country = yes
+						original_tag = ROOT
+						NOT = { has_dynamic_modifier = social_conservatism_modifier }
+					}
+				}
+				FROM = {
+					if = {
+						limit = { NOT = { has_variable = social_conservatism_government } }
+						set_variable = { social_conservatism_government = ROOT.social_conservatism_government }
+						set_variable = { social_conservatism_society = ROOT.social_conservatism_society }
+					}
+					if = {
+						limit = { ROOT = { has_country_flag = society_shia_drift } }
+						set_country_flag = society_shia_drift
+					}
+					update_social_conservatism_modifier = yes
+				}
+			}
+			else_if = {
+				limit = {
+					is_dynamic_country = yes
+					original_tag = FROM
+					NOT = { has_dynamic_modifier = social_conservatism_modifier }
+					FROM = { has_dynamic_modifier = social_conservatism_modifier }
+				}
+				if = {
+					limit = { NOT = { has_variable = social_conservatism_government } }
+					set_variable = { social_conservatism_government = FROM.social_conservatism_government }
+					set_variable = { social_conservatism_society = FROM.social_conservatism_society }
+				}
+				if = {
+					limit = { FROM = { has_country_flag = society_shia_drift } }
+					set_country_flag = society_shia_drift
+				}
+				update_social_conservatism_modifier = yes
 			}
 		}
 	}
@@ -990,8 +1066,9 @@ on_actions = {
 					ai_lower_expected_spending_on_deficit = yes
 					recalculate_law_desires = yes
 					apply_protest_effects = yes
+					if = { limit = { is_ai = yes } ai_buy_economic_cycle_upgrade = yes }
 
-					if = { limit = { is_debug = yes }
+					if = { limit = { OR = { is_debug = yes has_global_flag = GLOBAL_md_benchmark_logging } }
 						set_temp_variable = { bench_civilian = num_of_civilian_factories }
 						set_temp_variable = { bench_military = num_of_military_factories }
 						set_temp_variable = { bench_stability = stability }
@@ -1214,14 +1291,14 @@ on_actions = {
 						value = v
 						var:v = {
 							if = {
-								limit = { NOT = { has_country_flag = AS_arab_spring_completed } }
+								limit = { arab_spring_eligible = yes }
 								increment_arab_spring_strength = yes
 								# Nations still below the protest threshold by 2013 weather the Arab Spring
 								if = {
 									limit = {
 										date > 2013.1.1
 										check_variable = { arab_spring < 200 }
-										NOT = { has_country_flag = arab_spring_active }
+										arab_spring_protests_active = no
 									}
 									country_event = arab_spring.18
 								}
@@ -1230,22 +1307,30 @@ on_actions = {
 					}
 
 					## This section is just for the instance where someone just need to have it started
-					if = { limit = { NOT = { has_global_flag = global_arab_spring_started } }
+					if = {
+						limit = {
+							date > 2010.1.1
+							arab_spring_first_wave_available = yes
+							NOT = {
+								AND = {
+									is_historical_focus_on = yes
+									date < 2010.12.17
+									TUN = {
+										arab_spring_eligible = yes
+										arab_spring_ben_ali_in_power = yes
+										has_war = no
+										check_variable = { var = arab_spring value = 200 compare = greater_than_or_equals }
+									}
+								}
+							}
+						}
 						random_scope_in_array = {
 							array = global.arabic_countries
 							limit = {
-								check_variable = { arab_spring > 199 }
-								date > 2010.1.1
-								NOT = {
-									any_of_scopes = {
-										array = global.arabic_countries
-										has_country_flag = arab_spring_active
-									}
-								}
+								check_variable = { var = arab_spring value = 200 compare = greater_than_or_equals }
+								arab_spring_eligible = yes
 								NOT = { check_variable = { ruling_party = 12 } }
 								NOT = { AND = { original_tag = EGY EGY_mubarak_in_power = yes } }
-								NOT = { has_country_flag = arab_spring_active }
-								NOT = { has_country_flag = AS_arab_spring_completed }
 								has_war = no
 							}
 
@@ -1257,10 +1342,6 @@ on_actions = {
 										has_elections = yes
 										NOT = { has_idea = hybrid_regime_emerging }
 										NOT = { has_idea = hybrid_regime_western }
-									}
-									modifier = {
-										factor = 2
-										check_variable = { arab_spring < 200 }
 									}
 								}
 								10 = {

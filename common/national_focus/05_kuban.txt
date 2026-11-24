@@ -731,7 +731,7 @@ focus_tree = {
 
 		prerequisite = { focus = KUB_update_oil_infr }
 
-		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY FOCUS_FILTER_RESOURCE }
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY FOCUS_FILTER_RESOURCE FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			country_exists = SOV
@@ -787,7 +787,7 @@ focus_tree = {
 		prerequisite = { focus = KUB_give_rus_depots }
 		prerequisite = { focus = KUB_novorossysk_port_exp }
 
-		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY FOCUS_FILTER_RESOURCE }
+		search_filters = { FOCUS_FILTER_RUSSIA_ECONOMY FOCUS_FILTER_RESOURCE FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KUB_expand_anast_field"
@@ -1649,9 +1649,13 @@ focus_tree = {
 						Arty_Bat = { x = 2 y = 1 }
 						Arty_Bat = { x = 2 y = 2 }
 					}
+					regimental_support = {
+						Militia_Recce_Comp = { x = 0 y = 0 }
+						Militia_Recce_Comp = { x = 1 y = 0 }
+						Mot_Recce_Comp = { x = 2 y = 0 }
+					}
 					support = {
-						Mot_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				add_manpower = -1000
@@ -2317,7 +2321,7 @@ focus_tree = {
 
 		prerequisite = { focus = KUB_invite_cossaks }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MANPOWER FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			is_subject_of = SOV
@@ -2344,9 +2348,12 @@ focus_tree = {
 						L_Inf_Bat = { x = 1 y = 1 }
 						L_Inf_Bat = { x = 1 y = 2 }
 					}
-					support = {
+					regimental_support = {
 						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Recce_Comp = { x = 1 y = 0 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				random_owned_controlled_state = {
@@ -2435,7 +2442,7 @@ focus_tree = {
 
 		prerequisite = { focus = KUB_invite_cossaks }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			is_subject_of = SOV
@@ -2689,9 +2696,13 @@ focus_tree = {
 						Arty_Bat = { x = 3 y = 0 }
 						Arty_Bat = { x = 3 y = 1 }
 					}
-					support = {
+					regimental_support = {
 						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Recce_Comp = { x = 1 y = 0 }
+						L_Recce_Comp = { x = 2 y = 0 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				add_manpower = -1000
@@ -4494,14 +4505,19 @@ focus_tree = {
 
 		prerequisite = { focus = KUB_revive_black_sea_rep }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_EXPENDITURE }
 
-		available = { emerging_communist_state_are_in_power = yes }
+		available = {
+			emerging_communist_state_are_in_power = yes
+			has_manpower > 799
+			any_owned_state = { ROOT = { has_full_control_of_state = PREV } }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KUB_new_batalions"
 			URA_idea_ural_army_reforms = yes
-			effect_tooltip = {
+			if = {
+				limit = { NOT = { has_template = "National Battalion" } }
 				division_template = {
 					name = "National Battalion"
 					regiments = {
@@ -4511,26 +4527,36 @@ focus_tree = {
 						L_Inf_Bat = { x = 1 y = 1 }
 						L_Inf_Bat = { x = 1 y = 2 }
 					}
-					support = {
+					regimental_support = {
 						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Recce_Comp = { x = 1 y = 0 }
+						L_Recce_Comp = { x = 1 y = 1 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
-				add_manpower = -800
-				set_temp_variable = { treasury_change = -3 }
-				modify_treasury_effect = yes
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 668 }
-					create_unit = {
-						division = "name = \"Terek Batalion\" division_template = \"National Battalion\" start_experience_factor = 0.1"
-						owner = KUB
-					}
+			}
+			add_manpower = -800
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 668 }
+				create_unit = {
+					division = "name = \"Terek Batalion\" division_template = \"National Battalion\" start_experience_factor = 0.1"
+					owner = KUB
 				}
 			}
 		}
 
-		ai_will_do = { base = 355 }
+		ai_will_do = {
+			base = 355
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	focus = {
@@ -6957,9 +6983,11 @@ focus_tree = {
 						Special_Forces = { x = 0 y = 2 }
 						Special_Forces = { x = 0 y = 1 }
 					}
-					support = {
+					regimental_support = {
 						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 					priority = 2
 				}
@@ -7160,9 +7188,11 @@ focus_tree = {
 						Special_Forces = { x = 0 y = 2 }
 						Special_Forces = { x = 0 y = 1 }
 					}
-					support = {
+					regimental_support = {
 						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 					priority = 2
 				}
@@ -7392,9 +7422,11 @@ focus_tree = {
 						Special_Forces = { x = 0 y = 2 }
 						Special_Forces = { x = 0 y = 1 }
 					}
-					support = {
+					regimental_support = {
 						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 					priority = 2
 				}
@@ -8844,9 +8876,13 @@ focus_tree = {
 						Arty_Bat = { x = 2 y = 0 }
 						Arty_Bat = { x = 2 y = 1 }
 					}
+					regimental_support = {
+						Militia_Recce_Comp = { x = 0 y = 0 }
+						Militia_Recce_Comp = { x = 1 y = 0 }
+						Mot_Recce_Comp = { x = 2 y = 0 }
+					}
 					support = {
-						Mot_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				add_manpower = -750
@@ -8912,9 +8948,12 @@ focus_tree = {
 						L_Inf_Bat = { x = 1 y = 1 }
 						L_Inf_Bat = { x = 1 y = 2 }
 					}
-					support = {
+					regimental_support = {
 						L_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Recce_Comp = { x = 1 y = 0 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 					priority = 2
 				}
@@ -9013,9 +9052,12 @@ focus_tree = {
 						L_Inf_Bat = { x = 1 y = 1 }
 						L_Inf_Bat = { x = 1 y = 2 }
 					}
+					regimental_support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+						L_Recce_Comp = { x = 1 y = 0 }
+					}
 					support = {
-						Mot_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				668 = {
@@ -9060,9 +9102,12 @@ focus_tree = {
 					L_Inf_Bat = { x = 1 y = 1 }
 					L_Inf_Bat = { x = 1 y = 2 }
 				}
+				regimental_support = {
+					L_Recce_Comp = { x = 0 y = 0 }
+					L_Recce_Comp = { x = 1 y = 0 }
+				}
 				support = {
-					Mot_Recce_Comp = { x = 0 y = 0 }
-					L_Engi_Comp = { x = 0 y = 1 }
+					L_Engi_Comp = { x = 0 y = 0 }
 				}
 			}
 			668 = {
@@ -9150,9 +9195,12 @@ focus_tree = {
 						L_Inf_Bat = { x = 1 y = 1 }
 						L_Inf_Bat = { x = 1 y = 2 }
 					}
+					regimental_support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+						L_Recce_Comp = { x = 1 y = 0 }
+					}
 					support = {
-						Mot_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				1140 = {
@@ -9199,9 +9247,12 @@ focus_tree = {
 						L_Inf_Bat = { x = 1 y = 1 }
 						L_Inf_Bat = { x = 1 y = 2 }
 					}
+					regimental_support = {
+						L_Recce_Comp = { x = 0 y = 0 }
+						L_Recce_Comp = { x = 1 y = 0 }
+					}
 					support = {
-						Mot_Recce_Comp = { x = 0 y = 0 }
-						L_Engi_Comp = { x = 0 y = 1 }
+						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
 				1140 = {

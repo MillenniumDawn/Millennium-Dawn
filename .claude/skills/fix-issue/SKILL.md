@@ -54,17 +54,17 @@ before committing.
 
 ## 4. Commit
 
-Always branch from `main`, never from whatever branch the session started on:
+Always branch from `main`, never from whatever branch the session started on.
+Choose the branch name using the rule in `AGENTS.md`:
 
-```
+```bash
 git fetch origin
-git checkout -b <slug> origin/main
+git switch -c <branch> origin/main
 ```
 
-`<slug>` is a short kebab-case description, not an issue number. Stage only the files
-for this work:
+Stage only the files for this work:
 
-```
+```bash
 git commit -m "<Fix|Add|Implement> <short description> (#<issue>)" -m "<one or two sentences: the cause and fix, or what was added>"
 ```
 

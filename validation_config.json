@@ -73,7 +73,7 @@
       "TUR_military_category": "The military internal faction is granted in Turkey's history file, so the category is open from day one.",
       "ethnic_insurgency_category": "Ethnic_Insurgencies is granted in every eligible country's history file, so the category is open from day one.",
       "israel_lebanon_occup_category": "security_belt is granted in Israel's history file, so the category is open from day one.",
-      "mafia_ITA": "ITA_mafia is granted in Italy's history file, so the category is open from day one."
+      "mafia_ita": "ITA_mafia is granted in Italy's history file, so the category is open from day one."
     },
     "ai_cost_exempt": {
       "ALG_arrest_political_opponents": "Its only money effect is a one-point corporate tax rise, which adds revenue.",
@@ -189,6 +189,15 @@
       "ITA_with_europe": "Italian technocrat policy tree charges PP to enact a policy."
     }
   },
+  "validate_gfx_references": {
+    "dropped_gui_elements": {
+      "countrylogisticsview nuke_background": "MD's nuke panel names its background test_background and gives it the MD_NUCLEAR_GUIDE tooltip.",
+      "countrytechtreeview airtech_subtitle_scout": "MD rebuilt the air tech tab with its own folder subtitles.",
+      "countrytechtreeview armour_subtitle_amphibious": "MD rebuilt the armour tech tab with its own folder subtitles.",
+      "equipment_upgrade_designer_window border_container": "Visible frame left out of MD's rebuilt upgrade designer layout (#6675).",
+      "naviesview_window btn_composition_editor_bulk": "Visible button left out of MD's rebuilt navy view layout (#6675)."
+    }
+  },
   "validate_ideas": {
     "vanilla_idea_prefixes": {
       "generic_": "Vanilla or engine idea, not defined by MD.",
@@ -207,6 +216,8 @@
       "gekoloniseerd_NAME:e": "Spaced lettering of GEKOLONISEERD includes adjacent E letters.",
       "AST_fossil_fuels_for_yuan_desc:win": "Lexical reduplication; preserve meaning (optional hyphenation is editorial, not duplicate deletion).",
       "AST_experts_abroad_sri:sri": "Flag token @SRI beside the country name Sri Lanka.",
+      "AST_brownshirt_events.2.d:aussie": "Repeated call in the Australian crowd chant.",
+      "AST_brownshirt_events.2.d:oi": "Repeated response in the Australian crowd chant.",
       "AST_bring_them_home_desc:woop": "Australian idiom Woop Woop.",
       "rudd_events_gillard.6.a:hear": "Established expression Hear hear.",
       "uranium_trade_deal_ast.2.a:win": "Lexical reduplication; preserve meaning (optional hyphenation is editorial, not duplicate deletion).",
@@ -285,8 +296,120 @@
     "zero_base_exempt_stats": {}
   },
   "validate_modifiers": {
-    "income_over_25_percent_exceptions": {},
-    "unbalanced_roi_exceptions": {}
+    "income_over_25_percent_exceptions": {
+      "MP_workforce_idea::military_industry_tax_modifier": "MP admin decision tool idea granted by the paid add_workforce_idea decision in 99_mp_decisions.txt; not regular gameplay balance.",
+      "diff_very_hard_ai::tax_gain_multiplier_modifier": "Very hard AI difficulty static modifier, part of the deliberate AI handicap block in 00_static_modifiers.txt."
+    },
+    "unbalanced_roi_exceptions": {},
+    "modifier_caps": [
+      {
+        "match": ["ai_*"],
+        "skip": true,
+        "reason": "AI weights, not game modifiers"
+      },
+      {
+        "match": ["interest_rate_multiplier_modifier"],
+        "skip": true,
+        "reason": "A number of percentage points, not a percent"
+      },
+      {
+        "match": ["stability_weekly", "war_support_weekly"],
+        "cap": 0.05,
+        "direction": "bonus",
+        "category": "weekly-stability-war-support-over-cap",
+        "reason": "Flat weekly gains add up fast; flat penalties are not flagged (Issue #6494)"
+      },
+      {
+        "match": ["stability_weekly_factor", "war_support_weekly_factor"],
+        "cap": 0.25,
+        "direction": "either",
+        "category": "weekly-stability-war-support-over-cap",
+        "reason": "Weekly factors scale every weekly gain or loss (Issue #6494)"
+      },
+      {
+        "match": [
+          "tax_gain_multiplier_modifier",
+          "corporate_tax_income_multiplier_modifier",
+          "population_tax_income_multiplier_modifier",
+          "healthcare_income_multiplier_modifier",
+          "infrastructure_tax_gain_multiplier_modifier",
+          "civilian_industry_tax_modifier",
+          "military_industry_tax_modifier",
+          "agriculture_tax_modifier",
+          "dockyard_income_tax_modifier",
+          "office_park_income_tax_modifier",
+          "agriculture_district_income_tax_modifier",
+          "microchip_plant_income_tax_modifier",
+          "composite_plant_income_tax_modifier",
+          "synthetic_refinery_income_tax_modifier",
+          "resource_export_multiplier_modifier",
+          "oil_export_multiplier_modifier",
+          "steel_export_multiplier_modifier",
+          "aluminium_export_multiplier_modifier",
+          "tungsten_export_multiplier_modifier",
+          "chromium_export_multiplier_modifier",
+          "rubber_export_multiplier_modifier",
+          "microchip_export_multiplier_modifier",
+          "composite_export_multiplier_modifier",
+          "international_market_income_modifier"
+        ],
+        "cap": 0.25,
+        "direction": "bonus",
+        "timed": true,
+        "category": "income-over-25-percent",
+        "exceptions": "income_over_25_percent_exceptions",
+        "reason": "One income source above +25% moves the whole budget (Issue #6371)"
+      },
+      {
+        "match": ["investment_sale_recovery_modifier"],
+        "cap": 0.05,
+        "direction": "either",
+        "variables": true,
+        "timed": true,
+        "category": "investment-sale-recovery-over-cap",
+        "reason": "Single-source sale recovery adjustments are limited to ±5 percentage points; Wall Street's opinion formula has its own ±10-point bounds (Issue #6419)"
+      },
+      {
+        "match": ["return_on_investment_modifier"],
+        "cap": 0.03,
+        "direction": "bonus",
+        "opt_in": true,
+        "timed": true,
+        "category": "unbalanced-roi",
+        "exceptions": "unbalanced_roi_exceptions",
+        "reason": "Single-reward investment return cap (Issue #4370)"
+      },
+      {
+        "match": [
+          "productivity_growth_modifier",
+          "country_productivity_growth_modifier",
+          "state_productivity_growth_modifier"
+        ],
+        "cap": 0.25,
+        "direction": "bonus",
+        "opt_in": true,
+        "timed": true,
+        "category": "unbalanced-productivity",
+        "reason": "Single-reward productivity growth cap (Issue #4370)"
+      },
+      {
+        "match": ["*_worker_requirement_modifier", "*_workforce_requirement_modifier"],
+        "cap": 0.40,
+        "bonus_cap": 0.30,
+        "direction": "either",
+        "variables": true,
+        "category": "worker-requirement-over-cap",
+        "reason": "One increase above 40%, or one cut above the general 30% bonus cap, moves millions of workers in or out of jobs"
+      },
+      {
+        "match": ["*_factor", "*_modifier"],
+        "cap": 0.30,
+        "direction": "bonus",
+        "percent_only": true,
+        "category": "excessive-modifier-over-30-percent",
+        "reason": "General single-source bonus cap; modifiers defined as numbers are skipped (Issue #6494)"
+      }
+    ]
   },
   "validate_on_actions": {
     "date_poll_exempt_ids": {
@@ -462,6 +585,7 @@
       "target_value": ""
     },
     "flag_false_positives_generic": {
+      "GLOBAL_md_benchmark_logging": "headless_run.py bench on writes the setter to the gitignored startup on-action; headless_run_test.py verifies the generated flag.",
       "@": "",
       "[": "",
       "{": ""

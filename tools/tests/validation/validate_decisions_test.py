@@ -71,6 +71,19 @@ _ROOT_REPEAT = (
     " per target; remove it unless another country can change that ROOT state"
     " mid-day"
 )
+_ROOT_FROM = (
+    "%s - target_root_trigger %s, but FROM is not bound there; move the condition"
+    " into target_trigger"
+)
+_STALE_STATE = (
+    "%s - complete_effect changes %s on FROM, but only target_trigger checks it."
+    " target_trigger runs once a day, so the decision can be taken again on the same"
+    " target until the next pass; re-check it in available, inside hidden_trigger if"
+    " it is not player-facing"
+)
+_ONE_SHOT = " (the same country cannot repeat it; verify another one can take it)"
+_SET_TAKEN = "FROM = { set_country_flag = md_taken }"
+_NOT_TAKEN = "FROM = { NOT = { has_country_flag = md_taken } }"
 _EFFECT_BLOCKS = ("complete_effect", "remove_effect", "timeout_effect", "cancel_effect")
 _RANDOM = "\t\trandom = {\n\t\t\tchance = 50\n\t\t\tadd_stability = 0.01\n\t\t}\n"
 _RANDOM_LIST = (
@@ -127,12 +140,26 @@ _TRIGGERS = {
     "treasury_higher_than_50": " custom_trigger_tooltip = { tooltip = tip"
     " check_variable = { treasury > 49 } } ",
     "calculate_fee": " set_temp_variable = { fee = 5 } ",
+    # Each trigger calls the next, so one pass in this order would miss the first.
+    "outer_wrap": " wraps_target = yes ",
+    "wraps_target": " reads_target = yes ",
+    "reads_target": " FROM = { has_war = yes } ",
+    "idle_a": " idle_b = yes ",
+    "idle_b": " idle_a = yes ",
 }
 _TOOLTIPPED_GATE = (
     "\tavailable = { custom_trigger_tooltip = { tooltip = tip"
     " check_variable = { treasury > 1 } } }\n"
 )
 _APPLY = "\t\tmodify_treasury_effect = yes\n"
+
+
+def _taker(token, effect, trigger, extra=""):
+    """A targeted decision whose effect and target_trigger each name target state."""
+    return _nested(
+        token,
+        _block("target_trigger", trigger) + _block("complete_effect", effect) + extra,
+    )
 
 
 def _take(*amounts):
@@ -1066,6 +1093,261 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             [],
         ),
     },
+    "validate_root_trigger_reads_from": {
+        "direct read": (
+            [
+                _nested(
+                    "direct",
+                    _block(
+                        "target_root_trigger", "has_war = no\nFROM = { has_war = yes }"
+                    ),
+                )
+            ],
+            [(_ROOT_FROM % ("direct", "reads FROM"), "X.txt", 0)],
+        ),
+        "scripted trigger calls": (
+            [
+                _nested("nested", _block("target_root_trigger", "outer_wrap = yes")),
+                _nested("negated", _block("target_root_trigger", "reads_target = no")),
+            ],
+            [
+                (
+                    _ROOT_FROM % ("nested", "calls outer_wrap, which reads FROM"),
+                    "X.txt",
+                    0,
+                ),
+                (
+                    _ROOT_FROM % ("negated", "calls reads_target, which reads FROM"),
+                    "X.txt",
+                    0,
+                ),
+            ],
+        ),
+        "call cycle": (
+            [_nested("idle", _block("target_root_trigger", "idle_a = yes"))],
+            [],
+        ),
+        "ROOT only": (
+            [
+                _nested(
+                    "root_only",
+                    _block(
+                        "target_root_trigger",
+                        "has_idea = FROM_free\ncalculate_fee = yes",
+                    ),
+                )
+            ],
+            [],
+        ),
+        "script activated": (
+            [
+                _nested(
+                    "scripted",
+                    _block("allowed", "always = no")
+                    + _block("target_root_trigger", "FROM = { has_war = yes }"),
+                )
+            ],
+            [],
+        ),
+    },
+    "validate_target_state_rechecked_in_available": {
+        "flag only in target_trigger": (
+            [_taker("shared", _SET_TAKEN, _NOT_TAKEN)],
+            [(_STALE_STATE % ("shared", "flag md_taken"), "X.txt", 0)],
+        ),
+        "set preserves positive read": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { set_country_flag = md_taken }",
+                    "FROM = { has_country_flag = md_taken }",
+                )
+            ],
+            [],
+        ),
+        "clear preserves negative read": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { clr_country_flag = md_taken }",
+                    "FROM = { NOT = { has_country_flag = md_taken } }",
+                )
+            ],
+            [],
+        ),
+        "add preserves positive idea": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { add_ideas = md_taken }",
+                    "FROM = { has_idea = md_taken }",
+                )
+            ],
+            [],
+        ),
+        "remove preserves negative idea": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { remove_ideas = { md_taken } }",
+                    "FROM = { NOT = { has_idea = md_taken } }",
+                )
+            ],
+            [],
+        ),
+        "timed set invalidates negative read": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { set_country_flag = { flag = md_taken days = 2 } }",
+                    "FROM = { NOT = { has_country_flag = md_taken } }",
+                )
+            ],
+            [(_STALE_STATE % ("polarity", "flag md_taken"), "X.txt", 0)],
+        ),
+        "double negation is positive": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { clr_country_flag = md_taken }",
+                    "FROM = { NOT = { NOT = { has_country_flag = md_taken } } }",
+                )
+            ],
+            [(_STALE_STATE % ("polarity", "flag md_taken"), "X.txt", 0)],
+        ),
+        "negation does not leak to sibling": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { clr_country_flag = md_taken }",
+                    "FROM = { NOT = { has_country_flag = md_other } has_country_flag = md_taken }",
+                )
+            ],
+            [(_STALE_STATE % ("polarity", "flag md_taken"), "X.txt", 0)],
+        ),
+        "negation outside FROM": (
+            [
+                _taker(
+                    "outer_not",
+                    _SET_TAKEN,
+                    "NOT = { FROM = { has_country_flag = md_taken } }",
+                )
+            ],
+            [(_STALE_STATE % ("outer_not", "flag md_taken"), "X.txt", 0)],
+        ),
+        "original tag admits another country": (
+            [
+                _taker(
+                    "pin_" + block,
+                    _SET_TAKEN,
+                    _NOT_TAKEN,
+                    "\t\tdays_re_enable = 30\n" + _block(block, "original_tag = GER"),
+                )
+                for block in ("allowed", "target_root_trigger")
+            ],
+            [
+                (
+                    _STALE_STATE % ("pin_" + block, "flag md_taken") + _ONE_SHOT,
+                    "X.txt",
+                    0,
+                )
+                for block in ("allowed", "target_root_trigger")
+            ],
+        ),
+        "available re-checks it": (
+            [
+                _taker(
+                    "guarded",
+                    _SET_TAKEN,
+                    _NOT_TAKEN,
+                    _block("available", f"hidden_trigger = {{ {_NOT_TAKEN} }}"),
+                )
+            ],
+            [],
+        ),
+        "unrelated state": (
+            [
+                _taker(
+                    "other_flag", _SET_TAKEN, "FROM = { has_country_flag = md_other }"
+                ),
+                _taker("other_kind", _SET_TAKEN, "FROM = { has_idea = md_taken }"),
+            ],
+            [],
+        ),
+        "ideas and flag forms": (
+            [
+                _taker(
+                    "mixed",
+                    "FROM = { add_ideas = { md_a md_b } remove_ideas = md_c"
+                    " clr_country_flag = md_cleared }",
+                    "FROM = { NOT = { has_idea = md_b } has_idea = md_c"
+                    " has_country_flag = { flag = md_cleared days > 1 } }",
+                )
+            ],
+            [
+                (
+                    _STALE_STATE % ("mixed", "flag md_cleared, idea md_b, idea md_c"),
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "state outside FROM": (
+            [
+                _taker("root_write", "set_country_flag = md_taken", _NOT_TAKEN),
+                _taker(
+                    "root_read", _SET_TAKEN, "NOT = { has_country_flag = md_taken }"
+                ),
+            ],
+            [],
+        ),
+        "effect preview": (
+            [_taker("preview", f"effect_tooltip = {{ {_SET_TAKEN} }}", _NOT_TAKEN)],
+            [],
+        ),
+        "one-shot decisions": (
+            [
+                _taker("cooldown", _SET_TAKEN, _NOT_TAKEN, "\t\tdays_re_enable = 30\n"),
+                _taker("once", _SET_TAKEN, _NOT_TAKEN, "\t\tfire_only_once = yes\n"),
+            ],
+            [
+                (_STALE_STATE % (token, "flag md_taken") + _ONE_SHOT, "X.txt", 0)
+                for token in ("cooldown", "once")
+            ],
+        ),
+        "script activated": (
+            [
+                _taker(
+                    "scripted",
+                    _SET_TAKEN,
+                    _NOT_TAKEN,
+                    _block("allowed", "always = no"),
+                )
+            ],
+            [],
+        ),
+        "one-shot and one tag": (
+            [
+                _taker(
+                    "allowed_pin",
+                    _SET_TAKEN,
+                    _NOT_TAKEN,
+                    "\t\tdays_re_enable = 30\n" + _block("allowed", "tag = GER"),
+                ),
+                _taker(
+                    "root_pin",
+                    _SET_TAKEN,
+                    _NOT_TAKEN,
+                    "\t\tfire_only_once = yes\n"
+                    + _block("target_root_trigger", "tag = GER"),
+                ),
+                _taker(
+                    "tag_only", _SET_TAKEN, _NOT_TAKEN, _block("allowed", "tag = GER")
+                ),
+            ],
+            [(_STALE_STATE % ("tag_only", "flag md_taken"), "X.txt", 0)],
+        ),
+    },
     "validate_targets_no_trigger": {
         "FROM filter in available": (
             [
@@ -1184,6 +1466,44 @@ def test_decision_check(monkeypatch, check, decisions, expected):
     factories = [decision_factory(text) for text in decisions]
 
     assert_findings(decisions_results_for(factories, monkeypatch, check), expected)
+
+
+# case: (category allowed, expected findings)
+_TARGET_STATE_CATEGORY_CASES = {
+    "runtime tag locks the taker": ("tag = GER", []),
+    "original tag admits split-offs": (
+        "original_tag = GER",
+        [(_STALE_STATE % ("category_pin", "flag md_taken") + _ONE_SHOT,)],
+    ),
+    "conditional tag is not a lock": (
+        "OR = { tag = GER tag = FRA }",
+        [(_STALE_STATE % ("category_pin", "flag md_taken") + _ONE_SHOT,)],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("allowed", "expected"),
+    _TARGET_STATE_CATEGORY_CASES.values(),
+    ids=_TARGET_STATE_CATEGORY_CASES,
+)
+def test_target_state_category_pin(tmp_path, allowed, expected):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/categories/cat.txt": f"cat = {{\n\tallowed = {{ {allowed} }}\n}}\n",
+            "common/decisions/d.txt": "cat = {\n"
+            + _taker(
+                "category_pin", _SET_TAKEN, _NOT_TAKEN, "\t\tfire_only_once = yes\n"
+            )
+            + "}\n",
+        },
+    )
+
+    validator.validate_target_state_rechecked_in_available()
+
+    assert_findings([issue.message for issue in validator._issues], expected)
+    assert all(issue.severity == V.Severity.WARNING for issue in validator._issues)
 
 
 @pytest.mark.parametrize("no_cache", [False, True])
@@ -1650,20 +1970,30 @@ def test_factory_is_ai_only_on_a_flat_gate():
 
 
 _GER = ("original_tag", "GER")
+_GER_LOCK = "original_tag = GER"
+_GER_AT_WAR = "original_tag = GER\nhas_war = yes"
 _RECHECK = {"dec1": _block("available", "original_tag = GER")}
 
+
+def _category_rows(find, decisions, category_allowed):
+    factories = [
+        decision_factory(_nested(token, body)) for token, body in decisions.items()
+    ]
+    return find(factories, {"cat": category_allowed}, {"cat": list(decisions)})
+
+
 # A category locked to one tag makes the same check on its decisions redundant.
-# case: ({decision: body}, category pins, findings)
+# case: ({decision: body}, category allowed, findings)
 _CATEGORY_RECHECK_CASES = {
     "original_tag lock, original_tag recheck": (
         _RECHECK,
-        {_GER},
+        _GER_LOCK,
         [("dec1", "available")],
     ),
     # An original_tag lock admits civil-war split-offs, so `tag` still narrows.
     "original_tag lock, tag check": (
         {"dec1": _block("available", "tag = GER")},
-        {_GER},
+        _GER_LOCK,
         [],
     ),
     "tag lock, either recheck": (
@@ -1671,40 +2001,213 @@ _CATEGORY_RECHECK_CASES = {
             "dec_tag": _block("available", "tag = GER"),
             "dec_origtag": _block("visible", "original_tag = GER"),
         },
-        {("tag", "GER")},
+        "tag = GER",
         [("dec_tag",), ("dec_origtag",)],
     ),
     "NOT-wrapped recheck": (
         {"dec1": _block("available", "NOT = {\n\toriginal_tag = GER\n}")},
-        {_GER},
+        _GER_LOCK,
         [],
     ),
-    "two-tag lock": (_RECHECK, {_GER, ("original_tag", "ITA")}, []),
-    "no tag lock": (_RECHECK, set(), []),
-    # validate_allowed_redundant_with_category owns this one.
-    "allowed holding only the pin": (
-        {"dec1": _block("allowed", "original_tag = GER")},
-        {_GER},
+    "two-tag lock": (_RECHECK, "original_tag = GER\noriginal_tag = ITA", []),
+    "no tag lock": (_RECHECK, "has_war = yes", []),
+    "allowed with a condition the category lacks": (
+        {"dec1": _block("allowed", _GER_AT_WAR)},
+        _GER_LOCK,
+        [("dec1", "allowed")],
+    ),
+    # validate_allowed_redundant_with_category owns these two.
+    "allowed the category already holds": (
+        {"dec1": _block("allowed", _GER_AT_WAR)},
+        _GER_AT_WAR,
+        [],
+    ),
+    "allowed original_tag under a tag lock": (
+        {"dec1": _block("allowed", _GER_LOCK)},
+        "tag = GER",
         [],
     ),
 }
 
 
 @pytest.mark.parametrize(
-    ("decisions", "pins", "expected"),
+    ("decisions", "category_allowed", "expected"),
     _CATEGORY_RECHECK_CASES.values(),
     ids=_CATEGORY_RECHECK_CASES,
 )
-def test_category_lock_makes_a_decision_recheck_redundant(decisions, pins, expected):
+def test_category_lock_makes_a_decision_recheck_redundant(
+    decisions, category_allowed, expected
+):
+    rows = _category_rows(V._find_category_redundant_rows, decisions, category_allowed)
+
+    assert_findings(rows, expected)
+
+
+_WAR = "has_war = yes"
+_CAT_WAR = "\tvisible = { has_war = yes }\n"
+_STATE_TARGET = "\t\tstate_target = yes\n"
+
+# A hidden category hides its decisions, so its gate covers their checks.
+# case: (category body, {decision: body}, covered, candidates)
+_CATEGORY_GATE_CASES = {
+    "line the category visible checks": (
+        _CAT_WAR,
+        {"dec1": _block("visible", _WAR), "dec2": _block("available", _WAR)},
+        [("dec1: visible repeats", "category visible"), ("dec2: available",)],
+        [],
+    ),
+    "line the category allowed checks": (
+        "\tallowed = { has_dlc = x }\n",
+        {"dec1": _block("target_root_trigger", "has_dlc = x")},
+        [("dec1: target_root_trigger", "category allowed")],
+        [],
+    ),
+    # The target is FROM, which the category gate does not have.
+    "FROM line": (
+        "\tvisible = { FROM = { has_war = yes } }\n",
+        {"dec1": _block("visible", "FROM = { has_war = yes }")},
+        [],
+        [],
+    ),
+    # validate_tag_redundant_with_category reports the pin in visible.
+    "tag pin": (
+        "\tallowed = { original_tag = GER }\n",
+        {
+            "dec1": _block("visible", "original_tag = GER")
+            + _block("target_root_trigger", "original_tag = GER")
+        },
+        [("dec1: target_root_trigger",)],
+        [],
+    ),
+    "mission": (_CAT_WAR, {"dec1": _MISSION + _block("available", _WAR)}, [], []),
+    # A state target reads visible on the state.
+    "state target": (
+        _CAT_WAR,
+        {
+            "dec1": _STATE_TARGET
+            + _block("visible", _WAR)
+            + _block("target_root_trigger", _WAR)
+        },
+        [("dec1: target_root_trigger",)],
+        [],
+    ),
+    # A mission in a hidden category still ticks, so it need not share the line.
+    "line every decision checks": (
+        "",
+        {
+            "dec1": _block("visible", _WAR),
+            "dec2": _block("available", _WAR),
+            "mission": _MISSION,
+        },
+        [],
+        [("cat: all 2 decisions", _WAR)],
+    ),
+    "line only some decisions check": (
+        "",
+        {"dec1": _block("visible", _WAR), "dec2": ""},
+        [],
+        [],
+    ),
+    "one decision": ("", {"dec1": _block("visible", _WAR)}, [], []),
+    # A state scope is one line, not the lines inside it.
+    "state scope": (
+        _CAT_WAR,
+        {
+            "dec1": _block("visible", "759 = { has_war = yes }"),
+            "dec2": _block("visible", "759 = {\n\thas_war = yes\n}"),
+        },
+        [],
+        [("cat: all 2 decisions", "`759 = { has_war = yes }`")],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("category", "decisions", "covered", "candidates"),
+    _CATEGORY_GATE_CASES.values(),
+    ids=_CATEGORY_GATE_CASES,
+)
+def test_category_gate_covers_decision_checks(category, decisions, covered, candidates):
     factories = [
         decision_factory(_nested(token, body)) for token, body in decisions.items()
     ]
 
-    rows = V._find_category_redundant_rows(
-        factories, {"cat": pins}, {"cat": list(decisions)}
+    covered_rows, candidate_rows = V._find_category_covered_checks(
+        factories, {"cat": "cat = {\n" + category + "}\n"}, {"cat": list(decisions)}
     )
 
-    assert_findings(rows, expected)
+    assert_findings([message for message, _file, _line in covered_rows], covered)
+    assert_findings(candidate_rows, candidates)
+
+
+# case: (decision allowed, category allowed, flagged)
+_ALLOWED_REPEAT_CASES = {
+    "tag pin repeat": (_GER_LOCK, _GER_LOCK, True),
+    "scripted trigger repeat": (
+        "EU_is_potential = yes",
+        "EU_is_potential = yes\nhas_war = no",
+        True,
+    ),
+    "extra condition": (
+        "EU_is_potential = yes\nhas_war = no",
+        "EU_is_potential = yes",
+        False,
+    ),
+    "original_tag under a tag lock": (_GER_LOCK, "tag = GER", True),
+    # An original_tag lock admits civil-war split-offs, so `tag` still narrows.
+    "tag under an original_tag lock": ("tag = GER", _GER_LOCK, False),
+    "block on one line and across lines": (
+        "OR = {\n\ttag = GER\n\ttag = ITA\n}",
+        "OR = { tag = GER tag = ITA }",
+        True,
+    ),
+    "different block contents": (
+        "OR = { tag = GER tag = FRA }",
+        "OR = { tag = GER tag = ITA }",
+        False,
+    ),
+    "different operator": (
+        "has_political_power > 50",
+        "has_political_power < 50",
+        False,
+    ),
+    "different value": ("original_tag = ITA", _GER_LOCK, False),
+    "state scope key": ("123 = { has_war = yes }", "has_war = yes", False),
+    "conditional chain missing an else_if": (
+        "if = { limit = { is_ai = no } always = yes }\nelse = { has_war = yes }",
+        "if = { limit = { is_ai = no } always = yes }\n"
+        "else_if = { limit = { original_tag = GER } always = yes }\n"
+        "else = { has_war = yes }",
+        False,
+    ),
+    # Macros are file-local, so the same name can hold different values.
+    "file-local macro": (
+        "has_political_power > @minimum_pp",
+        "has_political_power > @minimum_pp",
+        False,
+    ),
+    "different arrays sharing an index name": (
+        "var:global.first_pool^slot = { has_war = yes }",
+        "var:global.second_pool^slot = { has_war = yes }",
+        False,
+    ),
+    "no allowed": ("", _GER_LOCK, False),
+}
+
+
+@pytest.mark.parametrize(
+    ("allowed", "category_allowed", "flagged"),
+    _ALLOWED_REPEAT_CASES.values(),
+    ids=_ALLOWED_REPEAT_CASES,
+)
+def test_decision_allowed_repeating_its_category(allowed, category_allowed, flagged):
+    body = _block("allowed", allowed) if allowed else ""
+
+    rows = _category_rows(
+        V._find_allowed_repeating_category, {"dec1": body}, category_allowed
+    )
+
+    assert_findings(rows, [("dec1", "category cat")] if flagged else [])
 
 
 # ---- formable commitment ratchet --------------------------------------------
@@ -2745,7 +3248,6 @@ def test_block_helpers_tolerate_empty_and_unbalanced_input(tmp_path):
     assert V._extract_from_blocks("FROM = {" + nested + "}") == [nested]
     assert V._extract_from_blocks("FROM = {") == []
     assert V._extract_from_blocks("") == []
-    assert V._is_sole_flat_pin("", "GER") is False
     assert _mod(tmp_path, {})._normalize_block("") == ""
     with pytest.raises(ValueError):
         V._int_literal("bad")
@@ -2878,6 +3380,9 @@ _FINDING_DECISIONS = {
     "root_repeat": _GER_TARGET
     + _block("target_root_trigger", "has_war = yes")
     + _block("available", "has_war = yes"),
+    "root_from": _block("target_root_trigger", "wraps_target = yes"),
+    "stale_state": _block("target_trigger", _NOT_TAKEN)
+    + _block("complete_effect", _SET_TAKEN),
     "from_duplicate": _GER_TARGET
     + _block("target_trigger", _FROM_WAR)
     + _block("visible", _FROM_WAR),
@@ -2927,10 +3432,13 @@ _FINDING_DECISIONS = {
     "repeat_default": "\t\tfire_only_once = no\n",
 }
 _FINDINGS_MOD = {
+    "common/scripted_triggers/from_readers.txt": "reads_target = { FROM = { has_war = yes } }\n"
+    "wraps_target = { reads_target = yes }\n",
     "common/decisions/categories/categories.txt": "cat_allowed = {\n"
     "\tallowed = { original_tag = GER }\n}\n"
     "cat_unchecked = {\n}\ncat_empty = {\n}\ncat_orphan = {\n}\n"
-    "cat_ai_disabled = {\n\tallowed = { always = no }\n}\n",
+    "cat_ai_disabled = {\n\tallowed = { always = no }\n}\n"
+    "cat_gated = {\n\tvisible = { has_war = yes }\n}\n",
     "common/decisions/decisions.txt": "cat_allowed = {\n"
     + _nested(
         "decision_dup",
@@ -2954,6 +3462,11 @@ _FINDINGS_MOD = {
     )
     + "}\ncat_ai_disabled = {\n"
     + _nested("category_ai_skip", _ICON)
+    + "}\ncat_gated = {\n"
+    + "".join(
+        _nested(token, _ICON + _block("visible", "has_war = yes\nhas_capitulated = no"))
+        for token in ("gated_one", "gated_two")
+    )
     + "}\n",
     "events/activations.txt": "activate_targeted_decision = { decision = manual_used }\n",
     "common/bop/bop.txt": "decision_category = cat_empty\n",
@@ -2968,8 +3481,12 @@ _BACKLOG_WARNINGS = (
     "decision-available-repeats-root-trigger",
     "decision-cosmetic-targeting",
     "decision-duplicate-log",
+    "decision-root-trigger-reads-from",
+    "decision-target-state-not-in-available",
     "decision-treasury-gate-below-charge",
     "decision-trigger-reads-temp-variable",
+    "decision-check-covered-by-category",
+    "decision-category-gate-candidate",
 )
 _PROMOTED_ERRORS = (
     "missing-decision-log",
@@ -3034,6 +3551,7 @@ def test_full_run_reports_every_finding_category(tmp_path):
         "category_ai_skip" in message and "AI factor" in message for message in messages
     )
     assert any("from_move" in m and "move the FROM" in m for m in messages)
+    assert any("root_from" in m and "calls wraps_target" in m for m in messages)
 
 
 def test_clean_mod_passes_full_staged_and_strict_runs(tmp_path, monkeypatch):

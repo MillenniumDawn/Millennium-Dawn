@@ -341,7 +341,7 @@ ingame_update_setup = {
 		refresh_investment_gui = yes
 	}
 
-	if = { limit = { is_debug = yes }
+	if = { limit = { OR = { is_debug = yes has_global_flag = GLOBAL_md_benchmark_logging } }
 		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
 		log = "[GetDateText]: [THIS.GetName]: Economy Breakdown: GDP: [?THIS.gdp_total] Income: [?THIS.display_income] (Tax: [?THIS.tax_gain] Resources: [?THIS.resource_sale_rate] Investments: [?THIS.int_investments_collected_rate] Other: [?THIS.additional_income_rate]) Expense: [?THIS.potential_expense] (Bureaucracy: [?THIS.bureaucracy_gain] Defence: [?THIS.defence_gain] Security: [?THIS.security_gain] Education: [?THIS.education_gain] Health: [?THIS.health_gain] Welfare: [?THIS.welfare_gain] Infrastructure: [?THIS.infra_gain] Other: [?THIS.additional_expenses_rate] Border: [?THIS.border_control_gain] UN: [?THIS.united_nations_expenses] Debt Service: [?THIS.debt_rate]) Defence Law: [?THIS.military_law] Expected Defence Law: [?THIS.expected_military_law] Political Power: [?THIS.political_power]"
 		log = "[GetDateText]: [THIS.GetName]: Spending Laws (law/expected/offset): Bureaucracy: [?THIS.bureau_law]/[?THIS.expected_adm_spending]/[?THIS.bureau_desire_offset] Police: [?THIS.police_law]/[?THIS.expected_police_spending]/[?THIS.police_desire_offset] Education: [?THIS.education_law]/[?THIS.expected_edu_spending]/[?THIS.education_desire_offset] Health: [?THIS.health_law]/[?THIS.expected_health_spending]/[?THIS.health_desire_offset] Social: [?THIS.social_law]/[?THIS.expected_welfare_spending]/[?THIS.social_desire_offset] Defence: [?THIS.military_law]/[?THIS.expected_military_law]/[?THIS.defence_desire_offset] Balance Ratio: [?THIS.budget_balance_ratio] AI Balance: [?THIS.ai_budget_balance] Raw (B/P/E/H/S): [?THIS.expected_adm_raw]/[?THIS.expected_police_raw]/[?THIS.expected_edu_raw]/[?THIS.expected_health_raw]/[?THIS.expected_welfare_raw]"
@@ -5536,6 +5536,19 @@ calculate_gdp = {
 	# Share out the workforce, then give every sector its workers
 	solve_workforce_priority_share = yes
 
+	# Unemployment one stricter labor regulations level would absorb (about 1/8 of base jobs), with a 20% margin
+	if = {
+		limit = { is_ai = yes }
+		set_variable = {
+			labor_law_tighten_unemployment = {
+				value = open_demand
+				divide = { value = modifier@buildings_worker_requirement_modifier add = 1 clamp = { min = 0.1 max = 2 } }
+				multiply = 0.15
+				divide = { value = workforce_total_display clamp = { min = 0.001 max = @math_expressions_max } }
+			}
+		}
+	}
+
 	# Fulfillment is priority * share, capped at 100%; a sector with no jobs stays at 100%
 	set_variable = {
 		nuclear_reactors_manpower_fulfillment = {
@@ -5855,11 +5868,22 @@ calculate_gdp = {
 		}
 	}
 
+	# Poorer countries carry a large informal labor pool without unrest: 55% up to $11.7k GDP/C, gone at $30k
+	set_variable = {
+		unemployment_structural_allowance = {
+			value = gdp_per_capita
+			multiply = -0.03
+			add = 0.9
+			clamp = { min = 0 max = 0.55 }
+		}
+	}
+
 	# Calculate Threshold
 	set_variable = {
 		unemployment_threshold_display_var = {
 			value = modifier@high_unemployment_threshold_modifier
 			add = 0.06
+			add = unemployment_structural_allowance
 			clamp = { min = 0 max = @math_expressions_max }
 		}
 	}
@@ -6306,13 +6330,13 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { ai_budget_balance< -1 }
+				check_variable = { ai_budget_balance < -1 }
 				check_variable = { budget_balance_ratio < -0.03 }
 			}
 			check_variable = { population_tax_rate < 40 }
 			OR = {
 				has_stability > 0.24
-				check_variable = { ai_budget_balance< -5 }
+				check_variable = { ai_budget_balance < -5 }
 				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
@@ -6324,7 +6348,7 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { ai_budget_balance< -2 }
+				check_variable = { ai_budget_balance < -2 }
 				check_variable = { budget_balance_ratio < -0.06 }
 			}
 			check_variable = { corporate_tax_rate < 50 }
@@ -6332,7 +6356,7 @@ calculate_tax_adjustments = {
 				check_variable = { population_tax_rate > 39 }
 				has_stability < 0.25
 				check_variable = { pop_point_income < corp_point_income_three_quarters }
-				check_variable = { ai_budget_balance< -5 }
+				check_variable = { ai_budget_balance < -5 }
 				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
@@ -6343,7 +6367,7 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			check_variable = { policy_transition_tax_stability < -0.1 }
-			check_variable = { ai_budget_balance> -5 }
+			check_variable = { ai_budget_balance > -5 }
 			check_variable = { budget_balance_ratio > -0.15 }
 		}
 		if = {
@@ -6372,7 +6396,7 @@ calculate_tax_adjustments = {
 				check_variable = { interest_rate > 8 }
 				check_variable = { debt_ratio > 1.0 }
 			}
-			check_variable = { ai_budget_balance< 0 }
+			check_variable = { ai_budget_balance < 0 }
 		}
 		if = {
 			limit = {
@@ -6397,7 +6421,7 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { ai_budget_balance> 2 }
+				check_variable = { ai_budget_balance > 2 }
 				check_variable = { budget_balance_ratio > 0.10 }
 			}
 			check_variable = { budget_balance_ratio > 0.03 }
@@ -6784,54 +6808,6 @@ update_population_growth_floor = {
 		}
 	}
 	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
-}
-
-# Effect: calculate_cost_pp_economic_cycles
-# Purpose: Computes political-point cost to unlock economic-cycle tiers
-calculate_cost_pp_economic_cycles = {
-	set_temp_variable = { tmp_tax_gain_multiplier_modifier = modifier@tax_gain_multiplier_modifier }
-	set_temp_variable = { tmp_production_speed_buildings_factor = modifier@production_speed_buildings_factor }
-	set_temp_variable = { tmp_stability_factor = modifier@stability_factor }
-	set_temp_variable = { tmp_political_power_gain = modifier@political_power_gain }
-
-	if = { limit = { has_idea = recession }
-		set_variable = { pp_cost_economic = 150 }
-		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.20 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.15 }
-		add_to_temp_variable = { tmp_stability_factor = 0.05 }
-	}
-	else_if = { limit = { has_idea = stagnation }
-		set_variable = { pp_cost_economic = 200 }
-		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.10 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.40 }
-		add_to_temp_variable = { tmp_stability_factor = 0.02 }
-	}
-	else_if = { limit = { has_idea = stable_growth }
-		set_variable = { pp_cost_economic = 250 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.65 }
-	}
-	else_if = { limit = { has_idea = fast_growth }
-		set_variable = { pp_cost_economic = 300 }
-		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.05 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.90 }
-		add_to_temp_variable = { tmp_stability_factor = 0.02 }
-	}
-	else_if = { limit = { has_idea = economic_boom }
-		set_variable = { pp_cost_economic = 350 }
-		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.10 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 1.10 }
-		add_to_temp_variable = { tmp_stability_factor = 0.04 }
-	}
-
-	multiply_variable = { pp_cost_economic = tmp_tax_gain_multiplier_modifier }
-	multiply_variable = { pp_cost_economic = tmp_production_speed_buildings_factor }
-	multiply_variable = { pp_cost_economic = tmp_stability_factor }
-	clamp_temp_variable = { var = tmp_political_power_gain min = 0.001 }
-	divide_variable = { pp_cost_economic = tmp_political_power_gain }
-
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Next Cycle Political Power Cost: [?pp_cost_economic]"
-	}
 }
 
 # Effect: recalculate_resources_price

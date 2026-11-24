@@ -45,6 +45,7 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_matching_brace,
     find_unquoted_block_end,
     first_flat_match,
     flat_block_text,
@@ -792,6 +793,66 @@ def _extract_from_blocks(block: str) -> List[str]:
     return bodies
 
 
+_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*(?:yes|no)\b")
+
+
+def _called_triggers(block: str, names: AbstractSet[str]) -> List[str]:
+    """Scripted triggers from *names* that *block* calls as `name = yes` or `= no`."""
+    return [m[1] for m in _TRIGGER_CALL_RE.finditer(block) if m[1] in names]
+
+
+def _from_reading_triggers(triggers: Mapping[str, str]) -> Set[str]:
+    """Scripted triggers whose body reads FROM, directly or through the triggers it calls."""
+    reading = {name for name, body in triggers.items() if _FROM_WORD_RE.search(body)}
+    callees = {
+        name: _called_triggers(body, triggers.keys()) for name, body in triggers.items()
+    }
+    grew = True
+    while grew:
+        grew = False
+        for name, called in callees.items():
+            if name not in reading and reading.intersection(called):
+                reading.add(name)
+                grew = True
+    return reading
+
+
+# Flags and ideas are the target state a decision's own effect changes.
+_TARGET_STATE_WRITES = {
+    "set_country_flag": ("flag", True),
+    "clr_country_flag": ("flag", False),
+    "add_ideas": ("idea", True),
+    "remove_ideas": ("idea", False),
+}
+_TARGET_STATE_READS = {"has_country_flag": ("flag", True), "has_idea": ("idea", True)}
+_FLAG_NAME_RE = re.compile(r"\bflag\s*=\s*([\w@.:]+)")
+_ONE_SHOT_NOTE = " (the same country cannot repeat it; verify another one can take it)"
+
+
+def _from_state(
+    block: str, verbs: Mapping[str, Tuple[str, bool]]
+) -> Set[Tuple[str, str, bool]]:
+    """(kind, name, present) of state written or required inside FROM, retaining NOTs."""
+    state: Set[Tuple[str, str, bool]] = set()
+
+    def visit(body: str, in_from: bool = False, negated: bool = False) -> None:
+        for key, scalar, child in iter_statements(flat_block_text(body)):
+            if in_from and key in verbs:
+                kind, present = verbs[key]
+                if scalar is not None:
+                    names = [scalar]
+                elif kind == "flag":
+                    names = _FLAG_NAME_RE.findall(child or "")
+                else:
+                    names = (child or "").split()
+                state.update((kind, name, present != negated) for name in names)
+            elif child is not None:
+                visit(child, in_from or key == "FROM", negated != (key == "NOT"))
+
+    visit(block)
+    return state
+
+
 # Bare trigger names needing a has_ prefix (hoisted from validate_bare_trigger_names).
 _BARE_TRIGGERS = {
     "political_power": "has_political_power",
@@ -835,34 +896,62 @@ def _flat_tag_pins(block: str) -> set:
     return {tag for _, tag in _flat_tag_pins_with_kind(block)}
 
 
-def _is_sole_flat_pin(block: str, tag: str) -> bool:
-    """True if ``block``'s only content (after comment-stripping) is a single
-    flat ``tag = X`` / ``original_tag = X`` pin equal to ``tag``.
+# iter_statement_ops reads no numeric key, so `123 = { ... }` would leak its body.
+_STATE_SCOPE_RE = re.compile(r"(?<![\w.:@])\d+\s*=\s*\{")
 
-    Mirrors the sole-pin shape validate_allowed_redundant_with_category
-    already reports, so callers can skip re-flagging it.
+
+def _trigger_statements(block: str) -> Set[str]:
+    """Depth-0 statements of a trigger block, whitespace-collapsed for comparison.
+
+    Keep blocks with numeric or array-indexed scopes whole.
     """
-    if not block:
+    if _STATE_SCOPE_RE.search(block) or re.search(
+        r"\bvar:[\w.:@]+\^\w+\s*=\s*\{", block
+    ):
+        return {" ".join(flat_block_text(block).split())}
+    statements = set()
+    for key, operator, scalar, body in iter_statement_ops(flat_block_text(block)):
+        if key.lower() in {"if", "else_if", "else"}:
+            return {" ".join(flat_block_text(block).split())}
+        value = scalar if body is None else "{ " + " ".join(body.split()) + " }"
+        statements.add(f"{key} {operator} {value}")
+    return statements
+
+
+def _category_guarantees(category_allowed: str) -> Set[str]:
+    """Conditions a category's ``allowed`` already holds for its decisions."""
+    statements = _trigger_statements(category_allowed)
+    # A tag lock implies the original_tag pin. The reverse narrows, so it is not added.
+    statements |= {
+        f"original_tag = {tag}"
+        for kind, tag in _flat_tag_pins_with_kind(category_allowed)
+        if kind == "tag"
+    }
+    return statements
+
+
+def _repeats_category(allowed: str, guarantees: Set[str]) -> bool:
+    """True when every condition of a decision's ``allowed`` is in ``guarantees``."""
+    if re.search(r"(?<![\w.])@\w+", allowed):
         return False
-    inner = block.strip()
-    if inner.startswith("{"):
-        inner = inner[1:]
-    if inner.endswith("}"):
-        inner = inner[:-1]
-    cleaned = re.sub(r"#[^\n]*", "", inner).strip()
-    pat = re.compile(r"^\s*(?:original_tag|tag)\s*=\s*" + re.escape(tag) + r"\s*$")
-    return bool(pat.match(cleaned))
+    statements = _trigger_statements(allowed)
+    return bool(statements) and statements <= guarantees
 
 
-def _category_allowed_pins(categories: Dict[str, str]) -> Dict[str, set]:
-    """Return category name -> {(keyword, tag), ...} pinned by its flat,
-    depth-0 ``allowed`` block.
+def _category_of_decision(cats_with_decs: Dict[str, List[str]]) -> Dict[str, str]:
+    token_to_cat: Dict[str, str] = {}
+    for cat, dec_tokens in cats_with_decs.items():
+        for tok in dec_tokens:
+            token_to_cat.setdefault(tok, cat)
+    return token_to_cat
 
-    Categories with no ``allowed`` block are omitted; categories whose
-    ``allowed`` has no flat tag pin at all (e.g. a scripted trigger) map to
-    an empty set — both read as "no lock" to callers.
+
+def _category_allowed_blocks(categories: Dict[str, str]) -> Dict[str, str]:
+    """Return category name -> its ``allowed`` block, braces included.
+
+    Categories with no ``allowed`` block are omitted.
     """
-    cat_pins: Dict[str, set] = {}
+    blocks: Dict[str, str] = {}
     for cat_name, cat_code in categories.items():
         am = re.search(r"\ballowed\s*=\s*\{", cat_code)
         if not am:
@@ -876,8 +965,22 @@ def _category_allowed_pins(categories: Dict[str, str]) -> Dict[str, set]:
             elif cat_code[i] == "}":
                 depth -= 1
             i += 1
-        cat_pins[cat_name] = _flat_tag_pins_with_kind(cat_code[a_start:i])
-    return cat_pins
+        blocks[cat_name] = cat_code[a_start:i]
+    return blocks
+
+
+def _category_allowed_pins(categories: Dict[str, str]) -> Dict[str, set]:
+    """Return category name -> {(keyword, tag), ...} pinned by its flat,
+    depth-0 ``allowed`` block.
+
+    Categories with no ``allowed`` block are omitted; categories whose
+    ``allowed`` has no flat tag pin at all (e.g. a scripted trigger) map to
+    an empty set — both read as "no lock" to callers.
+    """
+    return {
+        cat_name: _flat_tag_pins_with_kind(block)
+        for cat_name, block in _category_allowed_blocks(categories).items()
+    }
 
 
 def _scan_top_level(block: str):
@@ -914,9 +1017,30 @@ def _scan_top_level(block: str):
             yield ("scope", ident)
 
 
+def _find_allowed_repeating_category(
+    factories: List["DecisionFactory"],
+    category_allowed: Dict[str, str],
+    cats_with_decs: Dict[str, List[str]],
+) -> List[str]:
+    """Pure detection: decisions whose ``allowed`` holds only conditions the
+    parent category's ``allowed`` already guarantees."""
+    token_to_cat = _category_of_decision(cats_with_decs)
+    guarantees = {
+        cat: _category_guarantees(block) for cat, block in category_allowed.items()
+    }
+    results: List[str] = []
+    for d in factories:
+        cat_name = token_to_cat.get(d.token)
+        if cat_name in guarantees and _repeats_category(
+            d.allowed, guarantees[cat_name]
+        ):
+            results.append(f"{d.token:<55}{d.source_basename} (category {cat_name})")
+    return results
+
+
 def _find_category_redundant_rows(
     factories: List["DecisionFactory"],
-    cat_pins: Dict[str, set],
+    category_allowed: Dict[str, str],
     cats_with_decs: Dict[str, List[str]],
 ) -> List[str]:
     """Pure detection: decision-level tag/original_tag re-checks already
@@ -924,10 +1048,10 @@ def _find_category_redundant_rows(
 
     Fills the gap between ``validate_redundant_tag_checks`` (decision's own
     ``allowed`` pin vs its own ``visible``/``available``) and
-    ``validate_allowed_redundant_with_category`` (sole-content ``allowed``
-    duplicating the category pin): neither compares the *category* lock
-    against a decision's ``visible``/``available``, or against a partial
-    (multi-condition) ``allowed`` block.
+    ``validate_allowed_redundant_with_category`` (an ``allowed`` that only
+    repeats the category's): neither compares the *category* lock against a
+    decision's ``visible``/``available``, or against an ``allowed`` block the
+    category covers only in part.
 
     Rules:
     - Only single-tag category locks count: the category's ``allowed`` must
@@ -942,25 +1066,21 @@ def _find_category_redundant_rows(
       ``original_tag = X`` for the same tag) flags both ``tag = X`` and
       ``original_tag = X`` re-checks — the category is already at least as
       restrictive as either.
-    - ``allowed`` is skipped when its only content is the pin itself; that
-      exact shape is already reported by
-      ``validate_allowed_redundant_with_category``.
+    - ``allowed`` is skipped when the category's ``allowed`` already holds all
+      of it; ``validate_allowed_redundant_with_category`` reports that shape.
     - Depth-0 only, via ``_flat_tag_pins_with_kind``: negations
       (``NOT = {...}``), ``FROM``/``any_country``/``TAG = {}`` scopes are
       auto-excluded. ``target_trigger``/``target_root_trigger`` are separate
       factory fields and are not scanned.
     """
-    token_to_cat: Dict[str, str] = {}
-    for cat, dec_tokens in cats_with_decs.items():
-        for tok in dec_tokens:
-            token_to_cat.setdefault(tok, cat)
+    token_to_cat = _category_of_decision(cats_with_decs)
 
     results: List[str] = []
     for d in factories:
         cat_name = token_to_cat.get(d.token)
-        if cat_name is None:
+        if cat_name not in category_allowed:
             continue
-        pins = cat_pins.get(cat_name)
+        pins = _flat_tag_pins_with_kind(category_allowed[cat_name])
         if not pins:
             continue
         tag_values = {tg for _, tg in pins}
@@ -981,7 +1101,9 @@ def _find_category_redundant_rows(
         ):
             if not block:
                 continue
-            if field_name == "allowed" and _is_sole_flat_pin(block, lock_tag):
+            if field_name == "allowed" and _repeats_category(
+                block, _category_guarantees(category_allowed[cat_name])
+            ):
                 continue
             hits = _flat_tag_pins_with_kind(block)
             for kw in ("original_tag", "tag"):
@@ -995,6 +1117,126 @@ def _find_category_redundant_rows(
             )
 
     return results
+
+
+_GATE_STATEMENT_RE = re.compile(
+    r'([^\s{}=<>"]+)\s*(>=|<=|=|>|<)\s*("[^"]*"|\{|[^\s{}]+)'
+)
+
+
+def _gate_statement_lines(block: str) -> Set[str]:
+    """Depth-0 statements of a trigger block, whitespace collapsed for comparison.
+
+    A state scope such as ``759 = { ... }`` stays one statement.
+    """
+    lines = set()
+    for inner, index in iter_flat_offsets(block):
+        if index and inner[index - 1] not in " \t\r\n{}":
+            continue
+        match = _GATE_STATEMENT_RE.match(inner, index)
+        if not match:
+            continue
+        key, operator, value = match.groups()
+        if value == "{":
+            close = find_matching_brace(inner, match.end() - 1)
+            if close == -1:
+                continue
+            value = " ".join(["{", *inner[match.end() : close].split(), "}"])
+        lines.add(f"{key} {operator} {value}")
+    return lines
+
+
+def _category_gate_lines(category_code: str) -> Dict[str, str]:
+    """Map each depth-0 line of a category's visible and allowed to its block."""
+    gate: Dict[str, str] = {}
+    for field in ("visible", "allowed"):
+        block = extract_value_multi_line(category_code, field)
+        for line in _gate_statement_lines(block):
+            gate.setdefault(line, field)
+    return gate
+
+
+def _decision_gate_lines(d: "DecisionFactory") -> Dict[str, Set[str]]:
+    """ROOT-scope depth-0 lines of a decision's gates, by block.
+
+    A state target reads visible and available on the state, so only its
+    target_root_trigger counts. FROM is the target, which a category gate does
+    not have.
+    """
+    fields = (
+        ("target_root_trigger",)
+        if d.state_target
+        else ("visible", "target_root_trigger", "available")
+    )
+    return {
+        field: {
+            line
+            for line in _gate_statement_lines(getattr(d, field))
+            if not _FROM_WORD_RE.search(line)
+        }
+        for field in fields
+    }
+
+
+def _find_category_covered_checks(
+    factories: List["DecisionFactory"],
+    categories: Dict[str, str],
+    cats_with_decs: Dict[str, List[str]],
+) -> Tuple[List[Tuple[str, str, int]], List[str]]:
+    """Pure detection for ``validate_checks_covered_by_category``.
+
+    Returns (covered, candidates). ``covered`` holds a decision's visible,
+    target_root_trigger, or available line that its category's visible or
+    allowed already holds at depth 0. A hidden category hides its decisions from
+    players and the AI. ``candidates`` holds categories whose decisions, two or
+    more, all repeat a line the category does not hold.
+
+    Missions are skipped: one in a hidden category still ticks.
+    """
+    token_to_cat: Dict[str, str] = {}
+    for cat, dec_tokens in cats_with_decs.items():
+        for tok in dec_tokens:
+            token_to_cat.setdefault(tok, cat)
+    by_category: Dict[str, List["DecisionFactory"]] = {}
+    for d in factories:
+        cat_name = token_to_cat.get(d.token)
+        if cat_name is not None and not d.mission_subtype:
+            by_category.setdefault(cat_name, []).append(d)
+
+    covered: List[Tuple[str, str, int]] = []
+    candidates: List[str] = []
+    for cat_name, decisions in by_category.items():
+        gate = _category_gate_lines(categories[cat_name])
+        shared: Set[str] | None = None
+        for d in decisions:
+            gate_lines = _decision_gate_lines(d)
+            for field, lines in gate_lines.items():
+                for line in sorted(lines & gate.keys()):
+                    if (
+                        gate[line] == "allowed"
+                        and field != "target_root_trigger"
+                        and line.startswith(("tag ", "original_tag "))
+                    ):
+                        continue  # validate_tag_redundant_with_category reports it.
+                    covered.append(
+                        (
+                            f"{d.token}: {field} repeats `{line}` from the "
+                            f"category {gate[line]}; remove it",
+                            d.source_path,
+                            d.line,
+                        )
+                    )
+            every_line = set().union(*gate_lines.values())
+            shared = every_line if shared is None else shared & every_line
+        repeated = sorted((shared or set()) - gate.keys())
+        if len(decisions) > 1 and repeated:
+            candidates.append(
+                f"{cat_name}: all {len(decisions)} decisions check "
+                f"{', '.join(f'`{line}`' for line in repeated)}; "
+                "check once in the category instead"
+            )
+
+    return covered, candidates
 
 
 def _group_fixes_by_basename(fixes: list) -> Dict[str, List[str]]:
@@ -2314,6 +2556,119 @@ class Validator(BaseValidator):
             category="decision-available-repeats-root-trigger",
         )
 
+    def validate_root_trigger_reads_from(self):
+        """Flag a ``target_root_trigger`` that reads ``FROM``.
+
+        ``target_root_trigger`` runs before any target is bound, so a ``FROM``
+        read there checks nothing useful. Scripted triggers are followed, and
+        so are the triggers they call.
+
+        Exempts ``allowed = { always = no }`` (script-activated).
+        """
+        self._log_section("Checking target_root_trigger blocks that read FROM...")
+        triggers = self._get_scripted_triggers()
+        reading = _from_reading_triggers(triggers)
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            root = d.target_root_trigger
+            if not root or (d.allowed and "always = no" in d.allowed):
+                continue
+            if _FROM_WORD_RE.search(root):
+                reads = "reads FROM"
+            elif called := _called_triggers(root, reading):
+                reads = f"calls {called[0]}, which reads FROM"
+            else:
+                continue
+            results.append(
+                (
+                    f"{d.token} - target_root_trigger {reads}, but FROM is not"
+                    " bound there; move the condition into target_trigger",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No target_root_trigger reads FROM",
+            "Decisions whose target_root_trigger reads FROM:",
+            severity=Severity.WARNING,
+            category="decision-root-trigger-reads-from",
+        )
+
+    def validate_target_state_rechecked_in_available(self):
+        """Flag target state a decision changes that only ``target_trigger`` checks.
+
+        ``target_trigger`` runs once a day, so after one country completes the
+        decision, others can take it on the same target until the next pass.
+        Compares the flags and ideas ``complete_effect`` writes inside ``FROM``
+        with opposite-polarity reads in ``target_trigger``, less those ``available``
+        reads there. ``effect_tooltip`` bodies never run, so they do not count.
+        A ``days_re_enable`` or ``fire_only_once`` decision gets a verify note:
+        the same country cannot repeat it, so only another country can. When it
+        is also locked to one runtime ``tag``, nobody can, and it is skipped.
+
+        Exempts ``allowed = { always = no }`` (script-activated).
+        """
+        self._log_section(
+            "Checking targeted decisions for target state only target_trigger checks..."
+        )
+        token_to_cat = _category_of_decision(
+            parse_categories_with_decisions(self.mod_path)
+        )
+        cat_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not (d.target_trigger and d.complete_effect):
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            one_shot = d.fire_only_once or "days_re_enable" in d.raw
+            if one_shot and any(
+                kind == "tag"
+                for kind, _tag in (
+                    _flat_tag_pins_with_kind(d.allowed)
+                    | _flat_tag_pins_with_kind(d.target_root_trigger)
+                    | cat_pins.get(token_to_cat.get(d.token, ""), set())
+                )
+            ):
+                continue
+            effect = _strip_effect_tooltip_blocks(d.complete_effect)
+            invalidated = {
+                (kind, name, not present)
+                for kind, name, present in _from_state(effect, _TARGET_STATE_WRITES)
+            } & _from_state(d.target_trigger, _TARGET_STATE_READS)
+            stale = {(kind, name) for kind, name, _present in invalidated} - {
+                (kind, name)
+                for kind, name, _present in _from_state(
+                    d.available, _TARGET_STATE_READS
+                )
+            }
+            if stale:
+                changed = ", ".join(f"{kind} {name}" for kind, name in sorted(stale))
+                note = _ONE_SHOT_NOTE if one_shot else ""
+                results.append(
+                    (
+                        f"{d.token} - complete_effect changes {changed} on FROM, but"
+                        " only target_trigger checks it. target_trigger runs once a"
+                        " day, so the decision can be taken again on the same target"
+                        " until the next pass; re-check it in available, inside"
+                        f" hidden_trigger if it is not player-facing{note}",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ No targeted decision changes state only target_trigger checks",
+            "Targeted decisions whose effect changes target state that available does not check:",
+            severity=Severity.WARNING,
+            category="decision-target-state-not-in-available",
+        )
+
     def validate_from_checks_in_visible(self):
         """Flag targeted decisions with FROM checks in visible when a
         target_trigger already exists.
@@ -2604,45 +2959,22 @@ class Validator(BaseValidator):
         )
 
     def validate_allowed_redundant_with_category(self):
-        """Flag decisions whose ``allowed`` is fully redundant with the parent
-        category's ``allowed`` (same single-tag pin, no extra conditions).
+        """Flag decisions whose ``allowed`` only repeats conditions of the
+        parent category's ``allowed``.
 
-        E.g. a decision with ``allowed = { original_tag = TAG }`` inside a
-        category that already declares ``allowed = { original_tag = TAG }``.
+        E.g. a decision with ``allowed = { EU_is_potential = yes }`` inside a
+        category whose ``allowed`` already holds ``EU_is_potential = yes``.
         The decision-level allowed is dead weight — remove it.
         """
         self._log_section(
             "Checking decisions with allowed redundant with parent category..."
         )
 
-        factories = parse_all_decision_factories(self.mod_path)
-        categories = parse_decision_categories(self.mod_path)
-        cats_with_decs = parse_categories_with_decisions(self.mod_path)
-        cat_pins = _category_allowed_pins(categories)
-
-        results = []
-        for d in factories:
-            if not d.allowed:
-                continue
-            dec_pinned = _flat_tag_pins(d.allowed)
-            if len(dec_pinned) != 1:
-                continue
-            pinned = next(iter(dec_pinned))
-            # Verify allowed has ONLY this pin (no extra conditions)
-            if not _is_sole_flat_pin(d.allowed, pinned):
-                continue
-
-            # Find parent category
-            cat_name = None
-            for c, dec_set in cats_with_decs.items():
-                if d.token in dec_set:
-                    cat_name = c
-                    break
-            if cat_name not in cat_pins:
-                continue
-            cat_tag_values = {tg for _, tg in cat_pins[cat_name]}
-            if pinned in cat_tag_values:
-                results.append(f"{d.token:<55}{d.source_basename} ({pinned})")
+        results = _find_allowed_repeating_category(
+            parse_all_decision_factories(self.mod_path),
+            _category_allowed_blocks(parse_decision_categories(self.mod_path)),
+            parse_categories_with_decisions(self.mod_path),
+        )
 
         self._report(
             results,
@@ -2660,17 +2992,45 @@ class Validator(BaseValidator):
             "Checking decisions for tag re-checks redundant with category lock..."
         )
 
-        factories = parse_all_decision_factories(self.mod_path)
-        categories = parse_decision_categories(self.mod_path)
-        cats_with_decs = parse_categories_with_decisions(self.mod_path)
-        cat_pins = _category_allowed_pins(categories)
-
-        results = _find_category_redundant_rows(factories, cat_pins, cats_with_decs)
+        results = _find_category_redundant_rows(
+            parse_all_decision_factories(self.mod_path),
+            _category_allowed_blocks(parse_decision_categories(self.mod_path)),
+            parse_categories_with_decisions(self.mod_path),
+        )
 
         self._report(
             results,
             "✓ No decisions with tag checks redundant with category lock",
             "Decisions with tag/original_tag re-checks redundant with the parent category's lock (remove the re-check):",
+        )
+
+    def validate_checks_covered_by_category(self):
+        """Flag decision gate lines the category gate already checks, and
+        categories whose decisions all repeat one.
+
+        See ``_find_category_covered_checks`` for the rules.
+        """
+        self._log_section("Checking decision gates against their category gate...")
+
+        covered, candidates = _find_category_covered_checks(
+            parse_all_decision_factories(self.mod_path),
+            parse_decision_categories(self.mod_path),
+            parse_categories_with_decisions(self.mod_path),
+        )
+
+        self._report(
+            covered,
+            "✓ No decision repeats its category gate",
+            "Decision checks the category gate already makes:",
+            Severity.WARNING,
+            category="decision-check-covered-by-category",
+        )
+        self._report(
+            candidates,
+            "✓ No category whose decisions all repeat a check",
+            "Categories whose decisions all repeat a check:",
+            Severity.WARNING,
+            category="decision-category-gate-candidate",
         )
 
     def validate_pp_charge_in_effect(self):
@@ -4225,6 +4585,8 @@ class Validator(BaseValidator):
         self.validate_targets_no_trigger()
         self.validate_root_only_visible_on_targeted()
         self.validate_available_repeats_target_root_trigger()
+        self.validate_root_trigger_reads_from()
+        self.validate_target_state_rechecked_in_available()
         self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
@@ -4233,6 +4595,7 @@ class Validator(BaseValidator):
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
         self.validate_tag_redundant_with_category()
+        self.validate_checks_covered_by_category()
         self.validate_pp_charge_in_effect()
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
