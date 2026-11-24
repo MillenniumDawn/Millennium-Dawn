@@ -8901,3 +8901,1083 @@ country_event = {
 		}
 	}
 }
+
+# The Old Friends Call
+country_event = {
+	id = egypt_mubarak.185
+	title = egypt_mubarak.185.t
+	desc = egypt_mubarak.185.d
+	picture = GFX_parlament_old
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.185.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.185.a executed"
+		if = {
+			limit = { country_exists = SAU }
+			SAU = { add_opinion_modifier = { target = ROOT modifier = small_increase } }
+		}
+		set_country_flag = EGY_abdullah_called_first
+		custom_effect_tooltip = EGY_abdullah_called_first_tt
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				country_exists = SAU
+				SAU = { has_opinion = { target = ROOT value > 25 } }
+			}
+			modifier = {
+				factor = 0
+				NOT = { country_exists = SAU }
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.185.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.185.b executed"
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = ROOT modifier = small_increase } }
+		}
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				check_variable = { the_military_opinion < 40 }
+			}
+			modifier = {
+				factor = 0.5
+				country_exists = USA
+				USA = { has_opinion = { target = ROOT value < 0 } }
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.185.c
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.185.c executed"
+		custom_effect_tooltip = EGY_worried_rulers_opinion_tt
+		hidden_effect = {
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+						NOT = { has_government = democratic }
+						NOT = { has_war_with = ROOT }
+					}
+					add_opinion_modifier = { target = ROOT modifier = small_increase }
+				}
+			}
+		}
+		set_temp_variable = { temp_authority = 1 }
+		EGY_change_mubarak_authority = yes
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				check_variable = { EGY_mubarak_authority < 5 }
+			}
+		}
+	}
+}
+
+# A Million Workers in Libya
+country_event = {
+	id = egypt_mubarak.186
+	title = egypt_mubarak.186.t
+	desc = egypt_mubarak.186.d
+	picture = GFX_african_refugee_camp
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.186.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.186.a executed"
+		set_temp_variable = { treasury_change = -1.5 }
+		modify_treasury_effect = yes
+		newline = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+		set_temp_variable = { temp_authority = 1 }
+		EGY_change_mubarak_authority = yes
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				check_variable = { EGY_mubarak_authority < 5 }
+			}
+			modifier = {
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.186.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.186.b executed"
+		trigger = {
+			OR = {
+				country_exists = LBA
+				country_exists = GNA
+				country_exists = HOR
+			}
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					country_exists = LBA
+					NOT = { has_war_with = LBA }
+				}
+				LBA = { country_event = { id = egypt_mubarak.187 days = 2 } }
+			}
+			else_if = {
+				limit = {
+					country_exists = GNA
+					NOT = { has_war_with = GNA }
+				}
+				GNA = { country_event = { id = egypt_mubarak.187 days = 2 } }
+			}
+			else_if = {
+				limit = {
+					country_exists = HOR
+					NOT = { has_war_with = HOR }
+				}
+				HOR = { country_event = { id = egypt_mubarak.187 days = 2 } }
+			}
+		}
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			custom_effect_tooltip = EGY_workers_guaranteed_tt
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+		}
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { temp_influence = 2 }
+			EGY_change_brotherhood_influence = yes
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 5
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+}
+
+# Cairo Asks for Its Workers' Safety
+country_event = {
+	id = egypt_mubarak.187
+	title = egypt_mubarak.187.t
+	desc = egypt_mubarak.187.d
+	picture = GFX_libya_generic_country_event
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.187.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.187.a executed"
+		add_opinion_modifier = { target = FROM modifier = small_increase }
+		FROM = {
+			custom_effect_tooltip = EGY_workers_guaranteed_tt
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				factor = 0.5
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.187.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.187.b executed"
+		FROM = {
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { temp_influence = 2 }
+			EGY_change_brotherhood_influence = yes
+		}
+		ai_chance = {
+			base = 4
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				add = 5
+				has_war = yes
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+
+# An Egyptian Envoy in Tripoli
+country_event = {
+	id = egypt_mubarak.188
+	title = egypt_mubarak.188.t
+	desc = egypt_mubarak.188.d
+	picture = GFX_libya_generic_country_event
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.188.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.188.a executed"
+		custom_effect_tooltip = EGY_envoy_carries_terms_tt
+		hidden_effect = {
+			if = {
+				limit = { event_target:EGY_benghazi_side = { exists = yes } }
+				event_target:EGY_benghazi_side = { country_event = { id = egypt_mubarak.189 days = 2 } }
+			}
+			else = { EGY = { country_event = { id = egypt_mubarak.191 days = 2 } } }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = 10
+				surrender_progress > 0.3
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.188.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.188.b executed"
+		hidden_effect = {
+			EGY = { country_event = { id = egypt_mubarak.191 days = 2 } }
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				factor = 0.3
+				surrender_progress > 0.3
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+
+# Cairo Carries Tripoli's Terms
+country_event = {
+	id = egypt_mubarak.189
+	title = egypt_mubarak.189.t
+	desc = egypt_mubarak.189.d
+	picture = GFX_libya_militia_commanders
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.189.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.189.a executed"
+		custom_effect_tooltip = EGY_talks_in_cairo_tt
+		hidden_effect = {
+			EGY = { country_event = { id = egypt_mubarak.190 days = 2 } }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				has_opinion = { target = EGY value > 25 }
+			}
+			modifier = {
+				add = 10
+				surrender_progress > 0.3
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = EGY value < -25 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = EGY
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.189.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.189.b executed"
+		hidden_effect = {
+			EGY = { country_event = { id = egypt_mubarak.191 days = 2 } }
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 10
+				has_opinion = { target = EGY value < -10 }
+			}
+			modifier = {
+				factor = 0.3
+				surrender_progress > 0.3
+			}
+			modifier = {
+				add = 100
+				has_war_with = EGY
+			}
+		}
+	}
+}
+
+# Talks at the Ittihadiya Palace
+country_event = {
+	id = egypt_mubarak.190
+	title = egypt_mubarak.190.t
+	desc = egypt_mubarak.190.d
+	picture = GFX_peace_plan_signing
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.190.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.190.a executed"
+		set_country_flag = EGY_tripoli_talks_held
+		event_target:EGY_tripoli_side = {
+			add_opinion_modifier = { target = ROOT modifier = medium_increase }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = EGY.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+		event_target:EGY_benghazi_side = {
+			add_opinion_modifier = { target = ROOT modifier = medium_increase }
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = EGY.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+		newline = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+		add_to_variable = { EGY_mubarak_opinion_gain_monthly_factor = 0.05 tooltip = opinion_gain_monthly_factor_tt }
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0.5
+				EGY_libya_is_unstable = no
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.190.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.190.b executed"
+		set_country_flag = EGY_tripoli_talks_held
+		event_target:EGY_benghazi_side = {
+			add_opinion_modifier = { target = ROOT modifier = large_increase }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = EGY.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		}
+		event_target:EGY_tripoli_side = { add_opinion_modifier = { target = ROOT modifier = medium_decrease } }
+		newline = yes
+		set_temp_variable = { temp_risk = -1 }
+		EGY_change_sinai_bombing_risk = yes
+		ai_chance = {
+			base = 5
+			modifier = {
+				add = 5
+				check_variable = { EGY_sinai_bombing_risk > 6 }
+			}
+		}
+	}
+}
+
+# The Shuttle Breaks Down
+country_event = {
+	id = egypt_mubarak.191
+	title = egypt_mubarak.191.t
+	desc = egypt_mubarak.191.d
+	picture = GFX_libya_bombing
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.191.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.191.a executed"
+		set_temp_variable = { temp_authority = -1 }
+		EGY_change_mubarak_authority = yes
+		set_temp_variable = { temp_risk = 1 }
+		EGY_change_sinai_bombing_risk = yes
+		newline = yes
+		add_opinion_modifier = { target = FROM modifier = small_decrease }
+		ai_chance = { base = 1 }
+	}
+}
+
+# Cairo Offers a Border Compact
+country_event = {
+	id = egypt_mubarak.192
+	title = egypt_mubarak.192.t
+	desc = egypt_mubarak.192.d
+	picture = GFX_libyan_tribes
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.192.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.192.a executed"
+		set_temp_variable = { receiver_nation = EGY.id }
+		set_temp_variable = { sender_nation = THIS.id }
+		set_improved_trade_agreement = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = EGY.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.192.b
+		ai_chance = {
+			base = 4
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+
+# Mubarak Asks His Old Friend
+country_event = {
+	id = egypt_mubarak.193
+	title = egypt_mubarak.193.t
+	desc = egypt_mubarak.193.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.193.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.193.a executed"
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		set_temp_variable = { target_nation = THIS.id }
+		set_temp_variable = { adding_nation = EGY.id }
+		change_permanent_investment_target = yes
+		add_opinion_modifier = { target = FROM modifier = small_increase }
+		newline = yes
+		FROM = {
+			if = {
+				limit = { has_country_flag = EGY_abdullah_called_first }
+				custom_effect_tooltip = EGY_old_friend_bonus_tt
+				set_temp_variable = { treasury_change = 4 }
+			}
+			else = { set_temp_variable = { treasury_change = 3 } }
+			modify_treasury_effect = yes
+			add_fuel = 50000
+			add_timed_idea = { idea = EGY_saudi_oil_credit_idea days = 730 }
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_muslim_brotherhood_opinion = yes
+			set_country_flag = EGY_saudi_lifeline_flag
+			if = {
+				limit = { country_exists = PER }
+				PER = { add_opinion_modifier = { target = EGY modifier = small_decrease } }
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				add = 5
+				FROM = { has_completed_focus = EGY_the_lessons_of_january }
+			}
+			modifier = {
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.193.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.193.b executed"
+		set_temp_variable = { treasury_change = -1.5 }
+		modify_treasury_effect = yes
+		newline = yes
+		FROM = {
+			set_temp_variable = { treasury_change = 1.5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { NOT = { has_idea = EGY_gulf_deposits_idea } }
+				add_timed_idea = { idea = EGY_gulf_deposits_idea days = 365 }
+			}
+		}
+		ai_chance = {
+			base = 6
+			modifier = {
+				add = 5
+				has_opinion = { target = FROM value > 0 }
+			}
+			modifier = {
+				add = 5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.193.c
+		ai_chance = {
+			base = 2
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				add = 10
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+
+# Cairo Asks for the Held Deliveries
+country_event = {
+	id = egypt_mubarak.194
+	title = egypt_mubarak.194.t
+	desc = egypt_mubarak.194.d
+	picture = GFX_arm_usa_relationship
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.194.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.194.a executed"
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		FROM = {
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_military_modifier }
+			add_to_variable = { EGY_military_air_mission_efficiency = 0.03 tooltip = air_mission_efficiency_tt }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.194.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.194.b executed"
+		FROM = { add_opinion_modifier = { target = ROOT modifier = small_decrease } }
+		ai_chance = {
+			base = 3
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+
+# The Siemens Megadeal
+country_event = {
+	id = egypt_mubarak.195
+	title = egypt_mubarak.195.t
+	desc = egypt_mubarak.195.d
+	picture = GFX_powerplant
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.195.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.195.a executed"
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		if = {
+			limit = { has_dlc = "Arms Against Tyranny" }
+			mio:GER_siemens_defence_electronics = {
+				add_mio_funds = 500
+				add_mio_size = 1
+			}
+		}
+		newline = yes
+		FROM = {
+			set_temp_variable = { treasury_change = 7.8 }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.195.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.195.b executed"
+		FROM = { add_opinion_modifier = { target = ROOT modifier = small_decrease } }
+		ai_chance = {
+			base = 3
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+
+# Cairo Offers to Close the Boat Route
+country_event = {
+	id = egypt_mubarak.196
+	title = egypt_mubarak.196.t
+	desc = egypt_mubarak.196.d
+	picture = GFX_migrants_caught
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.196.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.196.a executed"
+		set_temp_variable = { treasury_change = -0.5 }
+		modify_treasury_effect = yes
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		newline = yes
+		FROM = {
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = { FROM = { add_to_variable = { EGY_med_border_partners = 1 } } }
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 5
+				has_opinion = { target = FROM value > 25 }
+			}
+			modifier = {
+				add = 5
+				has_idea = EU_member
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.196.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.196.b executed"
+		FROM = { add_opinion_modifier = { target = ROOT modifier = small_decrease } }
+		ai_chance = {
+			base = 4
+			modifier = {
+				add = 5
+				has_government = democratic
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+
+# The Coast Guard Pact
+country_event = {
+	id = egypt_mubarak.197
+	title = egypt_mubarak.197.t
+	desc = egypt_mubarak.197.d
+	picture = GFX_migrants_caught
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.197.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.197.a executed"
+		if = {
+			limit = { check_variable = { EGY_med_border_partners > 3 } }
+			custom_effect_tooltip = EGY_med_border_tier_high_tt
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+			add_to_variable = { EGY_mubarak_foreign_influence_continent_modifier = 0.05 tooltip = foreign_influence_continent_modifier_tt }
+			custom_effect_tooltip = EGY_eu_members_opinion_tt
+			hidden_effect = {
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = small_increase }
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { EGY_med_border_partners > 1 } }
+			custom_effect_tooltip = EGY_med_border_tier_mid_tt
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+			add_to_variable = { EGY_mubarak_terror_threat_detection_modifier = 0.03 tooltip = terror_threat_detection_modifier_tt }
+		}
+		else = {
+			custom_effect_tooltip = EGY_med_border_tier_low_tt
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = { clear_variable = EGY_med_border_partners }
+		ai_chance = { base = 1 }
+	}
+}
+
+# Invitation to the Cairo Summit
+country_event = {
+	id = egypt_mubarak.198
+	title = egypt_mubarak.198.t
+	desc = egypt_mubarak.198.d
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.198.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.198.a executed"
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = EGY.id }
+		set_temp_variable = { influence_target = THIS.id }
+		change_influence_percentage = yes
+		custom_effect_tooltip = EGY_signed_cairo_declaration_tt
+		hidden_effect = { EGY = { add_to_variable = { EGY_summit_signatories = 1 } } }
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_government = democratic }
+			}
+			modifier = {
+				add = 5
+				FROM = { has_country_flag = EGY_tripoli_talks_held }
+				original_tag = LBA
+			}
+			modifier = {
+				add = 5
+				FROM = { has_country_flag = EGY_tripoli_talks_held }
+				OR = {
+					original_tag = HOR
+					original_tag = GNA
+					original_tag = GNC
+				}
+			}
+			modifier = {
+				add = 5
+				FROM = { has_country_flag = EGY_saudi_lifeline_flag }
+				has_idea = idea_gcc_member_state
+			}
+			modifier = {
+				factor = 0.5
+				original_tag = QAT
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < -25 }
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.198.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.198.b executed"
+		add_opinion_modifier = { target = FROM modifier = small_increase }
+		ai_chance = {
+			base = 6
+			modifier = {
+				add = 5
+				has_war = yes
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.198.c
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.198.c executed"
+		add_opinion_modifier = { target = FROM modifier = small_decrease }
+		ai_chance = {
+			base = 2
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				add = 5
+				has_government = democratic
+			}
+			modifier = {
+				add = 10
+				original_tag = QAT
+			}
+		}
+	}
+}
+
+# The Cairo Summit Closes
+country_event = {
+	id = egypt_mubarak.199
+	title = egypt_mubarak.199.t
+	desc = egypt_mubarak.199.d
+	picture = GFX_united_arab_republic
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.199.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.199.a executed"
+		if = {
+			limit = { check_variable = { EGY_summit_signatories > 7 } }
+			custom_effect_tooltip = EGY_summit_tier_high_tt
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+			add_to_variable = { EGY_mubarak_improve_relations_maintain_cost_factor = -0.1 tooltip = improve_relations_maintain_cost_factor_tt }
+			add_timed_idea = { idea = EGY_cairo_declaration_idea days = 730 }
+		}
+		else_if = {
+			limit = { check_variable = { EGY_summit_signatories > 3 } }
+			custom_effect_tooltip = EGY_summit_tier_mid_tt
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+			add_to_variable = { EGY_mubarak_improve_relations_maintain_cost_factor = -0.05 tooltip = improve_relations_maintain_cost_factor_tt }
+			add_timed_idea = { idea = EGY_cairo_declaration_idea days = 730 }
+		}
+		else = {
+			custom_effect_tooltip = EGY_summit_tier_low_tt
+			set_temp_variable = { temp_authority = -1 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+		hidden_effect = { clear_variable = EGY_summit_signatories }
+		ai_chance = { base = 1 }
+	}
+}
+
+# The Dean's Bargain
+country_event = {
+	id = egypt_mubarak.200
+	title = egypt_mubarak.200.t
+	desc = egypt_mubarak.200.d
+	picture = GFX_africa_us_meeting
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.200.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.200.a executed"
+		add_opinion_modifier = { target = FROM modifier = medium_increase }
+		FROM = {
+			if = {
+				limit = { NOT = { has_idea = Major_Non_NATO_Ally } }
+				add_ideas = Major_Non_NATO_Ally
+			}
+			else = {
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+				add_to_variable = { EGY_mubarak_army_morale_factor = 0.03 tooltip = army_morale_factor_tt }
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				add = 5
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.3
+				has_opinion = { target = FROM value < -25 }
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.200.b
+		ai_chance = {
+			base = 3
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
+
+# The Riyadh-Cairo Axis
+country_event = {
+	id = egypt_mubarak.201
+	title = egypt_mubarak.201.t
+	desc = egypt_mubarak.201.d
+	picture = GFX_treaty
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.201.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.201.a executed"
+		set_temp_variable = { sender_nation = THIS.id }
+		set_temp_variable = { receiver_nation = EGY.id }
+		set_mutual_investment_treaty = yes
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		newline = yes
+		FROM = {
+			custom_effect_tooltip = EGY_riyadh_cairo_treaty_tt
+			set_temp_variable = { treasury_change = 1 }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 50 }
+			}
+			modifier = {
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_war_with = FROM
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.201.b
+		ai_chance = {
+			base = 3
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value < -10 }
+			}
+			modifier = {
+				add = 10
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 100
+				has_war_with = FROM
+			}
+		}
+	}
+}
