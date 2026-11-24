@@ -936,18 +936,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: brazil.68.b executed"
 		add_political_power = -75
 		custom_effect_tooltip = BRA_car_wash_permanent_tt
-		if = {
-			limit = { has_idea = BRA_idea_car_wash2 }
-			swap_ideas = { remove_idea = BRA_idea_car_wash2 add_idea = BRA_idea_car_wash1 }
-		}
-		else_if = {
-			limit = { has_idea = BRA_idea_car_wash3 }
-			swap_ideas = { remove_idea = BRA_idea_car_wash3 add_idea = BRA_idea_car_wash1 }
-		}
-		else_if = {
-			limit = { has_idea = BRA_idea_car_wash4 }
-			swap_ideas = { remove_idea = BRA_idea_car_wash4 add_idea = BRA_idea_car_wash1 }
-		}
 		ai_chance = {
 			base = 2
 			modifier = {
@@ -956,13 +944,6 @@ country_event = {
 					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
 					has_global_flag = BRA_LIBERALS_FOCUS_PATH
 					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
-				}
-			}
-			modifier = {
-				factor = 0.5
-				OR = {
-					has_idea = BRA_idea_car_wash3
-					has_idea = BRA_idea_car_wash4
 				}
 			}
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -1469,20 +1450,16 @@ country_event = {
 
 	trigger = {
 		original_tag = BRA
-		date > 2016.9.05
+		date > 2016.8.30
 	}
 
 	option = {
 		name = brazil.37.a
 		log = "[GetDateText]: [This.GetName]: brazil.37.a executed"
-		create_country_leader = {
-			name = "Michel Temer"
-			picture = "Michel_Temer.dds"
-			ideology = anarchist_communism
-			traits = {
-				emerging_anarchist_communism
-			}
-		}
+		set_temp_variable = { rul_party_temp = 15 }
+		set_temp_variable = { disable_elections = 0 }
+		hidden_effect = { set_variable = { oligarchism_leader = 0 } }
+		change_ruling_party_effect = yes
 		hidden_effect = { news_event = { id = brazil_news.6 days = 1 } }
 	}
 }
@@ -2311,11 +2288,11 @@ country_event = {
 	option = {
 		name = brazil.66.a
 		log = "[GetDateText]: [This.GetName]: brazil.66.a executed"
-		set_temp_variable = { treasury_change = 2 }
+		set_temp_variable = { treasury_change = -10 }
 		modify_treasury_effect = yes
 		set_temp_variable = { temp_opinion = -10 }
 		change_industrial_conglomerates_opinion = yes
-		add_stability = 0.01
+		add_stability = -0.03
 		ai_chance = {
 			base = 2
 			modifier = {
@@ -2326,15 +2303,19 @@ country_event = {
 					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
 				}
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
 	option = {
 		name = brazil.66.b
 		log = "[GetDateText]: [This.GetName]: brazil.66.b executed"
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_industrial_conglomerates_opinion = yes
-		add_stability = -0.02
+		add_stability = -0.05
 		ai_chance = {
 			base = 2
 			modifier = {
@@ -2354,9 +2335,11 @@ country_event = {
 		name = brazil.66.c
 		log = "[GetDateText]: [This.GetName]: brazil.66.c executed"
 		add_political_power = -50
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
 		set_temp_variable = { temp_opinion = -5 }
 		change_industrial_conglomerates_opinion = yes
-		add_stability = 0.02
+		add_stability = -0.03
 		ai_chance = {
 			base = 2
 			modifier = {
@@ -2805,14 +2788,13 @@ country_event = {
 	# Accept the new terms and renegotiate
 	option = {
 		name = brazil.73.a
+		trigger = { has_an_energy_deficit = yes }
 		log = "[GetDateText]: [This.GetName]: brazil.73.a executed"
-		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.001 } }
-		modify_treasury_effect = yes
 		BOL = { country_event = brazil.101 }
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		custom_effect_tooltip = BRA_bolivian_gas_offer_tt
 		ai_chance = {
-			base = 3
+			base = 6
 			modifier = {
 				factor = 3
 				OR = {
@@ -2832,7 +2814,6 @@ country_event = {
 				}
 			}
 			modifier = { factor = 2 has_opinion = { target = BOL value > 20 } }
-			modifier = { factor = 2 has_an_energy_deficit = yes }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
@@ -3502,6 +3483,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: brazil.80.c executed"
 		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.006 } }
 		modify_treasury_effect = yes
+		if = {
+			limit = { owns_state = 885 }
+			add_resource = { type = tungsten amount = 6 state = 885 }
+		}
 		ai_chance = {
 			base = 2
 			modifier = { factor = 3 has_global_flag = BRA_HISTORICAL_FOCUS_PATH }
@@ -3514,8 +3499,17 @@ country_event = {
 					emerging_anarchist_communism_are_in_power = yes
 				}
 			}
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.006
+					greater_than = { value = treasury }
+				}
+			}
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 }
@@ -3893,14 +3887,13 @@ country_event = {
 	# Pay Paraguay more for its energy
 	option = {
 		name = brazil.85.a
+		trigger = { has_an_energy_deficit = yes }
 		log = "[GetDateText]: [This.GetName]: brazil.85.a executed"
-		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
-		modify_treasury_effect = yes
 		PAR = { country_event = brazil.100 }
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		custom_effect_tooltip = BRA_itaipu_offer_tt
 		ai_chance = {
-			base = 2
+			base = 4
 			modifier = {
 				factor = 3
 				OR = {
@@ -3920,7 +3913,6 @@ country_event = {
 				}
 			}
 			modifier = { factor = 2 has_opinion = { target = PAR value > 20 } }
-			modifier = { factor = 2 has_an_energy_deficit = yes }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
@@ -8620,6 +8612,18 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: brazil.97.a executed"
 		add_stability = 0.05
 		add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			clear_variable = BRA_minustah_paid
+			add_timed_idea = { idea = BRA_idea_minustah_mission days = 730 }
+			for_each_scope_loop = {
+				array = global.p5_sc_members
+				tooltip = BRA_minustah_p5_tt
+				if = {
+					limit = { NOT = { original_tag = BRA } }
+					add_opinion_modifier = { target = BRA modifier = gratitude }
+				}
+			}
+		}
 		ai_chance = {
 			base = 6
 			modifier = { factor = 2 has_stability < 0.4 }
@@ -8633,7 +8637,13 @@ country_event = {
 		name = brazil.97.b
 		log = "[GetDateText]: [This.GetName]: brazil.97.b executed"
 		add_stability = 0.02
-		BRA = { add_manpower = 600 }
+		BRA = {
+			add_manpower = 600
+			add_political_power = 75
+			set_temp_variable = { treasury_change = BRA_minustah_paid }
+			modify_treasury_effect = yes
+			clear_variable = BRA_minustah_paid
+		}
 		ai_chance = {
 			base = 3
 			modifier = { factor = 2 has_opinion = { target = BRA value < 10 } }
@@ -8645,7 +8655,13 @@ country_event = {
 	option = {
 		name = brazil.97.c
 		log = "[GetDateText]: [This.GetName]: brazil.97.c executed"
-		BRA = { add_manpower = 1200 }
+		BRA = {
+			add_manpower = 1200
+			add_political_power = 75
+			set_temp_variable = { treasury_change = BRA_minustah_paid }
+			modify_treasury_effect = yes
+			clear_variable = BRA_minustah_paid
+		}
 		reverse_add_opinion_modifier = { target = BRA modifier = small_decrease }
 		ai_chance = {
 			base = 1
@@ -8804,6 +8820,10 @@ country_event = {
 		modify_treasury_effect = yes
 		add_opinion_modifier = { target = BRA modifier = gratitude }
 		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
+			modify_treasury_effect = yes
+		}
 		BRA_receive_energy_load_sharing_from_this = yes
 		ai_chance = {
 			base = 6
@@ -8821,7 +8841,7 @@ country_event = {
 		add_opinion_modifier = { target = BRA modifier = small_increase }
 		reverse_add_opinion_modifier = { target = BRA modifier = small_decrease }
 		BRA = {
-			set_temp_variable = { treasury_change = -1 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 add = -1 } }
 			modify_treasury_effect = yes
 		}
 		BRA_receive_energy_load_sharing_from_this = yes
@@ -8867,6 +8887,10 @@ country_event = {
 		modify_treasury_effect = yes
 		add_opinion_modifier = { target = BRA modifier = gratitude }
 		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.001 } }
+			modify_treasury_effect = yes
+		}
 		BRA_receive_energy_load_sharing_from_this = yes
 		ai_chance = {
 			base = 6
@@ -8884,7 +8908,7 @@ country_event = {
 		add_opinion_modifier = { target = BRA modifier = small_increase }
 		reverse_add_opinion_modifier = { target = BRA modifier = small_decrease }
 		BRA = {
-			set_temp_variable = { treasury_change = -1.5 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.001 add = -1.5 } }
 			modify_treasury_effect = yes
 		}
 		BRA_receive_energy_load_sharing_from_this = yes
@@ -9033,16 +9057,16 @@ country_event = {
 	picture = GFX_amazon_road_paving
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = BRA
-		country_exists = GUY
-		NOT = { has_war_with = GUY }
-		GUY = { owns_state = 877 }
-	}
+	trigger = { original_tag = BRA }
 
 	# Cut the ribbon
 	option = {
 		name = brazil.104.a
+		trigger = {
+			country_exists = GUY
+			NOT = { has_war_with = GUY }
+			GUY = { owns_state = 877 }
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.104.a executed"
 		1023 = { BRA_add_funded_infrastructure = yes }
 		1005 = { BRA_add_funded_infrastructure = yes }
@@ -9071,6 +9095,24 @@ country_event = {
 				state = 1023
 			}
 		}
+	}
+
+	# The bridge cannot go ahead, so the money comes back
+	option = {
+		name = brazil.104.b
+		trigger = {
+			NOT = {
+				AND = {
+					country_exists = GUY
+					NOT = { has_war_with = GUY }
+					GUY = { owns_state = 877 }
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.104.b executed"
+		set_temp_variable = { treasury_change = 12.5 }
+		modify_treasury_effect = yes
+		clr_country_flag = BRA_guyana_link_funded
 	}
 }
 
@@ -9147,7 +9189,10 @@ country_event = {
 		change_influence_percentage = yes
 		BRA = {
 			if = {
-				limit = { NOT = { has_country_flag = BRA_bioceanic_open } }
+				limit = {
+					has_country_flag = BRA_bioceanic_funded
+					NOT = { has_country_flag = BRA_bioceanic_open }
+				}
 				set_temp_variable = { treasury_change = -3.5 }
 				modify_treasury_effect = yes
 				set_country_flag = BRA_bioceanic_arg
@@ -9201,7 +9246,10 @@ country_event = {
 		change_influence_percentage = yes
 		BRA = {
 			if = {
-				limit = { NOT = { has_country_flag = BRA_bioceanic_open } }
+				limit = {
+					has_country_flag = BRA_bioceanic_funded
+					NOT = { has_country_flag = BRA_bioceanic_open }
+				}
 				set_temp_variable = { treasury_change = -3.5 }
 				modify_treasury_effect = yes
 				set_country_flag = BRA_bioceanic_chl
@@ -9253,16 +9301,16 @@ country_event = {
 	picture = GFX_amazon_rainforest_infrastructure
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = BRA
-		country_exists = PAR
-		NOT = { has_war_with = PAR }
-		PAR = { owns_state = 896 }
-	}
+	trigger = { original_tag = BRA }
 
 	# Open the corridor
 	option = {
 		name = brazil.108.a
+		trigger = {
+			country_exists = PAR
+			NOT = { has_war_with = PAR }
+			PAR = { owns_state = 896 }
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.108.a executed"
 		set_country_flag = BRA_bioceanic_open
 		954 = { BRA_add_funded_infrastructure = yes }
@@ -9296,6 +9344,34 @@ country_event = {
 		else = {
 			add_to_variable = { BRA_econ_resource_exports = 0.01 tooltip = resource_export_multiplier_modifier_tt }
 		}
+	}
+
+	# The corridor cannot go ahead, so the money comes back, including the shares Argentina and Chile paid in
+	option = {
+		name = brazil.108.b
+		trigger = {
+			NOT = {
+				AND = {
+					country_exists = PAR
+					NOT = { has_war_with = PAR }
+					PAR = { owns_state = 896 }
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.108.b executed"
+		set_temp_variable = { treasury_change = 7 }
+		if = {
+			limit = { has_country_flag = BRA_bioceanic_arg }
+			add_to_temp_variable = { treasury_change = 3.5 }
+		}
+		if = {
+			limit = { has_country_flag = BRA_bioceanic_chl }
+			add_to_temp_variable = { treasury_change = 3.5 }
+		}
+		modify_treasury_effect = yes
+		clr_country_flag = BRA_bioceanic_funded
+		clr_country_flag = BRA_bioceanic_arg
+		clr_country_flag = BRA_bioceanic_chl
 	}
 }
 
@@ -9356,19 +9432,19 @@ country_event = {
 	picture = GFX_amazon_road_paving
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = BRA
-		country_exists = PRU
-		NOT = { has_war_with = PRU }
-		PRU = {
-			owns_state = 901
-			owns_state = 902
-		}
-	}
+	trigger = { original_tag = BRA }
 
 	# Open the highway
 	option = {
 		name = brazil.110.a
+		trigger = {
+			country_exists = PRU
+			NOT = { has_war_with = PRU }
+			PRU = {
+				owns_state = 901
+				owns_state = 902
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.110.a executed"
 		1022 = { BRA_add_funded_infrastructure = yes }
 		901 = { BRA_add_funded_infrastructure = yes }
@@ -9385,6 +9461,27 @@ country_event = {
 		change_influence_percentage = yes
 		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
 		add_to_variable = { BRA_econ_resource_exports = 0.01 tooltip = resource_export_multiplier_modifier_tt }
+	}
+
+	# The highway cannot go ahead, so the money comes back
+	option = {
+		name = brazil.110.b
+		trigger = {
+			NOT = {
+				AND = {
+					country_exists = PRU
+					NOT = { has_war_with = PRU }
+					PRU = {
+						owns_state = 901
+						owns_state = 902
+					}
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.110.b executed"
+		set_temp_variable = { treasury_change = 10.5 }
+		modify_treasury_effect = yes
+		clr_country_flag = BRA_interoceanic_highway_funded
 	}
 }
 
@@ -9528,20 +9625,20 @@ country_event = {
 	picture = GFX_generic_train_event
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = BRA
-		country_exists = PRU
-		NOT = { has_war_with = PRU }
-		PRU = {
-			owns_state = 901
-			owns_state = 902
-			owns_state = 904
-		}
-	}
+	trigger = { original_tag = BRA }
 
 	# Run the first train
 	option = {
 		name = brazil.113.a
+		trigger = {
+			country_exists = PRU
+			NOT = { has_war_with = PRU }
+			PRU = {
+				owns_state = 901
+				owns_state = 902
+				owns_state = 904
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.113.a executed"
 		build_railway = {
 			level = 1
@@ -9582,6 +9679,34 @@ country_event = {
 			}
 			add_to_variable = { BRA_econ_resource_exports = 0.02 tooltip = resource_export_multiplier_modifier_tt }
 		}
+	}
+
+	# The railway cannot go ahead, so the money comes back
+	option = {
+		name = brazil.113.b
+		trigger = {
+			NOT = {
+				AND = {
+					country_exists = PRU
+					NOT = { has_war_with = PRU }
+					PRU = {
+						owns_state = 901
+						owns_state = 902
+						owns_state = 904
+					}
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.113.b executed"
+		if = {
+			limit = { has_country_flag = BRA_twin_ocean_joint }
+			set_temp_variable = { treasury_change = 5.5 }
+		}
+		else = {
+			set_temp_variable = { treasury_change = 11 }
+		}
+		modify_treasury_effect = yes
+		clr_country_flag = BRA_twin_ocean_funded
 	}
 }
 
@@ -9697,17 +9822,17 @@ country_event = {
 	picture = GFX_amazon_road_paving
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = BRA
-		67 = {
-			NOT = { is_owned_by = BRA }
-			OWNER = { NOT = { has_war_with = BRA } }
-		}
-	}
+	trigger = { original_tag = BRA }
 
 	# Open the bridge
 	option = {
 		name = brazil.116.a
+		trigger = {
+			67 = {
+				NOT = { is_owned_by = BRA }
+				OWNER = { NOT = { has_war_with = BRA } }
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.116.a executed"
 		set_country_flag = BRA_oyapock_open
 		1024 = { BRA_add_funded_infrastructure = yes }
@@ -9723,6 +9848,23 @@ country_event = {
 		}
 		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
 		add_to_variable = { BRA_econ_trade_opinion = 0.03 tooltip = trade_opinion_factor_tt }
+	}
+
+	# The bridge cannot go ahead, so the money comes back
+	option = {
+		name = brazil.116.b
+		trigger = {
+			NOT = {
+				67 = {
+					NOT = { is_owned_by = BRA }
+					OWNER = { NOT = { has_war_with = BRA } }
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.116.b executed"
+		set_temp_variable = { treasury_change = 7 }
+		modify_treasury_effect = yes
+		clr_country_flag = BRA_oyapock_funded
 	}
 }
 
@@ -9780,16 +9922,16 @@ country_event = {
 	picture = GFX_generic_train_event
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = BRA
-		country_exists = URG
-		NOT = { has_war_with = URG }
-		URG = { owns_state = 894 }
-	}
+	trigger = { original_tag = BRA }
 
 	# Run the first train
 	option = {
 		name = brazil.118.a
+		trigger = {
+			country_exists = URG
+			NOT = { has_war_with = URG }
+			URG = { owns_state = 894 }
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.118.a executed"
 		build_railway = {
 			level = 1
@@ -9813,6 +9955,24 @@ country_event = {
 		change_influence_percentage = yes
 		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
 		add_to_variable = { BRA_econ_trade_opinion = 0.05 tooltip = trade_opinion_factor_tt }
+	}
+
+	# The rail links cannot go ahead, so the money comes back
+	option = {
+		name = brazil.118.b
+		trigger = {
+			NOT = {
+				AND = {
+					country_exists = URG
+					NOT = { has_war_with = URG }
+					URG = { owns_state = 894 }
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.118.b executed"
+		set_temp_variable = { treasury_change = 10 }
+		modify_treasury_effect = yes
+		clr_country_flag = BRA_uruguay_link_funded
 	}
 }
 
@@ -9839,6 +9999,7 @@ country_event = {
 		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
 		BRA = {
 			set_temp_variable = { treasury_change = -17 }
+			set_variable = { BRA_garabi_paid = 17 }
 			modify_treasury_effect = yes
 			set_country_flag = BRA_garabi_funded
 			set_country_flag = BRA_garabi_sharing
@@ -9862,6 +10023,7 @@ country_event = {
 		reverse_add_opinion_modifier = { target = BRA modifier = small_decrease }
 		BRA = {
 			set_temp_variable = { treasury_change = -19 }
+			set_variable = { BRA_garabi_paid = 19 }
 			modify_treasury_effect = yes
 			set_country_flag = BRA_garabi_funded
 			set_country_flag = BRA_garabi_sharing
@@ -9895,17 +10057,18 @@ country_event = {
 	picture = GFX_amazon_rainforest_dam
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = BRA
-		country_exists = ARG
-		NOT = { has_war_with = ARG }
-		ARG = { owns_state = 448 }
-	}
+	trigger = { original_tag = BRA }
 
 	# Open the dams
 	option = {
 		name = brazil.120.a
+		trigger = {
+			country_exists = ARG
+			NOT = { has_war_with = ARG }
+			ARG = { owns_state = 448 }
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.120.a executed"
+		clear_variable = BRA_garabi_paid
 		879 = {
 			if = {
 				limit = { free_building_slots = { building = renewable_energy_infra size > 0 } }
@@ -9937,6 +10100,26 @@ country_event = {
 		set_temp_variable = { percent_change = 3 }
 		set_temp_variable = { influence_target = ARG.id }
 		change_influence_percentage = yes
+	}
+
+	# The dams cannot go ahead, so the money comes back
+	option = {
+		name = brazil.120.b
+		trigger = {
+			NOT = {
+				AND = {
+					country_exists = ARG
+					NOT = { has_war_with = ARG }
+					ARG = { owns_state = 448 }
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.120.b executed"
+		set_temp_variable = { treasury_change = BRA_garabi_paid }
+		modify_treasury_effect = yes
+		clear_variable = BRA_garabi_paid
+		clr_country_flag = BRA_garabi_funded
+		clr_country_flag = BRA_garabi_sharing
 	}
 }
 
@@ -10054,6 +10237,7 @@ country_event = {
 			else = {
 				set_temp_variable = { treasury_change = -5 }
 			}
+			set_variable = { BRA_cyclone_space_paid = { value = treasury_change multiply = -1 } }
 			modify_treasury_effect = yes
 			set_country_flag = BRA_cyclone_space_funded
 			country_event = { id = brazil.123 days = 730 }
@@ -10087,16 +10271,20 @@ country_event = {
 
 	trigger = {
 		original_tag = BRA
-		owns_state = 890
-		country_exists = UKR
-		NOT = { has_war_with = UKR }
 		NOT = { has_country_flag = BRA_cyclone_space_ended }
 	}
 
 	# Open the launch complex
 	option = {
 		name = brazil.123.a
+		trigger = {
+			owns_state = 890
+			country_exists = UKR
+			NOT = { has_war_with = UKR }
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.123.a executed"
+		clear_variable = BRA_cyclone_space_paid
+		set_country_flag = BRA_cyclone_space_open
 		add_tech_bonus = {
 			name = brazil.123.t
 			bonus = 0.3
@@ -10112,6 +10300,25 @@ country_event = {
 		set_improved_trade_agreement = yes
 		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
 		add_to_variable = { BRA_econ_launch_reliability = 0.05 tooltip = olv_launch_reliability_modifier_tt }
+	}
+
+	# The partnership cannot go ahead, so the money comes back
+	option = {
+		name = brazil.123.b
+		trigger = {
+			NOT = {
+				AND = {
+					owns_state = 890
+					country_exists = UKR
+					NOT = { has_war_with = UKR }
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.123.b executed"
+		set_temp_variable = { treasury_change = BRA_cyclone_space_paid }
+		modify_treasury_effect = yes
+		clear_variable = BRA_cyclone_space_paid
+		clr_country_flag = BRA_cyclone_space_funded
 	}
 }
 
@@ -10134,6 +10341,12 @@ country_event = {
 		name = brazil.124.a
 		log = "[GetDateText]: [This.GetName]: brazil.124.a executed"
 		set_country_flag = BRA_cyclone_space_ended
+		clear_variable = BRA_cyclone_space_paid
+		if = {
+			limit = { has_country_flag = BRA_cyclone_space_open }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_launch_reliability = -0.05 tooltip = olv_launch_reliability_modifier_tt }
+		}
 		if = {
 			limit = { country_exists = UKR }
 			reverse_add_opinion_modifier = { target = UKR modifier = medium_decrease }
@@ -10244,6 +10457,7 @@ country_event = {
 				limit = { has_country_flag = BRA_kourou_launch_sharing }
 				add_to_temp_variable = { treasury_change = 1 }
 			}
+			set_variable = { BRA_kourou_launch_paid = { value = treasury_change multiply = -1 } }
 			modify_treasury_effect = yes
 			set_country_flag = BRA_kourou_launch_funded
 			country_event = { id = brazil.126 days = 270 }
@@ -10277,18 +10491,19 @@ country_event = {
 	picture = GFX_nasa_launch_mars
 	is_triggered_only = yes
 
-	trigger = {
-		original_tag = BRA
-		67 = {
-			NOT = { is_owned_by = BRA }
-			OWNER = { NOT = { has_war_with = BRA } }
-		}
-	}
+	trigger = { original_tag = BRA }
 
 	# Switch on the satellite
 	option = {
 		name = brazil.126.a
+		trigger = {
+			67 = {
+				NOT = { is_owned_by = BRA }
+				OWNER = { NOT = { has_war_with = BRA } }
+			}
+		}
 		log = "[GetDateText]: [This.GetName]: brazil.126.a executed"
+		clear_variable = BRA_kourou_launch_paid
 		add_tech_bonus = {
 			name = brazil.126.t
 			bonus = 0.25
@@ -10314,6 +10529,24 @@ country_event = {
 				}
 			}
 		}
+	}
+
+	# The launch cannot go ahead, so the money comes back
+	option = {
+		name = brazil.126.b
+		trigger = {
+			NOT = {
+				67 = {
+					NOT = { is_owned_by = BRA }
+					OWNER = { NOT = { has_war_with = BRA } }
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: brazil.126.b executed"
+		set_temp_variable = { treasury_change = BRA_kourou_launch_paid }
+		modify_treasury_effect = yes
+		clear_variable = BRA_kourou_launch_paid
+		clr_country_flag = BRA_kourou_launch_funded
 	}
 }
 
@@ -10601,7 +10834,6 @@ country_event = {
 		original_tag = BRA
 		owns_state = 1023
 		country_exists = VEN
-		VEN = { emerging_anarchist_communism_in_power_or_coalition = yes }
 	}
 
 	immediate = {
@@ -10995,7 +11227,6 @@ country_event = {
 		original_tag = BRA
 		country_exists = VEN
 		NOT = { has_war_with = VEN }
-		VEN = { emerging_anarchist_communism_in_power_or_coalition = yes }
 	}
 
 	# Withhold recognition until the tallies are published
@@ -11147,6 +11378,7 @@ country_event = {
 	id = brazil.138
 	title = brazil.138.t
 	desc = brazil.138.d
+	picture = GFX_election_day
 	is_triggered_only = yes
 	fire_only_once = yes
 

@@ -254,45 +254,48 @@ BRA_acres_conserved_change_effect = {
 # BRA_amazon_research_speed_factor - Research bonus from 0 to 0.05, rises with the conserved ratio
 # BRA_amazon_neutral_drift - Neutrality drift from 0 to 0.05, rises as the total falls below the target
 BRA_calculate_amazon_system = {
-	set_variable = { BRA_acres_current = { value = BRA_acres_conserved add = BRA_acres_wild } }
-
 	if = {
-		limit = { check_variable = { BRA_acres_current > 0 } }
-		set_variable = { BRA_wild_acreage_ratio = { value = BRA_acres_wild divide = BRA_acres_current } }
-		set_variable = { BRA_conserved_acreage_ratio = { value = BRA_acres_conserved divide = BRA_acres_current } }
-	}
-	else = {
-		set_variable = { BRA_wild_acreage_ratio = 0 }
-		set_variable = { BRA_conserved_acreage_ratio = 0 }
-	}
+		limit = { original_tag = BRA }
+		set_variable = { BRA_acres_current = { value = BRA_acres_conserved add = BRA_acres_wild } }
 
-	if = {
-		limit = { check_variable = { BRA_acres_target > 0 } }
-		set_variable = { BRA_current_target_ratio = { value = BRA_acres_current divide = BRA_acres_target } }
-	}
-	else = {
-		set_variable = { BRA_current_target_ratio = 0 }
-	}
-
-	# Falling short of the target hurts the country, a larger conserved share helps research
-	set_variable = { BRA_amazon_stability_factor = { value = BRA_current_target_ratio subtract = 1 multiply = 0.2 clamp = { min = -0.1 max = 0 } } }
-	set_variable = { BRA_amazon_political_power_factor = { value = BRA_current_target_ratio subtract = 1 multiply = 0.3 clamp = { min = -0.15 max = 0 } } }
-	set_variable = { BRA_amazon_research_speed_factor = { value = BRA_conserved_acreage_ratio multiply = 0.05 clamp = { min = 0 max = 0.05 } } }
-	set_variable = { BRA_amazon_neutral_drift = { value = 1 subtract = BRA_current_target_ratio multiply = 0.1 clamp = { min = 0 max = 0.05 } } }
-
-	# Wild acreage drives the state penalties. Clamp before the local relief so the relief still shows.
-	set_temp_variable = { temp_ratio_penalties = { value = BRA_wild_acreage_ratio multiply = -1 clamp = { min = -1 max = 0 } } }
-	set_temp_variable = { temp_state_penalties = { value = temp_ratio_penalties clamp = { min = -0.5 max = 0 } } }
-	for_each_scope_loop = {
-		array = BRA.amazon_states
 		if = {
-			limit = { has_state_flag = improve_local_conservation_efforts }
-			set_variable = { BRA_amazon_penalties = { value = temp_state_penalties multiply = 0.75 } }
-			set_variable = { BRA_building_slots_factor = { value = temp_ratio_penalties multiply = 0.75 } }
+			limit = { check_variable = { BRA_acres_current > 0 } }
+			set_variable = { BRA_wild_acreage_ratio = { value = BRA_acres_wild divide = BRA_acres_current } }
+			set_variable = { BRA_conserved_acreage_ratio = { value = BRA_acres_conserved divide = BRA_acres_current } }
 		}
 		else = {
-			set_variable = { BRA_amazon_penalties = temp_state_penalties }
-			set_variable = { BRA_building_slots_factor = temp_ratio_penalties }
+			set_variable = { BRA_wild_acreage_ratio = 0 }
+			set_variable = { BRA_conserved_acreage_ratio = 0 }
+		}
+
+		if = {
+			limit = { check_variable = { BRA_acres_target > 0 } }
+			set_variable = { BRA_current_target_ratio = { value = BRA_acres_current divide = BRA_acres_target } }
+		}
+		else = {
+			set_variable = { BRA_current_target_ratio = 0 }
+		}
+
+		# Falling short of the target hurts the country, a larger conserved share helps research
+		set_variable = { BRA_amazon_stability_factor = { value = BRA_current_target_ratio subtract = 1 multiply = 0.2 clamp = { min = -0.1 max = 0 } } }
+		set_variable = { BRA_amazon_political_power_factor = { value = BRA_current_target_ratio subtract = 1 multiply = 0.3 clamp = { min = -0.15 max = 0 } } }
+		set_variable = { BRA_amazon_research_speed_factor = { value = BRA_conserved_acreage_ratio multiply = 0.05 clamp = { min = 0 max = 0.05 } } }
+		set_variable = { BRA_amazon_neutral_drift = { value = 1 subtract = BRA_current_target_ratio multiply = 0.1 clamp = { min = 0 max = 0.05 } } }
+
+		# Wild acreage drives the state penalties. Clamp before the local relief so the relief still shows.
+		set_temp_variable = { temp_ratio_penalties = { value = BRA_wild_acreage_ratio multiply = -1 clamp = { min = -1 max = 0 } } }
+		set_temp_variable = { temp_state_penalties = { value = temp_ratio_penalties clamp = { min = -0.5 max = 0 } } }
+		for_each_scope_loop = {
+			array = BRA.amazon_states
+			if = {
+				limit = { has_state_flag = improve_local_conservation_efforts }
+				set_variable = { BRA_amazon_penalties = { value = temp_state_penalties multiply = 0.75 } }
+				set_variable = { BRA_building_slots_factor = { value = temp_ratio_penalties multiply = 0.75 } }
+			}
+			else = {
+				set_variable = { BRA_amazon_penalties = temp_state_penalties }
+				set_variable = { BRA_building_slots_factor = temp_ratio_penalties }
+			}
 		}
 	}
 }
