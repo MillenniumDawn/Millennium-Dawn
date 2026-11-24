@@ -9703,6 +9703,7 @@ country_event = {
 	option = {
 		name = brazil.116.a
 		log = "[GetDateText]: [This.GetName]: brazil.116.a executed"
+		set_country_flag = BRA_oyapock_open
 		1024 = { BRA_add_funded_infrastructure = yes }
 		67 = {
 			BRA_add_funded_infrastructure = yes
@@ -9927,5 +9928,496 @@ country_event = {
 		set_temp_variable = { percent_change = 3 }
 		set_temp_variable = { influence_target = ARG.id }
 		change_influence_percentage = yes
+	}
+}
+
+# The VLS-1 rocket explodes on its pad at Alcântara. ROOT = Brazil.
+country_event = {
+	id = brazil.121
+	title = brazil.121.t
+	desc = brazil.121.d
+	picture = GFX_rocket_explosion
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		owns_state = 890
+	}
+
+	# Rebuild the pad and keep the VLS
+	option = {
+		name = brazil.121.a
+		log = "[GetDateText]: [This.GetName]: brazil.121.a executed"
+		set_temp_variable = { treasury_change = -1.5 }
+		modify_treasury_effect = yes
+		add_stability = -0.02
+		add_tech_bonus = {
+			name = brazil.121.t
+			bonus = 0.25
+			uses = 1
+			category = CAT_orbital_launch_vehicles
+		}
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+
+	# Turn to foreign partners
+	option = {
+		name = brazil.121.b
+		log = "[GetDateText]: [This.GetName]: brazil.121.b executed"
+		add_political_power = 40
+		set_country_flag = BRA_vls_foreign_partners
+		custom_effect_tooltip = BRA_vls_foreign_partners_tt
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+				}
+			}
+		}
+	}
+}
+
+# Brazil asks Ukraine to launch Cyclone-4 rockets from Alcântara. ROOT = Ukraine, FROM = Brazil.
+country_event = {
+	id = brazil.122
+	title = brazil.122.t
+	desc = brazil.122.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = UKR
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = {
+			NOT = { has_country_flag = BRA_cyclone_space_funded }
+			NOT = { has_country_flag = BRA_cyclone_space_ended }
+		}
+	}
+
+	# Join Alcântara Cyclone Space
+	option = {
+		name = brazil.122.a
+		log = "[GetDateText]: [This.GetName]: brazil.122.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			if = {
+				limit = { has_country_flag = BRA_vls_foreign_partners }
+				set_temp_variable = { treasury_change = -3.5 }
+			}
+			else = {
+				set_temp_variable = { treasury_change = -5 }
+			}
+			modify_treasury_effect = yes
+			set_country_flag = BRA_cyclone_space_funded
+			country_event = { id = brazil.123 days = 730 }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 30 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.122.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# Alcântara Cyclone Space opens its launch complex. ROOT = Brazil.
+country_event = {
+	id = brazil.123
+	title = brazil.123.t
+	desc = brazil.123.d
+	picture = GFX_nasa_launch_pad_mars
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		owns_state = 890
+		country_exists = UKR
+		NOT = { has_war_with = UKR }
+		NOT = { has_country_flag = BRA_cyclone_space_ended }
+	}
+
+	# Open the launch complex
+	option = {
+		name = brazil.123.a
+		log = "[GetDateText]: [This.GetName]: brazil.123.a executed"
+		add_tech_bonus = {
+			name = brazil.123.t
+			bonus = 0.3
+			uses = 1
+			category = CAT_orbital_launch_vehicles
+		}
+		UKR = {
+			add_opinion_modifier = { target = BRA modifier = friendship }
+			reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+		}
+		set_temp_variable = { sender_nation = BRA.id }
+		set_temp_variable = { receiver_nation = UKR.id }
+		set_improved_trade_agreement = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+		add_to_variable = { BRA_econ_launch_reliability = 0.05 tooltip = olv_launch_reliability_modifier_tt }
+	}
+}
+
+# Brazil decides whether to stay in Alcântara Cyclone Space. ROOT = Brazil.
+country_event = {
+	id = brazil.124
+	title = brazil.124.t
+	desc = brazil.124.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_country_flag = BRA_cyclone_space_funded
+		NOT = { has_country_flag = BRA_cyclone_space_ended }
+	}
+
+	# End the partnership
+	option = {
+		name = brazil.124.a
+		log = "[GetDateText]: [This.GetName]: brazil.124.a executed"
+		set_country_flag = BRA_cyclone_space_ended
+		if = {
+			limit = { country_exists = UKR }
+			reverse_add_opinion_modifier = { target = UKR modifier = medium_decrease }
+		}
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Keep funding the company
+	option = {
+		name = brazil.124.b
+		log = "[GetDateText]: [This.GetName]: brazil.124.b executed"
+		set_temp_variable = { treasury_change = -2.5 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { country_exists = UKR }
+			reverse_add_opinion_modifier = { target = UKR modifier = medium_increase }
+		}
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 country_exists = UKR UKR = { has_opinion = { target = ROOT value > 40 } } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# Brazil asks to launch its satellite from Kourou. ROOT = the owner of French Guiana, FROM = Brazil.
+country_event = {
+	id = brazil.125
+	title = brazil.125.t
+	desc = brazil.125.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		owns_state = 67
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_kourou_launch_funded } }
+	}
+
+	# Accept the launch
+	option = {
+		name = brazil.125.a
+		log = "[GetDateText]: [This.GetName]: brazil.125.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		if = {
+			limit = { BRA = { has_country_flag = BRA_oyapock_open } }
+			set_temp_variable = { treasury_change = 2 }
+		}
+		else = {
+			set_temp_variable = { treasury_change = 3 }
+		}
+		modify_treasury_effect = yes
+		BRA = {
+			if = {
+				limit = { has_country_flag = BRA_oyapock_open }
+				set_temp_variable = { treasury_change = -2 }
+			}
+			else = {
+				set_temp_variable = { treasury_change = -3 }
+			}
+			modify_treasury_effect = yes
+			set_country_flag = BRA_kourou_launch_funded
+			country_event = { id = brazil.126 days = 270 }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 30 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 1.5 is_in_array = { trade_agreement_partners = BRA } }
+			modifier = { factor = 1.5 BRA = { has_country_flag = BRA_oyapock_open } }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.125.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# The SGDC-1 satellite reaches orbit from Kourou. ROOT = Brazil.
+country_event = {
+	id = brazil.126
+	title = brazil.126.t
+	desc = brazil.126.d
+	picture = GFX_nasa_launch_mars
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		67 = {
+			NOT = { is_owned_by = BRA }
+			OWNER = { NOT = { has_war_with = BRA } }
+		}
+	}
+
+	# Switch on the satellite
+	option = {
+		name = brazil.126.a
+		log = "[GetDateText]: [This.GetName]: brazil.126.a executed"
+		add_tech_bonus = {
+			name = brazil.126.t
+			bonus = 0.25
+			uses = 2
+			category = CAT_communication_satellites
+		}
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+		add_to_variable = { BRA_econ_education_cost = -0.03 tooltip = education_cost_multiplier_modifier_tt }
+		if = {
+			limit = { has_country_flag = BRA_oyapock_open }
+			67 = {
+				OWNER = {
+					add_opinion_modifier = { target = BRA modifier = friendship }
+					reverse_add_opinion_modifier = { target = BRA modifier = friendship }
+				}
+			}
+		}
+		else = {
+			67 = {
+				OWNER = {
+					add_opinion_modifier = { target = BRA modifier = medium_increase }
+					reverse_add_opinion_modifier = { target = BRA modifier = medium_increase }
+				}
+			}
+		}
+	}
+}
+
+# Brazil offers the United States launches from Alcântara. ROOT = the United States, FROM = Brazil.
+country_event = {
+	id = brazil.127
+	title = brazil.127.t
+	desc = brazil.127.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = USA
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		BRA = { NOT = { has_country_flag = BRA_safeguards_signed } }
+	}
+
+	# Sign the agreement
+	option = {
+		name = brazil.127.a
+		log = "[GetDateText]: [This.GetName]: brazil.127.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		BRA = {
+			set_temp_variable = { treasury_change = 2 }
+			modify_treasury_effect = yes
+			set_country_flag = BRA_safeguards_signed
+			country_event = { id = brazil.128 days = 100 }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 30 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 0.5 BRA = { has_government = communism } }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.127.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+}
+
+# The base's expansion threatens quilombola communities. ROOT = Brazil.
+country_event = {
+	id = brazil.128
+	title = brazil.128.t
+	desc = brazil.128.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		owns_state = 890
+	}
+
+	# Compensate the communities
+	option = {
+		name = brazil.128.a
+		log = "[GetDateText]: [This.GetName]: brazil.128.a executed"
+		set_temp_variable = { treasury_change = -1.5 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Expand the base anyway
+	option = {
+		name = brazil.128.b
+		log = "[GetDateText]: [This.GetName]: brazil.128.b executed"
+		add_stability = -0.03
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
 	}
 }
