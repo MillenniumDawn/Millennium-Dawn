@@ -4919,6 +4919,178 @@ types = {
 		}
 	}
 
+	EGY_raid_rafah_tunnels = {
+		allowed = { original_tag = EGY }
+		days_to_prepare = 20
+		days_re_enable = 90
+
+		category = special_forces_raids
+
+		command_power = 15
+
+		arrow = {
+			type = line
+		}
+
+		visible = {
+			original_tag = EGY
+			has_country_flag = EGY_rafah_tunnels_flag
+		}
+		show_target = {
+			FROM = {
+				controls_state = 209
+				NOT = { original_tag = ISR }
+			}
+		}
+
+		available = {
+			raid_special_forces_tech_available = yes
+			FROM = { NOT = { is_subject_of = ROOT } }
+			set_temp_variable = { cost = 50 }
+			raid_can_launch = yes
+		}
+		launchable = {
+			set_temp_variable = { cost = 50 }
+			raid_can_launch = yes
+		}
+
+		unit_requirements = {
+			battalion_types = {
+				Special_Forces = { min = 1  max = 10 }
+			}
+		}
+		target_icon = GFX_other_target_icon
+		launch_sound = raid_launch_marine
+
+		target_type = {
+			state = {
+				state = 209
+				NOT = { is_controlled_by = ROOT }
+			}
+		}
+
+		starting_point = {
+			types = { air_base naval_base }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.30
+				experience = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 0.5
+				}
+				organisation = {
+					weight = 0.15
+					start_weight = -0.15
+					reference = 60
+				}
+				recon = {
+					weight = 0.20
+					reference = 10
+				}
+				intel = {
+					weight = 0.3
+					reference = 100
+				}
+			}
+			critical = {
+				base = 0.05
+			}
+			disaster = {
+				base = 0.10
+			}
+		}
+
+		success_levels = {
+			failure = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -50 }
+					apply_raid_failure_losses = yes
+					var:actor_country = {
+						set_temp_variable = { temp_risk = 1 }
+						EGY_change_sinai_bombing_risk = yes
+					}
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = { add_manpower = -500 }
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -50 }
+					apply_raid_limited_success_losses = yes
+					var:actor_country = { army_experience = 5 }
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = { add_manpower = -1000 }
+					var:target_state = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -50 }
+					apply_raid_success_losses = yes
+					var:actor_country = {
+						set_temp_variable = { temp_opinion = 3 }
+						change_the_military_opinion = yes
+						set_temp_variable = { temp_risk = -1 }
+						EGY_change_sinai_bombing_risk = yes
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = { add_manpower = -2000 }
+					var:target_state = {
+						damage_building = {
+							type = infrastructure
+							damage = 2
+						}
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -50 }
+					apply_raid_critical_success_losses = yes
+					var:actor_country = {
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_military_opinion = yes
+						set_temp_variable = { temp_risk = -2 }
+						EGY_change_sinai_bombing_risk = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.25 }
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					FROM = { is_subject_of = ROOT }
+					is_subject_of = FROM
+				}
+			}
+		}
+	}
+
 	# IRAQI RAIDS
 	raid_baath = {
 		allowed = { original_tag = USA }

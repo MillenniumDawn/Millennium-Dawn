@@ -2206,6 +2206,71 @@ EGY_state_projects = {
 		}
 	}
 
+	EGY_pipeline_watch_mission = {
+		icon = border_war
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_pipeline_watch_mission"
+			if = {
+				limit = { check_variable = { EGY_sinai_bombing_risk < 5 } }
+				custom_effect_tooltip = EGY_pipeline_held_tt
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+				add_to_variable = { EGY_political_resource_export_multiplier_modifier = 0.05 tooltip = resource_export_multiplier_modifier_tt }
+			}
+			else = {
+				custom_effect_tooltip = EGY_pipeline_bombed_tt
+				set_temp_variable = { temp_opinion = -5 }
+				change_the_military_opinion = yes
+				set_temp_variable = { temp_risk = 1 }
+				EGY_change_sinai_bombing_risk = yes
+			}
+		}
+	}
+
+	EGY_sinai_title_registry_mission = {
+		icon = generic_police_action
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_sinai_title_registry_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = { owns_state = 213 }
+						set_temp_variable = { skip_payment = 1 }
+						213 = { one_state_infrastructure = yes }
+						newline = yes
+					}
+					set_temp_variable = { temp_risk = -1 }
+					EGY_change_sinai_bombing_risk = yes
+				}
+				project_partial = {
+					set_temp_variable = { temp_risk = -1 }
+					EGY_change_sinai_bombing_risk = yes
+				}
+				project_troubled = {
+					set_temp_variable = { temp_risk = 1 }
+					EGY_change_sinai_bombing_risk = yes
+					newline = yes
+					set_temp_variable = { temp_opinion = -5 }
+					change_the_military_opinion = yes
+				}
+			}
+		}
+	}
+
 	EGY_imf_conditions_mission = {
 		icon = money_dec
 		activation = { always = no }
