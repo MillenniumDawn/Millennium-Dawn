@@ -51,9 +51,10 @@ choice behind its sum.
 
 What this misses or approximates:
 
-    - Reward totals are unconditional. An `if` chain or `random_list` contributes its
-      richest branch to a separate conditional total, an upper bound shown by
-      `--focuses` and kept out of branch totals. Stacking does include it.
+    - Reward totals are unconditional. An `if` chain, a `random` block or a
+      `random_list` contributes its richest branch to a separate conditional total,
+      an upper bound shown by `--focuses` and kept out of branch totals. Stacking
+      does include it.
     - Scripted effects other than the standard building ones are expanded only when
       named `TAG_...`. Any other effect is invisible, as is every `bypass` and
       `ai_will_do` block. An `available` counts only for the path choices above.
@@ -74,7 +75,8 @@ What this misses or approximates:
       gate is judged before the choice it depends on, and may miss the best path.
     - Blocks that switch to another country (`every_other_country`, another tag's
       block, ...) are skipped. `PREV`, `FROM` and variable scopes are not resolved.
-    - An `every_*_state` loop counts its effects once, and says so.
+    - An `every_*` loop, `for_each_loop`, `for_each_scope_loop` or `while_loop_effect`
+      counts its effects once, and says so.
     - `mutually_exclusive` is read as symmetric. Partners joined only through a third
       focus are treated as one fork. A fork's alternatives include nested forks.
     - A prerequisite that names a focus outside the audited set is ignored. A focus
@@ -121,6 +123,8 @@ SIMPLE_AMOUNTS = {
     "add_stability": "stability",
     "add_war_support": "war_support",
 }
+# Loops whose repeat count is not read, so their body counts once.
+LOOP_EFFECTS = frozenset({"for_each_loop", "for_each_scope_loop", "while_loop_effect"})
 FLAG_SETS = {"set_global_flag": "global flag", "set_country_flag": "country flag"}
 FLAG_TESTS = {"has_global_flag": "global flag", "has_country_flag": "country flag"}
 # Blocks of an `available` whose conditions all still apply.
@@ -270,7 +274,10 @@ def walk_nodes(nodes: Sequence[Node]) -> Iterator[Node]:
 
 
 def read(path: Path) -> str:
-    return path.read_text(encoding="utf-8-sig")
+    try:
+        return path.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError as error:
+        raise UnicodeError(f"{path}: {error}") from error
 
 
 # --- standard building effects ----------------------------------------------
@@ -557,6 +564,8 @@ class Walk:
             self.pay(target)
         elif key == "random_list" and isinstance(value, list):
             self.richest([n.value for n in value if isinstance(n.value, list)])
+        elif key == "random" and isinstance(value, list):
+            self.richest([value])
         elif isinstance(value, list):
             self.scope(key, value, cond, target)
         elif key in self.ctx.tag_effects and key not in self.stack:
@@ -571,7 +580,7 @@ class Walk:
         self.run(body, cond)
         note = f"{key} loop counted once"
         if (
-            key.startswith("every_")
+            (key.startswith("every_") or key in LOOP_EFFECTS)
             and target.weight() > before
             and note not in target.unquantified
         ):
@@ -1522,7 +1531,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         sys.exit(f"error: file not found: {error.filename}")
     except OSError as error:
         sys.exit(f"error: cannot read {error.filename}: {error.strerror}")
-    except UnicodeDecodeError as error:
+    except UnicodeError as error:
         sys.exit(f"error: input is not valid UTF-8: {error}")
 
     report = build_report(tag, files, focuses, ctx, ideas, args.stack_limit, args.top)

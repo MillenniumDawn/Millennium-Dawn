@@ -504,10 +504,10 @@ Metrics, reference analysis, and review tools.
 | **benchmark_report.py**             | Reports headless runs from game.log and error.log: run comparisons, country series, spreads, wars, decision and option counts, law churn, error shapes           |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                        |
 | **content_coverage.py**             | Reports how much of one tag's focuses, decisions, and events fired in a headless run's game.log, and what never did                                              |
-| **focus_reward_audit.py**           | Reports what one tag's focus rewards grant per focus and per branch: buildings, money, spirits, modifier variables, fork ranges, and spirit stacking             |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags, reading every GDP factor from the `@gdp_*` constants in `00_money_system.txt`                                           |
 | **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                                |
-| **headless_run.py**                 | Turns benchmark logging on without -debug, adds test wars, and saves a run's logs and newest save, using untracked on_actions files                              |
+| **focus_reward_audit.py**           | Reports what one tag's focus rewards grant per focus and per branch: buildings, money, spirits, modifier variables, fork ranges, and spirit stacking             |
+| **headless_run.py**                 | Turns benchmark logging on without -debug, adds test wars, logs a country with `probe`, and saves a run's logs and newest save, using untracked on_actions files |
 | **hoi4_probes/**                    | Script probes that log a country's stats or per-state infrastructure room in a headless run; `headless_run.py probe add TAG` installs them                       |
 | **inspect_save.py**                 | Reports countries in a text save: economy, spending laws, resources, divisions and fielded against needed equipment, production, construction, market, buildings |
 | **validation_timing_report.py**     | Summarizes saved GitHub Actions validation job and step timings, grouped by compatible revision and environment                                                  |
@@ -542,13 +542,16 @@ alternative leads to. Stacking flags a factor-style modifier key (`_factor`,
 `--stack-limit` (default 0.20) on the best path. Two `available` gates also split a
 branch the same way: a path flag (a flag that a focus on an exclusive arm sets and
 another focus tests) and each `has_country_leader` name a branch needs. A stacking
-row names its choice, and `--paths` lists the choices. Flags that an event or
-on_action sets are not path flags. Outliers rank buildings, money
+row names its choice, and `--paths` lists the choices. A flag that no focus on an
+exclusive arm sets is not a path flag, so paths that an event or on_action chooses
+can still be summed (issue #6878). Outliers rank buildings, money
 gained, and PP per day of focus time (`--top` rows), and list spirits with more than
 five modifiers. `--focuses` lists every focus, `--file PATH` reads a named focus
-file, and `--json` gives the same data for machines. Formulas, `if` and
-`random_list` rewards, `every_*_state` loops, and effects the tool does not expand
-are not totaled as constants. The module docstring lists what it misses.
+file, and `--json` gives the same data for machines. Formulas, `if`, `random` and
+`random_list` rewards, and effects the tool does not expand are not totaled as
+constants. A loop (`every_*`, `for_each_loop`, `for_each_scope_loop`,
+`while_loop_effect`) counts its effects once and is flagged as unquantified. The
+module docstring lists what it misses.
 
 ### Generators (`generators/`)
 

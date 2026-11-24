@@ -53,8 +53,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# Copied from summarize_game_log.py: the MCP server loads tools files standalone,
-# so this script cannot import it.
+# Copied from summarize_game_log.py, which reconfigures stdout when imported.
 DATE_RE = re.compile(r"\[(\d{4})\.(\d{1,2})\.(\d{1,2})\.\d{1,2}\]")
 PAYLOAD_RE = re.compile(r"\d{1,2}:\d{2}, \d{1,2} [A-Za-z]+, \d{4}: (.+?)\s*$")
 
@@ -105,14 +104,19 @@ def block_id(body: str) -> str | None:
     return match.group(1) if match else None
 
 
+def read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError as error:
+        raise UnicodeError(f"{path}: {error}") from error
+
+
 def texts_mentioning(directory: Path, needle: str) -> list[str]:
     """Text of each `*.txt` in directory that contains needle, minus strings and comments.
 
     Braces inside a string or comment would unbalance the block scan.
     """
-    raw = (
-        path.read_text(encoding="utf-8-sig") for path in sorted(directory.glob("*.txt"))
-    )
+    raw = (read_text(path) for path in sorted(directory.glob("*.txt")))
     return [_NOISE_RE.sub("", text) for text in raw if needle in text]
 
 
@@ -206,25 +210,30 @@ def scan_log(path: Path, tag: str, namespaces: list[str]) -> dict[str, dict[str,
     """First date, count and options per fired id, for each kind."""
     pattern = message_pattern(tag, namespaces)
     hits: dict[str, dict[str, Hit]] = {kind: {} for kind in KINDS}
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            if not pattern.search(line):
-                continue
-            payload = PAYLOAD_RE.search(line)
-            dates = DATE_RE.findall(line)
-            if not payload or not dates:
-                continue
-            match = pattern.match(payload.group(1).partition(": ")[2])
-            if not match:
-                continue
-            kind = "events" if match["event"] else KIND_OF[match["kind"]]
-            year, month, day = dates[-1]
-            date = f"{year}-{int(month):02d}-{int(day):02d}"
-            hit = hits[kind].setdefault(match["event"] or match["id"], Hit(first=date))
-            hit.first = min(hit.first, date)
-            hit.count += 1
-            if match["option"]:
-                hit.options[match["option"]] += 1
+    try:
+        with path.open(encoding="utf-8") as handle:
+            for line in handle:
+                if not pattern.search(line):
+                    continue
+                payload = PAYLOAD_RE.search(line)
+                dates = DATE_RE.findall(line)
+                if not payload or not dates:
+                    continue
+                match = pattern.match(payload.group(1).partition(": ")[2])
+                if not match:
+                    continue
+                kind = "events" if match["event"] else KIND_OF[match["kind"]]
+                year, month, day = dates[-1]
+                date = f"{year}-{int(month):02d}-{int(day):02d}"
+                hit = hits[kind].setdefault(
+                    match["event"] or match["id"], Hit(first=date)
+                )
+                hit.first = min(hit.first, date)
+                hit.count += 1
+                if match["option"]:
+                    hit.options[match["option"]] += 1
+    except UnicodeDecodeError as error:
+        raise UnicodeError(f"{path}: {error}") from error
     return hits
 
 
@@ -320,7 +329,9 @@ def main(argv: list[str] | None = None) -> None:
         hits = scan_log(args.log, tag, namespaces)
     except FileNotFoundError:
         sys.exit(f"error: file not found: {args.log}")
-    except UnicodeDecodeError as error:
+    except OSError as error:
+        sys.exit(f"error: cannot read {error.filename}: {error.strerror}")
+    except UnicodeError as error:
         sys.exit(f"error: input is not valid UTF-8: {error}")
 
     report = build_report(tag, args.log, defined, namespaces, hits)

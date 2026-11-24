@@ -317,29 +317,43 @@ def test_cli_namespace_option_changes_the_event_scan(root, log, monkeypatch, cap
     assert output["events"]["fired"] == 1
 
 
-# case: (error shown, log contents or None for a missing log, tree holds a mod)
+_BAD_BYTES = b"\xff\xfe\n"
+
+# case: (error shown, setup(log path, mod root) or None for no log, tree holds a mod)
 _ERROR_CASES = {
     "missing log": ("error: file not found", None, True),
-    "bad bytes in the log": ("error: input is not valid UTF-8", b"\xff\xfe\n", True),
-    "no mod directories": ("error: no common/national_focus", "", False),
+    "unreadable log": (
+        "error: cannot read .*game.log",
+        lambda log, mod: log.mkdir(),
+        True,
+    ),
+    "bad bytes name the log": (
+        "error: input is not valid UTF-8: .*game.log",
+        lambda log, mod: log.write_bytes(_BAD_BYTES),
+        True,
+    ),
+    "bad bytes name a mod file": (
+        "error: input is not valid UTF-8: .*bad.txt",
+        lambda log, mod: (mod / "events" / "bad.txt").write_bytes(_BAD_BYTES),
+        True,
+    ),
+    "no mod directories": ("error: no common/national_focus", None, False),
 }
 
 
 @pytest.mark.parametrize(
-    ("error", "contents", "has_mod"), _ERROR_CASES.values(), ids=_ERROR_CASES
+    ("error", "setup", "has_mod"), _ERROR_CASES.values(), ids=_ERROR_CASES
 )
 def test_cli_exits_with_a_message_when_it_cannot_scan(
-    tmp_path, monkeypatch, error, contents, has_mod
+    tmp_path, monkeypatch, error, setup, has_mod
 ):
-    path = tmp_path / "game.log"
-    if isinstance(contents, bytes):
-        path.write_bytes(contents)
-    elif contents is not None:
-        write_text(path, contents)
+    log = tmp_path / "game.log"
     mod = write_tree(tmp_path / "mod", _MOD if has_mod else {"unrelated.txt": ""})
+    if setup:
+        setup(log, mod)
 
     with pytest.raises(SystemExit, match=error):
-        _main(monkeypatch, "--tag", "TST", "--log", path, "--root", mod)
+        _main(monkeypatch, "--tag", "TST", "--log", log, "--root", mod)
 
 
 def test_script_runs_on_its_own(root, log):

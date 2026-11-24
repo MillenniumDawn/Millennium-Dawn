@@ -4,7 +4,7 @@ import json
 
 import focus_reward_audit as A
 import pytest
-from shared.suite import run_tool_script, write_tree
+from shared.suite import run_tool_script, write_text, write_tree
 
 # One if/else effect (the richest branch counts once) and one loop that selects two
 # states, both priced by their first constant treasury_change.
@@ -177,6 +177,11 @@ _REWARD_CASES = {
         {"buildings": {"widget_plant": 1}, "money": -7.5},
         {},
     ),
+    "an offsite building has its own prefix": (
+        "add_offsite_building = { type = widget_plant level = 2 }",
+        {"buildings": {"offsite_widget_plant": 2}},
+        {},
+    ),
     "standard effect: a loop of two states": (
         "two_random_widget_plant = yes",
         {"buildings": {"widget_plant": 2}, "money": -15},
@@ -199,6 +204,12 @@ _REWARD_CASES = {
         {"money": 0, "unquantified": ["money { value = gdp_total multiply = -0.02 }"]},
         {},
     ),
+    "a treasury operation that is no sum is unquantified": (
+        "set_temp_variable = { treasury_change = 10 } "
+        "multiply_temp_variable = { treasury_change = 2 } modify_treasury_effect = yes",
+        {"money": 0, "unquantified": ["money multiply_temp_variable 2"]},
+        {},
+    ),
     "pp, stability and war support": (
         "add_political_power = 25 add_stability = 0.05 add_war_support = -0.5",
         {"pp": 25, "stability": 0.05, "war_support": -0.5},
@@ -211,6 +222,11 @@ _REWARD_CASES = {
             "permanent": ["TST_idea_a", "TST_idea_b"],
             "timed": [{"idea": "TST_idea_alt", "days": 365}],
         },
+        {},
+    ),
+    "add_ideas with days is timed": (
+        "add_ideas = { idea = TST_idea_alt days = 30 }",
+        {"permanent": [], "timed": [{"idea": "TST_idea_alt", "days": 30}]},
         {},
     ),
     "a swap replaces and remove_ideas removes": (
@@ -234,6 +250,11 @@ _REWARD_CASES = {
         {"pp": 0},
         {"pp": 30},
     ),
+    "a random chance is conditional": (
+        "random = { chance = 25 add_political_power = 30 }",
+        {"pp": 0},
+        {"pp": 30},
+    ),
     "other countries are skipped": (
         "OTH = { add_political_power = 100 } every_other_country = { add_political_power = 200 } "
         "TST = { add_political_power = 1 }",
@@ -245,6 +266,30 @@ _REWARD_CASES = {
         {
             "buildings": {"widget_plant": 1},
             "unquantified": ["every_owned_state loop counted once"],
+        },
+        {},
+    ),
+    "a for_each_loop is counted once and says so": (
+        "for_each_loop = { array = tst_list " + _widgets(1) + " }",
+        {
+            "buildings": {"widget_plant": 1},
+            "unquantified": ["for_each_loop loop counted once"],
+        },
+        {},
+    ),
+    "a for_each_scope_loop is counted once and says so": (
+        "for_each_scope_loop = { array = tst_list " + _widgets(1) + " }",
+        {
+            "buildings": {"widget_plant": 1},
+            "unquantified": ["for_each_scope_loop loop counted once"],
+        },
+        {},
+    ),
+    "a while_loop_effect is counted once and says so": (
+        "while_loop_effect = { limit = { always = yes } " + _widgets(1) + " }",
+        {
+            "buildings": {"widget_plant": 1},
+            "unquantified": ["while_loop_effect loop counted once"],
         },
         {},
     ),
@@ -433,6 +478,18 @@ def test_stacking_judges_a_swap_ladder_by_its_last_rung(tmp_path, capsys):
     assert _stacked(report, "TST_w_root") == {
         "tst_output_factor": (0.3, ["TST_idea_a", "TST_idea_alt"])
     }
+
+
+# case: a modifier key stacking checks, besides the `_factor` one that the trees above use
+_FACTOR_KEYS = {
+    "_multiplier suffix": "tst_output_multiplier",
+    "_modifier suffix": "tst_output_modifier",
+}
+
+
+@pytest.mark.parametrize("key", _FACTOR_KEYS.values(), ids=_FACTOR_KEYS)
+def test_stacking_checks_multiplier_and_modifier_keys(key):
+    assert A.is_factor(key)
 
 
 def test_stacking_flags_only_what_passes_the_limit(tmp_path, capsys):
@@ -681,6 +738,11 @@ _GATE_READS = {
         [["global flag A"], ["country flag B"]],
         [],
     ),
+    "a hidden_trigger wrapper": (
+        "hidden_trigger = { has_global_flag = A }",
+        [["global flag A"]],
+        [],
+    ),
     "an OR of tests": (
         "OR = { has_global_flag = A has_country_flag = B }",
         [["country flag B", "global flag A"]],
@@ -804,7 +866,7 @@ def test_text_report_lists_forks_and_focuses_on_request(tmp_path, capsys):
     )
 
 
-# case: (error shown, focus tree text, extra arguments)
+# case: (error shown, focus tree text or bytes, extra arguments with {root} filled in)
 _ERROR_CASES = {
     "no focus of the tag": (
         "error: no TST_ focuses",
@@ -812,18 +874,28 @@ _ERROR_CASES = {
         [],
     ),
     "missing file": ("error: file not found", "", ["--file", "nowhere.txt"]),
+    "unreadable file": ("error: cannot read", "", ["--file", "{root}"]),
+    "bad bytes name their file": (
+        r"error: input is not valid UTF-8: .*x\.txt",
+        b"\xff\xfe\n",
+        [],
+    ),
 }
 
 
 @pytest.mark.parametrize(
     ("error", "tree", "extra"), _ERROR_CASES.values(), ids=_ERROR_CASES
 )
-def test_cli_exits_with_a_message_when_there_is_nothing_to_audit(
-    tmp_path, error, tree, extra
-):
-    root = write_tree(
-        tmp_path / "mod", {**_CONTEXT, "common/national_focus/x.txt": tree}
-    )
+def test_cli_exits_with_a_message_when_it_cannot_audit(tmp_path, error, tree, extra):
+    root = write_tree(tmp_path / "mod", _CONTEXT)
+    focus_file = root / "common" / "national_focus" / "x.txt"
+    if isinstance(tree, bytes):
+        focus_file.parent.mkdir(parents=True)
+        focus_file.write_bytes(tree)
+    else:
+        write_text(focus_file, tree)
 
     with pytest.raises(SystemExit, match=error):
-        A.main(["--tag", "TST", "--root", str(root), *extra])
+        A.main(
+            ["--tag", "TST", "--root", str(root), *(a.format(root=root) for a in extra)]
+        )

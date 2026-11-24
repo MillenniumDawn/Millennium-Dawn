@@ -105,8 +105,14 @@ _PROBE_CASES = {
         False,
         ["probe", "add", "ABC", "--every", "year"],
         0,
-        ["add_to_variable = { probe_months = 1 }", "probe_months > 11", "FAKE_STATS"],
-        ["FAKE_INFRA"],
+        [
+            "\n\t\t\tadd_to_variable = { probe_months = 1 }\n",
+            "\n\t\t\tif = {\n",
+            "\n\t\t\t\tlimit = { check_variable = { probe_months > 11 } }\n",
+            '\n\t\t\t\tlog = "FAKE_STATS"\n',
+            "\n\t\t\t}\n\t\t}\n",
+        ],
+        ["FAKE_INFRA", '\n\t\t\tlog = "FAKE_STATS"'],
     ),
     "add rejects a bad tag": (False, ["probe", "add", "abc"], 1, None, None),
     "add needs a tag": (False, ["probe", "add"], 1, None, None),
@@ -155,7 +161,18 @@ def test_probe_real_files(tmp_path, monkeypatch, every):
     assert _run_in(tmp_path, monkeypatch, args) == 0
     text = (tmp_path / headless_run.PROBE_FILE).read_text(encoding="utf-8")
     assert text.count("{") == text.count("}")
-    assert text.count('log = "PROBE_') == len(headless_run.PROBE_KINDS)
+    body = text.splitlines()[3:-3]  # inside `effect = { ... }`
+    if every == "year":
+        assert body[:2] == [
+            "\t\t\tadd_to_variable = { probe_months = 1 }",
+            "\t\t\tif = {",
+        ]
+        assert body[-1] == "\t\t\t}"
+        body = body[2:-1]
+        assert all(line.startswith("\t\t\t\t") for line in body)
+    assert sum('log = "PROBE_' in line for line in body) == len(
+        headless_run.PROBE_KINDS
+    )
 
 
 # case: (files in the HOI4 user folder, exit code, files the run folder must hold)

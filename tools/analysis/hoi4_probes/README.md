@@ -6,11 +6,13 @@ scope (ROOT = THIS = the country) that writes `PROBE_` lines to game.log.
 
 ## What each probe logs
 
-- `country_stats.txt` writes one `PROBE_STATS` line per run:
+A probe logs each time it fires: monthly, or yearly with `--every year`.
+
+- `country_stats.txt` writes one `PROBE_STATS` line per firing:
   `tag`, `civ`, `mil`, `dock` (factory counts), `gdp`, `treasury`, `debt`,
   `debt_ratio`, `stability`, `pp`, and `research_slots`. War support is left out
   because it reads 0 when copied into a variable.
-- `state_infrastructure.txt` writes one `PROBE_INFRA` line per owned state:
+- `state_infrastructure.txt` writes one `PROBE_INFRA` line per owned state per firing:
   `state` (name), `id`, `infra` (building level), `free` (1 when a free infrastructure
   slot exists, queued levels counted), and `can_take` (1 when
   `investment_infrastructure_slots_available` passes for one level). `free=1` with
