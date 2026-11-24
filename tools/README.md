@@ -539,7 +539,11 @@ into branches by root ancestor. `mutually_exclusive` forks are never summed: a b
 total is a min..max range over the valid paths, and `--forks` lists what each
 alternative leads to. Stacking flags a factor-style modifier key (`_factor`,
 `_multiplier`, `_modifier`) whose permanent spirits and variable adds pass
-`--stack-limit` (default 0.20) on the best path. Outliers rank buildings, money
+`--stack-limit` (default 0.20) on the best path. Two `available` gates also split a
+branch the same way: a path flag (a flag that a focus on an exclusive arm sets and
+another focus tests) and each `has_country_leader` name a branch needs. A stacking
+row names its choice, and `--paths` lists the choices. Flags that an event or
+on_action sets are not path flags. Outliers rank buildings, money
 gained, and PP per day of focus time (`--top` rows), and list spirits with more than
 five modifiers. `--focuses` lists every focus, `--file PATH` reads a named focus
 file, and `--json` gives the same data for machines. Formulas, `if` and

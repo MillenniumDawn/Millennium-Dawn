@@ -3,7 +3,8 @@
 
     python tools/analysis/focus_reward_audit.py --tag BRA
     python tools/analysis/focus_reward_audit.py --tag BRA --forks --focuses --top 20
-    python tools/analysis/focus_reward_audit.py --tag BRA --stack-limit 0.3 --json
+    python tools/analysis/focus_reward_audit.py --tag BRA --paths --stack-limit 0.3
+    python tools/analysis/focus_reward_audit.py --tag BRA --json
     python tools/analysis/focus_reward_audit.py --tag BRA --file path/to/tree.txt
 
 A tag's focuses are every `focus`, `shared_focus` and `joint_focus` block whose id
@@ -28,8 +29,25 @@ min..max range over the valid paths, so alternatives are never summed. `--forks`
 lists what every alternative of a fork leads to. Stacking sums the numeric
 `modifier` values of the permanent spirits a branch can grant, plus dynamic modifier
 variable adds, and flags a factor-style key (`_factor`, `_multiplier`, `_modifier`)
-whose best path passes `--stack-limit`. A spirit that a focus of the same branch
-removes does not count, and one that several focuses grant counts once.
+whose best path passes `--stack-limit`. A spirit that a focus on the path removes
+does not count, and one that several focuses on it grant counts once.
+
+Path choices. Two kinds of `available` gate also split a branch, and totals and
+stacking count only paths that can happen:
+
+    path flag    A flag that a focus sets unconditionally (`set_global_flag`,
+                 `set_country_flag`) on an exclusive arm, meaning the focus or an
+                 ancestor has a `mutually_exclusive` partner, and that another
+                 focus gates with `has_global_flag` or `has_country_flag`. A focus
+                 that needs it (alone, in `AND`, or in an `OR` of such tests) waits
+                 for a setter. A focus under `NOT = { has_..._flag = F }` is off
+                 the table once a setter of F is.
+    leader       Each name in `has_country_leader = { name = X }` that a branch
+                 needs. A path has one leader, so the branch is totaled per leader
+                 and the best (or lowest) wins.
+
+`--paths` lists them and `--json` has them under `paths`. A stacking row names the
+choice behind its sum.
 
 What this misses or approximates:
 
@@ -37,8 +55,23 @@ What this misses or approximates:
       richest branch to a separate conditional total, an upper bound shown by
       `--focuses` and kept out of branch totals. Stacking does include it.
     - Scripted effects other than the standard building ones are expanded only when
-      named `TAG_...`. Any other effect is invisible, as is every `available`,
-      `bypass` and `ai_will_do` block.
+      named `TAG_...`. Any other effect is invisible, as is every `bypass` and
+      `ai_will_do` block. An `available` counts only for the path choices above.
+    - A flag with no focus setter, or set only outside an exclusive arm, gates
+      nothing: an event, decision or on_action may set it, so it proves no path. That
+      covers the game-rule AI path flags (`TAG_*_FOCUS_PATH`, read in `ai_will_do`)
+      and flags that an event option sets. `clr_*_flag` is ignored. A path flag that
+      an event also sets would wrongly gate its focuses.
+    - A gate counts only when every test in the `OR` is a flag or leader test, and a
+      `NOT` only around a single test. A set of flags mixed with leaders in one `OR`
+      is not read.
+    - Leaders do not change over time in this model, so a branch that hands from one
+      leader to the next is totaled as if the player had only one of them.
+    - `NOT` ignores order: in game a focus can be taken before the setter it forbids,
+      and a setter below the fork focus is optional. Here the focus is off the table
+      whenever a setter on the path can be taken, so it never shares a path with one.
+    - Forks resolve one at a time, so a fork whose arms differ by flag or leader
+      gate is judged before the choice it depends on, and may miss the best path.
     - Blocks that switch to another country (`every_other_country`, another tag's
       block, ...) are skipped. `PREV`, `FROM` and variable scopes are not resolved.
     - An `every_*_state` loop counts its effects once, and says so.
@@ -88,6 +121,11 @@ SIMPLE_AMOUNTS = {
     "add_stability": "stability",
     "add_war_support": "war_support",
 }
+FLAG_SETS = {"set_global_flag": "global flag", "set_country_flag": "country flag"}
+FLAG_TESTS = {"has_global_flag": "global flag", "has_country_flag": "country flag"}
+# Blocks of an `available` whose conditions all still apply.
+TRIGGER_WRAPPERS = frozenset({"AND", "custom_trigger_tooltip", "hidden_trigger"})
+LEADER = "leader "
 TEMP_OPS = frozenset(
     {
         "set_temp_variable",
@@ -397,6 +435,7 @@ class Reward:
     swaps: list[tuple[str, str]] = field(default_factory=list)
     variables: Counter[str] = field(default_factory=Counter)
     unquantified: list[str] = field(default_factory=list)
+    flags: set[str] = field(default_factory=set)  # "global flag X", "country flag X"
 
     def weight(self) -> float:
         """Rough size, only to pick the richest branch of a chain or random_list."""
@@ -421,6 +460,7 @@ class Reward:
         self.removed += other.removed
         self.swaps += other.swaps
         self.unquantified += other.unquantified
+        self.flags |= other.flags
 
 
 def other_country(key: str, tag: str) -> bool:
@@ -505,6 +545,9 @@ class Walk:
                 target.swaps.append((old, new))
         elif key in ("remove_ideas", "remove_idea"):
             target.removed += idea_names(value)
+        elif key in FLAG_SETS:
+            if name := flag_name(value):
+                target.flags.add(f"{FLAG_SETS[key]} {name}")
         elif key in ("add_to_variable", "subtract_from_variable"):
             if isinstance(value, list):
                 self.add_variables(target, key, value)
@@ -587,6 +630,47 @@ def add_building(target: Reward, block: list[Node], prefix: str = "") -> None:
 # --- focuses and the prerequisite graph -----------------------------------------
 
 
+def flag_name(value: str | list[Node] | None) -> str | None:
+    """The flag of `set_x_flag = NAME` or `has_x_flag = { flag = NAME ... }`."""
+    name = child(value, "flag") if isinstance(value, list) else value
+    return name if isinstance(name, str) else None
+
+
+def gate_token(node: Node) -> str | None:
+    """`global flag X`, `country flag X` or `leader NAME` for such a test, else None."""
+    if node.key in FLAG_TESTS and (name := flag_name(node.value)):
+        return f"{FLAG_TESTS[node.key]} {name}"
+    if node.key == "has_country_leader" and isinstance(node.value, list):
+        name = child(node.value, "name")
+        return LEADER + name.strip('"') if isinstance(name, str) else None
+    return None
+
+
+def read_gates(nodes: Sequence[Node]) -> tuple[list[frozenset[str]], frozenset[str]]:
+    """What an `available` demands: token sets of which one must hold, and tokens
+    that must not. An `OR` with any other condition in it gates nothing, and only a
+    `NOT` of one test counts."""
+    needs: list[frozenset[str]] = []
+    forbids: set[str] = set()
+    for node in nodes:
+        value = node.value
+        if token := gate_token(node):
+            needs.append(frozenset([token]))
+        elif not isinstance(value, list):
+            continue
+        elif node.key in TRIGGER_WRAPPERS:
+            inner_needs, inner_forbids = read_gates(value)
+            needs += inner_needs
+            forbids |= inner_forbids
+        elif node.key == "OR":
+            tokens = [gate_token(entry) for entry in value]
+            if tokens and all(tokens):
+                needs.append(frozenset(tokens))
+        elif node.key == "NOT" and len(value) == 1 and (token := gate_token(value[0])):
+            forbids.add(token)
+    return needs, frozenset(forbids)
+
+
 @dataclass
 class Focus:
     id: str
@@ -595,6 +679,8 @@ class Focus:
     cost: float
     prerequisites: list[list[str]]
     exclusive: list[str]
+    needs: list[frozenset[str]]  # `available`: one token of each set must hold
+    forbids: frozenset[str]  # `available`: none of these may hold
     always: Reward
     maybe: Reward
 
@@ -636,6 +722,8 @@ def build_focus(node: Node, file: str, ctx: Context) -> Focus:
         for block in focus_ids([n.value for n in body if n.key == "mutually_exclusive"])
         for focus in block
     ]
+    available = child(body, "available")
+    needs, forbids = read_gates(available if isinstance(available, list) else ())
     return Focus(
         id=str(child(body, "id")),
         file=file,
@@ -643,6 +731,8 @@ def build_focus(node: Node, file: str, ctx: Context) -> Focus:
         cost=DEFAULT_COST if cost is None else cost,
         prerequisites=prerequisites,
         exclusive=exclusive,
+        needs=needs,
+        forbids=forbids,
         always=walk.always,
         maybe=walk.maybe,
     )
@@ -681,6 +771,16 @@ class Branch(NamedTuple):
     members: list[str]  # shallowest first
     inside: frozenset[str]  # the same, as a set
     forks: list[list[str]]  # deepest first
+    leaders: list[tuple[str, frozenset[str]]]  # leader token, focuses it rules out
+
+
+class Pick(NamedTuple):
+    focuses: set[str]
+    choice: list[str]  # the leader and path flags this path takes
+
+
+def is_leader(token: str) -> bool:
+    return token.startswith(LEADER)
 
 
 class Graph:
@@ -705,6 +805,8 @@ class Graph:
                 for parent in block:
                     ancestors[fid] |= ancestors.get(parent, set()) | {parent}
         components = self._exclusive_components(focuses, known)
+        self.ancestors = ancestors
+        self._read_gates(focuses, {m for comp in components for m in comp})
         self.branches = []
         self.roots_of: dict[str, list[str]] = defaultdict(list)
         for root in (i for i in order if not self.blocks[i]):
@@ -718,7 +820,70 @@ class Graph:
                 if len(alternatives := [m for m in comp if m in inside]) > 1
             ]
             forks.sort(key=lambda c: (-min(self.depth[m] for m in c), c[0]))
-            self.branches.append(Branch(root, members, inside, forks))
+            self.branches.append(
+                Branch(root, members, inside, forks, self._leaders(members))
+            )
+
+    def _read_gates(self, focuses: Sequence[Focus], forked: set[str]) -> None:
+        """Sort the `available` gates into leader choices and path flags.
+
+        A path flag is set by a focus on an exclusive arm (the focus or an ancestor
+        has a `mutually_exclusive` partner) and gates a focus. Only path flags are
+        enforced: a flag nothing in the audited set sets, or that every path sets,
+        may be set elsewhere, so it is no proof of a path.
+        """
+        self.setters: dict[str, list[str]] = defaultdict(list)
+        self.gates: dict[str, list[str]] = defaultdict(list)
+        for focus in focuses:
+            for token in sorted(focus.always.flags):
+                self.setters[token].append(focus.id)
+            for token in sorted({t for b in focus.needs for t in b} | focus.forbids):
+                self.gates[token].append(focus.id)
+        self.path_flags = {
+            token: setters
+            for token, setters in sorted(self.setters.items())
+            if token in self.gates
+            and any(({s} | self.ancestors[s]) & forked for s in setters)
+        }
+        self.flag_needs = {
+            f.id: [
+                block
+                for block in f.needs
+                if all(t in self.path_flags for t in block)
+                and not block & f.always.flags  # it would need its own flag
+            ]
+            for f in focuses
+        }
+        self.flag_forbids = {
+            f.id: [t for t in f.forbids if t in self.path_flags] for f in focuses
+        }
+        self.leader_needs = {
+            f.id: [b for b in f.needs if all(is_leader(t) for t in b)] for f in focuses
+        }
+        self.leader_forbids = {
+            f.id: {t for t in f.forbids if is_leader(t)} for f in focuses
+        }
+        self.gated = any(self.flag_needs.values())
+        self.forbidders = [f for f, tokens in self.flag_forbids.items() if tokens]
+
+    def _leaders(self, members: Sequence[str]) -> list[tuple[str, frozenset[str]]]:
+        """One choice per leader a focus of the branch needs, each with the focuses
+        that leader rules out. A path has one leader, so a lone name is no choice."""
+        names = sorted({t for m in members for b in self.leader_needs[m] for t in b})
+        if len(names) < 2:
+            return []
+        return [
+            (
+                name,
+                frozenset(
+                    m
+                    for m in members
+                    if name in self.leader_forbids[m]
+                    or any(name not in block for block in self.leader_needs[m])
+                ),
+            )
+            for name in names
+        ]
 
     def _depth(self, fid: str, trail: frozenset[str]) -> int:
         if fid in self.depth:
@@ -754,26 +919,76 @@ class Graph:
     def reach(self, branch: Branch, excluded: Collection[str]) -> set[str]:
         """Focuses of the branch a player can take when `excluded` are off the table.
 
-        A prerequisite outside the branch counts as taken.
+        A prerequisite outside the branch counts as taken, and so does a path flag
+        set outside it. A focus that needs a path flag waits for one of its setters,
+        and one that forbids it is off the table once a setter is.
         """
-        reached: set[str] = set()
-        for fid in branch.members:
-            if fid not in excluded and all(
-                any(p in reached or p not in branch.inside for p in block)
-                for block in self.blocks[fid]
-            ):
-                reached.add(fid)
-        return reached
+        off = set(excluded)
+        while True:
+            reached: set[str] = set()
+            grew = True
+            while grew:
+                grew = False
+                for fid in branch.members:
+                    if fid not in reached and fid not in off:
+                        if self._open(fid, branch, reached):
+                            reached.add(fid)
+                            grew = True
+                grew = grew and self.gated  # a deeper focus may set the flag
+            banned = {f for f in self.forbidders if self._forbidden(f, reached)}
+            if not banned:
+                return reached
+            off |= banned
+
+    def _open(self, fid: str, branch: Branch, reached: set[str]) -> bool:
+        """Whether the prerequisites and path flag needs of `fid` are met."""
+        return all(
+            any(p in reached or p not in branch.inside for p in block)
+            for block in self.blocks[fid]
+        ) and all(
+            any(
+                s in reached or s not in branch.inside
+                for token in block
+                for s in self.setters[token]
+            )
+            for block in self.flag_needs[fid]
+        )
+
+    def _forbidden(self, fid: str, reached: set[str]) -> bool:
+        """Whether `fid` is reachable beside a setter of a flag it forbids. A setter
+        below `fid` comes after it, so it does not count."""
+        return fid in reached and any(
+            s in reached and s != fid and fid not in self.ancestors[s]
+            for token in self.flag_forbids[fid]
+            for s in self.setters[token]
+        )
 
     def pick_path(
         self, branch: Branch, score: Mapping[str, float], largest: bool
-    ) -> set[str]:
-        """The path with the highest (or lowest) total score.
+    ) -> Pick:
+        """The path with the highest (or lowest) total score, and what it chose.
 
-        Forks resolve deepest first, each to its best alternative given the forks
-        already settled. That is exact when forks nest and scores add up.
+        Each leader choice of the branch gets its best path, and the best of those
+        wins.
         """
-        excluded: set[str] = set()
+        picks = []
+        for leader, ruled_out in branch.leaders or [("", frozenset())]:
+            focuses = self._resolve_forks(branch, score, largest, set(ruled_out))
+            flags = [t for t, s in self.path_flags.items() if focuses.intersection(s)]
+            picks.append(Pick(focuses, ([leader] if leader else []) + flags))
+        return (max if largest else min)(
+            picks, key=lambda pick: sum(score.get(f, 0.0) for f in pick.focuses)
+        )
+
+    def _resolve_forks(
+        self,
+        branch: Branch,
+        score: Mapping[str, float],
+        largest: bool,
+        excluded: set[str],
+    ) -> set[str]:
+        """Forks resolve deepest first, each to its best alternative given the forks
+        already settled. That is exact when forks nest and scores add up."""
         for fork in branch.forks:
             reached = self.reach(branch, excluded)
             live = [m for m in fork if m in reached]
@@ -788,6 +1003,34 @@ class Graph:
             )
             excluded |= set(fork) - {best}
         return self.reach(branch, excluded)
+
+    def path_rows(self) -> list[dict]:
+        """Every path choice the audit applies: path flags, then leaders."""
+        rows = [
+            {
+                "choice": token,
+                "kind": "flag",
+                "setters": setters,
+                "gates": len(self.gates[token]),
+                "branches": sorted({r for s in setters for r in self.roots_of[s]}),
+            }
+            for token, setters in self.path_flags.items()
+        ]
+        leaders: dict[str, list[str]] = defaultdict(list)
+        for branch in self.branches:
+            for token, _ in branch.leaders:
+                leaders[token].append(branch.root)
+        rows += [
+            {
+                "choice": token,
+                "kind": "leader",
+                "setters": [],
+                "gates": len(self.gates[token]),
+                "branches": roots,
+            }
+            for token, roots in sorted(leaders.items())
+        ]
+        return rows
 
     def alternatives(self, branch: Branch, fork: Sequence[str]) -> dict[str, set[str]]:
         """For each focus of a fork, what only taking it opens up."""
@@ -826,43 +1069,79 @@ def stacking_rows(
     ctx: Context,
     limit: float,
 ) -> list[dict]:
-    members = [by_id[m] for m in branch.members]
-    removed = {idea for f in members for r in (f.always, f.maybe) for idea in r.removed}
-    # key -> focus -> [(source, amount)]
-    parts: dict[str, dict[str, list[tuple[str, float]]]] = defaultdict(
+    # key -> focus -> [(source, amount, is an idea)]. Every granter of an idea is
+    # listed: which one counts depends on the path.
+    swapped = {
+        idea
+        for fid in branch.members
+        for r in (by_id[fid].always, by_id[fid].maybe)
+        for idea in r.removed
+    }
+    granters: dict[str, set[str]] = defaultdict(set)
+    parts: dict[str, dict[str, list[tuple[str, float, bool]]]] = defaultdict(
         lambda: defaultdict(list)
     )
-    counted: set[str] = set()  # an idea granted twice still applies once
-    for focus in members:
-        for reward in (focus.always, focus.maybe):
+    for fid in branch.members:
+        for reward in (by_id[fid].always, by_id[fid].maybe):
             for idea in reward.permanent:
-                if idea not in removed and idea in ideas and idea not in counted:
-                    counted.add(idea)
+                if idea in ideas:
+                    granters[idea].add(fid)
                     for key, amount in ideas[idea].modifiers.items():
-                        parts[key][focus.id].append((idea, amount))
+                        parts[key][fid].append((idea, amount, True))
             for variable, amount in reward.variables.items():
                 for key in ctx.variables[variable]:
-                    parts[key][focus.id].append((variable, amount))
+                    parts[key][fid].append((variable, amount, False))
+
+    def tally(key: str, path: set[str]) -> tuple[float, list[tuple[str, float]]]:
+        """What the path stacks: an idea applies once, and not if the path removes it."""
+        skip = {
+            idea
+            for f in path
+            for r in (by_id[f].always, by_id[f].maybe)
+            for idea in r.removed
+        }
+        sources: list[tuple[str, float]] = []
+        for fid in branch.members:
+            if fid not in path:
+                continue
+            for source, amount, is_idea in parts[key].get(fid, ()):
+                if is_idea:
+                    if source in skip:
+                        continue
+                    skip.add(source)
+                sources.append((source, amount))
+        return sum(a for _, a in sources), sorted(sources, key=lambda s: -abs(s[1]))
+
     rows = []
     for key in sorted(parts):
-        amounts = [a for entries in parts[key].values() for _, a in entries]
+        amounts = [a for entries in parts[key].values() for _, a, _ in entries]
         if not is_factor(key) or (
             sum(a for a in amounts if a > 0) <= limit
             and sum(a for a in amounts if a < 0) >= -limit
         ):
             continue
-        score = {fid: sum(a for _, a in e) for fid, e in parts[key].items()}
-        totals = {}
-        for largest in (True, False):
-            path = graph.pick_path(branch, score, largest)
-            totals[largest] = (sum(score.get(f, 0.0) for f in path), path)
-        total, path = max(totals.values(), key=lambda t: abs(t[0]))
-        if abs(total) > limit:
-            sources = sorted(
-                (s for f in path for s in parts[key].get(f, ())),
-                key=lambda s: -abs(s[1]),
+        # Judging forks: a spirit that something removes scores 0, so a swap ladder
+        # counts by its last rung, and one that a prerequisite also grants scores
+        # once. The tally above is exact for the path picked.
+        score = {
+            fid: sum(
+                a
+                for source, a, is_idea in entries
+                if not is_idea
+                or (
+                    source not in swapped
+                    and not graph.ancestors[fid] & granters[source]
+                )
             )
-            rows.append({"key": key, "sum": total, "from": sources})
+            for fid, entries in parts[key].items()
+        }
+        results = []
+        for largest in (True, False):
+            pick = graph.pick_path(branch, score, largest)
+            results.append((*tally(key, pick.focuses), pick.choice))
+        total, sources, choice = max(results, key=lambda r: abs(r[0]))
+        if abs(total) > limit:
+            rows.append({"key": key, "sum": total, "from": sources, "path": choice})
     return rows
 
 
@@ -880,7 +1159,7 @@ def branch_rows(
         for name, value in METRICS.items():
             score = {f.id: value(f) for f in members}
             bounds = [
-                sum(score[i] for i in graph.pick_path(branch, score, largest))
+                sum(score[i] for i in graph.pick_path(branch, score, largest).focuses)
                 for largest in (False, True)
             ]
             metrics[name] = {"min": bounds[0], "max": bounds[1]}
@@ -966,6 +1245,7 @@ def reward_row(reward: Reward) -> dict:
         "swaps": [{"from": old, "to": new} for old, new in reward.swaps],
         "variables": dict(reward.variables),
         "unquantified": reward.unquantified,
+        "flags": sorted(reward.flags),
     }
 
 
@@ -1015,11 +1295,14 @@ def build_report(
                 "branches": graph.roots_of.get(f.id, []),
                 "prerequisites": f.prerequisites,
                 "mutually_exclusive": f.exclusive,
+                "requires": [sorted(block) for block in f.needs],
+                "forbids": sorted(f.forbids),
                 "reward": reward_row(f.always),
                 "conditional": reward_row(f.maybe),
             }
             for f in focuses
         ],
+        "paths": graph.path_rows(),
         "branches": branch_rows(graph, by_id, ideas, ctx, limit),
         "outliers": outliers(focuses, ideas, top),
     }
@@ -1085,7 +1368,11 @@ def reward_text(reward: dict) -> str:
 
 
 def format_text(
-    report: dict, *, show_forks: bool = False, show_focuses: bool = False
+    report: dict,
+    *,
+    show_forks: bool = False,
+    show_focuses: bool = False,
+    show_paths: bool = False,
 ) -> str:
     lines = [
         f"{report['tag']} focus reward audit ({', '.join(report['files'])})",
@@ -1126,11 +1413,24 @@ def format_text(
                     for a in fork
                 )
                 lines.append(f"  {branch['root']}: {arms}")
+    if show_paths:
+        lines += ["", "== paths (choices that exclude each other) =="]
+        for path in report["paths"]:
+            setters = (
+                f"set by {', '.join(path['setters'])}; " if path["setters"] else ""
+            )
+            lines.append(
+                f"  {path['choice']}: {setters}gates {path['gates']} focuses; "
+                f"branches {', '.join(path['branches'])}"
+            )
+        if not report["paths"]:
+            lines.append("  none")
     lines += ["", f"== stacking over {fmt(report['stack_limit'])} =="]
     flagged = [(b["root"], row) for b in report["branches"] for row in b["stacking"]]
     for root, row in flagged:
         sources = ", ".join(f"{name} {amount:+g}" for name, amount in row["from"][:6])
-        lines.append(f"  {root}: {row['key']} {row['sum']:+g}  <- {sources}")
+        choice = f"  [{', '.join(row['path'])}]" if row["path"] else ""
+        lines.append(f"  {root}: {row['key']} {row['sum']:+g}  <- {sources}{choice}")
     if not flagged:
         lines.append("  none")
     lines += ["", "== outliers =="]
@@ -1197,6 +1497,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument(
         "--focuses", action="store_true", help="also list every focus's rewards"
     )
+    parser.add_argument(
+        "--paths",
+        action="store_true",
+        help="also list the path flags and leaders that split a branch",
+    )
     parser.add_argument("--json", action="store_true", help="emit JSON, not text")
     args = parser.parse_args(argv)
     tag = args.tag.upper()
@@ -1224,7 +1529,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     if args.json:
         print(json.dumps(rounded(report), indent=2))
     else:
-        print(format_text(report, show_forks=args.forks, show_focuses=args.focuses))
+        print(
+            format_text(
+                report,
+                show_forks=args.forks,
+                show_focuses=args.focuses,
+                show_paths=args.paths,
+            )
+        )
 
 
 if __name__ == "__main__":

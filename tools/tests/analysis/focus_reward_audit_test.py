@@ -70,6 +70,10 @@ _IDEAS = """ideas = {
 		TST_idea_new = { modifier = { tst_output_factor = 0.25 } }
 		TST_idea_six = { modifier = { m1 = 1 m2 = 1 m3 = 1 m4 = 1 m5 = 1 m6 = 1 } }
 		TST_idea_five = { modifier = { m1 = 1 m2 = 1 m3 = 1 m4 = 1 m5 = 1 } }
+			TST_idea_gate_a = { modifier = { stability_factor = 0.15 } }
+			TST_idea_gate_b = { modifier = { stability_factor = 0.15 } }
+			TST_idea_gate_big = { modifier = { stability_factor = 0.20 } }
+			TST_idea_gate_shared = { modifier = { stability_factor = 0.10 } }
 	}
 }
 """
@@ -82,7 +86,7 @@ _CONTEXT = {
 }
 
 
-def _focus(focus_id, *, after=(), against=(), reward=""):
+def _focus(focus_id, *, after=(), against=(), available="", reward=""):
     """One focus of 7 days; `after` is one OR prerequisite, `against` its forks."""
     lines = [f"\t\tid = {focus_id}", "\t\tcost = 1"]
     if after:
@@ -95,6 +99,8 @@ def _focus(focus_id, *, after=(), against=(), reward=""):
             + " ".join(f"focus = {a}" for a in against)
             + " }"
         )
+    if available:
+        lines.append("\t\tavailable = { " + available + " }")
     lines.append("\t\tcompletion_reward = {\n" + reward + "\n\t\t}")
     return "\tfocus = {\n" + "\n".join(lines) + "\n\t}\n"
 
@@ -396,6 +402,39 @@ def test_stacking_drops_a_swapped_out_spirit(tmp_path, capsys):
     }
 
 
+def test_stacking_judges_a_swap_ladder_by_its_last_rung(tmp_path, capsys):
+    report = _audit(
+        capsys,
+        _mod(
+            tmp_path,
+            _focus("TST_w_root"),
+            _focus(
+                "TST_w_ladder",
+                after=["TST_w_root"],
+                against=["TST_w_flat"],
+                reward="add_ideas = TST_idea_old",
+            ),
+            _focus(
+                "TST_w_rung",
+                after=["TST_w_ladder"],
+                reward="swap_ideas = { remove_idea = TST_idea_old add_idea = TST_idea_new }",
+            ),
+            _focus(
+                "TST_w_flat",
+                after=["TST_w_root"],
+                against=["TST_w_ladder"],
+                reward="add_ideas = { TST_idea_a TST_idea_alt }",
+            ),
+        ),
+    )
+
+    # The ladder ends at 0.25 and the flat arm gives 0.30. Scoring the swapped-out
+    # 0.20 as well would make the ladder look like 0.45 and pick it.
+    assert _stacked(report, "TST_w_root") == {
+        "tst_output_factor": (0.3, ["TST_idea_a", "TST_idea_alt"])
+    }
+
+
 def test_stacking_flags_only_what_passes_the_limit(tmp_path, capsys):
     report = _audit(capsys, _mod(tmp_path, *_stacking_tree()), "--stack-limit", "0.35")
 
@@ -424,6 +463,290 @@ def test_outliers_rank_density_and_flag_spirits_with_many_modifiers(tmp_path, ca
     assert [(s["idea"], s["modifiers"]) for s in outliers["spirits"]] == [
         ("TST_idea_six", 6)
     ]
+
+
+# --- path choices: flags and leaders -------------------------------------------
+
+
+def _path_tree(kind, *gated):
+    """A fork whose arms set TST_A and TST_B, then the focuses gated on them."""
+    return (
+        _focus("TST_root"),
+        _focus(
+            "TST_a",
+            after=["TST_root"],
+            against=["TST_b"],
+            reward=f"set_{kind}_flag = TST_A " + _widgets(1),
+        ),
+        _focus(
+            "TST_b",
+            after=["TST_root"],
+            against=["TST_a"],
+            reward=f"set_{kind}_flag = TST_B",
+        ),
+        *gated,
+    )
+
+
+def _gated(focus_id, available, reward=""):
+    return _focus(focus_id, after=["TST_root"], available=available, reward=reward)
+
+
+def _buildings(report, root_id="TST_root"):
+    bounds = _branch(report, root_id)["metrics"]["buildings"]
+    return bounds["min"], bounds["max"]
+
+
+# case: (available of a focus worth 5 buildings, lowest and highest buildings of the
+# branch). Path a is worth 1 building and path b none, so ignoring the gate gives 5..6.
+_GATE_PATHS = {
+    "needs a flag of path a": ("has_KIND_flag = TST_A", (0, 6)),
+    "needs a flag of path b": ("has_KIND_flag = TST_B", (1, 5)),
+    "needs either flag": (
+        "OR = { has_KIND_flag = TST_A has_KIND_flag = TST_B }",
+        (5, 6),
+    ),
+    "needs a flag inside an AND": (
+        "AND = { has_KIND_flag = TST_B always = yes }",
+        (1, 5),
+    ),
+    "forbids a flag": ("NOT = { has_KIND_flag = TST_A }", (1, 5)),
+}
+
+
+@pytest.mark.parametrize("kind", ["global", "country"])
+@pytest.mark.parametrize(
+    ("available", "expected"), _GATE_PATHS.values(), ids=_GATE_PATHS
+)
+def test_branch_totals_count_only_paths_the_flags_allow(
+    tmp_path, capsys, kind, available, expected
+):
+    gated = _gated("TST_gated", available.replace("KIND", kind), _widgets(5))
+
+    report = _audit(capsys, _mod(tmp_path, *_path_tree(kind, gated)))
+
+    assert _buildings(report) == expected
+
+
+@pytest.mark.parametrize("kind", ["global", "country"])
+def test_stacking_takes_one_path_flag_not_both(tmp_path, capsys, kind):
+    tree = _path_tree(
+        kind,
+        _gated("TST_only_a", f"has_{kind}_flag = TST_A", "add_ideas = TST_idea_gate_a"),
+        _gated("TST_only_b", f"has_{kind}_flag = TST_B", "add_ideas = TST_idea_gate_b"),
+    )
+
+    report = _audit(capsys, _mod(tmp_path, *tree), "--stack-limit", "0.1")
+
+    # Both paths together would be 0.30.
+    [row] = _branch(report, "TST_root")["stacking"]
+    assert (row["key"], row["sum"], row["path"]) == (
+        "stability_factor",
+        0.15,
+        [f"{kind} flag TST_A"],
+    )
+    assert [source for source, _ in row["from"]] == ["TST_idea_gate_a"]
+
+
+def test_flags_set_below_an_exclusive_focus_are_paths_too(tmp_path, capsys):
+    report = _audit(
+        capsys,
+        _mod(
+            tmp_path,
+            _focus("TST_root"),
+            _focus("TST_x", after=["TST_root"], against=["TST_y"]),
+            _focus("TST_y", after=["TST_root"], against=["TST_x"]),
+            _focus("TST_x_deep", after=["TST_x"], reward="set_global_flag = TST_X"),
+            _focus("TST_y_deep", after=["TST_y"], reward="set_global_flag = TST_Y"),
+            _gated("TST_needs_x", "has_global_flag = TST_X", _widgets(2)),
+            _gated("TST_needs_y", "has_global_flag = TST_Y", _widgets(3)),
+        ),
+    )
+
+    assert _buildings(report) == (2, 3)
+    assert [(p["choice"], p["setters"], p["gates"]) for p in report["paths"]] == [
+        ("global flag TST_X", ["TST_x_deep"], 1),
+        ("global flag TST_Y", ["TST_y_deep"], 1),
+    ]
+
+
+def test_flags_without_an_exclusive_setter_gate_nothing(tmp_path, capsys):
+    report = _audit(
+        capsys,
+        _mod(
+            tmp_path,
+            _focus("TST_root", reward="set_global_flag = TST_FREE"),
+            _gated("TST_late", "has_global_flag = TST_FREE", _widgets(1)),
+            _gated("TST_event", "has_global_flag = TST_SET_ELSEWHERE", _widgets(2)),
+        ),
+    )
+
+    assert report["paths"] == []
+    assert _buildings(report) == (3, 3)
+
+
+def test_a_focus_may_forbid_a_flag_it_or_its_child_sets(tmp_path, capsys):
+    report = _audit(
+        capsys,
+        _mod(
+            tmp_path,
+            _focus("TST_root"),
+            _focus(
+                "TST_x",
+                after=["TST_root"],
+                against=["TST_y"],
+                available="NOT = { has_global_flag = TST_LATER }",
+                reward=_widgets(1),
+            ),
+            _focus(
+                "TST_x_child",
+                after=["TST_x"],
+                reward="set_global_flag = TST_LATER " + _widgets(4),
+            ),
+            _focus(
+                "TST_y",
+                after=["TST_root"],
+                against=["TST_x"],
+                available="NOT = { has_global_flag = TST_SELF }",
+                reward="set_global_flag = TST_SELF " + _widgets(2),
+            ),
+        ),
+    )
+
+    assert _buildings(report) == (2, 5)
+
+
+_ADA = 'has_country_leader = { name = "Ada Test" }'
+_BO = 'has_country_leader = { name = "Bo Test" }'
+
+
+def _leader_tree():
+    return (
+        _focus("TST_root"),
+        _focus(
+            "TST_ada",
+            after=["TST_root"],
+            available=_ADA,
+            reward="add_ideas = { TST_idea_gate_a TST_idea_gate_shared } "
+            + _widgets(3),
+        ),
+        _focus(
+            "TST_bo",
+            after=["TST_root"],
+            available=_BO,
+            reward="add_ideas = { TST_idea_gate_big TST_idea_gate_shared } "
+            + _widgets(1),
+        ),
+        _focus(
+            "TST_not_bo",
+            after=["TST_root"],
+            available="NOT = { " + _BO + " }",
+            reward=_widgets(10),
+        ),
+        _focus("TST_any", after=["TST_root"], reward=_widgets(100)),
+    )
+
+
+def test_leaders_are_exclusive_choices_in_totals_and_stacking(tmp_path, capsys):
+    report = _audit(capsys, _mod(tmp_path, *_leader_tree()))
+
+    # Ada: 3 + 10 + 100. Bo: 1 + 100. Summing both leaders would give 114.
+    assert _buildings(report) == (101, 113)
+    assert [(p["choice"], p["kind"], p["gates"]) for p in report["paths"]] == [
+        ("leader Ada Test", "leader", 1),
+        ("leader Bo Test", "leader", 2),
+    ]
+    # Bo stacks 0.30 and Ada 0.25. The idea both grant counts on either path, so
+    # Bo's path keeps it even though Ada's focus is listed first.
+    [row] = _branch(report, "TST_root")["stacking"]
+    assert (row["sum"], row["path"]) == (0.3, ["leader Bo Test"])
+    assert [source for source, _ in row["from"]] == [
+        "TST_idea_gate_big",
+        "TST_idea_gate_shared",
+    ]
+
+
+# case: (an `available` body, the sets of which one must hold, the forbidden tokens)
+_GATE_READS = {
+    "a flag": ("has_global_flag = A", [["global flag A"]], []),
+    "a flag block": (
+        "has_country_flag = { flag = A days > 3 }",
+        [["country flag A"]],
+        [],
+    ),
+    "a leader without its quotes": (_ADA, [["leader Ada Test"]], []),
+    "AND and a tooltip wrapper": (
+        "AND = { has_global_flag = A } "
+        "custom_trigger_tooltip = { tooltip = tt has_country_flag = B }",
+        [["global flag A"], ["country flag B"]],
+        [],
+    ),
+    "an OR of tests": (
+        "OR = { has_global_flag = A has_country_flag = B }",
+        [["country flag B", "global flag A"]],
+        [],
+    ),
+    "an OR with another condition": (
+        "OR = { has_global_flag = A has_war = yes }",
+        [],
+        [],
+    ),
+    "a NOT of one test": ("NOT = { has_global_flag = A }", [], ["global flag A"]),
+    "a NOT of two tests": (
+        "NOT = { has_global_flag = A has_global_flag = B }",
+        [],
+        [],
+    ),
+    "another country's scope": ("OTH = { has_global_flag = A }", [], []),
+}
+
+
+@pytest.mark.parametrize(
+    ("text", "needs", "forbids"), _GATE_READS.values(), ids=_GATE_READS
+)
+def test_read_gates(text, needs, forbids):
+    found_needs, found_forbids = A.read_gates(A.parse(text))
+
+    assert ([sorted(block) for block in found_needs], sorted(found_forbids)) == (
+        needs,
+        forbids,
+    )
+
+
+def test_paths_section_lists_flags_and_stacking_names_the_choice(tmp_path, capsys):
+    tree = _path_tree(
+        "global",
+        _gated("TST_only_a", "has_global_flag = TST_A", "add_ideas = TST_idea_gate_a"),
+        _gated("TST_only_b", "has_global_flag = TST_B", "add_ideas = TST_idea_gate_b"),
+    )
+    root = _mod(tmp_path, *tree)
+
+    A.main(["--tag", "TST", "--root", str(root), "--stack-limit", "0.1", "--paths"])
+
+    lines = capsys.readouterr().out.splitlines()
+    assert (
+        "  global flag TST_A: set by TST_a; gates 1 focuses; branches TST_root" in lines
+    )
+    assert (
+        "  TST_root: stability_factor +0.15  <- TST_idea_gate_a +0.15"
+        "  [global flag TST_A]"
+    ) in lines
+
+
+def test_a_tree_without_gates_has_no_paths(tmp_path, capsys):
+    root = _mod(tmp_path, *_stacking_tree())
+
+    report = _audit(capsys, root)
+    assert report["paths"] == []
+    assert [r["path"] for b in report["branches"] for r in b["stacking"]] == [[], []]
+
+    A.main(["--tag", "TST", "--root", str(root)])
+    assert "== paths" not in capsys.readouterr().out
+
+    A.main(["--tag", "TST", "--root", str(root), "--paths"])
+    lines = capsys.readouterr().out.splitlines()
+    heading = lines.index("== paths (choices that exclude each other) ==")
+    assert lines[heading + 1] == "  none"
 
 
 # --- CLI --------------------------------------------------------------------------
