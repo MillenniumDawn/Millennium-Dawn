@@ -10581,3 +10581,556 @@ country_event = {
 		}
 	}
 }
+
+# Operation Welcome opens at the Venezuelan border, 28 February 2018. Scheduled in trigger_year_2018_events. ROOT = Brazil.
+country_event = {
+	id = brazil.131
+	title = brazil.131.t
+	desc = brazil.131.d
+	picture = GFX_migrant_protest
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = BRA
+		owns_state = 1023
+		country_exists = VEN
+		VEN = { emerging_anarchist_communism_in_power_or_coalition = yes }
+	}
+
+	immediate = {
+		country_event = { id = brazil.133 days = 171 }
+	}
+
+	# Relocate families across Brazil
+	option = {
+		name = brazil.131.a
+		log = "[GetDateText]: [This.GetName]: brazil.131.a executed"
+		small_expenditure = yes
+		set_country_flag = { flag = BRA_welcome_interiorizing days = 400 value = 1 }
+		custom_effect_tooltip = BRA_welcome_interiorizing_tt
+		country_event = { id = brazil.132 days = 270 }
+		ai_chance = {
+			base = 4
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Close the border
+	option = {
+		name = brazil.131.b
+		log = "[GetDateText]: [This.GetName]: brazil.131.b executed"
+		add_stability = 0.02
+		reverse_add_opinion_modifier = { target = VEN modifier = medium_decrease }
+		set_temp_variable = { percent_change = -3 }
+		set_temp_variable = { influence_target = VEN.id }
+		change_influence_percentage = yes
+		set_country_flag = { flag = BRA_welcome_closed days = 400 value = 1 }
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+				}
+			}
+		}
+	}
+
+	# Leave it to Roraima
+	option = {
+		name = brazil.131.c
+		log = "[GetDateText]: [This.GetName]: brazil.131.c executed"
+		add_stability = -0.02
+		set_country_flag = { flag = BRA_welcome_neglected days = 400 value = 1 }
+		custom_effect_tooltip = BRA_welcome_neglected_tt
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 has_global_flag = BRA_LIBERALS_FOCUS_PATH }
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+}
+
+# Relocated Venezuelan families settle across Brazil. Fired 270 days after brazil.131.a. ROOT = Brazil.
+country_event = {
+	id = brazil.132
+	title = brazil.132.t
+	desc = brazil.132.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = { original_tag = BRA }
+
+	# Welcome the new workers
+	option = {
+		name = brazil.132.a
+		log = "[GetDateText]: [This.GetName]: brazil.132.a executed"
+		add_stability = 0.02
+		add_manpower = 10000
+		ai_chance = { base = 1 }
+	}
+}
+
+# Mobs burn Venezuelan camps in Pacaraima, 18 August 2018. Scheduled by brazil.131. ROOT = Brazil.
+country_event = {
+	id = brazil.133
+	title = brazil.133.t
+	desc = {
+		text = brazil.133.d_neglected
+		trigger = { has_country_flag = BRA_welcome_neglected }
+	}
+	desc = {
+		text = brazil.133.d_closed
+		trigger = { has_country_flag = BRA_welcome_closed }
+	}
+	desc = {
+		text = brazil.133.d_interiorizing
+		trigger = { has_country_flag = BRA_welcome_interiorizing }
+	}
+	desc = {
+		text = brazil.133.d
+	}
+	picture = GFX_migrant_protest
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = BRA
+		owns_state = 1023
+	}
+
+	# Send the Army to Pacaraima
+	option = {
+		name = brazil.133.a
+		log = "[GetDateText]: [This.GetName]: brazil.133.a executed"
+		small_expenditure = yes
+		add_stability = 0.02
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Expand shelters and relocation
+	option = {
+		name = brazil.133.b
+		log = "[GetDateText]: [This.GetName]: brazil.133.b executed"
+		medium_expenditure = yes
+		add_stability = 0.03
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Leave it to the state government
+	option = {
+		name = brazil.133.c
+		log = "[GetDateText]: [This.GetName]: brazil.133.c executed"
+		add_stability = -0.03
+		if = {
+			limit = { has_country_flag = BRA_welcome_neglected }
+			add_stability = -0.02
+		}
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 has_global_flag = BRA_LIBERALS_FOCUS_PATH }
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+}
+
+# Venezuela's Essequibo referendum puts Roraima on alert, 5 December 2023. Fired by venezuela.204. ROOT = Brazil.
+country_event = {
+	id = brazil.134
+	title = brazil.134.t
+	desc = brazil.134.d
+	picture = GFX_generic_soldiers
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = BRA
+		owns_state = 1023
+		country_exists = VEN
+		country_exists = GUY
+		NOT = { has_war_with = VEN }
+		NOT = { has_war_with = GUY }
+		GUY = { owns_state = 1005 }
+	}
+
+	# Reinforce Roraima
+	option = {
+		name = brazil.134.a
+		log = "[GetDateText]: [This.GetName]: brazil.134.a executed"
+		small_expenditure = yes
+		1023 = {
+			add_building_construction = {
+				type = bunker
+				level = 1
+				province = 5214
+				instant_build = yes
+			}
+		}
+		reverse_add_opinion_modifier = { target = VEN modifier = small_decrease }
+		reverse_add_opinion_modifier = { target = GUY modifier = small_increase }
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+					western_conservatism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 GUY = { has_country_flag = GUY_essequibo_asked_brazil } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Mediate between Caracas and Georgetown
+	option = {
+		name = brazil.134.b
+		log = "[GetDateText]: [This.GetName]: brazil.134.b executed"
+		trigger = { NOT = { VEN = { has_war_with = GUY } } }
+		if = {
+			limit = { has_idea = BRA_idea_the_international_mediator }
+			add_political_power = -20
+		}
+		else = {
+			add_political_power = -40
+		}
+		reverse_add_opinion_modifier = { target = VEN modifier = medium_increase }
+		reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { influence_target = VEN.id }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { influence_target = GUY.id }
+		change_influence_percentage = yes
+		hidden_effect = { country_event = { id = brazil.135 days = 9 } }
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					western_liberals_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 has_idea = BRA_idea_the_international_mediator }
+			modifier = { factor = 1.5 GUY = { has_country_flag = GUY_essequibo_asked_brazil } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Stay out of it
+	option = {
+		name = brazil.134.c
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH }
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 has_war = yes }
+		}
+	}
+}
+
+# Amorim represents Brazil at the Argyle meeting, 14 December 2023. Fired 9 days after brazil.134.b. ROOT = Brazil.
+country_event = {
+	id = brazil.135
+	title = brazil.135.t
+	desc = brazil.135.d
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = VEN
+		country_exists = GUY
+		NOT = { VEN = { has_war_with = GUY } }
+	}
+
+	# Take our seat at the table
+	option = {
+		name = brazil.135.a
+		log = "[GetDateText]: [This.GetName]: brazil.135.a executed"
+		add_political_power = 20
+		every_other_country = {
+			limit = { has_country_flag = caribbean_nation_flag }
+			add_opinion_modifier = { target = ROOT modifier = gratitude }
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# Brazil answers the disputed Venezuelan election, 1 August 2024. Scheduled in trigger_year_2024_events. ROOT = Brazil.
+country_event = {
+	id = brazil.136
+	title = brazil.136.t
+	desc = brazil.136.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = VEN
+		NOT = { has_war_with = VEN }
+		VEN = { emerging_anarchist_communism_in_power_or_coalition = yes }
+	}
+
+	# Withhold recognition until the tallies are published
+	option = {
+		name = brazil.136.a
+		log = "[GetDateText]: [This.GetName]: brazil.136.a executed"
+		add_political_power = 15
+		reverse_add_opinion_modifier = { target = VEN modifier = medium_decrease }
+		set_temp_variable = { percent_change = -2 }
+		set_temp_variable = { influence_target = VEN.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.5 has_opinion = { target = VEN value > 40 } }
+		}
+	}
+
+	# Recognize the result
+	option = {
+		name = brazil.136.b
+		log = "[GetDateText]: [This.GetName]: brazil.136.b executed"
+		add_stability = -0.01
+		reverse_add_opinion_modifier = { target = VEN modifier = medium_increase }
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { influence_target = VEN.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 has_opinion = { target = VEN value > 40 } }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+}
+
+# Venezuela asks BRICS for partner status at Kazan, 24 October 2024. Scheduled in trigger_year_2024_events. ROOT = Brazil.
+country_event = {
+	id = brazil.137
+	title = brazil.137.t
+	desc = brazil.137.d
+	picture = GFX_RAJ_brics_tower
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = BRA
+		has_idea = RAJ_BRICS
+		country_exists = VEN
+		NOT = { has_war_with = VEN }
+		VEN = {
+			NOT = { has_idea = RAJ_BRICS }
+			NOT = { has_country_flag = BRICS_application_pending }
+		}
+		any_of_scopes = {
+			array = global.BRICS_potential
+			has_dynamic_modifier = { modifier = RAJ_brics_leadership }
+		}
+	}
+
+	# Block the bid
+	option = {
+		name = brazil.137.a
+		log = "[GetDateText]: [This.GetName]: brazil.137.a executed"
+		reverse_add_opinion_modifier = { target = VEN modifier = large_decrease }
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.5 has_opinion = { target = VEN value > 40 } }
+		}
+	}
+
+	# Back Venezuela's application
+	option = {
+		name = brazil.137.b
+		log = "[GetDateText]: [This.GetName]: brazil.137.b executed"
+		reverse_add_opinion_modifier = { target = VEN modifier = medium_increase }
+		custom_effect_tooltip = BRA_brics_sponsor_ven_tt
+		hidden_effect = { VEN = { BRICS_join_via_event = yes } }
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH }
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 has_opinion = { target = VEN value > 40 } }
+			modifier = { factor = 0.5 has_opinion = { target = VEN value < 0 } }
+		}
+	}
+}
