@@ -318,9 +318,7 @@ class Reader:
                 status = (
                     "unresolved"
                     if influencer is None or target is None
-                    else "self"
-                    if influencer == target
-                    else "resolved"
+                    else "self" if influencer == target else "resolved"
                 )
                 self.reads.add(
                     Read(
