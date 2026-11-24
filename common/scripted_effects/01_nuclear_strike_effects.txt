@@ -1,3 +1,55 @@
+nuclear_strike_spend_state_warheads = {
+	if = { limit = { has_equipment = { nuclear_missile_equipment > 2 } }
+		add_equipment_to_stockpile = {
+			type = nuclear_missile_equipment
+			amount = -3
+		}
+	}
+	else_if = { limit = { has_equipment = { nuclear_ballistic_missile_equipment > 2 } }
+		add_equipment_to_stockpile = {
+			type = nuclear_ballistic_missile_equipment
+			amount = -3
+		}
+	}
+	else = {
+		set_temp_variable = { nuclear_warheads_shortfall = { value = 3 subtract = { value = num_equipment@nuclear_missile_equipment clamp = { min = 0 max = 3 } } multiply = -1 } }
+		add_equipment_to_stockpile = {
+			type = nuclear_missile_equipment
+			amount = -3
+		}
+		add_equipment_to_stockpile = {
+			type = nuclear_ballistic_missile_equipment
+			amount = nuclear_warheads_shortfall
+		}
+	}
+}
+
+nuclear_strike_spend_strategic_warheads = {
+	if = { limit = { has_equipment = { nuclear_missile_equipment > 9 } }
+		add_equipment_to_stockpile = {
+			type = nuclear_missile_equipment
+			amount = -10
+		}
+	}
+	else_if = { limit = { has_equipment = { nuclear_ballistic_missile_equipment > 9 } }
+		add_equipment_to_stockpile = {
+			type = nuclear_ballistic_missile_equipment
+			amount = -10
+		}
+	}
+	else = {
+		set_temp_variable = { nuclear_warheads_shortfall = { value = 10 subtract = { value = num_equipment@nuclear_missile_equipment clamp = { min = 0 max = 10 } } multiply = -1 } }
+		add_equipment_to_stockpile = {
+			type = nuclear_missile_equipment
+			amount = -10
+		}
+		add_equipment_to_stockpile = {
+			type = nuclear_ballistic_missile_equipment
+			amount = nuclear_warheads_shortfall
+		}
+	}
+}
+
 # Effect: nuclear_strike_devastate_state
 # Purpose: Destroys a share of the economic buildings in the state in scope, cuts its productivity and damages its military sites
 # Parameters:
@@ -161,7 +213,7 @@ nuclear_strike_devastate_state = {
 			damage_building = { type = anti_air_building damage = 10 }
 		}
 
-		# The caller refreshes the owner's economy once, after every state is done
+		# The caller refreshes the affected country's economy once, after every state is done
 		set_temp_variable = { nuclear_productivity_lost = { value = productivity_state_var multiply = nuclear_destroy_share } }
 		subtract_from_variable = { productivity_state_var = nuclear_productivity_lost }
 		clamp_variable = { var = productivity_state_var min = 100 }
@@ -177,8 +229,15 @@ nuclear_strike_devastate_state = {
 # Purpose: Charges the country in scope the domestic and international cost of a nuclear strike it launched
 # Parameters:
 # - nuclear_strike_severity: 1 tactical, 3 state, 6 strategic
+# - ROOT.victim_country: country that was struck by this raid
 nuclear_strike_political_fallout = {
-	# Every strike within 180 days of the last one costs half as much again, up to double
+	set_temp_variable = { nuclear_is_retaliation = 0 }
+	var:ROOT.victim_country = {
+		if = { limit = { has_country_flag = nuclear_struck_first@PREV }
+			set_temp_variable = { nuclear_is_retaliation = 1 }
+		}
+	}
+	# Strikes within 180 days of the last raise stability, war support, protest and party losses by half, up to double
 	set_temp_variable = { nuclear_days_since_strike = global.num_days }
 	subtract_from_temp_variable = { nuclear_days_since_strike = nuclear_last_strike_day }
 	set_temp_variable = { nuclear_strikes_before = nuclear_recent_strikes }
@@ -212,7 +271,7 @@ nuclear_strike_political_fallout = {
 	}
 
 	# Answering a nuclear strike costs far less than starting one
-	if = { limit = { has_country_flag = has_been_nuked }
+	if = { limit = { check_variable = { nuclear_is_retaliation = 1 } }
 		multiply_temp_variable = { nuclear_domestic_share = 0.5 }
 		if = {
 			limit = {
@@ -225,7 +284,7 @@ nuclear_strike_political_fallout = {
 
 	# Half the political power cost is fixed, half follows the domestic share
 	set_temp_variable = { nuclear_pp_cost = { value = nuclear_domestic_share multiply = 0.5 add = 0.5 multiply = nuclear_strike_severity multiply = -25 } }
-	if = { limit = { has_country_flag = has_been_nuked }
+	if = { limit = { check_variable = { nuclear_is_retaliation = 1 } }
 		multiply_temp_variable = { nuclear_pp_cost = 0.5 }
 	}
 
@@ -237,7 +296,7 @@ nuclear_strike_political_fallout = {
 	}
 
 	custom_effect_tooltip = nuclear_strike_political_fallout_tt
-	if = { limit = { has_country_flag = has_been_nuked }
+	if = { limit = { check_variable = { nuclear_is_retaliation = 1 } }
 		custom_effect_tooltip = nuclear_strike_retaliation_tt
 	}
 	else = {
@@ -264,14 +323,18 @@ nuclear_strike_political_fallout = {
 		# The ruling party loses the same share of its own support as the country loses stability, so it never drops below zero
 		set_party_index_to_ruling_party = yes
 		set_temp_variable = { party_popularity_increase = { value = party_pop_array^party_index multiply = nuclear_stability_loss } }
+		set_temp_variable = { temp_outlook_increase = party_popularity_increase }
 		change_relative_party_popularity = yes
 
-		if = { limit = { has_country_flag = has_been_nuked }
+		if = { limit = { check_variable = { nuclear_is_retaliation = 1 } }
 			every_other_country = {
 				add_opinion_modifier = { target = PREV modifier = nuclear_strike_retaliation }
 			}
 		}
 		else = {
+			var:ROOT.victim_country = {
+				PREV = { set_country_flag = nuclear_struck_first@PREV }
+			}
 			if = { limit = { check_variable = { nuclear_strike_severity > 5 } }
 				every_other_country = {
 					add_opinion_modifier = { target = PREV modifier = nuclear_strike_strategic_first_use }
