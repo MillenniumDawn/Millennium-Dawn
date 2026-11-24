@@ -316,6 +316,180 @@ BRA_public_policy_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
+
+	BRA_minustah_deployment = {
+		icon = un_flag
+		cost = 75
+		days_remove = 730
+		days_re_enable = 1095
+
+		visible = { date > 2004.5.31 }
+
+		available = {
+			country_exists = HAI
+			NOT = { has_war_with = HAI }
+			has_manpower > 3000
+		}
+
+		modifier = {
+			foreign_influence_continent_modifier = 0.10
+			political_power_gain = 0.1
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_minustah_deployment"
+			add_manpower = -1200
+			if = {
+				limit = { has_idea = BRA_idea_the_international_mediator }
+				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.0005 } }
+			}
+			else = {
+				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.001 } }
+			}
+			modify_treasury_effect = yes
+			for_each_scope_loop = {
+				array = global.p5_sc_members
+				tooltip = BRA_minustah_p5_tt
+				if = {
+					limit = { NOT = { original_tag = BRA } }
+					add_opinion_modifier = { target = ROOT modifier = gratitude }
+				}
+			}
+			HAI = { country_event = brazil.97 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_minustah_haiti_tt
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 has_idea = BRA_idea_the_international_mediator }
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_ibsa_trade_investment = {
+		icon = generic_political_discourse
+		cost = 50
+		days_re_enable = 365
+
+		targets = { RAJ SAF }
+		target_root_trigger = { date > 2003.5.31 }
+
+		available = {
+			NOT = { has_war_with = FROM }
+			custom_trigger_tooltip = {
+				tooltip = BRA_ibsa_package_open_tt
+				OR = {
+					NOT = { is_in_array = { trade_agreement_partners = FROM } }
+					NOT = { is_in_array = { investment_treaty_partners = FROM } }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_ibsa_trade_investment target: [From.GetName]"
+			FROM = { country_event = brazil.99 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			set_temp_variable = { sender_nation = ROOT.id }
+			set_temp_variable = { receiver_nation = FROM.id }
+			effect_tooltip = {
+				set_improved_trade_agreement = yes
+				set_mutual_investment_treaty = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 2 FROM = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0 has_war = yes }
+		}
+	}
+
+	BRA_embraer_export_deal = {
+		icon = jet_aircraft
+		cost = 25
+		days_re_enable = 180
+
+		targets = { ARG CHL COL ECU URG PAR DOM MEX POR HUN CZE HOL UAE SAU MOR NIG SAF MOZ }
+
+		target_trigger = {
+			FROM = { has_opinion = { target = ROOT value > 15 } }
+		}
+
+		available = {
+			NOT = { has_war_with = FROM }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_embraer_export_deal target: [From.GetName]"
+			FROM = { country_event = brazil.98 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_embraer_export_deal_tt
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+			modifier = { factor = 2 FROM = { has_opinion = { target = ROOT value > 40 } } }
+			modifier = { factor = 1.5 has_idea = BRA_idea_the_international_mediator }
+			modifier = { factor = 0.5 has_war = yes }
+		}
+	}
 }
 
 BRA_national_development_category = {

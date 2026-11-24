@@ -17,6 +17,44 @@ BRA_operation_car_wash_switch = {
 	}
 }
 
+# BRICS_join_via_event sets BRICS_application_pending before it looks for a leader, so call it only when one exists
+BRA_apply_to_brics = {
+	if = {
+		limit = {
+			NOT = { has_idea = RAJ_BRICS }
+			NOT = { has_country_flag = BRICS_application_pending }
+			any_of_scopes = {
+				array = global.BRICS_potential
+				has_dynamic_modifier = { modifier = RAJ_brics_leadership }
+			}
+		}
+		BRICS_join_via_event = yes
+	}
+}
+
+# THIS = the supplier. Mirrors the request_energy_load_sharing diplomatic action with Brazil as the recipient
+BRA_receive_energy_load_sharing_from_this = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GAME_RULE_disable_energy_load_sharing }
+			NOT = { has_country_flag = energy_load_sharing_recipient }
+			NOT = { is_in_array = { energy_load_sharing_nations = BRA.id } }
+			NOT = { is_in_array = { BRA.energy_load_sharing_nations = THIS.id } }
+			BRA = {
+				has_an_energy_deficit = yes
+				NOT = { has_country_flag = energy_load_sharing_recipient }
+			}
+		}
+		add_to_array = { energy_load_sharing_nations = BRA.id }
+		calculate_energy_load_sharing = yes
+		BRA = {
+			set_country_flag = energy_load_sharing_recipient
+			ingame_update_setup = yes
+		}
+		ingame_update_setup = yes
+	}
+}
+
 BRA_update_brazil_energy_idea = {
 	if = {
 		limit = {
