@@ -1,0 +1,187 @@
+add_namespace = guyana
+
+# ROOT = Guyana, no FROM. Scheduled in trigger_year_2015_events for 20 May 2015.
+country_event = {
+	id = guyana.1
+	title = guyana.1.t
+	desc = guyana.1.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = GUY }
+
+	immediate = {
+		set_country_flag = GUY_stabroek_discovered
+		set_country_flag = { flag = GUY_stabroek_appraisal days = 750 value = 1 }
+	}
+
+	option = {
+		name = guyana.1.a
+		log = "[GetDateText]: [This.GetName]: guyana.1.a executed"
+		add_stability = 0.02
+		unlock_decision_tooltip = GUY_decision_liza_phase_1
+		unlock_decision_tooltip = GUY_decision_natural_resource_fund
+		ai_chance = { base = 1 }
+	}
+}
+
+# ROOT = Guyana, no FROM. Fired by the Liza Phase 1 decision, or by trigger_year_2019_events on 20 December 2019 if the decision was not started.
+country_event = {
+	id = guyana.2
+	title = guyana.2.t
+	desc = guyana.2.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_country_flag = GUY_stabroek_discovered
+		NOT = { has_country_flag = GUY_liza_phase_1_online }
+		NOT = { has_decision = GUY_decision_liza_phase_1 }
+		owns_state = 877
+	}
+
+	option = {
+		name = guyana.2.a
+		log = "[GetDateText]: [This.GetName]: guyana.2.a executed"
+		set_country_flag = GUY_liza_phase_1_online
+		add_resource = { type = oil amount = 3 state = 877 }
+		add_stability = 0.02
+		unlock_decision_tooltip = GUY_decision_liza_phase_2_payara
+		ai_chance = { base = 1 }
+	}
+}
+
+# ROOT = Guyana, no FROM. Scheduled in trigger_year_2018_events for 21 December 2018. Fires only while the PNCR/APNU slot governs.
+country_event = {
+	id = guyana.3
+	title = guyana.3.t
+	desc = guyana.3.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_elections = yes
+		check_variable = { ruling_party = 3 }
+	}
+
+	option = { # accept the vote and call elections within three months
+		name = guyana.3.a
+		log = "[GetDateText]: [This.GetName]: guyana.3.a executed"
+		add_stability = -0.02
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		change_relative_party_popularity = yes
+		custom_effect_tooltip = GUY_elections_march_2019_tt
+		hidden_effect = {
+			set_temp_variable = { election_year_param = 2014 }
+			set_temp_variable = { election_month_param = 3 }
+			set_temp_variable = { election_freq = 60 }
+			set_elections_with_frequency = yes
+		}
+		ai_chance = {
+			base = 3
+			modifier = { factor = 0.5 has_stability < 0.35 }
+		}
+	}
+
+	option = { # challenge the vote in court, as the Granger government did
+		name = guyana.3.b
+		log = "[GetDateText]: [This.GetName]: guyana.3.b executed"
+		set_country_flag = GUY_no_confidence_contested
+		add_stability = -0.03
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		change_relative_party_popularity = yes
+		custom_effect_tooltip = GUY_elections_march_2020_tt
+		hidden_effect = {
+			set_temp_variable = { election_year_param = 2015 }
+			set_temp_variable = { election_month_param = 3 }
+			set_temp_variable = { election_freq = 60 }
+			set_elections_with_frequency = yes
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 0.25 has_stability < 0.35 }
+		}
+	}
+}
+
+# ROOT = Guyana, no FROM. Scheduled in trigger_year_2020_events for 2 March 2020. Fires only after the government contested the no-confidence vote.
+country_event = {
+	id = guyana.4
+	title = guyana.4.t
+	desc = guyana.4.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_country_flag = GUY_no_confidence_contested
+	}
+
+	immediate = { set_country_flag = GUY_2020_count_disputed }
+
+	option = { # stand by the Region 4 declaration
+		name = guyana.4.a
+		log = "[GetDateText]: [This.GetName]: guyana.4.a executed"
+		add_stability = -0.03
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		change_relative_party_popularity = yes
+		hidden_effect = { country_event = { id = guyana.5 days = 153 } }
+		ai_chance = {
+			base = 6
+			modifier = { factor = 0.25 has_stability < 0.35 }
+		}
+	}
+
+	option = { # agree to the CARICOM-supervised recount
+		name = guyana.4.b
+		log = "[GetDateText]: [This.GetName]: guyana.4.b executed"
+		add_stability = -0.01
+		hidden_effect = { country_event = { id = guyana.5 days = 153 } }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 0.5 has_stability < 0.35 }
+		}
+	}
+}
+
+# ROOT = Guyana, no FROM. Fired by guyana.4 for 2 August 2020. Installs the PPP/C government if the simulated election has not already done so.
+country_event = {
+	id = guyana.5
+	title = guyana.5.t
+	desc = guyana.5.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_country_flag = GUY_2020_count_disputed
+	}
+
+	option = {
+		name = guyana.5.a
+		log = "[GetDateText]: [This.GetName]: guyana.5.a executed"
+		clr_country_flag = GUY_2020_count_disputed
+		clr_country_flag = GUY_no_confidence_contested
+		add_stability = 0.03
+		if = {
+			limit = { NOT = { check_variable = { ruling_party = 5 } } }
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
+			set_temp_variable = { rul_party_temp = 5 }
+			set_temp_variable = { disable_elections = 0 }
+			change_ruling_party_effect = yes
+		}
+		ai_chance = { base = 1 }
+	}
+}

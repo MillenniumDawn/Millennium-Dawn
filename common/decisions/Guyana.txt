@@ -1,0 +1,287 @@
+GUY_resources_category = {
+	GUY_decision_liza_phase_1 = {
+		icon = oil
+		cost = 25
+		fire_only_once = yes
+		days_remove = 900
+		cancel_if_not_visible = yes
+
+		visible = {
+			has_country_flag = GUY_stabroek_discovered
+			NOT = { has_country_flag = GUY_liza_phase_1_online }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GUY_stabroek_appraisal_tt
+				NOT = { has_country_flag = GUY_stabroek_appraisal }
+			}
+			has_tech = excavation1
+			has_full_control_of_state = 877
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 877 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_liza_phase_1"
+			small_expenditure = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_liza_phase_1"
+			effect_tooltip = { add_resource = { type = oil amount = 3 state = 877 } }
+			country_event = { id = guyana.2 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.002
+					greater_than = { value = treasury }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	GUY_decision_liza_phase_2_payara = {
+		icon = oil
+		cost = 40
+		fire_only_once = yes
+		days_remove = 900
+
+		visible = {
+			has_country_flag = GUY_liza_phase_1_online
+			NOT = { has_country_flag = GUY_liza_phase_2_online }
+		}
+
+		available = {
+			has_tech = excavation2
+			has_full_control_of_state = 877
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 877 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_liza_phase_2_payara"
+			medium_expenditure = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_liza_phase_2_payara"
+			set_country_flag = GUY_liza_phase_2_online
+			if = {
+				limit = { owns_state = 877 }
+				add_resource = { type = oil amount = 10 state = 877 }
+			}
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.004
+					greater_than = { value = treasury }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	GUY_decision_yellowtail = {
+		icon = oil
+		cost = 50
+		fire_only_once = yes
+		days_remove = 1100
+
+		visible = {
+			has_country_flag = GUY_liza_phase_2_online
+			NOT = { has_country_flag = GUY_yellowtail_online }
+		}
+
+		available = {
+			has_tech = excavation3
+			has_full_control_of_state = 877
+		}
+
+		highlight_states = {
+			highlight_state_targets = { state = 877 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_yellowtail"
+			large_expenditure = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_yellowtail"
+			set_country_flag = GUY_yellowtail_online
+			if = {
+				limit = { owns_state = 877 }
+				add_resource = { type = oil amount = 5 state = 877 }
+			}
+		}
+
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.006
+					greater_than = { value = treasury }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	GUY_decision_natural_resource_fund = {
+		icon = generic_fundraising
+		cost = 30
+		fire_only_once = yes
+		days_remove = 120
+
+		visible = {
+			has_country_flag = GUY_stabroek_discovered
+			NOT = { has_country_flag = GUY_natural_resource_fund }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_natural_resource_fund"
+			set_country_flag = GUY_natural_resource_fund
+			unlock_decision_tooltip = GUY_decision_natural_resource_fund_withdrawal
+		}
+
+		ai_will_do = { base = 30 }
+	}
+
+	GUY_decision_natural_resource_fund_withdrawal = {
+		icon = money_dec
+		days_re_enable = 365
+
+		visible = { has_country_flag = GUY_natural_resource_fund }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GUY_oil_flowing_tt
+				check_variable = { resource_produced@oil > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_natural_resource_fund_withdrawal"
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = resource_produced@oil } }
+			multiply_temp_variable = { treasury_change = 0.002 }
+			if = {
+				limit = { check_variable = { debt > 0 } }
+				set_temp_variable = { debt_change = { value = treasury_change multiply = 0.4 min = debt } }
+				subtract_from_temp_variable = { treasury_change = debt_change }
+				multiply_temp_variable = { debt_change = -1 }
+				modify_debt_effect = yes
+			}
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = { base = 60 }
+	}
+
+	GUY_decision_bauxite_belt = {
+		icon = aluminium
+		cost = 20
+		fire_only_once = yes
+		days_remove = 365
+
+		available = { has_full_control_of_state = 877 }
+
+		highlight_states = {
+			highlight_state_targets = { state = 877 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_bauxite_belt"
+			small_expenditure = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_bauxite_belt"
+			if = {
+				limit = { owns_state = 877 }
+				add_resource = { type = aluminium amount = 3 state = 877 }
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.002
+					greater_than = { value = treasury }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	GUY_decision_aurora_gold = {
+		icon = chromium
+		cost = 30
+		fire_only_once = yes
+		days_remove = 540
+
+		visible = { date > 2013.12.31 }
+
+		available = { has_full_control_of_state = 1005 }
+
+		highlight_states = {
+			highlight_state_targets = { state = 1005 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_aurora_gold"
+			medium_expenditure = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GUY_decision_aurora_gold"
+			if = {
+				limit = { owns_state = 1005 }
+				add_resource = { type = chromium amount = 3 state = 1005 }
+			}
+		}
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.004
+					greater_than = { value = treasury }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
