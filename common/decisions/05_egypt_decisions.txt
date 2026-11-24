@@ -911,6 +911,48 @@ EGY_regime_balance = {
 		ai_will_do = { base = 100 }
 	}
 
+	EGY_the_2015_vote_mission = {
+		icon = generic_political_discourse
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = EGY_2015_ndp_majority_tt
+				check_variable = { party_pop_array^0 > 0.44 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = EGY_2015_licensed_opposition_tt
+				check_variable = { party_pop_array^14 > 0.02 }
+			}
+		}
+
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_the_2015_vote_mission complete"
+			set_temp_variable = { temp_authority = 3 }
+			EGY_change_mubarak_authority = yes
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+			add_to_variable = { EGY_mubarak_party_popularity_stability_factor = 0.10 tooltip = party_popularity_stability_factor_tt }
+			newline = yes
+			set_temp_variable = { temp_influence = -3 }
+			EGY_change_brotherhood_influence = yes
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_the_2015_vote_mission timeout"
+			add_timed_idea = { idea = EGY_rigged_parliament_idea days = 365 }
+			newline = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_brotherhood_influence = yes
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+		}
+	}
+
 	EGY_eighteen_days_mission = {
 		icon = generic_civil_support
 		activation = { always = no }
@@ -1378,6 +1420,55 @@ EGY_bread_subsidies = {
 			}
 		}
 	}
+
+	EGY_ration_register_mission = {
+		icon = generic_welfare
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_ration_register_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					set_temp_variable = { temp_bread = -5 }
+					EGY_change_bread_pressure = yes
+					newline = yes
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+					add_to_variable = { EGY_mubarak_opinion_gain_monthly_factor = 0.05 tooltip = opinion_gain_monthly_factor_tt }
+				}
+				project_partial = {
+					set_temp_variable = { temp_bread = -2 }
+					EGY_change_bread_pressure = yes
+				}
+				project_troubled = {
+					country_event = { id = egypt_mubarak.180 days = 3 }
+					custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+					effect_tooltip = {
+						custom_effect_tooltip = egypt_mubarak.180.a_tt
+						decrease_corruption = yes
+						set_temp_variable = { temp_bread = 5 }
+						EGY_change_bread_pressure = yes
+						newline = yes
+						custom_effect_tooltip = egypt_mubarak.180.b_tt
+						increase_corruption = yes
+						set_temp_variable = { temp_influence = 2 }
+						EGY_change_brotherhood_influence = yes
+						newline = yes
+						custom_effect_tooltip = egypt_mubarak.180.c_tt
+						set_temp_variable = { temp_influence = 2 }
+						EGY_change_military_influence = yes
+						set_temp_variable = { treasury_change = -0.5 }
+						modify_treasury_effect = yes
+					}
+				}
+			}
+		}
+	}
 }
 
 EGY_informal_cairo = {
@@ -1707,6 +1798,427 @@ EGY_state_projects = {
 		}
 	}
 
+	EGY_suez_zone_mission = {
+		icon = generic_factory
+		days_mission_timeout = 180
+		fixed_random_seed = no
+		days_re_enable = 1
+		selectable_mission = no
+		is_good = yes
+
+		activation = {
+			has_completed_focus = EGY_the_suez_canal_corridor
+			owns_state = 214
+			owns_state = 1255
+			NOT = { check_variable = { EGY_suez_zone_count > 3 } }
+		}
+
+		available = { hidden_trigger = { always = no } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_suez_zone_mission"
+			add_to_variable = { EGY_suez_zone_count = 1 }
+			random_list = {
+				25 = { 1255 = { one_state_industrial_complex = yes } }
+				25 = { 1255 = { one_state_dockyard = yes } }
+				25 = { 214 = { one_state_office_construction = yes } }
+				25 = { 214 = { one_state_infrastructure = yes } }
+			}
+		}
+	}
+
+	EGY_cairo_2050_mission = {
+		icon = generic_construction
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_cairo_2050_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					set_temp_variable = { temp_housing_k = 500 }
+					EGY_change_formal_housing = yes
+					if = {
+						limit = { owns_state = 1102 }
+						newline = yes
+						1102 = { one_state_infrastructure = yes }
+					}
+				}
+				project_partial = {
+					set_temp_variable = { temp_housing_k = 300 }
+					EGY_change_formal_housing = yes
+				}
+				project_troubled = {
+					set_temp_variable = { temp_housing_k = 150 }
+					EGY_change_formal_housing = yes
+					newline = yes
+					increase_corruption = yes
+					newline = yes
+					set_temp_variable = { temp_influence = 2 }
+					EGY_change_brotherhood_influence = yes
+				}
+			}
+		}
+	}
+
+	EGY_thousand_villages_mission = {
+		icon = generic_construction
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_thousand_villages_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = { owns_state = 217 }
+						217 = {
+							one_state_infrastructure = yes
+							one_state_agriculture_district = yes
+						}
+						newline = yes
+					}
+					set_temp_variable = { temp_influence = -3 }
+					EGY_change_brotherhood_influence = yes
+					newline = yes
+					add_stability = 0.02
+				}
+				project_partial = {
+					if = {
+						limit = { owns_state = 217 }
+						217 = { one_state_infrastructure = yes }
+						newline = yes
+					}
+					set_temp_variable = { temp_influence = -1 }
+					EGY_change_brotherhood_influence = yes
+				}
+				project_troubled = {
+					increase_corruption = yes
+					newline = yes
+					set_temp_variable = { temp_influence = 2 }
+					EGY_change_brotherhood_influence = yes
+				}
+			}
+		}
+	}
+
+	EGY_nspo_audit_mission = {
+		icon = generic_political_discourse
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_nspo_audit_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = { has_idea = EGY_corrupt_mil_idea }
+						swap_ideas = { remove_idea = EGY_corrupt_mil_idea add_idea = EGY_corrupt_mil_idea3 }
+						newline = yes
+					}
+					decrease_corruption = yes
+					newline = yes
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.03 tooltip = corporate_tax_income_multiplier_modifier_tt }
+				}
+				project_partial = {
+					if = {
+						limit = { has_idea = EGY_corrupt_mil_idea }
+						swap_ideas = { remove_idea = EGY_corrupt_mil_idea add_idea = EGY_corrupt_mil_idea1 }
+						newline = yes
+					}
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.015 tooltip = corporate_tax_income_multiplier_modifier_tt }
+				}
+				project_troubled = {
+					increase_corruption = yes
+					newline = yes
+					set_temp_variable = { temp_opinion = -5 }
+					change_the_military_opinion = yes
+				}
+			}
+		}
+	}
+
+	EGY_ministry_advisers_mission = {
+		icon = generic_political_discourse
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_ministry_advisers_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_return_on_investment_modifier = 0.03 tooltip = return_on_investment_modifier_tt }
+					newline = yes
+					set_temp_variable = { int_investment_change = 1 }
+					modify_international_investment_effect = yes
+				}
+				project_partial = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_return_on_investment_modifier = 0.015 tooltip = return_on_investment_modifier_tt }
+				}
+				project_troubled = {
+					custom_effect_tooltip = EGY_new_guard_regroups_tt
+					add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
+					newline = yes
+					increase_corruption = yes
+				}
+			}
+		}
+	}
+
+	EGY_nchr_inspections_mission = {
+		icon = generic_political_discourse
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_nchr_inspections_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_opinion_gain_monthly_factor = 0.05 tooltip = opinion_gain_monthly_factor_tt }
+					newline = yes
+					decrease_corruption = yes
+				}
+				project_partial = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_opinion_gain_monthly_factor = 0.025 tooltip = opinion_gain_monthly_factor_tt }
+				}
+				project_troubled = {
+					set_temp_variable = { temp_opinion = 5 }
+					change_intelligence_community_opinion = yes
+					newline = yes
+					add_stability = -0.01
+				}
+			}
+		}
+	}
+
+	EGY_teda_zone_mission = {
+		icon = generic_construction
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_teda_zone_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = {
+							owns_state = 1255
+							can_staff_an_industrial_complex = yes
+						}
+						1255 = { one_state_industrial_complex = yes }
+						newline = yes
+					}
+					else_if = {
+						limit = { owns_state = 1255 }
+						1255 = { one_state_infrastructure = yes }
+						newline = yes
+					}
+					set_temp_variable = { int_investment_change = 2 }
+					modify_international_investment_effect = yes
+				}
+				project_partial = {
+					if = {
+						limit = { owns_state = 1255 }
+						1255 = { one_state_infrastructure = yes }
+						newline = yes
+					}
+					set_temp_variable = { int_investment_change = 1 }
+					modify_international_investment_effect = yes
+				}
+				project_troubled = { increase_corruption = yes }
+			}
+		}
+	}
+
+	EGY_nspo_contracts_mission = {
+		icon = generic_construction
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_nspo_contracts_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = {
+							owns_state = 215
+							can_staff_an_industrial_complex = yes
+						}
+						215 = { one_state_industrial_complex = yes }
+						newline = yes
+					}
+					else_if = {
+						limit = { owns_state = 215 }
+						215 = { one_state_infrastructure = yes }
+						newline = yes
+					}
+					set_temp_variable = { temp_opinion = 5 }
+					change_the_military_opinion = yes
+					newline = yes
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_production_speed_industrial_complex_factor = 0.03 tooltip = production_speed_industrial_complex_factor_tt }
+				}
+				project_partial = {
+					if = {
+						limit = { owns_state = 215 }
+						215 = { one_state_infrastructure = yes }
+						newline = yes
+					}
+					set_temp_variable = { temp_opinion = 3 }
+					change_the_military_opinion = yes
+				}
+				project_troubled = {
+					increase_corruption = yes
+					newline = yes
+					set_temp_variable = { treasury_change = -1 }
+					modify_treasury_effect = yes
+				}
+			}
+		}
+	}
+
+	EGY_sinai_compact_mission = {
+		icon = generic_police_action
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_sinai_compact_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					set_temp_variable = { temp_risk = -2 }
+					EGY_change_sinai_bombing_risk = yes
+					newline = yes
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
+					add_to_variable = { EGY_mubarak_terror_threat_detection_modifier = 0.05 tooltip = terror_threat_detection_modifier_tt }
+				}
+				project_partial = {
+					set_temp_variable = { temp_risk = -1 }
+					EGY_change_sinai_bombing_risk = yes
+				}
+				project_troubled = {
+					country_event = { id = egypt_mubarak.169 days = 3 }
+					custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+					effect_tooltip = {
+						custom_effect_tooltip = egypt_mubarak.169.a_tt
+						army_experience = 10
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_military_opinion = yes
+						set_temp_variable = { temp_influence = 2 }
+						EGY_change_military_influence = yes
+						set_temp_variable = { temp_risk = 1 }
+						EGY_change_sinai_bombing_risk = yes
+						newline = yes
+						custom_effect_tooltip = egypt_mubarak.169.b_tt
+						set_temp_variable = { treasury_change = -1 }
+						modify_treasury_effect = yes
+						increase_corruption = yes
+						set_temp_variable = { temp_risk = -1 }
+						EGY_change_sinai_bombing_risk = yes
+						newline = yes
+						custom_effect_tooltip = egypt_mubarak.169.c_tt
+						set_temp_variable = { temp_opinion = 5 }
+						change_intelligence_community_opinion = yes
+						set_temp_variable = { temp_influence = 2 }
+						EGY_change_security_influence = yes
+					}
+				}
+			}
+		}
+	}
+
+	EGY_imf_conditions_mission = {
+		icon = money_dec
+		activation = { always = no }
+		days_mission_timeout = 730
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = no
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = potential_expenses_lower_than_potential_income_tt
+				check_variable = { potential_expense < potential_income }
+			}
+			custom_trigger_tooltip = {
+				tooltip = EGY_imf_bread_pressure_tt
+				check_variable = { EGY_bread_pressure < 70 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_imf_conditions_mission complete"
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.02 } }
+			modify_treasury_effect = yes
+			set_temp_variable = { debt_change = treasury_change }
+			modify_debt_effect = yes
+			newline = yes
+			decrease_corruption = yes
+			decrease_corruption = yes
+			newline = yes
+			if = {
+				limit = { has_idea = EGY_imf_programme_idea }
+				remove_ideas = EGY_imf_programme_idea
+			}
+			add_timed_idea = { idea = EGY_imf_seal_of_approval_idea days = 730 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_imf_conditions_mission timeout"
+			if = {
+				limit = { has_idea = EGY_imf_programme_idea }
+				remove_ideas = EGY_imf_programme_idea
+			}
+			add_timed_idea = { idea = EGY_imf_programme_suspended_idea days = 730 }
+		}
+	}
+
 	EGY_income_tax_law_second_phase = {
 		icon = money_dec
 		activation = { always = no }
@@ -2028,6 +2540,59 @@ EGY_state_projects = {
 		}
 
 		ai_will_do = { base = 5 }
+	}
+
+	EGY_ain_sokhna_mission = {
+		icon = generic_factory
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_ain_sokhna_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = {
+							owns_state = 1255
+							can_staff_an_industrial_complex = yes
+						}
+						1255 = {
+							one_state_industrial_complex = yes
+							one_state_industrial_complex = yes
+						}
+					}
+					else_if = {
+						limit = { owns_state = 1255 }
+						1255 = { one_state_infrastructure = yes }
+					}
+				}
+				project_partial = {
+					if = {
+						limit = {
+							owns_state = 1255
+							can_staff_an_industrial_complex = yes
+						}
+						1255 = { one_state_industrial_complex = yes }
+					}
+					else_if = {
+						limit = { owns_state = 1255 }
+						1255 = { one_state_infrastructure = yes }
+					}
+				}
+				project_troubled = {
+					custom_effect_tooltip = EGY_nspo_takes_sokhna_tt
+					set_temp_variable = { temp_influence = 3 }
+					EGY_change_military_influence = yes
+					newline = yes
+					increase_corruption = yes
+				}
+			}
+		}
 	}
 }
 
@@ -2363,6 +2928,123 @@ EGY_great_projects = {
 			base = 6
 			modifier = { factor = 0 has_idea = recession }
 			modifier = { factor = 0 has_idea = depression }
+		}
+	}
+
+	EGY_toshka_pumping_mission = {
+		icon = hol_drain_water_lines
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_pumping_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = { owns_state = 218 }
+						218 = {
+							one_state_agriculture_district = yes
+							one_state_agriculture_district = yes
+						}
+					}
+					set_country_flag = EGY_toshka_built
+					set_temp_variable = { temp_wheat = 4 }
+					EGY_change_domestic_wheat_share = yes
+					EGY_bump_great_projects_gui = yes
+				}
+				project_partial = {
+					if = {
+						limit = { owns_state = 218 }
+						218 = { one_state_agriculture_district = yes }
+					}
+					set_temp_variable = { temp_wheat = 2 }
+					EGY_change_domestic_wheat_share = yes
+					EGY_bump_great_projects_gui = yes
+				}
+				project_troubled = {
+					country_event = { id = egypt_mubarak.182 days = 3 }
+					custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+					effect_tooltip = {
+						custom_effect_tooltip = egypt_mubarak.182.a_tt
+						set_temp_variable = { temp_influence = 2 }
+						EGY_change_military_influence = yes
+						set_temp_variable = { treasury_change = -1 }
+						modify_treasury_effect = yes
+						set_temp_variable = { temp_wheat = 2 }
+						EGY_change_domestic_wheat_share = yes
+						newline = yes
+						custom_effect_tooltip = egypt_mubarak.182.b_tt
+						set_temp_variable = { debt_change = 2 }
+						modify_debt_effect = yes
+						if = {
+							limit = { owns_state = 218 }
+							218 = { one_state_agriculture_district = yes }
+						}
+						set_temp_variable = { temp_wheat = 3 }
+						EGY_change_domestic_wheat_share = yes
+						newline = yes
+						custom_effect_tooltip = egypt_mubarak.182.c_tt
+						set_temp_variable = { temp_authority = -3 }
+						EGY_change_mubarak_authority = yes
+					}
+				}
+			}
+		}
+	}
+
+	EGY_metro_line_four_mission = {
+		icon = JAP_train
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_metro_line_four_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = { owns_state = 215 }
+						215 = { one_state_infrastructure = yes }
+					}
+					if = {
+						limit = { owns_state = 1102 }
+						1102 = { one_state_infrastructure = yes }
+					}
+					set_temp_variable = { temp_housing_k = 400 }
+					EGY_change_formal_housing = yes
+					set_country_flag = EGY_metro_line_four_built
+					EGY_bump_great_projects_gui = yes
+				}
+				project_partial = {
+					if = {
+						limit = { owns_state = 215 }
+						215 = { one_state_infrastructure = yes }
+					}
+					set_temp_variable = { temp_housing_k = 200 }
+					EGY_change_formal_housing = yes
+					set_country_flag = EGY_metro_line_four_built
+					EGY_bump_great_projects_gui = yes
+				}
+				project_troubled = {
+					set_temp_variable = { temp_housing_k = 100 }
+					EGY_change_formal_housing = yes
+					newline = yes
+					set_temp_variable = { temp_authority = -2 }
+					EGY_change_mubarak_authority = yes
+					set_temp_variable = { treasury_change = -1 }
+					modify_treasury_effect = yes
+					EGY_bump_great_projects_gui = yes
+				}
+			}
 		}
 	}
 }

@@ -3573,6 +3573,185 @@ types = {
 		}
 	}
 
+	EGY_raid_derna = {
+		allowed = { original_tag = EGY }
+		days_to_prepare = 20
+		days_re_enable = 90
+
+		category = infastructure_strikes
+		custom_map_icon = GFX_raid_type_icon_infrastructure_strike
+
+		command_power = 15
+
+		visible = {
+			original_tag = EGY
+			has_country_flag = EGY_derna_strikes_flag
+		}
+		show_target = {
+			FROM = { original_tag = ISI }
+		}
+
+		available = {
+			FROM = {
+				original_tag = ISI
+				NOT = { is_subject_of = ROOT }
+			}
+			set_temp_variable = { cost = 50 }
+			raid_can_launch = yes
+		}
+		launchable = {
+			set_temp_variable = { cost = 50 }
+			raid_can_launch = yes
+		}
+
+		target_type = {
+			state = {
+				is_core_of = LBA
+				infrastructure > 0
+			}
+		}
+		arrow = {
+			type = air
+		}
+
+		launch_sound = raid_launch_air
+		target_icon = GFX_other_target_icon
+		unit_requirements = {
+			equipment = {
+				type = { tactical_bomber cas strategic_bomber }
+				amount = { min = 10 }
+			}
+		}
+
+		starting_point = {
+			types = { air_base carrier }
+		}
+
+		success_factors = {
+			success = {
+				base = 0.35
+				experience = {
+					weight = 0.1
+					start_weight = -0.1
+					reference = 10
+				}
+				reliability = {
+					reference = 1
+					weight = 0.1
+					start_weight = -0.1
+				}
+				air_superiority = {
+					reference = 1
+					weight = 0.2
+					start_weight = -0.1
+				}
+				anti_air = {
+					reference = 1
+					weight = -0.15
+				}
+				intel = {
+					weight = 0.2
+					reference = 100
+				}
+			}
+			disaster = {
+				base = 0.05
+			}
+			critical = {
+				base = 0.05
+			}
+		}
+
+		success_levels = {
+			failure = {
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -50 }
+					apply_raid_failure_losses = yes
+					var:actor_country = {
+						set_temp_variable = { temp_risk = 1 }
+						EGY_change_sinai_bombing_risk = yes
+					}
+				}
+				victim_effects = {
+					send_raid_event_to_victim = yes
+				}
+			}
+			limited_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = { add_manpower = -1000 }
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -50 }
+					apply_raid_limited_success_losses = yes
+					var:actor_country = { add_war_support = 0.01 }
+				}
+			}
+			success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = { add_manpower = -2500 }
+					var:target_state = {
+						damage_building = {
+							type = infrastructure
+							damage = 1
+						}
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -50 }
+					apply_raid_success_losses = yes
+					var:actor_country = {
+						add_war_support = 0.03
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_military_opinion = yes
+						set_temp_variable = { temp_risk = -1 }
+						EGY_change_sinai_bombing_risk = yes
+					}
+				}
+			}
+			critical_success = {
+				victim_effects = {
+					send_raid_event_to_victim = yes
+					var:victim_country = { add_manpower = -4000 }
+					var:target_state = {
+						damage_building = {
+							type = infrastructure
+							damage = 2
+						}
+					}
+				}
+				actor_effects = {
+					set_temp_variable = { raid_pp_loss = -50 }
+					apply_raid_critical_success_losses = yes
+					var:actor_country = {
+						add_war_support = 0.05
+						set_temp_variable = { temp_opinion = 5 }
+						change_the_military_opinion = yes
+						set_temp_variable = { temp_risk = -2 }
+						EGY_change_sinai_bombing_risk = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = {
+				factor = 0
+				check_variable = { debt_ratio > 0.25 }
+				raid_skip_target_non_hostile_no_retaliation = yes
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					FROM = { is_subject_of = ROOT }
+					is_subject_of = FROM
+				}
+			}
+		}
+	}
+
 	EH_raid_portal = {
 		days_to_prepare = 30
 		days_re_enable = 30
