@@ -33,12 +33,12 @@ Show a table: `token | tier | negative? | removal path (ids + names) | proposed 
 
 ### 4. Write
 
-Edit only `localisation/english/MD_focus_<TAG>_l_english.yml` (UTF-8 with BOM). Append the footer inside the existing closing quote; do not rewrite the flavour text. Follow the template rules in `localisation-rules.md`: `§Y$focus_id$§!` for focus names, `§Y` never `§H`, no em dashes, first person collective, the same footer on every tier of a chain with the last-tier and never-removed variants.
+Edit only `localisation/english/MD_focus_<TAG>_l_english.yml` (UTF-8 with BOM). Append the footer inside the existing closing quote; do not rewrite the flavour text. Follow the template rules in `localisation-rules.md`: `§H$focus_id$§!` for focus names and `§H` for thresholds, no em dashes, first person collective, the same footer on every tier of a chain with the last-tier and never-removed variants.
 
 ### 5. Verify
 
 - `grep -c "§W--------------§!" <file>` equals the number of rows in the confirmed table.
-- No `§H` and no em dash in the new text; every `$key$` used exists as a loc key in the same file.
+- No em dash in the new text; every `$key$` used exists as a loc key in the same file.
 - `pre-commit run --files <file>` passes.
 
 Report the table with `done` per row, plus the unfixed script findings (dead ends, duplicates) as a separate list. Do not fix script files under this skill.
