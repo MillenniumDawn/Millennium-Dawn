@@ -10221,6 +10221,10 @@ country_event = {
 		else = {
 			set_temp_variable = { treasury_change = 3 }
 		}
+		if = {
+			limit = { BRA = { has_country_flag = BRA_kourou_launch_sharing } }
+			add_to_temp_variable = { treasury_change = -1 }
+		}
 		modify_treasury_effect = yes
 		BRA = {
 			if = {
@@ -10229,6 +10233,10 @@ country_event = {
 			}
 			else = {
 				set_temp_variable = { treasury_change = -3 }
+			}
+			if = {
+				limit = { has_country_flag = BRA_kourou_launch_sharing }
+				add_to_temp_variable = { treasury_change = 1 }
 			}
 			modify_treasury_effect = yes
 			set_country_flag = BRA_kourou_launch_funded
@@ -10421,6 +10429,155 @@ country_event = {
 			}
 			modifier = { factor = 2 ai_has_high_deficit = yes }
 			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+}
+
+# French Guiana votes on its status, and Brazil picks a side. ROOT = Brazil.
+country_event = {
+	id = brazil.129
+	title = brazil.129.t
+	desc = {
+		text = brazil.129.d_autonomous
+		trigger = { country_exists = FGU }
+	}
+	desc = {
+		text = brazil.129.d_vote
+	}
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = FRA
+	}
+
+	# Back Guianese autonomy
+	option = {
+		name = brazil.129.a
+		log = "[GetDateText]: [This.GetName]: brazil.129.a executed"
+		reverse_add_opinion_modifier = { target = FRA modifier = medium_decrease }
+		if = {
+			limit = { country_exists = FGU }
+			add_opinion_modifier = { target = FGU modifier = friendship }
+			reverse_add_opinion_modifier = { target = FGU modifier = friendship }
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { influence_target = FGU.id }
+			change_influence_percentage = yes
+		}
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = { factor = 0.5 NOT = { country_exists = FGU } }
+			modifier = { factor = 0.5 FRA = { has_opinion = { target = ROOT value > 30 } } }
+			modifier = { factor = 0.5 has_war = yes }
+		}
+	}
+
+	# Stay out of it
+	option = {
+		name = brazil.129.b
+		ai_chance = {
+			base = 4
+			modifier = { factor = 2 has_war = yes }
+		}
+	}
+
+	# Side with Paris
+	option = {
+		name = brazil.129.c
+		log = "[GetDateText]: [This.GetName]: brazil.129.c executed"
+		reverse_add_opinion_modifier = { target = FRA modifier = medium_increase }
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 FRA = { has_opinion = { target = ROOT value > 30 } } }
+		}
+	}
+}
+
+# Brazil asks to share launches at Kourou. ROOT = the owner of French Guiana, FROM = Brazil.
+country_event = {
+	id = brazil.130
+	title = brazil.130.t
+	desc = brazil.130.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		owns_state = 67
+		country_exists = BRA
+		NOT = { has_war_with = BRA }
+		has_global_flag = FRA_kourou_open_to_partners
+		BRA = { NOT = { has_country_flag = BRA_kourou_launch_sharing } }
+	}
+
+	# Sign the agreement
+	option = {
+		name = brazil.130.a
+		log = "[GetDateText]: [This.GetName]: brazil.130.a executed"
+		add_opinion_modifier = { target = BRA modifier = gratitude }
+		reverse_add_opinion_modifier = { target = BRA modifier = gratitude }
+		set_temp_variable = { treasury_change = 2 }
+		modify_treasury_effect = yes
+		BRA = {
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_country_flag = BRA_kourou_launch_sharing
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			custom_effect_tooltip = BRA_olv_launch_rebate_tt
+			hidden_effect = { add_to_variable = { BRA_econ_launch_rebate = 0.15 } }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 2 has_opinion = { target = BRA value > 30 } }
+			modifier = { factor = 1.5 sender_influence_higher_10 = yes }
+			modifier = { factor = 1.5 is_in_array = { trade_agreement_partners = BRA } }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.25 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = brazil.130.b
+		ai_chance = {
+			base = 1
+			modifier = { add = 4 has_opinion = { target = BRA value < 0 } }
 		}
 	}
 }

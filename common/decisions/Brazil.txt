@@ -448,7 +448,7 @@ BRA_public_policy_category = {
 		cost = 25
 		days_re_enable = 365
 
-		targets = { SUR CHL }
+		targets = { SUR CHL FGU }
 		target_root_trigger = { date > 2003.1.1 }
 		target_trigger = {
 			FROM = { NOT = { is_in_array = { trade_agreement_partners = ROOT } } }
@@ -2431,6 +2431,62 @@ BRA_national_development_category = {
 			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
 			modifier = { factor = 0 has_country_flag = BRA_oyapock_open check_variable = { treasury < 2 } }
 			modifier = { factor = 0 NOT = { has_country_flag = BRA_oyapock_open } check_variable = { treasury < 3 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	BRA_kourou_launch_sharing = {
+		icon = satellite
+		cost = 25
+		days_re_enable = 365
+
+		targets = { FRA FGU }
+		target_root_trigger = {
+			has_global_flag = FRA_kourou_open_to_partners
+			NOT = { has_country_flag = BRA_kourou_launch_sharing }
+		}
+		target_trigger = {
+			FROM = { owns_state = 67 }
+		}
+
+		available = {
+			NOT = { has_war_with = FROM }
+			has_tech = OLV1
+			FROM = { has_opinion = { target = ROOT value > 10 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_kourou_launch_sharing target: [From.GetName]"
+			FROM = { country_event = brazil.130 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_kourou_launch_sharing_tt
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+			modifier = { factor = 1.5 FROM = { has_opinion = { target = ROOT value > 20 } } }
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 2 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
