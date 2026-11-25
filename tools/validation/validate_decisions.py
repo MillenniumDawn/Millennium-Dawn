@@ -1230,12 +1230,10 @@ def _find_category_covered_checks(
                             d.line,
                         )
                     )
-            visibility_lines = gate_lines.get("visible", set()) | gate_lines[
-                "target_root_trigger"
-            ]
-            shared = (
-                visibility_lines if shared is None else shared & visibility_lines
+            visibility_lines = (
+                gate_lines.get("visible", set()) | gate_lines["target_root_trigger"]
             )
+            shared = visibility_lines if shared is None else shared & visibility_lines
         repeated = sorted(
             line
             for line in (shared or set()) - gate.keys()
