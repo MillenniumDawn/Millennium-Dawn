@@ -200,7 +200,7 @@ Write only the properties the focus uses. An empty commented-out slot marker
 
 ## Naming
 
-- Start decision and category IDs with a country tag or a shared system directive. Keep the other words lowercase. One registered counterpart tag may stay uppercase, as in `SER_KOS_invite` or `MERCOSUR_invite_CHL`. In a decision, it must match the single country target or a literal country scope.
+- Start decision and category IDs with a country tag or a shared system directive. Keep ordinary words lowercase. Use the established spelling of registered country tags and known abbreviations for parties, organizations, and common terms, as in `MERCOSUR_invite_CHL` or `GER_expand_TV_network`.
 - Start each effect block's log with `Decision <id>` (`Mission <id>` in a mission),
   naming the decision the block sits in.
 - Do not rename existing ids to fit these rules.
