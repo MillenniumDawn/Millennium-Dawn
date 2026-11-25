@@ -1372,7 +1372,7 @@ UKR_kraz_6316_can_offer_revival = {
 
 UKR_kraz_6316_can_choose_supplier = {
 	OR = {
-		AND = { country_exists = SOV NOT = { has_war_with = SOV } }
+		AND = { country_exists = SOV UKR_at_war_with_russia_or_proxies = no }
 		AND = {
 			country_exists = CZE
 			NOT = { has_war_with = CZE }
@@ -1515,6 +1515,7 @@ UKR_kraz_followup_truck_waiting = {
 		has_country_flag = UKR_utility_vehicle_tender_kraz_7140_pending_production_flag
 		has_country_flag = UKR_utility_vehicle_tender_kraz_5401_pending_production_flag
 		has_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_pending_production_flag
+		has_country_flag = UKR_utility_vehicle_tender_kraz_cougar_pending_production_flag
 	}
 }
 
@@ -1726,24 +1727,15 @@ UKR_bars_site_controlled = {
 
 # Light utility vehicle tender 2 review (.13, also Dozor-B and MRAP lines): we cannot pay for the line or the expansion of the chosen model
 UKR_tender2_review_unaffordable = {
+	# UKR_tender2_calc_costs (run in the .13 immediate) holds what the reserved model costs to develop and to expand for
 	OR = {
 		AND = {
 			UKR_tender2_site_has_factory = yes
-			NOT = { has_country_flag = UKR_utility_vehicle_tender_2_finished_flag }
-			NOT = { check_variable = { treasury > 0.06 } }
+			check_variable = { treasury < UKR_tender2_dev_cost }
 		}
 		AND = {
 			NOT = { UKR_tender2_site_has_factory = yes }
-			OR = {
-				AND = {
-					OR = { has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag }
-					NOT = { check_variable = { treasury > 0.26 } }
-				}
-				AND = {
-					NOT = { OR = { has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag } }
-					NOT = { check_variable = { treasury > 0.36 } }
-				}
-			}
+			check_variable = { treasury < UKR_tender2_expand_need }
 		}
 	}
 }
@@ -1796,7 +1788,7 @@ UKR_bohdan_cherkasy_free = {
 	1091 = { is_owned_and_controlled_by = UKR }
 }
 
-# Bohdan already builds the Bars for us: the pickup order is 20% cheaper
+# Bohdan already builds the Bars for us: the pickup order is $30 million cheaper
 UKR_bohdan_is_bars_partner = {
 	OR = {
 		has_country_flag = UKR_utility_vehicle_tender_bars_lutsk_site_flag

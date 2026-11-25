@@ -16244,6 +16244,19 @@ UKR_kraz_followup_trucks_start_lines = {
 		}
 		clr_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_pending_production_flag
 	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_cougar_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_6 version_name = "KrAZ-Cougar" }
+			requested_factories = 1
+			efficiency = 10
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_cougar_pending_production_flag
+	}
 }
 
 # Light utility vehicle tender 2 (production site and model come from the UKR_tender2_model_* country flags)
@@ -16253,6 +16266,73 @@ UKR_tender2_apply_discount = {
 			UKR_tender2_has_luaz_discount = yes
 		}
 		multiply_temp_variable = { treasury_change = 0.85 }
+	}
+}
+
+UKR_tender2_calc_costs = {
+	# What .13 charges for the reserved model, with the LuAZ discount: the development (once) and the plant expansion
+	set_variable = { UKR_tender2_dev_cost = 0 }
+	if = {
+		limit = { NOT = { has_country_flag = UKR_utility_vehicle_tender_2_finished_flag } }
+		if = {
+			limit = {
+				NOT = { has_tech = util_vehicle_4 }
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag
+				}
+			}
+			add_to_variable = { UKR_tender2_dev_cost = 0.02 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+				}
+			}
+			add_to_variable = { UKR_tender2_dev_cost = 0.04 }
+		}
+	}
+	set_variable = { UKR_tender2_expand_need = 0.3 }
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+			}
+		}
+		set_variable = { UKR_tender2_expand_need = 0.2 }
+	}
+	add_to_variable = { UKR_tender2_expand_need = UKR_tender2_dev_cost }
+	if = {
+		limit = { UKR_tender2_has_luaz_discount = yes }
+		multiply_variable = { UKR_tender2_dev_cost = 0.85 }
+		multiply_variable = { UKR_tender2_expand_need = 0.85 }
+	}
+}
+
+UKR_tender2_clear_bars_site = {
+	# A dropped Bars line frees the plant: the Bars-8 can choose it again and Bohdan is no longer the Bars partner
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+			}
+		}
+		hidden_effect = {
+			clr_country_flag = UKR_utility_vehicle_tender_bars_cherkasy_site_flag
+			clr_country_flag = UKR_utility_vehicle_tender_bars_lutsk_site_flag
+		}
 	}
 }
 
