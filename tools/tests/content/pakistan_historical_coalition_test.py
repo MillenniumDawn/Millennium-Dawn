@@ -91,7 +91,7 @@ def test_both_ai_formation_paths_use_filtered_affinities():
 
 
 def test_player_caliphate_invitation_remains_available():
-    invite = _block(_block(DECISIONS, "coalition_decisions"), "Caliphate_invite")
+    invite = _block(_block(DECISIONS, "coalition_decisions"), "caliphate_invite")
     assert ("country_event", "coalition.11", None) in list(_walk(invite))
     assert ("base", "0", None) in list(_walk(_block(invite, "ai_will_do")))
     events = [

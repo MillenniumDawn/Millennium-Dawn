@@ -73,6 +73,10 @@ from validate_events import (
     load_event_payments,
     unneeded_treasury_reason,
 )
+from validate_localisation import _iter_loc_values
+from validate_party_loc import HOOK_PATH as PARTY_HOOK_PATH
+from validate_party_loc import LOC_PATH as PARTY_LOC_PATH
+from validate_party_loc import load_registered_tags, parse_hooks, parse_party_keys
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -1189,9 +1193,13 @@ def _find_category_covered_checks(
     target_root_trigger, or available line that its category's visible or
     allowed already holds at depth 0. A hidden category hides its decisions from
     players and the AI. ``candidates`` holds categories whose decisions, two or
-    more, all repeat a line the category does not hold.
+    more, all use a visible or target_root_trigger line the category lacks.
+    Per-decision availability checks can block selection while the card is
+    still visible.
 
     Missions are skipped: one in a hidden category still ticks.
+    Constant checks and statements that set temporary variables are not
+    candidates for moving to the category.
     """
     token_to_cat: Dict[str, str] = {}
     for cat, dec_tokens in cats_with_decs.items():
@@ -1226,9 +1234,16 @@ def _find_category_covered_checks(
                             d.line,
                         )
                     )
-            every_line = set().union(*gate_lines.values())
-            shared = every_line if shared is None else shared & every_line
-        repeated = sorted((shared or set()) - gate.keys())
+            visibility_lines = (
+                gate_lines.get("visible", set()) | gate_lines["target_root_trigger"]
+            )
+            shared = visibility_lines if shared is None else shared & visibility_lines
+        repeated = sorted(
+            line
+            for line in (shared or set()) - gate.keys()
+            if line not in {"always = yes", "always = no"}
+            and not re.search(r"\bset_temp_variable\s*=", blank_quoted_strings(line))
+        )
         if len(decisions) > 1 and repeated:
             candidates.append(
                 f"{cat_name}: all {len(decisions)} decisions check "
@@ -1754,7 +1769,6 @@ def parse_decision_categories(
 _LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
 _ID_PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]*_")
 _TAG_PREFIX_RE = re.compile(r"^([A-Z][A-Z0-9]{2})_")
-_COUNTRY_SCOPE_RE = re.compile(r"(?<![\w.:@])([A-Z][A-Z0-9]{2})\s*=\s*\{")
 
 
 def _named_country(name: str, country_tags: AbstractSet[str]) -> Optional[str]:
@@ -1774,8 +1788,40 @@ def _named_country(name: str, country_tags: AbstractSet[str]) -> Optional[str]:
     return None
 
 
-def _has_uppercase_after_prefix(name: str) -> bool:
-    rest = _ID_PREFIX_RE.sub("", name, count=1)
+_ID_ABBREVIATION_WORD_RE = re.compile(r"[^\W_]+(?:[-./&+][^\W_]+)*")
+_ID_ABBREVIATION_MARKUP_RE = re.compile(r"£[\w.\-]+|§.|\[[^\]]*\]|\$[^$]*\$")
+_ID_ABBREVIATION_PARENTHESES_RE = re.compile(r"\(([^()]*)\)")
+_ORGANIZATION_ACRONYM_RE = re.compile(r"^[A-Z0-9]+(?:_[A-Z0-9]+)*(?=_|$)")
+_FORMABLE_ACRONYM_RE = re.compile(r"form_([A-Z][A-Z0-9]+)_category")
+_FORMABLE_LOC_PATH = "localisation/english/MD_formable_nations_l_english.yml"
+
+
+def _written_id_abbreviations(label: str) -> Set[str]:
+    """Read acronyms from names and parenthetical short forms."""
+    label = _ID_ABBREVIATION_MARKUP_RE.sub("", label).strip()
+    candidates = {
+        word for word in _ID_ABBREVIATION_WORD_RE.findall(label) if word.isupper()
+    }
+    candidates.update(
+        group.rsplit(",", 1)[-1].strip()
+        for group in _ID_ABBREVIATION_PARENTHESES_RE.findall(label)
+    )
+    return {
+        spelling
+        for word in candidates
+        if _ID_ABBREVIATION_WORD_RE.fullmatch(word)
+        and (
+            sum(char.isupper() for char in word) >= 2
+            or (word.isupper() and any(char.isdigit() for char in word))
+        )
+        for spelling in (word, re.sub(r"[-./&+]", "_", word))
+    }
+
+
+def _has_uppercase_after_prefix(name: str, abbreviations: re.Pattern) -> bool:
+    normalized = abbreviations.sub(lambda match: match[0].lower(), name)
+    prefix = _ID_PREFIX_RE.match(name)
+    rest = normalized[prefix.end() :] if prefix else normalized
     return rest != rest.lower()
 
 
@@ -3399,28 +3445,84 @@ class Validator(BaseValidator):
             )
         return tags
 
+    def _id_case_abbreviations(self) -> re.Pattern:
+        abbreviations = set(load_registered_tags(self.mod_path))
+        abbreviations.update(
+            validation_config("validate_decisions", "id_case_abbreviations")
+        )
+
+        party_labels = set()
+        for path in self._collect_files([PARTY_LOC_PATH], ignore_staged=True):
+            parties = FileOpener.open_text_file(path, strip_comments_flag=True)
+            party_keys, _ = parse_party_keys(parties)
+            party_labels.update(
+                party.key for party in party_keys if party.kind != "icon"
+            )
+        for path in self._collect_files([PARTY_HOOK_PATH], ignore_staged=True):
+            hooks = parse_hooks(FileOpener.open_text_file(path))
+            party_labels.update(
+                hook.key for hook in hooks if not hook.key.endswith("_icon")
+            )
+        party_labels.update(
+            key + "_desc" for key in tuple(party_labels) if not key.endswith("_desc")
+        )
+
+        organization_labels = set()
+        for path in self._collect_files(
+            [
+                "common/factions/templates/**/*.txt",
+                "common/military_industrial_organization/organizations/**/*.txt",
+            ],
+            ignore_staged=True,
+        ):
+            script = FileOpener.open_text_file(path, strip_comments_flag=True)
+            for identifier, _, body in iter_statements(script):
+                if body is None:
+                    continue
+                name = next(
+                    (
+                        value.strip('"')
+                        for key, value, _ in iter_statements(body)
+                        if key == "name" and value
+                    ),
+                    identifier,
+                )
+                acronym = _ORGANIZATION_ACRONYM_RE.match(name)
+                if acronym and len(acronym[0]) > 1:
+                    abbreviations.add(acronym[0])
+                organization_labels.add(name)
+                abbreviations.update(_written_id_abbreviations(name))
+
+        formable_catalogue = Path(self.mod_path, _FORMABLE_LOC_PATH)
+        labels = party_labels | organization_labels
+        for path in self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        ):
+            text = FileOpener.open_text_file(path)
+            is_formable_catalogue = Path(path) == formable_catalogue
+            for _, key, value in _iter_loc_values(text):
+                if is_formable_catalogue and (
+                    formable := _FORMABLE_ACRONYM_RE.fullmatch(key)
+                ):
+                    abbreviations.add(formable[1])
+                if key in labels:
+                    title = value.split("\\n", 1)[0] if key.endswith("_desc") else value
+                    abbreviations.update(_written_id_abbreviations(title))
+
+        alternatives = "|".join(
+            re.escape(word)
+            for word in sorted(abbreviations, key=lambda word: (-len(word), word))
+        )
+        return re.compile(r"(?<![^_])(?:" + alternatives + r")(?=_|$)")
+
     def validate_id_case(self):
-        """Flag uppercase words after the directive, except explicit country tags."""
+        """Flag uppercase words other than registered tags and known abbreviations."""
         self._log_section("Checking decision and category id case...")
-        country_tags = self._country_tags()
+        abbreviations = self._id_case_abbreviations()
         results = []
         for d in parse_all_decision_factories(self.mod_path):
-            if not _has_uppercase_after_prefix(d.token):
+            if not _has_uppercase_after_prefix(d.token, abbreviations):
                 continue
-            named = _named_country(d.token, country_tags)
-            if named:
-                raw = blank_quoted_strings(strip_comments(d.raw))
-                body = raw[raw.index("{") + 1 : -1]
-                targets = direct_child_block(body, "targets")[1:-1].split()
-                if (
-                    not d.state_target
-                    and not d.target_array
-                    and (
-                        targets == [named]
-                        or (not targets and named in _COUNTRY_SCOPE_RE.findall(body))
-                    )
-                ):
-                    continue
             results.append(
                 (
                     f"Decision {d.token} is not lowercase after its prefix",
@@ -3434,9 +3536,7 @@ class Validator(BaseValidator):
             text = FileOpener.open_text_file(path, strip_comments_flag=True)
             for m in _LINE_OPENER_RE.finditer(text):
                 name = m.group(1)
-                if _has_uppercase_after_prefix(name) and not _named_country(
-                    name, country_tags
-                ):
+                if _has_uppercase_after_prefix(name, abbreviations):
                     results.append(
                         (
                             f"Category {name} is not lowercase after its prefix",
