@@ -72,6 +72,109 @@ def test_setup(tmp_path, monkeypatch, existing, args, code, checked, text):
         )
 
 
+def _put(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        handle.write(text)
+
+
+def _run_in(mod: Path, monkeypatch, args) -> int:
+    (mod / "common" / "on_actions").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(sys, "argv", ["headless_run.py", "--path", str(mod), *args])
+    return headless_run.main()
+
+
+# case: (file present before, arguments, exit code, fragments in order, fragments absent)
+# fragments None means the file must be absent afterwards
+_PROBE_CASES = {
+    "add logs stats monthly": (
+        False,
+        ["probe", "add", "ABC"],
+        0,
+        ["on_monthly_ABC = {", "FAKE_STATS"],
+        ["FAKE_INFRA", "probe_months"],
+    ),
+    "add takes several kinds in order": (
+        False,
+        ["probe", "add", "ABC", "--kind", "stats", "infrastructure"],
+        0,
+        ["FAKE_STATS", "FAKE_INFRA"],
+        ["probe_months"],
+    ),
+    "add yearly wraps the body in the month gate": (
+        False,
+        ["probe", "add", "ABC", "--every", "year"],
+        0,
+        [
+            "\n\t\t\tadd_to_variable = { probe_months = 1 }\n",
+            "\n\t\t\tif = {\n",
+            "\n\t\t\t\tlimit = { check_variable = { probe_months > 11 } }\n",
+            '\n\t\t\t\tlog = "FAKE_STATS"\n',
+            "\n\t\t\t}\n\t\t}\n",
+        ],
+        ["FAKE_INFRA", '\n\t\t\tlog = "FAKE_STATS"'],
+    ),
+    "add rejects a bad tag": (False, ["probe", "add", "abc"], 1, None, None),
+    "add needs a tag": (False, ["probe", "add"], 1, None, None),
+    "remove": (True, ["probe", "remove"], 0, None, None),
+}
+
+
+@pytest.mark.parametrize(
+    "existing, args, code, present, absent", _PROBE_CASES.values(), ids=_PROBE_CASES
+)
+def test_probe(tmp_path, monkeypatch, existing, args, code, present, absent):
+    probes = tmp_path / "probes"
+    _put(probes / "country_stats.txt", 'log = "FAKE_STATS"\n')
+    _put(probes / "state_infrastructure.txt", 'log = "FAKE_INFRA"\n')
+    monkeypatch.setattr(headless_run, "PROBE_DIR", str(probes))
+    mod = tmp_path / "mod"
+    if existing:
+        _put(mod / headless_run.PROBE_FILE, "on_actions = {\n}\n")
+    assert _run_in(mod, monkeypatch, args) == code
+    path = mod / headless_run.PROBE_FILE
+    if present is None:
+        assert not path.exists()
+        return
+    text = path.read_text(encoding="utf-8")
+    assert text.startswith("on_actions = {\n\ton_monthly_ABC = {")
+    assert text.count("{") == text.count("}")
+    position = 0
+    for fragment in present:
+        position = text.find(fragment, position)
+        assert position >= 0, fragment
+    for fragment in absent:
+        assert fragment not in text
+
+
+@pytest.mark.parametrize("every", ["month", "year"])
+def test_probe_real_files(tmp_path, monkeypatch, every):
+    args = [
+        "probe",
+        "add",
+        "ABC",
+        "--every",
+        every,
+        "--kind",
+        *headless_run.PROBE_KINDS,
+    ]
+    assert _run_in(tmp_path, monkeypatch, args) == 0
+    text = (tmp_path / headless_run.PROBE_FILE).read_text(encoding="utf-8")
+    assert text.count("{") == text.count("}")
+    body = text.splitlines()[3:-3]  # inside `effect = { ... }`
+    if every == "year":
+        assert body[:2] == [
+            "\t\t\tadd_to_variable = { probe_months = 1 }",
+            "\t\t\tif = {",
+        ]
+        assert body[-1] == "\t\t\t}"
+        body = body[2:-1]
+        assert all(line.startswith("\t\t\t\t") for line in body)
+    assert sum('log = "PROBE_' in line for line in body) == len(
+        headless_run.PROBE_KINDS
+    )
+
+
 # case: (files in the HOI4 user folder, exit code, files the run folder must hold)
 _SAVE_CASES = {
     "copies logs and the newest save": (
