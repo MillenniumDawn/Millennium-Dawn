@@ -51,15 +51,14 @@ country-level `any_owned_state = { arms_factory > 0 }` does not prove the
 state the effect runs on has that building. `effect_tooltip` subtrees are
 skipped because they only preview effects and never execute.
 
-The advisory random-state slot check covers direct construction effects with
-positive or unknown levels in selected random-state iterators and randomly
-limited every-state iterators. It
-looks for a free slot proven in the selector's own limit (`free_building_slots`
-or a scripted trigger built on it), or made earlier in the same block by
-`add_extra_state_shared_building_slots` or a `remove_building` of a building
-the limit proves present. Shared-slot buildings share one proof. Province
-buildings are skipped: `free_building_slots` only checks them for a fixed
-province.
+The advisory random-state slot check covers direct construction of buildings
+with `level_cap = { shares_slots = yes }` and positive or unknown levels in
+selected random-state iterators and randomly limited every-state iterators.
+It looks for a shared slot proven in the selector's own limit
+(`free_building_slots` or a scripted trigger built on it), or made earlier in
+the same block by `add_extra_state_shared_building_slots` or a `remove_building`
+of a shared-slot building the limit proves present. Province placement is
+checked separately.
 
 The same file walk also checks where buildings go and who owns them:
 
@@ -684,7 +683,7 @@ class Scanner:
                 if building in present:
                     guards.add(building)
                 continue
-            if child != "add_building_construction" or building in _PROVINCIAL:
+            if child != "add_building_construction" or building not in _SHARED_SLOTS:
                 continue
             fields = _direct_text(
                 self.text, c_start, c_end, _child_blocks(self.text, c_start, c_end)
@@ -692,9 +691,7 @@ class Scanner:
             level = _CONSTRUCTION_LEVEL_RE.search(fields)
             if level and int(level.group(1)) <= 0:
                 continue
-            if building in guards or (
-                building in _SHARED_SLOTS and guards & _SHARED_SLOTS
-            ):
+            if guards & _SHARED_SLOTS:
                 continue
             message = (
                 f"randomly selected state builds {building} without a recognized "
@@ -704,9 +701,7 @@ class Scanner:
                 message += (
                     "; a level bound is present but slot availability is not verified"
                 )
-            if building in _SHARED_SLOTS and _EXTRA_SHARED_SLOTS_RE.search(
-                self.text, c_end, end
-            ):
+            if _EXTRA_SHARED_SLOTS_RE.search(self.text, c_end, end):
                 message += "; the extra shared slots are only added after it"
             line = line_for_offset(self.offsets, c_start)
             self.findings.append(("random-building-slot-guard", line, message))
@@ -942,8 +937,8 @@ class Validator(BaseValidator):
             "randomly selected building construction",
             ("random-building-slot-guard",),
             self.add_warning,
-            "random building construction(s) without a recognized slot guard",
-            "Checked random-state building constructions have recognized slot guards",
+            "random shared-slot construction(s) without a recognized slot guard",
+            "Checked random-state shared-slot constructions have recognized slot guards",
         )
         section(
             "add_building_construction province targets",

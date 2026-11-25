@@ -51,11 +51,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   selected country. Event pools, automatic firing, unsupported dispatches, and
   definitions without a known caller keep unknown contexts alongside known ones.
   Broadcast events also have an unspecified audience context.
-- A decision's ROOT is its actor, targeted or not. In a targeted decision FROM
-  (the target) stays unknown, and so does THIS inside `target_trigger` and
-  `target_root_trigger`. Other unmodeled blocks, state/variable/event-target
-  scopes, and other entry points remain conservative. Templates and effect
-  previews are skipped. This is not a reachability solver or an audit of
+- A decision's ROOT is its actor. Country-targeted decisions bind FROM to each
+  literal target, or to an unnamed country for `target_array` and dynamic targets.
+  `allowed` and `target_root_trigger` run before FROM is bound. State targets
+  remain unknown. A scope loop member is treated as a country inside an `if`
+  whose `limit` directly checks `exists = yes`, a country-only trigger.
+  Unmodeled and variable/event-target scopes remain conservative. Templates and
+  effect previews are skipped. This is not a reachability solver or an audit of
   arbitrary array reads.
   Each definition keeps at most 64 distinct contexts before adding an unknown
   context; recursive calls are deduplicated. Scope chains retain the depth used
@@ -86,21 +88,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   pre-selection.
 - Not guards: a `limit` on something else (an idea, a flag), and `trigger`, `available`,
   `visible`, `allowed`. `effect_tooltip` subtrees are skipped.
-- `random-building-slot-guard` (WARNING): a direct `add_building_construction` in
+- `random-building-slot-guard` (WARNING): a direct `add_building_construction`
+  of a shared-slot building (`level_cap = { shares_slots = yes }`) in
   `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
   or `random_core_state`, or in `every_owned_state` or `every_controlled_state` with
-  `random_select_amount`, has no proven free slot. Proof is `free_building_slots` for
-  that building with `size > 0` or `size >= 1` in the selector's own `limit` (also
-  inside `AND`), or a scripted trigger whose body has one, read from
-  `common/scripted_triggers/` (`infrastructure_random_build_loc`,
-  `free_shared_building_slots`). An earlier `add_extra_state_shared_building_slots` or
-  `remove_building` in the same block also counts, the removal only when the `limit`
-  proves that building is present. Effects run in order, so one placed after the
-  construction does not, and the warning says so. Shared-slot buildings
-  (`level_cap = { shares_slots = yes }`) share one proof. A same-building upper bound
-  is noted but does not suppress the warning. Province buildings are skipped, since
-  `free_building_slots` checks them only with a fixed `province`. Nested effects and
-  other selectors are not checked, and one free slot does not prove every level fits.
+  `random_select_amount`, has no proven free shared slot. Proof is
+  `free_building_slots` for any shared-slot building with `size > 0` or `size >= 1`
+  in the selector's own `limit` (also inside `AND`), or a scripted trigger such as
+  `free_shared_building_slots`. An earlier `add_extra_state_shared_building_slots`
+  also counts. A removal frees a shared slot when the `limit` proves the building
+  is present. The warning points out slot grants that run after construction and
+  reports a same-building upper bound as context. Province buildings, nested
+  effects, and other selectors are outside this check. One free slot does not
+  prove every level fits.
 - `building-missing-province` (ERROR): `add_building_construction` of a province
   building with no `province` key. The engine rejects the effect.
 - `province-id-in-selector-block` (ERROR): `province = { province = <id> }` inside
@@ -155,12 +155,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   stale name leaves the tooltip empty while the unlock still happens. The category form
   takes the bare token only.
 - `validate_formable_commitment_sync` (ERROR): contract in `formable-reference.md`.
-- `decision-cosmetic-targeting` (WARNING): a single explicit country target is a
-  candidate for a normal decision with a custom icon. Multiple explicit country
-  targets without unquoted `FROM` use need review for target-dependent behavior.
-  State/map targeting, script-only `allowed = { always = no }`, target arrays, and
-  dynamic country variants are skipped. For multiple targets, an enabled
-  `war_with_target_on_*` hint also counts as target use. Comments and quoted text
+- `decision-cosmetic-targeting` (WARNING): explicit country targeting is a review
+  candidate when the script does not use `FROM` or a `war_with_target_on_*` hint.
+  A single target named by a matching uppercase country token in the decision ID
+  is explicit enough. State/map targeting, script-only `allowed = { always = no }`,
+  target arrays, and dynamic country variants are skipped. Comments and quoted text
   such as logs do not count as script use. This is advisory: localisation and called
   scripts may consume `FROM`, and a single-target decision may depend on it too.
   Verify those dependencies and visibility before removing targeting. The check
@@ -208,9 +207,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case` (WARNING, `--id-case`, on in CI): the case rule in the stylization
-  guide. Existing ids are never renamed, so the main baseline holds them and a PR report
-  marks only ids the PR adds as NEW. It stays a warning while that backlog stands.
+- `decision-id-case` (WARNING, `--id-case`, on in CI): keep words after the uppercase
+  country or system directive lowercase, except one registered country tag. A
+  decision must match that tag to its sole explicit country target, or scope to it
+  directly if the decision is not targeted. Existing IDs are not renamed.
 - `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
   tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are
