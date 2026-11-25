@@ -17719,24 +17719,25 @@ UKR_mrls_clear_kyiv = {
 }
 
 UKR_storage_update_naval_aviation_museum = {
-	set_temp_variable = { active_displays = 0 }
+	# The Naval Aviation Museum Program fades: 100% in its first year, 75% in the second, 50% in the third
+	# and 25% in the fourth and fifth; the flag (1825 days) ends it and the modifier's remove_trigger removes it
+	set_temp_variable = { museum_share = 1 }
 	if = {
-		limit = { has_country_flag = UKR_storage_yak38_museum_active_flag }
-		add_to_temp_variable = { active_displays = 1 }
+		limit = { has_country_flag = { flag = UKR_storage_yak38_museum_active_flag days > 1095 } }
+		set_temp_variable = { museum_share = 0.25 }
 	}
-	if = {
-		limit = { NOT = { check_variable = { UKR_storage_museum_active_displays = active_displays } } }
-		set_variable = { UKR_storage_museum_active_displays = active_displays }
-		set_variable = { UKR_storage_museum_recruitment = { value = active_displays multiply = 0.005 } }
-		set_variable = { UKR_storage_museum_ace_chance = { value = active_displays multiply = 0.02 } }
-		set_variable = { UKR_storage_museum_navy_xp = { value = active_displays multiply = 0.01 } }
-		if = {
-			limit = {
-				check_variable = { active_displays > 0 }
-				NOT = { has_dynamic_modifier = { modifier = UKR_storage_naval_aviation_museum } }
-			}
-			add_dynamic_modifier = { modifier = UKR_storage_naval_aviation_museum }
-		}
-		force_update_dynamic_modifier = yes
+	else_if = {
+		limit = { has_country_flag = { flag = UKR_storage_yak38_museum_active_flag days > 730 } }
+		set_temp_variable = { museum_share = 0.5 }
 	}
+	else_if = {
+		limit = { has_country_flag = { flag = UKR_storage_yak38_museum_active_flag days > 365 } }
+		set_temp_variable = { museum_share = 0.75 }
+	}
+	set_variable = { UKR_storage_museum_recruitment = museum_share }
+	multiply_variable = { UKR_storage_museum_recruitment = 0.005 }
+	set_variable = { UKR_storage_museum_ace_chance = museum_share }
+	multiply_variable = { UKR_storage_museum_ace_chance = 0.02 }
+	set_variable = { UKR_storage_museum_navy_xp = museum_share }
+	multiply_variable = { UKR_storage_museum_navy_xp = 0.01 }
 }
