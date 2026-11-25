@@ -28,17 +28,6 @@ news_event = {
 
 		add_political_power = 25
 
-		add_to_variable = { current_term = 1 }
-		if = {
-			limit = {
-				check_variable = { term_limit > 0 } #make sure term limits are a thing
-				check_variable = { current_term > term_limit }
-			}
-			hidden_effect = {
-				set_leader = yes
-			}
-		}
-
 		if = {
 			limit = { is_major = no }
 			every_country = {
@@ -879,7 +868,12 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		NOT = { has_country_flag = generic_election_killswitch }
+		NOT = {
+			OR = {
+				has_country_flag = generic_election_killswitch
+				BRA_has_pending_special_election = yes
+			}
+		}
 	}
 
 	immediate = {
@@ -1811,19 +1805,10 @@ country_event = {
 		clr_country_flag = elections_in_progress
 		add_political_power = 150
 		hidden_effect = { ROOT = { news_event = { days = 1 id = News_MD4_election.0 } } }
-		add_to_variable = { current_term = 1 }
+		advance_elected_term = yes
 		if = {
 			limit = { original_tag = ENG }
 			ENG_run_agendas = yes
-		}
-		if = {
-			limit = {
-				check_variable = { term_limit > 0 } #make sure term limits are a thing
-				check_variable = { current_term > term_limit }
-			}
-			hidden_effect = {
-				set_leader = yes
-			}
 		}
 		if = {
 			limit = { is_major = no }
@@ -1885,22 +1870,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: MD4_election.2.a executed"
 		clr_country_flag = elections_in_progress
 		hidden_effect = {
+			set_temp_variable = { incumbent_party = ruling_party }
 			update_coalition_leader = yes
+			if = { limit = { check_variable = { incumbent_party = ruling_party } }
+				advance_elected_term = yes
+			}
+			else = { set_variable = { current_term = 1 } }
 			ROOT = { news_event = { days = 1 id = News_MD4_election.0 } }
 		}
-		add_to_variable = { current_term = 1 }
 		if = {
 			limit = { original_tag = ENG }
 			ENG_run_agendas = yes
-		}
-		if = {
-			limit = {
-				check_variable = { term_limit > 0 } #make sure term limits are a thing
-				check_variable = { current_term > term_limit }
-			}
-			hidden_effect = {
-				set_leader = yes
-			}
 		}
 		if = {
 			limit = { is_major = no }
@@ -1939,6 +1919,7 @@ country_event = {
 		}
 		clear_array = gov_coalition_array
 		hidden_effect = { recalculate_party = yes }
+		set_country_flag = coalition_election_term_pending
 		#trigger mission desicion
 		set_country_flag = coalition_forming
 		activate_mission = coalition_countdown
@@ -1967,6 +1948,7 @@ country_event = {
 		set_temp_variable = { rul_party_temp = max_index_1 }
 		set_temp_variable = { disable_elections = 0 }
 		change_ruling_party_effect = yes
+		set_variable = { current_term = 1 }
 		hidden_effect = { recalculate_party = yes }
 		#switch to ruling
 		hidden_effect = { ROOT = { news_event = { days = 1 id = News_MD4_election.2 } } }
@@ -2012,6 +1994,7 @@ country_event = {
 		}
 		hidden_effect = { recalculate_party = yes }
 		#trigger mission decision
+		set_country_flag = coalition_election_term_pending
 		set_country_flag = coalition_forming
 		activate_mission = coalition_countdown
 		unlock_decision_category_tooltip = coalition_decisions
@@ -2039,7 +2022,9 @@ country_event = {
 			set_temp_variable = { rul_party_temp = max_index_1 }
 			set_temp_variable = { disable_elections = 0 }
 			change_ruling_party_effect = yes
+			set_variable = { current_term = 0 }
 		}
+		set_country_flag = coalition_election_term_pending
 		custom_effect_tooltip = coalition_pass_dismantle_tt
 		custom_effect_tooltip = coalition_pass_pol_change_0_tt
 
@@ -2059,7 +2044,9 @@ country_event = {
 			set_temp_variable = { rul_party_temp = max_index_2 }
 			set_temp_variable = { disable_elections = 0 }
 			change_ruling_party_effect = yes
+			set_variable = { current_term = 0 }
 		}
+		set_country_flag = coalition_election_term_pending
 		custom_effect_tooltip = coalition_pass_dismantle_tt
 		custom_effect_tooltip = coalition_pass_pol_change_1_tt
 
