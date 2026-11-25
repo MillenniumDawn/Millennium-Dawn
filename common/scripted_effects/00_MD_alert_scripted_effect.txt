@@ -81,8 +81,8 @@ remove_md_alert = {
 # Alert click effect
 md_alert_click = {
 	# DO NOT DELETE THIS
-	# Follow this template:
-	# if = {
+	# Add handlers to the same chain because an action can shift the alert array.
+	# else_if = {
 	# 	limit = {
 	# 		check_variable = { md_alerts^alert_idx = token:<token ID> }
 	# 	}
@@ -99,8 +99,7 @@ md_alert_click = {
 			update_global_energy_ui = yes
 		}
 	}
-
-	if = {
+	else_if = {
 		limit = {
 			check_variable = { md_alerts^alert_idx = token:md_idle_nuclear_reactors }
 		}
@@ -110,8 +109,7 @@ md_alert_click = {
 			update_global_energy_ui = yes
 		}
 	}
-
-	if = {
+	else_if = {
 		limit = {
 			check_variable = { md_alerts^alert_idx = token:md_eu_council_vote }
 		}
@@ -125,6 +123,34 @@ md_alert_click = {
 		else = {
 			md_check_eu_council_vote_alert = yes
 		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { md_alerts^alert_idx = token:md_atc_action_available }
+			NOT = { has_country_flag = MD_atc_open }
+		}
+		MD_atc_toggle_window = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { md_alerts^alert_idx = token:md_artc_action_available }
+			NOT = { has_country_flag = MD_artc_open }
+		}
+		MD_artc_toggle_window = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { md_alerts^alert_idx = token:md_ftc_action_available }
+			NOT = { has_country_flag = MD_ftc_open }
+		}
+		MD_ftc_toggle_window = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { md_alerts^alert_idx = token:md_sftc_action_available }
+			NOT = { has_country_flag = MD_sftc_open }
+		}
+		MD_sftc_toggle_window = yes
 	}
 
 	md_alert_update_gui = yes
@@ -279,18 +305,15 @@ md_refresh_eu_council_vote_alerts = {
 	}
 }
 
-# The MD_<prefix>_action_available flags drive the launcher button shine, so the GUI reads a flag instead of the full trigger every frame.
 md_check_atc_action_alert = {
 	set_temp_variable = { alert_id = token:md_atc_action_available }
 	if = {
 		limit = { MD_atc_has_action_available = yes }
-		set_country_flag = MD_atc_action_available
 		set_temp_variable = { alert_color = 1 }
 		add_md_alert_unless_exists = yes
 	}
 	else_if = {
-		limit = { has_country_flag = MD_atc_action_available }
-		clr_country_flag = MD_atc_action_available
+		limit = { is_in_array = { md_alerts = alert_id } }
 		remove_md_alert = yes
 	}
 }
@@ -299,13 +322,11 @@ md_check_artc_action_alert = {
 	set_temp_variable = { alert_id = token:md_artc_action_available }
 	if = {
 		limit = { MD_artc_has_action_available = yes }
-		set_country_flag = MD_artc_action_available
 		set_temp_variable = { alert_color = 1 }
 		add_md_alert_unless_exists = yes
 	}
 	else_if = {
-		limit = { has_country_flag = MD_artc_action_available }
-		clr_country_flag = MD_artc_action_available
+		limit = { is_in_array = { md_alerts = alert_id } }
 		remove_md_alert = yes
 	}
 }
@@ -314,13 +335,11 @@ md_check_ftc_action_alert = {
 	set_temp_variable = { alert_id = token:md_ftc_action_available }
 	if = {
 		limit = { MD_ftc_has_action_available = yes }
-		set_country_flag = MD_ftc_action_available
 		set_temp_variable = { alert_color = 1 }
 		add_md_alert_unless_exists = yes
 	}
 	else_if = {
-		limit = { has_country_flag = MD_ftc_action_available }
-		clr_country_flag = MD_ftc_action_available
+		limit = { is_in_array = { md_alerts = alert_id } }
 		remove_md_alert = yes
 	}
 }
@@ -329,13 +348,11 @@ md_check_sftc_action_alert = {
 	set_temp_variable = { alert_id = token:md_sftc_action_available }
 	if = {
 		limit = { MD_sftc_has_action_available = yes }
-		set_country_flag = MD_sftc_action_available
 		set_temp_variable = { alert_color = 1 }
 		add_md_alert_unless_exists = yes
 	}
 	else_if = {
-		limit = { has_country_flag = MD_sftc_action_available }
-		clr_country_flag = MD_sftc_action_available
+		limit = { is_in_array = { md_alerts = alert_id } }
 		remove_md_alert = yes
 	}
 }
