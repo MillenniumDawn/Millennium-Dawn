@@ -17371,6 +17371,202 @@ focus_tree = {
 	}
 
 
+	focus = {
+		id = FRA_open_kourou_to_partners
+		icon = focus_rocketry
+
+		x = 0
+		y = 1
+		relative_position_id = FRA_kourou_launch_pad
+
+		prerequisite = { focus = FRA_kourou_launch_pad }
+
+		search_filters = { FOCUS_FILTER_SPACE FOCUS_FILTER_FOREIGN_POLICY }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus FRA_open_kourou_to_partners"
+			set_global_flag = FRA_kourou_open_to_partners
+			custom_effect_tooltip = FRA_open_kourou_to_partners_tt
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = FRA_arianegroup_space_industry }
+			custom_effect_tooltip = FRA_olv_launch_rebate_tt
+			hidden_effect = { add_to_variable = { FRA_arianegroup_olv_launch_rebate = 0.10 } }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 1.1
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.8
+				has_war = no
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 1.2
+				has_government = nationalist
+			}
+		}
+	}
+
+	focus = {
+		id = FRA_the_guyane_question
+		icon = elections_01
+
+		x = 2
+		y = 1
+		relative_position_id = FRA_kourou_launch_pad
+
+		prerequisite = { focus = FRA_kourou_launch_pad }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_POLITICAL }
+
+		available = {
+			date > 2009.1.1
+			owns_state = 67
+		}
+
+		bypass = {
+			OR = {
+				has_country_flag = FRA_guyane_collectivity
+				AND = {
+					country_exists = FGU
+					FGU = { is_subject_of = PREV }
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus FRA_the_guyane_question"
+			add_political_power = 25
+			custom_effect_tooltip = FRA_the_guyane_question_tt
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 1.1
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.8
+				has_war = no
+				has_government = neutrality
+			}
+			modifier = {
+				factor = 1.2
+				has_government = nationalist
+			}
+		}
+	}
+
+	focus = {
+		id = FRA_guyane_single_collectivity
+		icon = Decentralization
+
+		x = -1
+		y = 1
+		relative_position_id = FRA_the_guyane_question
+
+		prerequisite = { focus = FRA_the_guyane_question }
+		mutually_exclusive = { focus = FRA_guyane_autonomy }
+
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_STABILITY }
+
+		available = { owns_state = 67 }
+
+		bypass = { has_country_flag = FRA_guyane_collectivity }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus FRA_guyane_single_collectivity"
+			set_country_flag = FRA_guyane_collectivity
+			add_stability = 0.02
+			67 = { add_extra_state_shared_building_slots = 1 }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0.2
+				OR = {
+					has_global_flag = FRA_SOCIALIST_FOCUS_PATH
+					has_global_flag = FRA_GREEN_FOCUS_PATH
+					has_global_flag = FRA_COMMUNE_FOCUS_PATH
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = FRA_guyane_autonomy
+		icon = autonomy
+
+		x = 1
+		y = 1
+		relative_position_id = FRA_the_guyane_question
+
+		prerequisite = { focus = FRA_the_guyane_question }
+		mutually_exclusive = { focus = FRA_guyane_single_collectivity }
+
+		search_filters = { FOCUS_FILTER_TFV_AUTONOMY FOCUS_FILTER_INFLUENCE }
+
+		available = {
+			owns_state = 67
+			NOT = { country_exists = FGU }
+		}
+
+		bypass = {
+			country_exists = FGU
+			FGU = { is_subject_of = PREV }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus FRA_guyane_autonomy"
+			release_puppet = FGU
+			FGU = { ingame_startup_nations_effect = yes }
+			set_autonomy = {
+				target = FGU
+				autonomy_state = autonomy_associated_state
+				end_wars = no
+				end_civil_wars = no
+			}
+			FGU = { add_opinion_modifier = { target = FRA modifier = friendship } }
+			custom_effect_tooltip = FRA_guyane_brazil_reacts_tt
+			hidden_effect = {
+				if = {
+					limit = {
+						country_exists = BRA
+						BRA = { NOT = { has_country_flag = BRA_guyane_stance_asked } }
+					}
+					BRA = {
+						set_country_flag = BRA_guyane_stance_asked
+						country_event = { id = brazil.129 days = 2 }
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 10
+				OR = {
+					has_global_flag = FRA_SOCIALIST_FOCUS_PATH
+					has_global_flag = FRA_GREEN_FOCUS_PATH
+					has_global_flag = FRA_COMMUNE_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0.1
+				OR = {
+					FRA_ai_historical_path = yes
+					FRA_ai_nationalist_path = yes
+				}
+			}
+		}
+	}
+
 	# Francosphere
 	focus = {
 		id = FRA_francosphere

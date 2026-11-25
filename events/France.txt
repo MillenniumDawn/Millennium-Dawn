@@ -9722,12 +9722,7 @@ country_event = { #invest civ
 		set_temp_variable = { tag_index = FRA.id }
 		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
-		THIS = {
-			add_opinion_modifier = {
-				target = FRA
-				modifier = recently_invest
-			}
-		}
+		add_opinion_modifier = { target = FRA modifier = recently_invest }
 		random_owned_controlled_state = {
 			limit = {
 				free_building_slots = {
@@ -9815,12 +9810,7 @@ country_event = { #invest infrastructure
 		set_temp_variable = { tag_index = FRA.id }
 		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
-		THIS = {
-			add_opinion_modifier = {
-				target = FRA
-				modifier = recently_invest
-			}
-		}
+		add_opinion_modifier = { target = FRA modifier = recently_invest }
 		random_owned_controlled_state = {
 			limit = {
 				infrastructure < 5
@@ -9890,12 +9880,7 @@ country_event = {
 		set_temp_variable = { tag_index = FRA.id }
 		set_temp_variable = { influence_target = THIS.id }
 		change_influence_percentage = yes
-		THIS = {
-			add_opinion_modifier = {
-				target = FRA
-				modifier = recently_invest
-			}
-		}
+		add_opinion_modifier = { target = FRA modifier = recently_invest }
 		random_owned_controlled_state = {
 			limit = {
 				free_building_slots = {
@@ -16502,6 +16487,178 @@ country_event = {
 		effect_tooltip = { add_timed_idea = { idea = FRA_cs_market_like_any_other days = 365 } }
 		hidden_effect = { FRA_cs_apply_market_like_any_other = yes }
 		ai_chance = { base = 100 }
+	}
+}
+
+# French Guiana votes on Article 74 autonomy on 10 January 2010.
+country_event = {
+	id = france_md.992
+	title = france_md.992.t
+	desc = france_md.992.d
+	picture = GFX_country_brexit_referendum
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = FRA
+		owns_state = 67
+		NOT = { country_exists = FGU }
+		NOT = { has_country_flag = FRA_guyane_collectivity }
+	}
+
+	# Campaign against autonomy
+	option = {
+		name = france_md.992.a
+		log = "[GetDateText]: [This.GetName]: france_md.992.a executed"
+		add_stability = 0.01
+		hidden_effect = {
+			if = {
+				limit = {
+					country_exists = BRA
+					BRA = { NOT = { has_country_flag = BRA_guyane_stance_asked } }
+				}
+				BRA = {
+					set_country_flag = BRA_guyane_stance_asked
+					country_event = { id = brazil.129 days = 2 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 0.1
+				OR = {
+					has_global_flag = FRA_SOCIALIST_FOCUS_PATH
+					has_global_flag = FRA_GREEN_FOCUS_PATH
+					has_global_flag = FRA_COMMUNE_FOCUS_PATH
+				}
+			}
+		}
+	}
+
+	# Grant autonomy
+	option = {
+		name = france_md.992.b
+		log = "[GetDateText]: [This.GetName]: france_md.992.b executed"
+		release_puppet = FGU
+		FGU = { ingame_startup_nations_effect = yes }
+		set_autonomy = {
+			target = FGU
+			autonomy_state = autonomy_associated_state
+			end_wars = no
+			end_civil_wars = no
+		}
+		FGU = { add_opinion_modifier = { target = FRA modifier = friendship } }
+		hidden_effect = {
+			if = {
+				limit = {
+					country_exists = BRA
+					BRA = { NOT = { has_country_flag = BRA_guyane_stance_asked } }
+				}
+				BRA = {
+					set_country_flag = BRA_guyane_stance_asked
+					country_event = { id = brazil.129 days = 2 }
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 20
+				OR = {
+					has_global_flag = FRA_SOCIALIST_FOCUS_PATH
+					has_global_flag = FRA_GREEN_FOCUS_PATH
+					has_global_flag = FRA_COMMUNE_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0.1
+				OR = {
+					FRA_ai_historical_path = yes
+					FRA_ai_nationalist_path = yes
+				}
+			}
+		}
+	}
+}
+
+# French Guiana votes on a single territorial collectivity on 24 January 2010.
+country_event = {
+	id = france_md.993
+	title = france_md.993.t
+	desc = france_md.993.d
+	picture = GFX_country_brexit_referendum
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = FRA
+		owns_state = 67
+		NOT = { has_country_flag = FRA_guyane_collectivity }
+	}
+
+	# A single collectivity
+	option = {
+		name = france_md.993.a
+		log = "[GetDateText]: [This.GetName]: france_md.993.a executed"
+		set_country_flag = FRA_guyane_collectivity
+		add_stability = 0.02
+		67 = { add_extra_state_shared_building_slots = 1 }
+	}
+}
+
+# A general strike blocks Kourou on 20 March 2017.
+country_event = {
+	id = france_md.994
+	title = france_md.994.t
+	desc = france_md.994.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = FRA
+		owns_state = 67
+	}
+
+	# Sign the Guiana Accord
+	option = {
+		name = france_md.994.a
+		log = "[GetDateText]: [This.GetName]: france_md.994.a executed"
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0.5
+				FRA_ai_nationalist_path = yes
+			}
+			modifier = { factor = 0.5 check_variable = { debt_ratio > 0.42 } }
+			modifier = { factor = 0 check_variable = { treasury < 2 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Send the gendarmes
+	option = {
+		name = france_md.994.b
+		log = "[GetDateText]: [This.GetName]: france_md.994.b executed"
+		add_stability = -0.03
+		add_political_power = 25
+		add_timed_idea = { idea = FRA_idea_guiana_blockade days = 120 }
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 5
+				FRA_ai_nationalist_path = yes
+			}
+			modifier = {
+				factor = 3
+				FRA_ai_any_path = no
+				is_historical_focus_on = no
+				has_government = nationalist
+			}
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
 	}
 }
 
