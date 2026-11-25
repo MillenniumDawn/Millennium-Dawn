@@ -3879,7 +3879,7 @@ _TARGET_NAMING_CASES = {
         "targets = { VOJ }",
         set(),
     ),
-    "wrong named target": ("TRADE_SER_invite", "targets = { VOJ }", {_CASE, _COSMETIC}),
+    "wrong named target": ("TRADE_SER_invite", "targets = { VOJ }", {_COSMETIC}),
     "unregistered tag": ("TRADE_INV_invite", "targets = { INV }", {_CASE, _COSMETIC}),
     "ambiguous name and targeting": ("SER_invite", "targets = { VOJ }", {_COSMETIC}),
     "literal counterpart in a regular decision": (
@@ -3887,17 +3887,55 @@ _TARGET_NAMING_CASES = {
         "available = { VOJ = { exists = yes } }",
         set(),
     ),
-    "quoted counterpart is not proof": (
+    "registered tag needs no literal scope for casing": (
         "TRADE_VOJ_invest",
         'complete_effect = { log = "VOJ = { exists = yes }" }',
-        {_CASE},
+        set(),
     ),
     "two uppercase counterparts are ambiguous": (
         "TRADE_SER_VOJ_invite",
         "targets = { VOJ }",
-        {_CASE, _COSMETIC},
+        {_COSMETIC},
     ),
 }
+
+
+@pytest.mark.parametrize(
+    ("name", "warns"),
+    [
+        ("export_SER_VOJ_TV", False),
+        ("review_PQA_QFORGE", False),
+        ("convene_QXZ_JZF", False),
+        ("review_QxZ_QZX_CP", False),
+        ("support_NEXUS", False),
+        ("review_QXZExtra", True),
+        ("review_Unknown", True),
+        ("review_QZX", True),
+    ],
+)
+def test_decision_id_case_abbreviations(tmp_path, name, warns):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/country_tags/00_countries.txt": 'SER = "countries/Serbia.txt"\n'
+            'VOJ = "countries/Vojvodina.txt"\n',
+            "common/factions/templates/test.txt": "faction_template_test = { name = NEXUS_alliance }\n",
+            "common/country_tag_aliases/tag_aliases.txt": "PQA = { fallback = SER }\n",
+            "localisation/english/MD_formable_nations_l_english.yml": 'l_english:\n form_QFORGE_category: "Forge Union"\n',
+            "localisation/english/MD_politics_view_parties_l_english.yml": (
+                'l_english:\n SER.conservatism: "£sprite (QXZ) - Example Party"\n'
+                ' SER.conservatism_desc: "(Test) - Example Party (Native: Example, QxZ)\\n\\nProse."\n'
+                ' VOJ.liberalism: "£sprite (QZX-CP) - Example Alliance"\n'
+            ),
+            "localisation/english/test.yml": 'l_english:\n NEXUS_alliance: "Joint Zenith Forum (JZF)"\n',
+            _DECISIONS_FILE: "synthetic_category = {\n" + _nested(name, "") + "}\n",
+            "common/decisions/categories/cats.txt": f"{name}_category = {{\n}}\n",
+        },
+    )
+    validator.validate_id_case()
+    assert [issue.category for issue in validator._issues] == (
+        [_CASE, _CASE] if warns else []
+    )
 
 
 @pytest.mark.parametrize(
