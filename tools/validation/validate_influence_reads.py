@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass, replace
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from equipment_variant_context import event_pool_targets, script_nodes, value
 from guard_scan import read_file
-from shared_utils import atomic_write_text
+from shared_utils import atomic_write_text, iter_statements, strip_comments
 from validator_common import BaseValidator, run_validator_main
 
 CONTRACTS = {
@@ -66,6 +66,8 @@ _CONDITION_LISTS = frozenset(
         "available",
         "allowed",
         "visible",
+        "target_trigger",
+        "target_root_trigger",
         "bypass",
         "possible",
         "happened",
@@ -218,8 +220,9 @@ def _root(path, node):
 
 
 class Reader:
-    def __init__(self, documents):
+    def __init__(self, documents, decision_targets=None):
         self.documents = documents
+        self.decision_targets = decision_targets or {}
         self.definitions = {}
         self.events = {}
         self.relevant = set(CONTRACTS)
@@ -354,6 +357,9 @@ class Reader:
                 for outcome in node.children:
                     self._walk(path, outcome.children, scope, caller, preview)
                 continue
+            if node.key == "for_each_scope_loop":
+                self._walk_scope_loop(path, node, scope, caller, preview)
+                continue
             if node.key in _NEUTRAL:
                 child_scope = (
                     scope.constrain(node.children)
@@ -393,9 +399,37 @@ class Reader:
                     preview or node.key in _CONDITION_LISTS,
                 )
 
+    def _walk_scope_loop(self, path, node, scope, caller, preview):
+        for child in node.children:
+            country = None
+            if child.key == "if":
+                limit = next(
+                    (block for block in child.children if block.key == "limit"), None
+                )
+                if limit and value(limit, "exists") == "yes":
+                    country = f"country[{node.key}]@{path}:{node.line}"
+            self._walk(
+                path, (child,), scope.enter(country, self.depth), caller, preview
+            )
+
     def _entry(self, path, node):
         root = _root(path, node)
         self._walk(path, node.children, Scope(root, root), f"{path}:{node.line}")
+
+    def _decision_entry(self, path, node):
+        root = _root(path, node)
+        caller = f"{path}:{node.line}"
+        targets = self.decision_targets.get((path, node.key), ())
+        if not targets:
+            self._entry(path, node)
+            return
+        unbound = Scope(root, root)
+        for block in node.children:
+            if block.key in {"allowed", "target_root_trigger"}:
+                self._walk(path, (block,), unbound, caller)
+            else:
+                for target in targets:
+                    self._walk(path, (block,), Scope(root, root, (), (target,)), caller)
 
     def scan(self):
         for path, nodes in self.documents.items():
@@ -416,7 +450,7 @@ class Reader:
                 for category in nodes:
                     for decision in category.children:
                         if decision.children:
-                            self._entry(path, decision)
+                            self._decision_entry(path, decision)
             elif path.startswith("common/on_actions/"):
                 for node in nodes:
                     hooks = node.children if node.key == "on_actions" else (node,)
@@ -474,14 +508,44 @@ class Reader:
                 self._walk(path, node.children, scope, caller)
 
 
+def _decision_country_targets(text):
+    # The assignment-only AST does not preserve bare tokens in targets = { ... }.
+    for _, _, category in iter_statements(strip_comments(text)):
+        if category is None:
+            continue
+        for name, _, body in iter_statements(category):
+            if body is None:
+                continue
+            fields = {
+                key: block if block is not None else scalar
+                for key, scalar, block in iter_statements(body)
+            }
+            if fields.get("state_target", "no") != "no":
+                continue
+            targets = (fields.get("targets") or "").split()
+            if fields.get("target_array"):
+                yield name, (f"country[FROM; {name}]",)
+            elif targets and all(_TAG.fullmatch(tag) for tag in targets):
+                if fields.get("targets_dynamic") == "yes":
+                    yield name, (f"country[FROM; {name}]",)
+                else:
+                    yield name, tuple(targets)
+
+
 def scan_documents(documents):
     """Return bindings from relative script paths mapped to raw text."""
     parsed = {}
     pools = set()
+    decision_targets = {}
     for path, text in sorted(documents.items()):
         parsed[path] = script_nodes(text)
         pools.update(event_pool_targets(text))
-    reader = Reader(parsed)
+        if path.startswith("common/decisions/") and not path.startswith(
+            "common/decisions/categories/"
+        ):
+            for name, targets in _decision_country_targets(text):
+                decision_targets[path, name] = targets
+    reader = Reader(parsed, decision_targets)
     for event in sorted(pools):
         reader._event(event, Scope(), "event pool (caller unresolved)")
     return reader.scan()

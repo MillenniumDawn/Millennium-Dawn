@@ -1313,6 +1313,32 @@ space_auto_execute_launch = {
 	}
 }
 
+# Called by launch_OLV after its flights: refunds olv_launch_rebate_modifier of each flown rocket's unit price
+space_launch_rebate = {
+	set_temp_variable = { temp_rebate_share = modifier@olv_launch_rebate_modifier }
+	if = {
+		limit = {
+			check_variable = { sat_launch_completed > 0 }
+			check_variable = { temp_rebate_share > 0 }
+		}
+		set_temp_variable = {
+			temp_rebate_idx = {
+				value = var_OLV_type
+				subtract = @olv_pid_base
+				clamp = { min = 0 max = @olv_max_idx }
+			}
+		}
+		set_temp_variable = {
+			treasury_change = {
+				value = global.prod_10_price_unit^temp_rebate_idx
+				multiply = sat_launch_completed
+				multiply = temp_rebate_share
+			}
+		}
+		modify_treasury_effect = yes
+	}
+}
+
 space_auto_raise_system_tiers = {
 	space_auto_raise_gnss = yes
 	space_auto_raise_comsat = yes
