@@ -2114,6 +2114,13 @@ _CATEGORY_GATE_CASES = {
         [],
         [],
     ),
+    # The category shows even when every decision is hidden.
+    "visible_when_empty category": (
+        "\tvisible_when_empty = yes\n",
+        {"dec1": _block("visible", _WAR), "dec2": _block("visible", _WAR)},
+        [],
+        [],
+    ),
     "line only some decisions check": (
         "",
         {"dec1": _block("visible", _WAR), "dec2": ""},

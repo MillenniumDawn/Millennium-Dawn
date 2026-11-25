@@ -1195,7 +1195,8 @@ def _find_category_covered_checks(
 
     Missions are skipped: one in a hidden category still ticks.
     Constant checks and statements that set temporary variables are not
-    candidates for moving to the category.
+    candidates for moving to the category, and neither is any line of a
+    ``visible_when_empty = yes`` category.
     """
     token_to_cat: Dict[str, str] = {}
     for cat, dec_tokens in cats_with_decs.items():
@@ -1240,7 +1241,11 @@ def _find_category_covered_checks(
             if line not in {"always = yes", "always = no"}
             and not re.search(r"\bset_temp_variable\s*=", blank_quoted_strings(line))
         )
-        if len(decisions) > 1 and repeated:
+        # A visible_when_empty category shows even when its decisions are hidden.
+        shows_when_empty = re.search(
+            r"\bvisible_when_empty\s*=\s*yes\b", categories[cat_name]
+        )
+        if len(decisions) > 1 and repeated and not shows_when_empty:
             candidates.append(
                 f"{cat_name}: all {len(decisions)} decisions check "
                 f"{', '.join(f'`{line}`' for line in repeated)}; "
