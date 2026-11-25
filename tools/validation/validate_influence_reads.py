@@ -461,7 +461,9 @@ class Reader:
             return
         lists = next((c for c in node.children if c.key == "dynamic_lists"), None)
         # Element triggers and effects run in the list entry's scope.
-        if lists and any(value(entry, "change_scope") == "yes" for entry in lists.children):
+        if lists and any(
+            value(entry, "change_scope") == "yes" for entry in lists.children
+        ):
             element = Scope(root, f"country[THIS; {node.key} entry]")
         else:
             element = scope
