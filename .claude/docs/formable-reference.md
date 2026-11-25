@@ -246,7 +246,7 @@ worldwide, and the idea alone strands an EU member before any federation exists.
 - MAGHREB: `update_flag` is hidden only once the cosmetic is held. No EU guard, because
   none of the nine tags that can form it is EU-potential.
 - MAGHREB and UAR exclude each other: `MAGHREB_integrate_start` is hidden for a UAR, and
-  `form_UAR_category` is hidden on `is_MAGHREB`.
+  `UAR_form_category` is hidden on `is_MAGHREB`.
 - ANZ, NORDEM, AVG: no EU guard.
 - All other formables have no EU guard. `EFS_update_flag` has no ratchet gate.
 

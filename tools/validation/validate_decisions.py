@@ -684,7 +684,7 @@ _FROM_WORD_RE = re.compile(r"\bFROM\b")
 # Formable commitment ratchet sync (validate_formable_commitment_sync).
 _FORMABLE_DECISIONS_BASENAME = "formable_nation_decisions.txt"
 _FORMABLE_TAG_RE = re.compile(
-    r"^([A-Z0-9]+)_(?:integrate_|buy_core_state$|update_flag$)"
+    r"^([A-Z0-9]+)_(?:(?:[A-Z0-9]+_)*integrate(?:_|$)|buy_core_state$|update_flag$)"
 )
 _STATE_ENTRY_RE = re.compile(r"\b\d+\s*=\s*\{")
 _SIZE_SET_RE = re.compile(r"formable_committed_size\s*=\s*(\d+)")
@@ -1769,8 +1769,8 @@ def parse_decision_categories(
 # block can start.
 _LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
 _ID_PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]*_")
+_ID_CHAIN_RE = re.compile(r"^(?:[A-Z][A-Z0-9]*(?:_|$))+")
 _TAG_PREFIX_RE = re.compile(r"^([A-Z][A-Z0-9]{2})_")
-_COUNTRY_SCOPE_RE = re.compile(r"(?<![\w.:@])([A-Z][A-Z0-9]{2})\s*=\s*\{")
 
 
 def _named_country(name: str, country_tags: AbstractSet[str]) -> Optional[str]:
@@ -1790,8 +1790,21 @@ def _named_country(name: str, country_tags: AbstractSet[str]) -> Optional[str]:
     return None
 
 
-def _has_uppercase_after_prefix(name: str) -> bool:
-    rest = _ID_PREFIX_RE.sub("", name, count=1)
+_COUNTRY_NAME_LINE_RE = re.compile(
+    r'^\s*([A-Z][A-Z0-9]{2})(_neutrality)?:\d*\s*"([^"]*)"', re.MULTILINE
+)
+_NAME_FILLER = frozenset({"of", "the", "and", "state", "republic", "islands"})
+
+
+def _names_country(token: str, tag: str, names: Mapping[str, str]) -> bool:
+    """True when the words after the leading chain spell the tag or its English name."""
+    words = set(_ID_CHAIN_RE.sub("", token, count=1).split("_"))
+    name_words = re.findall(r"[a-z0-9]+", names.get(tag, "").lower())
+    return tag.lower() in words or bool(words & set(name_words) - _NAME_FILLER)
+
+
+def _has_uppercase_after_chain(name: str) -> bool:
+    rest = _ID_CHAIN_RE.sub("", name, count=1)
     return rest != rest.lower()
 
 
@@ -2404,6 +2417,7 @@ class Validator(BaseValidator):
         """Warn about static country targeting that may only provide a flag overlay."""
         self._log_section("Checking decisions for cosmetic country targeting...")
         country_tags = self._country_tags()
+        country_names = self._country_names()
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
@@ -2435,6 +2449,10 @@ class Validator(BaseValidator):
             ):
                 continue
             if targets == [_named_country(d.token, country_tags)]:
+                continue
+            if len(targets) == 1 and _names_country(
+                d.token, targets[0], country_names
+            ):
                 continue
             if len(targets) == 1:
                 advice = (
@@ -3403,6 +3421,20 @@ class Validator(BaseValidator):
             category="unannounced-decision-category",
         )
 
+    def _country_names(self) -> Dict[str, str]:
+        """English country names by tag, from `TAG_neutrality` or `TAG` keys."""
+        names: Dict[str, str] = {}
+        path = os.path.join(
+            self.mod_path, "localisation", "english", "countries_l_english.yml"
+        )
+        if not os.path.isfile(path):
+            return names
+        for m in _COUNTRY_NAME_LINE_RE.finditer(FileOpener.open_text_file(path)):
+            tag, neutrality, name = m.groups()
+            if neutrality or tag not in names:
+                names[tag] = name
+        return names
+
     def _country_tags(self) -> Set[str]:
         tags = set()
         for path in self._collect_files(
@@ -3416,27 +3448,12 @@ class Validator(BaseValidator):
         return tags
 
     def validate_id_case(self):
-        """Flag uppercase words after the directive, except explicit country tags."""
+        """Flag uppercase after the leading all-caps chain (`CHI_HKG_`, `EU_POTEF_`)."""
         self._log_section("Checking decision and category id case...")
-        country_tags = self._country_tags()
         results = []
         for d in parse_all_decision_factories(self.mod_path):
-            if not _has_uppercase_after_prefix(d.token):
+            if not _has_uppercase_after_chain(d.token):
                 continue
-            named = _named_country(d.token, country_tags)
-            if named:
-                raw = blank_quoted_strings(strip_comments(d.raw))
-                body = raw[raw.index("{") + 1 : -1]
-                targets = direct_child_block(body, "targets")[1:-1].split()
-                if (
-                    not d.state_target
-                    and not d.target_array
-                    and (
-                        targets == [named]
-                        or (not targets and named in _COUNTRY_SCOPE_RE.findall(body))
-                    )
-                ):
-                    continue
             results.append(
                 (
                     f"Decision {d.token} is not lowercase after its prefix",
@@ -3450,9 +3467,7 @@ class Validator(BaseValidator):
             text = FileOpener.open_text_file(path, strip_comments_flag=True)
             for m in _LINE_OPENER_RE.finditer(text):
                 name = m.group(1)
-                if _has_uppercase_after_prefix(name) and not _named_country(
-                    name, country_tags
-                ):
+                if _has_uppercase_after_chain(name):
                     results.append(
                         (
                             f"Category {name} is not lowercase after its prefix",

@@ -2335,6 +2335,11 @@ _FORMABLE_CASES = {
         {},
         ["gate id 2 != AAA commit id 1"],
     ),
+    "acronym chain before integrate": (
+        [_AAA, _nested("AAA_NORTHBBB_integrate", _gate(2, 3))],
+        {},
+        ["gate id 2 != AAA commit id 1"],
+    ),
     "guarded focus commit": (
         [_start("AAA", 1, 3), _AAA],
         {"05_spain.txt": _FOCUS_COMMIT % _GUARDED_FOCUS_COMMIT},
@@ -3929,28 +3934,31 @@ _COSMETIC = "decision-cosmetic-targeting"
 _TARGET_NAMING_CASES = {
     "country pair matches target": ("SER_VOJ_invite", "targets = { VOJ }", set()),
     "system directive and named target": (
-        "TRADE_invite_VOJ",
+        "TRADE_VOJ_invite",
         "targets = { VOJ }",
         set(),
     ),
-    "wrong named target": ("TRADE_SER_invite", "targets = { VOJ }", {_CASE, _COSMETIC}),
-    "unregistered tag": ("TRADE_INV_invite", "targets = { INV }", {_CASE, _COSMETIC}),
+    "wrong named target": ("TRADE_SER_invite", "targets = { VOJ }", {_COSMETIC}),
+    "unregistered tag": ("TRADE_INV_invite", "targets = { INV }", {_COSMETIC}),
     "ambiguous name and targeting": ("SER_invite", "targets = { VOJ }", {_COSMETIC}),
     "literal counterpart in a regular decision": (
         "TRADE_VOJ_invest",
         "available = { VOJ = { exists = yes } }",
         set(),
     ),
-    "quoted counterpart is not proof": (
-        "TRADE_VOJ_invest",
-        'complete_effect = { log = "VOJ = { exists = yes }" }',
-        {_CASE},
-    ),
-    "two uppercase counterparts are ambiguous": (
+    "leading chain needs no counterpart": ("SER_HKG_invest", "", set()),
+    "two uppercase counterparts in the chain": (
         "TRADE_SER_VOJ_invite",
         "targets = { VOJ }",
-        {_CASE, _COSMETIC},
+        {_COSMETIC},
     ),
+    "trailing tag after lowercase": ("SER_invite_VOJ", "targets = { VOJ }", {_CASE}),
+    "acronym after lowercase": ("SER_invite_PFLP", "", {_CASE}),
+    "trailing roman numeral": ("SER_forts_II", "", {_CASE}),
+    "mixed case word in the chain": ("EU_USoE_reset", "", {_CASE}),
+    "country name matches target": ("SER_invite_vojvodina", "targets = { VOJ }", set()),
+    "lowercase tag matches target": ("SER_invite_voj", "targets = { VOJ }", set()),
+    "prefix is not a name match": ("VOJ_invite", "targets = { VOJ }", {_COSMETIC}),
 }
 
 
@@ -3963,6 +3971,8 @@ def test_targeted_naming_style(tmp_path, token, body, categories):
         {
             "common/country_tags/00_countries.txt": 'SER = "countries/Serbia.txt"\n'
             'VOJ = "countries/Vojvodina.txt"\n',
+            "localisation/english/countries_l_english.yml": "l_english:\n"
+            ' VOJ_neutrality: "Vojvodina"\n',
             _DECISIONS_FILE: "category = {\n" + _nested(token, f"\t\t{body}\n") + "}\n",
         },
     )
