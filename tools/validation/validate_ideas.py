@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from equipment_module_slots import _iter_blocks, blank_comments
-from equipment_stats import build_equipment_stat_index, iter_type_archetype_stacks
+from equipment_stats import build_equipment_stat_index, iter_equipment_bonus_stacks
 from shared_utils import AVAILABLE_OPEN_RE as _AVAILABLE_BLOCK_START
 from shared_utils import (
     blank_quoted_strings,
@@ -239,7 +239,7 @@ def _weekly_modifier_issues(
                 ):
                     idea_name = idea_match.group(1)
                     idea_body = cat_body[idea_open + 1 : idea_close]
-                    modifiers = []
+                    modifiers: List[str] = []
                     for _modifier, mod_open, mod_close in iter_direct_child_blocks(
                         idea_body, re.compile(r"(?<![A-Za-z0-9_])modifier\s*=\s*\{")
                     ):
@@ -1489,31 +1489,42 @@ class Validator(BaseValidator):
         )
 
     def validate_equipment_bonus_stack(self):
-        """Flag nested equipment_bonus keys that stack a type on its child."""
-        self._log_section("Checking equipment_bonus type/archetype stacking...")
-        idea_files = self._collect_files(["common/ideas/**/*.txt"])
-        if not idea_files:
-            self.log("  No idea files to scan")
-            return
-        index = build_equipment_stat_index(self.mod_path)
-        for filepath in idea_files:
+        """Check idea bonuses and scripted bonus grants for overlapping targets."""
+        self._log_section("Checking for stacked equipment bonuses...")
+        index = None
+        for filepath in self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        ):
+            rel = os.path.relpath(filepath, self.mod_path).replace(os.sep, "/")
+            ideas = rel.startswith("common/ideas/")
             try:
-                with open(filepath, encoding="utf-8") as handle:
-                    text = blank_comments(handle.read())
-            except (OSError, UnicodeDecodeError):
+                with open(filepath, "rb") as handle:
+                    raw = handle.read()
+                if (b"equipment_bonus" if ideas else b"add_equipment_bonus") not in raw:
+                    continue
+                text = blank_quoted_strings(blank_comments(raw.decode("utf-8-sig")))
+            except (OSError, UnicodeDecodeError) as exc:
+                self.add_warning("equipment-bonus-read", str(exc), rel)
                 continue
-            rel = os.path.relpath(filepath, self.mod_path)
-            for offset, type_key, child, shared in iter_type_archetype_stacks(
-                text, index
-            ):
-                line = text.count("\n", 0, offset) + 1
-                self.add_error(
-                    "bonus-type-archetype-stack",
-                    f"equipment_bonus {', '.join(sorted(shared))} on {child} "
-                    f"also applies via type '{type_key}' in this block",
-                    rel,
-                    line,
+            if index is None:
+                index = build_equipment_stat_index(self.mod_path)
+            for (
+                offset,
+                form,
+                relation,
+                parent,
+                child,
+                shared,
+            ) in iter_equipment_bonus_stacks(text, index, ideas=ideas):
+                message = (
+                    f"{form} {', '.join(sorted(shared))} on {child} "
+                    f"also applies via {relation} '{parent}' in this block"
                 )
+                line = text.count("\n", 0, offset) + 1
+                if form == "equipment_bonus" and relation == "type":
+                    self.add_error("bonus-type-archetype-stack", message, rel, line)
+                else:
+                    self.add_warning("equipment-bonus-overlap", message, rel, line)
 
     def run_validations(self):
         # Always parse all ideas — needed as the reference set even in staged mode

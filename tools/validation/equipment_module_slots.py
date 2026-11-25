@@ -853,11 +853,13 @@ def _exact_category_problems(
         for slot, refs, off in assignments
     ]
     for slot, identity, _ in identities:
-        rules = index.module_exact_category_forbids.get(identity[0]) if identity else {}
-        if not identity or not rules:
+        if not identity or identity[0] is None:
+            continue
+        rules = index.module_exact_category_forbids.get(identity[0])
+        if not rules:
             continue
         for other_slot, other, off in identities:
-            if other_slot == slot or not other:
+            if other_slot == slot or not other or other[1] is None:
                 continue
             if rules.get(other[1], set()) & hull_types and len(hull_types) == 1:
                 yield (

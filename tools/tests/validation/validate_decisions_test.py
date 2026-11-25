@@ -2096,11 +2096,23 @@ _CATEGORY_GATE_CASES = {
         "",
         {
             "dec1": _block("visible", _WAR),
-            "dec2": _block("available", _WAR),
+            "dec2": _block("target_root_trigger", _WAR),
             "mission": _MISSION,
         },
         [],
         [("cat: all 2 decisions", _WAR)],
+    ),
+    "shared availability does not hide decisions": (
+        "",
+        {"dec1": _block("available", _WAR), "dec2": _block("available", _WAR)},
+        [],
+        [],
+    ),
+    "visibility shared with an availability-only check": (
+        "",
+        {"dec1": _block("visible", _WAR), "dec2": _block("available", _WAR)},
+        [],
+        [],
     ),
     "line only some decisions check": (
         "",
@@ -2109,6 +2121,41 @@ _CATEGORY_GATE_CASES = {
         [],
     ),
     "one decision": ("", {"dec1": _block("visible", _WAR)}, [], []),
+    "constant true is not a category gate": (
+        "",
+        {
+            "dec1": _block("visible", "always = yes"),
+            "dec2": _block("visible", "always = yes"),
+        },
+        [],
+        [],
+    ),
+    "individual scripted activation keeps decisions hidden": (
+        "",
+        {
+            "dec1": _block("visible", "always = no"),
+            "dec2": _block("visible", "always = no"),
+        },
+        [],
+        [],
+    ),
+    "temporary variables stay in the decision trigger": (
+        "",
+        {
+            "dec1": _block(
+                "visible",
+                "set_temp_variable = { temp_value = 5 }\n"
+                "hidden_trigger = { set_temp_variable = { temp_other = 6 } }",
+            ),
+            "dec2": _block(
+                "visible",
+                "set_temp_variable = { temp_value = 5 }\n"
+                "hidden_trigger = { set_temp_variable = { temp_other = 6 } }",
+            ),
+        },
+        [],
+        [],
+    ),
     # A state scope is one line, not the lines inside it.
     "state scope": (
         _CAT_WAR,
@@ -2972,7 +3019,7 @@ def _category_mod(tmp_path, gate, files=None, category="md_test_category", **kwa
 # A category gated on state that flips during play shows up part-way through a
 # game. History does not exempt it: the gate still has to be announced.
 # case: (category gate, {other file: text}, the trigger the finding names)
-_CATEGORY_GATE_CASES = {
+_UNANNOUNCED_CATEGORY_GATE_CASES = {
     "flag": (_FLAG_GATE, {}, _FLAG),
     "focus": (
         _visible("has_completed_focus = md_other_focus"),
@@ -3014,8 +3061,8 @@ _CATEGORY_GATE_CASES = {
 
 @pytest.mark.parametrize(
     ("gate", "files", "reported"),
-    _CATEGORY_GATE_CASES.values(),
-    ids=_CATEGORY_GATE_CASES,
+    _UNANNOUNCED_CATEGORY_GATE_CASES.values(),
+    ids=_UNANNOUNCED_CATEGORY_GATE_CASES,
 )
 def test_unannounced_category_gate(tmp_path, gate, files, reported):
     findings = _category_mod(tmp_path, gate, files)._unannounced_categories()
@@ -3793,6 +3840,14 @@ _NAMING_CASES = {
             )
         ],
     ),
+    "country pair category": ("SER_VOJ", "", "SER_invite", "", []),
+    "shared directive country category": (
+        "TRADE_VOJ_accession",
+        "",
+        "TRADE_invite",
+        "",
+        [],
+    ),
     "uppercase category": (
         "SER_Political",
         "",
@@ -3859,6 +3914,54 @@ def test_naming_style(tmp_path, category, category_allowed, token, allowed, rows
 
     assert issue_rows(validator) == rows
     assert validator.warnings_found == len(rows)
+
+
+# case: (decision id, target fields, warning categories)
+_CASE = "decision-id-case"
+_COSMETIC = "decision-cosmetic-targeting"
+_TARGET_NAMING_CASES = {
+    "country pair matches target": ("SER_VOJ_invite", "targets = { VOJ }", set()),
+    "system directive and named target": (
+        "TRADE_invite_VOJ",
+        "targets = { VOJ }",
+        set(),
+    ),
+    "wrong named target": ("TRADE_SER_invite", "targets = { VOJ }", {_CASE, _COSMETIC}),
+    "unregistered tag": ("TRADE_INV_invite", "targets = { INV }", {_CASE, _COSMETIC}),
+    "ambiguous name and targeting": ("SER_invite", "targets = { VOJ }", {_COSMETIC}),
+    "literal counterpart in a regular decision": (
+        "TRADE_VOJ_invest",
+        "available = { VOJ = { exists = yes } }",
+        set(),
+    ),
+    "quoted counterpart is not proof": (
+        "TRADE_VOJ_invest",
+        'complete_effect = { log = "VOJ = { exists = yes }" }',
+        {_CASE},
+    ),
+    "two uppercase counterparts are ambiguous": (
+        "TRADE_SER_VOJ_invite",
+        "targets = { VOJ }",
+        {_CASE, _COSMETIC},
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "token,body,categories", _TARGET_NAMING_CASES.values(), ids=_TARGET_NAMING_CASES
+)
+def test_targeted_naming_style(tmp_path, token, body, categories):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/country_tags/00_countries.txt": 'SER = "countries/Serbia.txt"\n'
+            'VOJ = "countries/Vojvodina.txt"\n',
+            _DECISIONS_FILE: "category = {\n" + _nested(token, f"\t\t{body}\n") + "}\n",
+        },
+    )
+    validator.validate_id_case()
+    validator.validate_cosmetic_targeting()
+    assert {issue.category for issue in validator._issues} == categories
 
 
 def test_unused_category_check_skips_bop_and_always_visible_categories(tmp_path):
