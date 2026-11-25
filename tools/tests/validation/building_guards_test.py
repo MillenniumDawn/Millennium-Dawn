@@ -55,7 +55,7 @@ def _scan_province(script):
 
 _RANDOM_SLOT_CASES = {
     "unguarded random state": (
-        "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        "random_owned_state = { add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "negative level does not consume a slot": (
@@ -72,105 +72,105 @@ _RANDOM_SLOT_CASES = {
         1,
     ),
     "scripted guard": (
-        "random_owned_state = { limit = { infrastructure_random_build_loc = yes } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "random_owned_state = { limit = { free_shared_building_slots = yes } "
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         0,
     ),
     "matching free slots": (
         "random_owned_state = { limit = { AND = { free_building_slots = "
-        "{ building = infrastructure size >= 1 } } } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "{ building = industrial_complex size >= 1 } } } "
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         0,
     ),
     "wrong building": (
         "random_owned_state = { limit = { free_building_slots = "
         "{ building = air_base size > 0 } } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "zero slots": (
         "random_owned_state = { limit = { free_building_slots = "
-        "{ building = infrastructure size = 0 } } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "{ building = industrial_complex size = 0 } } "
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "fractional negative threshold": (
         "random_owned_state = { limit = { free_building_slots = "
-        "{ building = infrastructure size > -0.5 } } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "{ building = industrial_complex size > -0.5 } } "
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "nested size is not the slot count": (
         "random_owned_state = { limit = { free_building_slots = "
-        "{ building = infrastructure other = { size > 0 } } } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "{ building = industrial_complex other = { size > 0 } } } "
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "guard in OR": (
-        "random_owned_state = { limit = { OR = { infrastructure_random_build_loc = yes "
-        "always = yes } } add_building_construction = { type = infrastructure level = 1 } }",
+        "random_owned_state = { limit = { OR = { free_shared_building_slots = yes "
+        "always = yes } } add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "guard in other state": (
         "random_owned_state = { limit = { any_owned_state = "
-        "{ infrastructure_random_build_loc = yes } } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "{ free_shared_building_slots = yes } } "
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "random subset": (
         "every_owned_state = { random_select_amount = 2 "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "controlled state": (
-        "random_controlled_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        "random_controlled_state = { add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "owned controlled state": (
-        "random_owned_controlled_state = { limit = { infrastructure_random_build_loc = yes } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "random_owned_controlled_state = { limit = { free_shared_building_slots = yes } "
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         0,
     ),
     "core state": (
-        "random_core_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        "random_core_state = { add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "controlled subset": (
         "every_controlled_state = { random_select_amount = 1 "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
     "all controlled states": (
-        "every_controlled_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        "every_controlled_state = { add_building_construction = { type = industrial_complex level = 1 } }",
         0,
     ),
     "all states": (
-        "every_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        "every_owned_state = { add_building_construction = { type = industrial_complex level = 1 } }",
         0,
     ),
     "nested random selection": (
         "every_owned_state = { if = { random_select_amount = 1 } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         0,
     ),
-    "other building": (
+    "individually capped building skipped": (
         "random_owned_state = { add_building_construction = { type = air_base level = 1 } }",
-        1,
-    ),
-    "matching other building": (
-        "random_owned_state = { limit = { free_building_slots = "
-        "{ building = air_base size > 0 } } "
-        "add_building_construction = { type = air_base level = 1 } }",
         0,
+    ),
+    "unshared scripted trigger does not cover a shared building": (
+        "random_owned_state = { limit = { infrastructure_random_build_loc = yes } "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        1,
     ),
     "shared trigger covers another shared building": (
         "random_owned_state = { limit = { free_shared_building_slots = yes } "
         "add_building_construction = { type = arms_factory level = 1 } }",
         0,
     ),
-    "shared proof skips an unshared building": (
-        "random_owned_state = { limit = { free_shared_building_slots = yes } "
-        "add_building_construction = { type = fossil_powerplant level = 1 } }",
+    "unshared removal does not free a shared slot": (
+        "random_owned_state = { limit = { air_base > 0 } "
+        "remove_building = { type = air_base level = 1 } "
+        "add_building_construction = { type = arms_factory level = 1 } }",
         1,
     ),
     "extra shared slots first": (
@@ -206,18 +206,18 @@ _RANDOM_SLOT_CASES = {
     ),
     "nested effect excluded": (
         "random_owned_state = { if = { add_building_construction = "
-        "{ type = infrastructure level = 1 } } }",
+        "{ type = industrial_complex level = 1 } } }",
         0,
     ),
     "tooltip excluded": (
         "effect_tooltip = { random_owned_state = { add_building_construction = "
-        "{ type = infrastructure level = 1 } } }",
+        "{ type = industrial_complex level = 1 } } }",
         0,
     ),
     "quoted and commented guards": (
-        'random_owned_state = { limit = { log = "infrastructure_random_build_loc = yes" '
-        "# infrastructure_random_build_loc = yes\n } "
-        "add_building_construction = { type = infrastructure level = 1 } }",
+        'random_owned_state = { limit = { log = "free_shared_building_slots = yes" '
+        "# free_shared_building_slots = yes\n } "
+        "add_building_construction = { type = industrial_complex level = 1 } }",
         1,
     ),
 }
@@ -237,26 +237,26 @@ def test_random_slot_guards(script, count):
 # hints: {case: (selector body, hint, shown)}
 _SLOT_HINT_CASES = {
     "level bound": (
-        "limit = { infrastructure < 5 } "
-        "add_building_construction = { type = infrastructure level = 1 }",
+        "limit = { industrial_complex < 5 } "
+        "add_building_construction = { type = industrial_complex level = 1 }",
         "a level bound is present",
         True,
     ),
     "level bound in AND": (
-        "limit = { AND = { infrastructure <= 4 } } "
-        "add_building_construction = { type = infrastructure level = 1 }",
+        "limit = { AND = { industrial_complex <= 4 } } "
+        "add_building_construction = { type = industrial_complex level = 1 }",
         "a level bound is present",
         True,
     ),
     "level bound in OR": (
-        "limit = { OR = { infrastructure < 5 always = yes } } "
-        "add_building_construction = { type = infrastructure level = 1 }",
+        "limit = { OR = { industrial_complex < 5 always = yes } } "
+        "add_building_construction = { type = industrial_complex level = 1 }",
         "a level bound is present",
         False,
     ),
     "level bound in other state": (
-        "limit = { any_owned_state = { infrastructure < 5 } } "
-        "add_building_construction = { type = infrastructure level = 1 }",
+        "limit = { any_owned_state = { industrial_complex < 5 } } "
+        "add_building_construction = { type = industrial_complex level = 1 }",
         "a level bound is present",
         False,
     ),
@@ -907,9 +907,12 @@ def test_random_slot_guard_reads_triggers_and_shared_slots(
         tmp_path,
         monkeypatch,
         f"random_owned_state = {{ {guard} "
-        "add_building_construction = { type = dockyard level = 1 } }",
+        "add_building_construction = { type = dockyard level = 1 } "
+        "add_building_construction = { type = air_base level = 1 } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
     )
     assert [(i.severity, i.category) for i in validator._issues] == expected
+    assert all("builds dockyard" in i.message for i in validator._issues)
 
 
 def test_run_stays_quiet_when_every_effect_is_guarded(tmp_path, monkeypatch):
@@ -930,6 +933,12 @@ def test_run_stays_quiet_when_every_effect_is_guarded(tmp_path, monkeypatch):
 # --- building placement and starting owners --------------------------------
 
 _BUILDINGS = """buildings = {
+	air_base = {
+		level_cap = { state_max = 10 shares_slots = no }
+	}
+	infrastructure = {
+		level_cap = { state_max = 6 }
+	}
 	naval_base = {
 		only_costal = yes
 		level_cap = { province_max = 10 }
