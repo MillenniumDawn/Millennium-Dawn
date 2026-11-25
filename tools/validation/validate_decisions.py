@@ -1758,7 +1758,6 @@ def parse_decision_categories(
 _LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
 _ID_PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]*_")
 _TAG_PREFIX_RE = re.compile(r"^([A-Z][A-Z0-9]{2})_")
-_COUNTRY_SCOPE_RE = re.compile(r"(?<![\w.:@])([A-Z][A-Z0-9]{2})\s*=\s*\{")
 
 
 def _named_country(name: str, country_tags: AbstractSet[str]) -> Optional[str]:
