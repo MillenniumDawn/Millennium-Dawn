@@ -1192,6 +1192,8 @@ def _find_category_covered_checks(
     more, all repeat a line the category does not hold.
 
     Missions are skipped: one in a hidden category still ticks.
+    Constant checks and statements that set temporary variables are not
+    candidates for moving to the category.
     """
     token_to_cat: Dict[str, str] = {}
     for cat, dec_tokens in cats_with_decs.items():
@@ -1228,7 +1230,12 @@ def _find_category_covered_checks(
                     )
             every_line = set().union(*gate_lines.values())
             shared = every_line if shared is None else shared & every_line
-        repeated = sorted((shared or set()) - gate.keys())
+        repeated = sorted(
+            line
+            for line in (shared or set()) - gate.keys()
+            if line not in {"always = yes", "always = no"}
+            and not re.search(r"\bset_temp_variable\s*=", blank_quoted_strings(line))
+        )
         if len(decisions) > 1 and repeated:
             candidates.append(
                 f"{cat_name}: all {len(decisions)} decisions check "
