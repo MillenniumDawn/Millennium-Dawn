@@ -16318,19 +16318,137 @@ UKR_tender2_calc_costs = {
 	}
 }
 
-UKR_tender2_clear_bars_site = {
-	# A dropped Bars line frees the plant: the Bars-8 can choose it again and Bohdan is no longer the Bars partner
+# Utility vehicle and IMV technologies from the tenders: every missing tier up to the named one, so no tier is skipped
+# (Ukraine starts with util_vehicle_1 to 3 and no IMV tier; IMV_3 is the first one)
+UKR_grant_util_vehicle_tech_4 = {
 	if = {
-		limit = {
-			OR = {
-				has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
-				has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
-				has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
-				has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+		limit = { NOT = { has_tech = util_vehicle_4 } }
+		set_technology = { util_vehicle_4 = 1 }
+	}
+}
+
+UKR_grant_util_vehicle_tech_5 = {
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_4 } }
+		set_technology = { util_vehicle_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_5 } }
+		set_technology = { util_vehicle_5 = 1 }
+	}
+}
+
+UKR_grant_util_vehicle_tech_6 = {
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_4 } }
+		set_technology = { util_vehicle_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_5 } }
+		set_technology = { util_vehicle_5 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_6 } }
+		set_technology = { util_vehicle_6 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_3 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_4 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_4 } }
+		set_technology = { IMV_4 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_5 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_4 } }
+		set_technology = { IMV_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_5 } }
+		set_technology = { IMV_5 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_6 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_4 } }
+		set_technology = { IMV_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_5 } }
+		set_technology = { IMV_5 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_6 } }
+		set_technology = { IMV_6 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_7 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_4 } }
+		set_technology = { IMV_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_5 } }
+		set_technology = { IMV_5 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_6 } }
+		set_technology = { IMV_6 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_7 } }
+		set_technology = { IMV_7 = 1 }
+	}
+}
+
+UKR_tender2_clear_bars_site = {
+	# A dropped or aborted Bars model frees its plant, unless a Bars line already runs there (Bohdan avoids the Bars plant)
+	hidden_effect = {
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
+				}
+				NOT = { has_country_flag = UKR_utility_vehicle_tender_bars_cherkasy_line_flag }
 			}
-		}
-		hidden_effect = {
 			clr_country_flag = UKR_utility_vehicle_tender_bars_cherkasy_site_flag
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+				}
+				NOT = { has_country_flag = UKR_utility_vehicle_tender_bars_lutsk_line_flag }
+			}
 			clr_country_flag = UKR_utility_vehicle_tender_bars_lutsk_site_flag
 		}
 	}
@@ -16385,7 +16503,7 @@ UKR_tender2_finish_development = {
 			UKR_tender2_apply_discount = yes
 			modify_treasury_effect = yes
 
-			set_technology = { util_vehicle_4 = 1 }
+			UKR_grant_util_vehicle_tech_4 = yes
 
 			custom_effect_tooltip = universal_blank_line_tooltip
 		}
@@ -16546,6 +16664,27 @@ UKR_tender2_finish_development = {
 
 UKR_tender2_launch_production = {
 	# Expects the temporary variable UKR_tender2_stage: 1 = launch in a plant that already has a factory, 2 = launch after the expansion
+	# A Bars line keeps its plant marked as the Bars site (UKR_tender2_clear_bars_site)
+	hidden_effect = {
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
+				}
+			}
+			set_country_flag = UKR_utility_vehicle_tender_bars_cherkasy_line_flag
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+				}
+			}
+			set_country_flag = UKR_utility_vehicle_tender_bars_lutsk_line_flag
+		}
+	}
 	if = {
 		limit = { check_variable = { UKR_tender2_stage = 2 } }
 		if = {
