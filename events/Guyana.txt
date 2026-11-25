@@ -1,0 +1,712 @@
+add_namespace = guyana
+add_namespace = guyana_essequibo
+
+# ROOT = Guyana, no FROM. Scheduled in trigger_year_2015_events for 20 May 2015.
+country_event = {
+	id = guyana.1
+	title = guyana.1.t
+	desc = guyana.1.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = GUY }
+
+	immediate = {
+		set_country_flag = GUY_stabroek_discovered
+		set_country_flag = { flag = GUY_stabroek_appraisal days = 750 value = 1 }
+	}
+
+	option = {
+		name = guyana.1.a
+		log = "[GetDateText]: [This.GetName]: guyana.1.a executed"
+		add_stability = 0.02
+		unlock_decision_tooltip = GUY_decision_liza_phase_1
+		unlock_decision_tooltip = GUY_decision_natural_resource_fund
+		ai_chance = { base = 1 }
+	}
+}
+
+# ROOT = Guyana, no FROM. Fired by the Liza Phase 1 decision, or by trigger_year_2019_events on 20 December 2019 if the decision was not started.
+country_event = {
+	id = guyana.2
+	title = guyana.2.t
+	desc = guyana.2.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_country_flag = GUY_stabroek_discovered
+		NOT = { has_country_flag = GUY_liza_phase_1_online }
+		NOT = { has_decision = GUY_decision_liza_phase_1 }
+		owns_state = 877
+	}
+
+	option = {
+		name = guyana.2.a
+		log = "[GetDateText]: [This.GetName]: guyana.2.a executed"
+		set_country_flag = GUY_liza_phase_1_online
+		add_resource = { type = oil amount = 3 state = 877 }
+		add_stability = 0.02
+		unlock_decision_tooltip = GUY_decision_liza_phase_2_payara
+		ai_chance = { base = 1 }
+	}
+}
+
+# ROOT = Guyana, no FROM. Scheduled in trigger_year_2018_events for 21 December 2018. Fires only while the PNCR/APNU slot governs.
+country_event = {
+	id = guyana.3
+	title = guyana.3.t
+	desc = guyana.3.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_elections = yes
+		check_variable = { ruling_party = 3 }
+	}
+
+	option = { # accept the vote and call elections within three months
+		name = guyana.3.a
+		log = "[GetDateText]: [This.GetName]: guyana.3.a executed"
+		add_stability = -0.02
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		change_relative_party_popularity = yes
+		custom_effect_tooltip = GUY_elections_march_2019_tt
+		hidden_effect = {
+			set_temp_variable = { election_year_param = 2014 }
+			set_temp_variable = { election_month_param = 3 }
+			set_temp_variable = { election_freq = 60 }
+			set_elections_with_frequency = yes
+		}
+		ai_chance = {
+			base = 3
+			modifier = { factor = 0.5 has_stability < 0.35 }
+		}
+	}
+
+	option = { # challenge the vote in court, as the Granger government did
+		name = guyana.3.b
+		log = "[GetDateText]: [This.GetName]: guyana.3.b executed"
+		set_country_flag = GUY_no_confidence_contested
+		add_stability = -0.03
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		change_relative_party_popularity = yes
+		custom_effect_tooltip = GUY_elections_march_2020_tt
+		hidden_effect = {
+			set_temp_variable = { election_year_param = 2015 }
+			set_temp_variable = { election_month_param = 3 }
+			set_temp_variable = { election_freq = 60 }
+			set_elections_with_frequency = yes
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 0.25 has_stability < 0.35 }
+		}
+	}
+}
+
+# ROOT = Guyana, no FROM. Scheduled in trigger_year_2020_events for 2 March 2020. Fires only after the government contested the no-confidence vote.
+country_event = {
+	id = guyana.4
+	title = guyana.4.t
+	desc = guyana.4.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_country_flag = GUY_no_confidence_contested
+	}
+
+	immediate = { set_country_flag = GUY_2020_count_disputed }
+
+	option = { # stand by the Region 4 declaration
+		name = guyana.4.a
+		log = "[GetDateText]: [This.GetName]: guyana.4.a executed"
+		add_stability = -0.03
+		set_temp_variable = { party_index = 5 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		change_relative_party_popularity = yes
+		hidden_effect = { country_event = { id = guyana.5 days = 153 } }
+		ai_chance = {
+			base = 6
+			modifier = { factor = 0.25 has_stability < 0.35 }
+		}
+	}
+
+	option = { # agree to the CARICOM-supervised recount
+		name = guyana.4.b
+		log = "[GetDateText]: [This.GetName]: guyana.4.b executed"
+		add_stability = -0.01
+		hidden_effect = { country_event = { id = guyana.5 days = 153 } }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 0.5 has_stability < 0.35 }
+		}
+	}
+}
+
+# ROOT = Guyana, no FROM. Fired by guyana.4 for 2 August 2020. Installs the PPP/C government for an AI Guyana if the simulated election has not already done so.
+country_event = {
+	id = guyana.5
+	title = guyana.5.t
+	desc = {
+		text = guyana.5.d
+		trigger = {
+			OR = {
+				is_ai = yes
+				check_variable = { ruling_party = 5 }
+			}
+		}
+	}
+	desc = {
+		text = guyana.5.d_held
+	}
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_country_flag = GUY_2020_count_disputed
+	}
+
+	option = {
+		name = guyana.5.a
+		log = "[GetDateText]: [This.GetName]: guyana.5.a executed"
+		clr_country_flag = GUY_2020_count_disputed
+		clr_country_flag = GUY_no_confidence_contested
+		add_stability = 0.03
+		if = {
+			limit = {
+				is_ai = yes
+				NOT = { check_variable = { ruling_party = 5 } }
+			}
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
+			set_temp_variable = { rul_party_temp = 5 }
+			set_temp_variable = { disable_elections = 0 }
+			change_ruling_party_effect = yes
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# ROOT = Guyana, no FROM. Scheduled in trigger_year_2015_events for 11 May 2015. Fires only while the PPP/C governs.
+country_event = {
+	id = guyana.6
+	title = guyana.6.t
+	desc = guyana.6.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		has_elections = yes
+		check_variable = { ruling_party = 5 }
+		check_variable = { party_banned_array^3 = 0 }
+	}
+
+	immediate = {
+		hidden_effect = { set_elections_60_months = yes }
+	}
+
+	option = { # concede to the coalition
+		name = guyana.6.a
+		log = "[GetDateText]: [This.GetName]: guyana.6.a executed"
+		add_stability = 0.02
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.05 }
+		change_relative_party_popularity = yes
+		set_variable = { socialism_leader = 2 }
+		set_temp_variable = { rul_party_temp = 3 }
+		set_temp_variable = { col_one = 2 }
+		set_temp_variable = { disable_elections = 0 }
+		change_ruling_party_effect = yes
+		ai_chance = { base = 90 }
+	}
+
+	option = { # the PPP/C holds on in a recount
+		name = guyana.6.b
+		log = "[GetDateText]: [This.GetName]: guyana.6.b executed"
+		add_stability = -0.05
+		set_temp_variable = { party_index = 3 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		change_relative_party_popularity = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0 has_stability < 0.4 }
+		}
+	}
+}
+
+# ROOT = Guyana, no FROM. Scheduled in trigger_year_2025_events for 15 September 2025. Renames the populist slot to WIN.
+# TODO: confirm WIN as the fit for Nat_Populism and the date it should replace the URP
+country_event = {
+	id = guyana.7
+	title = guyana.7.t
+	desc = guyana.7.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = GUY }
+
+	option = {
+		name = guyana.7.a
+		log = "[GetDateText]: [This.GetName]: guyana.7.a executed"
+		set_country_flag = GUY_win_formed
+		update_party_name = yes
+	}
+}
+
+# ROOT = the United States, FROM = Guyana. Fired by GUY_decision_stabroek_partner. Acceptance pays us a share of Guyana's GDP and lets it approve the later Stabroek phases without the excavation techs.
+country_event = {
+	id = guyana.8
+	title = guyana.8.t
+	desc = guyana.8.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = USA
+		country_exists = GUY
+		NOT = { has_war_with = GUY }
+		GUY = { NOT = { has_country_flag = GUY_stabroek_partner } }
+	}
+
+	# Back ExxonMobil and Hess in the block
+	option = {
+		name = guyana.8.a
+		log = "[GetDateText]: [This.GetName]: guyana.8.a executed"
+		add_opinion_modifier = { target = GUY modifier = medium_increase }
+		reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
+		set_temp_variable = { treasury_change = GUY.gdp_total }
+		multiply_temp_variable = { treasury_change = 0.006 }
+		modify_treasury_effect = yes
+		GUY = {
+			set_country_flag = GUY_stabroek_partner
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.006 } }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 60
+			modifier = { factor = 1.5 has_opinion = { target = GUY value > 20 } }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.4 has_opinion = { target = GUY value < -20 } }
+		}
+	}
+
+	# Decline the request
+	option = {
+		name = guyana.8.b
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_opinion = { target = GUY value < -20 } }
+			modifier = { factor = 1.5 has_war = yes }
+		}
+	}
+}
+
+# ROOT = China, FROM = Guyana. Fired by GUY_decision_stabroek_partner. Acceptance pays us a share of Guyana's GDP and lets it approve the later Stabroek phases without the excavation techs.
+country_event = {
+	id = guyana.9
+	title = guyana.9.t
+	desc = guyana.9.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CHI
+		country_exists = GUY
+		NOT = { has_war_with = GUY }
+		GUY = { NOT = { has_country_flag = GUY_stabroek_partner } }
+	}
+
+	# Back CNOOC in the block
+	option = {
+		name = guyana.9.a
+		log = "[GetDateText]: [This.GetName]: guyana.9.a executed"
+		add_opinion_modifier = { target = GUY modifier = medium_increase }
+		reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
+		set_temp_variable = { treasury_change = GUY.gdp_total }
+		multiply_temp_variable = { treasury_change = 0.006 }
+		modify_treasury_effect = yes
+		GUY = {
+			set_country_flag = GUY_stabroek_partner
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.006 } }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 60
+			modifier = { factor = 1.5 has_opinion = { target = GUY value > 20 } }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.4 has_opinion = { target = GUY value < -20 } }
+		}
+	}
+
+	# Decline the request
+	option = {
+		name = guyana.9.b
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_opinion = { target = GUY value < -20 } }
+			modifier = { factor = 1.5 has_war = yes }
+		}
+	}
+}
+
+# ROOT = Brazil, FROM = Guyana. Fired by GUY_decision_stabroek_partner. Acceptance pays us a share of Guyana's GDP and lets it approve the later Stabroek phases without the excavation techs.
+country_event = {
+	id = guyana.10
+	title = guyana.10.t
+	desc = guyana.10.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		country_exists = GUY
+		NOT = { has_war_with = GUY }
+		GUY = { NOT = { has_country_flag = GUY_stabroek_partner } }
+	}
+
+	# Send Petrobras into the block
+	option = {
+		name = guyana.10.a
+		log = "[GetDateText]: [This.GetName]: guyana.10.a executed"
+		add_opinion_modifier = { target = GUY modifier = medium_increase }
+		reverse_add_opinion_modifier = { target = GUY modifier = medium_increase }
+		set_temp_variable = { treasury_change = GUY.gdp_total }
+		multiply_temp_variable = { treasury_change = 0.006 }
+		modify_treasury_effect = yes
+		GUY = {
+			set_country_flag = GUY_stabroek_partner
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.006 } }
+			modify_treasury_effect = yes
+		}
+		ai_chance = {
+			base = 60
+			modifier = { factor = 1.5 has_opinion = { target = GUY value > 20 } }
+			modifier = { factor = 1.5 has_country_flag = BRA_guyana_link_funded }
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.4 has_opinion = { target = GUY value < -20 } }
+		}
+	}
+
+	# Decline the request
+	option = {
+		name = guyana.10.b
+		ai_chance = {
+			base = 20
+			modifier = { factor = 2 has_opinion = { target = GUY value < -20 } }
+			modifier = { factor = 1.5 has_war = yes }
+		}
+	}
+}
+
+# Decree 1787 claims the waters off our coast. ROOT = Guyana, FROM = Venezuela. Fired by venezuela.202.a.
+country_event = {
+	id = guyana_essequibo.1
+	title = guyana_essequibo.1.t
+	desc = guyana_essequibo.1.d
+	picture = GFX_generic_oil_field
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		owns_state = 1005
+		country_exists = VEN
+		NOT = { has_war_with = VEN }
+	}
+
+	# Protest at the United Nations and in CARICOM
+	option = {
+		name = guyana_essequibo.1.a
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.1.a executed"
+		add_stability = 0.01
+		add_opinion_modifier = { target = VEN modifier = small_decrease }
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = VEN value < -20 } }
+		}
+	}
+
+	# Ask Caracas for quiet talks
+	option = {
+		name = guyana_essequibo.1.b
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.1.b executed"
+		add_opinion_modifier = { target = VEN modifier = peace_talks }
+		reverse_add_opinion_modifier = { target = VEN modifier = peace_talks }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 2 has_opinion = { target = VEN value > 0 } }
+		}
+	}
+}
+
+# The Secretary-General refers the dispute to the ICJ, and we can file, 29 March 2018. Scheduled in trigger_year_2018_events. ROOT = Guyana.
+country_event = {
+	id = guyana_essequibo.2
+	title = guyana_essequibo.2.t
+	desc = guyana_essequibo.2.d
+	picture = GFX_court
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		owns_state = 1005
+		country_exists = VEN
+		NOT = { has_war_with = VEN }
+	}
+
+	# File the case at the ICJ
+	option = {
+		name = guyana_essequibo.2.a
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.2.a executed"
+		add_political_power = 25
+		reverse_add_opinion_modifier = { target = VEN modifier = medium_decrease }
+		set_country_flag = { flag = GUY_essequibo_icj_filed days = 1100 value = 1 }
+		ai_chance = {
+			base = 8
+			modifier = { factor = 1.5 has_opinion = { target = VEN value < -20 } }
+			modifier = { factor = 0.5 has_war = yes }
+		}
+	}
+
+	# Keep to the Good Offices process
+	option = {
+		name = guyana_essequibo.2.b
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.2.b executed"
+		add_opinion_modifier = { target = VEN modifier = peace_talks }
+		reverse_add_opinion_modifier = { target = VEN modifier = peace_talks }
+		ai_chance = {
+			base = 2
+			modifier = { factor = 2 has_opinion = { target = VEN value > 20 } }
+		}
+	}
+}
+
+# The ICJ rules it has jurisdiction, 18 December 2020. Scheduled in trigger_year_2020_events. Fires only if we filed the case. ROOT = Guyana.
+country_event = {
+	id = guyana_essequibo.3
+	title = guyana_essequibo.3.t
+	desc = guyana_essequibo.3.d
+	picture = GFX_court
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		owns_state = 1005
+		has_country_flag = GUY_essequibo_icj_filed
+		country_exists = VEN
+		NOT = { has_war_with = VEN }
+	}
+
+	# Press on to the merits
+	option = {
+		name = guyana_essequibo.3.a
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.3.a executed"
+		add_stability = 0.02
+		add_political_power = 20
+		ai_chance = {
+			base = 8
+			modifier = { factor = 0.5 has_war = yes }
+		}
+	}
+
+	# Invite Caracas to talks alongside the case
+	option = {
+		name = guyana_essequibo.3.b
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.3.b executed"
+		add_opinion_modifier = { target = VEN modifier = peace_talks }
+		reverse_add_opinion_modifier = { target = VEN modifier = peace_talks }
+		ai_chance = {
+			base = 2
+			modifier = { factor = 2 has_opinion = { target = VEN value > 20 } }
+		}
+	}
+}
+
+# Venezuela proclaims the Guayana Esequiba state. ROOT = Guyana, FROM = Venezuela. Fired by venezuela.204.a and venezuela.204.c.
+country_event = {
+	id = guyana_essequibo.4
+	title = guyana_essequibo.4.t
+	desc = guyana_essequibo.4.d
+	picture = GFX_generic_soldiers
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		owns_state = 1005
+		country_exists = VEN
+		NOT = { has_war_with = VEN }
+	}
+
+	# Ask Washington to stand with us
+	option = {
+		name = guyana_essequibo.4.a
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.4.a executed"
+		trigger = { country_exists = USA }
+		USA = { country_event = { id = guyana_essequibo.5 days = 1 } }
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = { USA = { diplomatic_relation = { country = GUY relation = guarantee active = yes } } }
+		ai_chance = {
+			base = 6
+			modifier = { factor = 1.5 has_opinion = { target = USA value > 20 } }
+			modifier = { factor = 0.4 has_opinion = { target = USA value < -20 } }
+		}
+	}
+
+	# Rally CARICOM
+	option = {
+		name = guyana_essequibo.4.b
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.4.b executed"
+		add_stability = 0.02
+		every_other_country = {
+			limit = {
+				has_country_flag = caribbean_nation_flag
+				NOT = { original_tag = CUB }
+			}
+			add_opinion_modifier = { target = ROOT modifier = took_stand_for_us }
+		}
+		ai_chance = { base = 5 }
+	}
+
+	# Seek Brasília's backing
+	option = {
+		name = guyana_essequibo.4.c
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.4.c executed"
+		trigger = { country_exists = BRA }
+		add_opinion_modifier = { target = BRA modifier = small_increase }
+		set_temp_variable = { percent_change = 2 }
+		set_temp_variable = { tag_index = BRA.id }
+		change_influence_percentage = yes
+		set_country_flag = { flag = GUY_essequibo_asked_brazil days = 30 value = 1 }
+		ai_chance = {
+			base = 4
+			modifier = { factor = 1.5 BRA = { has_country_flag = BRA_guyana_link_funded } }
+			modifier = { factor = 1.5 has_opinion = { target = BRA value > 30 } }
+			modifier = { factor = 0.4 has_opinion = { target = BRA value < 0 } }
+		}
+	}
+
+	# Offer Caracas talks without conditions
+	option = {
+		name = guyana_essequibo.4.e
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.4.e executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = VEN modifier = peace_talks }
+		reverse_add_opinion_modifier = { target = VEN modifier = peace_talks }
+		ai_chance = {
+			base = 2
+			modifier = { factor = 2 has_war = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Georgetown asks us for backing after the referendum. ROOT = the United States, FROM = Guyana.
+country_event = {
+	id = guyana_essequibo.5
+	title = guyana_essequibo.5.t
+	desc = guyana_essequibo.5.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = USA
+		country_exists = GUY
+		NOT = { has_war_with = GUY }
+		NOT = { has_guaranteed = GUY }
+	}
+
+	# Guarantee Guyana's independence
+	option = {
+		name = guyana_essequibo.5.a
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.5.a executed"
+		diplomatic_relation = { country = GUY relation = guarantee active = yes }
+		reverse_add_opinion_modifier = { target = GUY modifier = gratitude }
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { influence_target = GUY.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 3
+			modifier = { factor = 2 has_opinion = { target = VEN value < -20 } }
+			modifier = { factor = 1.5 has_opinion = { target = GUY value > 20 } }
+			modifier = { factor = 0.5 has_war = yes }
+		}
+	}
+
+	# Issue a statement of support
+	option = {
+		name = guyana_essequibo.5.b
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.5.b executed"
+		reverse_add_opinion_modifier = { target = GUY modifier = small_increase }
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { influence_target = GUY.id }
+		change_influence_percentage = yes
+		ai_chance = { base = 6 }
+	}
+
+	# Stay out of the dispute
+	option = {
+		name = guyana_essequibo.5.c
+		ai_chance = {
+			base = 2
+			modifier = { factor = 2 has_war = yes }
+			modifier = { factor = 0.5 has_opinion = { target = VEN value < -20 } }
+		}
+	}
+}
+
+# Venezuela pledges not to use force at Argyle. ROOT = Guyana, FROM = Venezuela. Fired by venezuela.205.a.
+country_event = {
+	id = guyana_essequibo.6
+	title = guyana_essequibo.6.t
+	desc = guyana_essequibo.6.d
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = GUY
+		owns_state = 1005
+		country_exists = VEN
+		NOT = { has_war_with = VEN }
+	}
+
+	# Accept the pledge and stay the course
+	option = {
+		name = guyana_essequibo.6.a
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.6.a executed"
+		add_stability = 0.01
+		add_opinion_modifier = { target = VEN modifier = eased_border_tensions }
+		ai_chance = { base = 8 }
+	}
+
+	# Keep our guard up
+	option = {
+		name = guyana_essequibo.6.b
+		log = "[GetDateText]: [This.GetName]: guyana_essequibo.6.b executed"
+		add_war_support = 0.02
+		ai_chance = {
+			base = 2
+			modifier = { factor = 2 has_opinion = { target = VEN value < -40 } }
+		}
+	}
+}
