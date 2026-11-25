@@ -111,6 +111,9 @@ _VANILLA_IDEA_PREFIXES: Tuple[str, ...] = tuple(
 _INSTANT_EXEMPT_PREFIXES: Tuple[str, ...] = tuple(
     validation_config("validate_ideas", "equipment_bonus_instant_exempt")
 )
+_MISSING_ICON_EXEMPT_PREFIXES: Tuple[str, ...] = tuple(
+    validation_config("validate_ideas", "missing_icon_exempt")
+)
 
 
 def _extract_swap_idea_refs(text: str) -> List[str]:
@@ -1294,6 +1297,8 @@ class Validator(BaseValidator):
         for idea_name in sorted(defined_ideas):
             cat, name_override, picture = defined_ideas[idea_name]
             if cat == "character" or cat in hidden_cats:
+                continue
+            if idea_name.startswith(_MISSING_ICON_EXEMPT_PREFIXES):
                 continue
             checked += 1
             msg = _missing_icon_message(

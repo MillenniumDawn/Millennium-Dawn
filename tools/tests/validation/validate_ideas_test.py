@@ -908,6 +908,31 @@ def test_missing_icons_skip_hidden_and_character_categories(tmp_path, no_vanilla
     ]
 
 
+def test_missing_icons_skip_exempt_prefixes(tmp_path, no_vanilla_gfx, monkeypatch):
+    monkeypatch.setattr(validate_ideas, "_MISSING_ICON_EXEMPT_PREFIXES", ("EXEMPT_",))
+    _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
+    _write(tmp_path, "interface/ideas.gfx", "")
+    ideas = _write(
+        tmp_path,
+        "common/ideas/x.txt",
+        "ideas = {\n\tcountry = {\n\t\tEXEMPT_x = {\n\t\t}\n"
+        "\t\tNO_icon = {\n\t\t}\n\t}\n}\n",
+    )
+    validator = _validator(tmp_path)
+
+    validator.validate_missing_icons(
+        {
+            "EXEMPT_x": ("country", None, None),
+            "NO_icon": ("country", None, None),
+        },
+        {str(ideas): ["EXEMPT_x", "NO_icon"]},
+    )
+
+    assert [i.message for i in validator._issues] == [
+        "country: NO_icon: auto-icon GFX_idea_NO_icon (undefined)"
+    ]
+
+
 def test_empty_idea_scope_skips_the_sprite_index(tmp_path, monkeypatch):
     validator = _validator(tmp_path)
     monkeypatch.setattr(

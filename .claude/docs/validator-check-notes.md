@@ -574,6 +574,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `idea-quality` (WARNING): an idea `equipment_bonus` without `instant = yes` applies only
   to variants created afterwards. Exempt name prefixes go in
   `equipment_bonus_instant_exempt`.
+- `missing-idea-icon` (WARNING): an idea's icon sprite is undefined, case-mismatched, or
+  placeholder art. Ideas shown only through a scripted GUI panel go in
+  `missing_icon_exempt` by name prefix.
 - `idea-quality` (WARNING): `weekly_war_support` and `weekly_stability` in a top-level
   `modifier` on a `country` idea need a permanent grant to tick as intended. The check
   reads static `add_idea(s)` and `add_timed_idea` call sites across `common/`, `events/`,
