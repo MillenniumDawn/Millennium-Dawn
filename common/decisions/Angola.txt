@@ -1,0 +1,68 @@
+MD_economic_category = {
+	AGL_caculo_cabaca_planning = {
+		allowed = { original_tag = AGL }
+		icon = GFX_decision_generic_construction
+		fire_only_once = yes
+		days_remove = 120
+		visible = { has_completed_focus = GENERIC_energy_sector }
+
+		available = {
+			owns_state = 298
+			NOT = { has_war_with = UNI }
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.5 } }
+		custom_cost_text = cost_0_5
+		modifier = { civilian_factory_use = 1 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AGL_caculo_cabaca_planning"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AGL_caculo_cabaca_planning remove"
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = AGL_power_shortages
+			}
+			add_to_variable = { AGL_power_shortage_factory_var = 0.03 tooltip = industrial_capacity_factory_tt }
+			add_to_variable = { AGL_power_shortage_construction_var = 0.03 tooltip = production_speed_buildings_factor_tt }
+			newline = yes
+			country_event = { id = Angola.1 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 has_an_energy_deficit = yes }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	AGL_caculo_cabaca_mission = {
+		allowed = { original_tag = AGL }
+		icon = GFX_decision_generic_electricity
+		days_mission_timeout = 1095
+		fire_only_once = yes
+		selectable_mission = no
+		is_good = yes
+		activation = { has_country_flag = AGL_caculo_cabaca_financed }
+		available = { hidden_trigger = { always = no } }
+		cancel_trigger = { NOT = { owns_state = 298 } }
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AGL_caculo_cabaca_mission cancel"
+			if = {
+				limit = { has_dynamic_modifier = { modifier = AGL_caculo_cabaca_works } }
+				remove_dynamic_modifier = { modifier = AGL_caculo_cabaca_works }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AGL_caculo_cabaca_mission timeout"
+			country_event = Angola.5
+		}
+	}
+}

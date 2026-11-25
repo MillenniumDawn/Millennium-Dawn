@@ -3,7 +3,6 @@ add_namespace = AngolaNews
 
 # Bird Note: All Angola Civil War events have been shifted to MD_event_on_actions.txt
 news_event = {
-
 	id = AngolaNews.1
 	title = AngolaNews.1.t
 	desc = {
@@ -15,12 +14,201 @@ news_event = {
 		trigger = { FROM = { original_tag = UNI } }
 	}
 	picture = GFX_news_angolan_civil_war
-
+	is_triggered_only = yes
 	major = yes
 
+	option = { name = AngolaNews.1.a }
+}
+
+# Caculo Cabaca Power Station, fired by AGL_caculo_cabaca_planning
+country_event = {
+	id = Angola.1
+	title = Angola.1.t
+	desc = Angola.1.d
+	picture = GFX_powerplant
 	is_triggered_only = yes
 
 	option = {
-		name = AngolaNews.1.a
+		name = Angola.1.a
+		log = "[GetDateText]: [This.GetName]: Angola.1.a executed"
+		trigger = { country_exists = CHI }
+		set_country_flag = AGL_caculo_cabaca_financed
+		set_variable = { AGL_caculo_cabaca_capacity = 2.172 }
+		set_temp_variable = { treasury_change = -0.5 }
+		modify_treasury_effect = yes
+		set_temp_variable = { debt_change = 3.5 }
+		modify_debt_effect = yes
+		add_opinion_modifier = { target = CHI modifier = joint_infrastructure_projects }
+		reverse_add_opinion_modifier = { target = CHI modifier = joint_infrastructure_projects }
+		add_dynamic_modifier = { modifier = AGL_caculo_cabaca_works }
+		activate_mission = AGL_caculo_cabaca_mission
+		hidden_effect = {
+			country_event = { id = Angola.2 days = 300 random_days = 100 }
+			country_event = { id = Angola.3 days = 550 }
+			country_event = { id = Angola.4 days = 750 random_days = 100 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = Angola.1.b
+		log = "[GetDateText]: [This.GetName]: Angola.1.b executed"
+		set_country_flag = AGL_caculo_cabaca_financed
+		set_variable = { AGL_caculo_cabaca_capacity = 2.172 }
+		set_temp_variable = { treasury_change = -4 }
+		modify_treasury_effect = yes
+		add_dynamic_modifier = { modifier = AGL_caculo_cabaca_works }
+		activate_mission = AGL_caculo_cabaca_mission
+		add_days_mission_timeout = {
+			mission = AGL_caculo_cabaca_mission
+			days = -180
+		}
+		hidden_effect = {
+			country_event = { id = Angola.2 days = 300 random_days = 100 }
+			country_event = { id = Angola.3 days = 550 }
+			country_event = { id = Angola.4 days = 750 random_days = 100 }
+		}
+		ai_chance = {
+			base = 3
+			modifier = { factor = 3 check_variable = { treasury > 12 } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+country_event = {
+	id = Angola.2
+	title = Angola.2.t
+	desc = Angola.2.d
+	picture = GFX_gen_construction
+	is_triggered_only = yes
+
+	trigger = { has_active_mission = AGL_caculo_cabaca_mission }
+
+	option = {
+		name = Angola.2.a
+		log = "[GetDateText]: [This.GetName]: Angola.2.a executed"
+		set_temp_variable = { treasury_change = -0.75 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = Angola.2.b
+		log = "[GetDateText]: [This.GetName]: Angola.2.b executed"
+		add_days_mission_timeout = {
+			mission = AGL_caculo_cabaca_mission
+			days = 120
+		}
+		ai_chance = { base = 5 }
+	}
+
+	option = {
+		name = Angola.2.c
+		log = "[GetDateText]: [This.GetName]: Angola.2.c executed"
+		set_variable = { AGL_caculo_cabaca_capacity = 1.5 }
+		custom_effect_tooltip = Angola.2.c_tt
+		ai_chance = {
+			base = 2
+			modifier = { factor = 3 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+country_event = {
+	id = Angola.3
+	title = Angola.3.t
+	desc = Angola.3.d
+	picture = GFX_zamfara_dam
+	is_triggered_only = yes
+
+	trigger = { has_active_mission = AGL_caculo_cabaca_mission }
+
+	option = {
+		name = Angola.3.a
+		log = "[GetDateText]: [This.GetName]: Angola.3.a executed"
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = AGL_power_shortages
+		}
+		add_to_variable = { AGL_power_shortage_factory_var = 0.04 tooltip = industrial_capacity_factory_tt }
+		add_to_variable = { AGL_power_shortage_construction_var = 0.04 tooltip = production_speed_buildings_factor_tt }
+	}
+}
+
+country_event = {
+	id = Angola.4
+	title = Angola.4.t
+	desc = Angola.4.d
+	picture = GFX_gen_construction
+	is_triggered_only = yes
+
+	trigger = { has_active_mission = AGL_caculo_cabaca_mission }
+
+	option = {
+		name = Angola.4.a
+		log = "[GetDateText]: [This.GetName]: Angola.4.a executed"
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = Angola.4.b
+		log = "[GetDateText]: [This.GetName]: Angola.4.b executed"
+		add_days_mission_timeout = {
+			mission = AGL_caculo_cabaca_mission
+			days = 180
+		}
+		ai_chance = { base = 5 }
+	}
+}
+
+country_event = {
+	id = Angola.5
+	title = Angola.5.t
+	desc = Angola.5.d
+	picture = GFX_zamfara_dam
+	is_triggered_only = yes
+
+	option = {
+		name = Angola.5.a
+		log = "[GetDateText]: [This.GetName]: Angola.5.a executed"
+		if = {
+			limit = { has_dynamic_modifier = { modifier = AGL_power_shortages } }
+			remove_dynamic_modifier = { modifier = AGL_power_shortages }
+		}
+		if = {
+			limit = { has_dynamic_modifier = { modifier = AGL_caculo_cabaca_works } }
+			remove_dynamic_modifier = { modifier = AGL_caculo_cabaca_works }
+		}
+		if = {
+			limit = { owns_state = 298 }
+			298 = {
+				set_temp_variable = { electric_addition = ROOT.AGL_caculo_cabaca_capacity }
+				set_temp_variable = { storage_addition = 0 }
+				add_hydroelectric_energy_production_effect = yes
+				set_temp_variable = { temp_productivity_change = 25 }
+				state_flat_productivity_change_effect = yes
+			}
+		}
+		hidden_effect = {
+			clear_variable = AGL_power_shortage_factory_var
+			clear_variable = AGL_power_shortage_construction_var
+			clear_variable = AGL_caculo_cabaca_capacity
+		}
 	}
 }
