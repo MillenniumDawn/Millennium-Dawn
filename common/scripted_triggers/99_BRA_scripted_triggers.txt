@@ -1,3 +1,83 @@
+BRA_lula_is_ineligible = {
+	OR = {
+		has_idea = BRA_idea_lula_in_custody
+		has_idea = BRA_idea_lula_conviction_pending
+	}
+}
+
+BRA_car_wash_is_open = {
+	OR = {
+		has_idea = BRA_idea_car_wash1
+		has_idea = BRA_idea_car_wash2
+		has_idea = BRA_idea_car_wash3
+		has_idea = BRA_idea_car_wash4
+	}
+}
+
+BRA_has_pending_special_election = {
+	original_tag = BRA
+	has_completed_focus = BRA_the_new_elections
+	NOT = {
+		OR = {
+			has_country_flag = BRA_psl_win
+			has_country_flag = BRA_pt_win
+			has_country_flag = BRA_psdb_win
+			has_country_flag = generic_election_killswitch
+			has_country_flag = elections_in_progress
+		}
+	}
+}
+
+BRA_ai_left_path = {
+	OR = {
+		has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+		has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+		has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+		has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+	}
+}
+
+BRA_ai_right_path = {
+	OR = {
+		has_global_flag = BRA_LIBERALS_FOCUS_PATH
+		has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+		has_global_flag = BRA_MONARCHY_FOCUS_PATH
+	}
+}
+
+BRA_ai_has_focus_path = {
+	OR = {
+		BRA_ai_left_path = yes
+		BRA_ai_right_path = yes
+	}
+}
+
+BRA_influence_higher_10 = {
+	any_of = {
+		array = influence_array
+		value = v
+		index = i
+		var:v = { tag = BRA }
+		check_variable = { influence_array_val^i > 9.999 }
+	}
+}
+
+BRA_can_sponsor_ven_mercosur_association = {
+	has_global_flag = MER_mercosur_requests_enabled
+	has_dynamic_modifier = { modifier = mercosur_member_state_modifier }
+	is_in_array = { global.mercosur_potential = THIS }
+	is_subject = no
+	has_at_least_regional_power_status = yes
+	country_exists = VEN
+	VEN = {
+		NOT = { has_idea = BRA_idea_associate_states }
+		NOT = { has_dynamic_modifier = mercosur_member_state_modifier }
+		is_subject = no
+		has_elections = yes
+		NOT = { has_country_flag = partyall_banned }
+	}
+}
+
 BRA_has_conserved_acreage_x = {
 	custom_trigger_tooltip = {
 		check_variable = { BRA_acres_conserved > needed_acreage }
@@ -9,5 +89,55 @@ BRA_has_wild_acreage_x = {
 	custom_trigger_tooltip = {
 		check_variable = { BRA_acres_wild > needed_acreage }
 		tooltip = BRA_has_wild_acreage_x_tt
+	}
+}
+
+# THIS = the borrower, ROOT = Brazil. True when the borrower can take the BNDES project built for it
+BRA_bndes_project_available = {
+	scripted_investment_recipient_available = yes
+	set_temp_variable = { investment_slots_needed = 1 }
+	set_temp_variable = { investment_slot_building = 11 }
+	OR = {
+		AND = {
+			original_tag = CUB
+			capital_scope = {
+				is_controlled_by = PREV
+				NOT = { is_in_array = { projects_in_state = ROOT } }
+				investment_civilian_slot_available = yes
+			}
+		}
+		AND = {
+			original_tag = VEN
+			capital_scope = {
+				is_controlled_by = PREV
+				NOT = { is_in_array = { projects_in_state = ROOT } }
+				investment_infrastructure_slots_available = yes
+			}
+		}
+		AND = {
+			original_tag = ECU
+			ROOT = { has_tech = fuel_silos }
+			any_controlled_state = {
+				is_owned_by = PREV
+				NOT = { is_in_array = { projects_in_state = ROOT } }
+				investment_single_building_slot_available = yes
+			}
+		}
+	}
+}
+
+# THIS = a state. True when it has a free infrastructure level that its controller has the railway tech to build
+BRA_state_can_take_infrastructure = {
+	custom_trigger_tooltip = {
+		tooltip = BRA_state_can_take_infrastructure_tt
+		set_temp_variable = { investment_slots_needed = 1 }
+		investment_infrastructure_slots_available = yes
+	}
+}
+
+BRA_state_has_favelas = {
+	OR = {
+		has_dynamic_modifier = { modifier = BRA_favela_modifier }
+		has_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
 	}
 }
