@@ -2096,11 +2096,23 @@ _CATEGORY_GATE_CASES = {
         "",
         {
             "dec1": _block("visible", _WAR),
-            "dec2": _block("available", _WAR),
+            "dec2": _block("target_root_trigger", _WAR),
             "mission": _MISSION,
         },
         [],
         [("cat: all 2 decisions", _WAR)],
+    ),
+    "shared availability does not hide decisions": (
+        "",
+        {"dec1": _block("available", _WAR), "dec2": _block("available", _WAR)},
+        [],
+        [],
+    ),
+    "visibility shared with an availability-only check": (
+        "",
+        {"dec1": _block("visible", _WAR), "dec2": _block("available", _WAR)},
+        [],
+        [],
     ),
     "line only some decisions check": (
         "",
@@ -2112,7 +2124,7 @@ _CATEGORY_GATE_CASES = {
     "constant true is not a category gate": (
         "",
         {
-            "dec1": _block("available", "always = yes"),
+            "dec1": _block("visible", "always = yes"),
             "dec2": _block("visible", "always = yes"),
         },
         [],
@@ -2131,12 +2143,12 @@ _CATEGORY_GATE_CASES = {
         "",
         {
             "dec1": _block(
-                "available",
+                "visible",
                 "set_temp_variable = { temp_value = 5 }\n"
                 "hidden_trigger = { set_temp_variable = { temp_other = 6 } }",
             ),
             "dec2": _block(
-                "available",
+                "visible",
                 "set_temp_variable = { temp_value = 5 }\n"
                 "hidden_trigger = { set_temp_variable = { temp_other = 6 } }",
             ),
