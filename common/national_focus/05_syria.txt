@@ -1427,8 +1427,6 @@ focus_tree = {
 			country_event = SyriaFocus.89
 			hidden_effect = {
 				set_country_flag = no_leader_change
-				set_temp_variable = { election_year = global.year }
-				subtract_from_temp_variable = { election_year = 3 }
 				meta_effect = {
 					text = {
 						set_politics = {
@@ -1438,8 +1436,8 @@ focus_tree = {
 							election_frequency = 48
 						}
 					}
-					YEAR = global.year
-					MONTH = global.month
+					YEAR = "[?global.year]"
+					MONTH = "[?global.month]"
 				}
 				clr_country_flag = no_leader_change
 			}
@@ -2729,8 +2727,10 @@ focus_tree = {
 		}
 
 		bypass = {
-			NOT = { country_exists = SOV }
-			has_war_with = SOV
+			OR = {
+				NOT = { country_exists = SOV }
+				has_war_with = SOV
+			}
 		}
 
 		completion_reward = {
@@ -2784,8 +2784,10 @@ focus_tree = {
 		}
 
 		bypass = {
-			NOT = { country_exists = SOV }
-			has_war_with = SOV
+			OR = {
+				NOT = { country_exists = SOV }
+				has_war_with = SOV
+			}
 		}
 
 		completion_reward = {
@@ -2852,8 +2854,10 @@ focus_tree = {
 		}
 
 		bypass = {
-			NOT = { country_exists = SOV }
-			has_war_with = SOV
+			OR = {
+				NOT = { country_exists = SOV }
+				has_war_with = SOV
+			}
 		}
 
 		completion_reward = {
@@ -3727,8 +3731,10 @@ focus_tree = {
 		}
 
 		bypass = {
-			NOT = { country_exists = USA }
-			has_war_with = USA
+			OR = {
+				NOT = { country_exists = USA }
+				has_war_with = USA
+			}
 		}
 
 		completion_reward = {
@@ -7467,48 +7473,49 @@ focus_tree = {
 			nationalist > 0.10
 		}
 
-		bypass = { has_government = nationalist }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SYR_ssnp_coup"
-			if = { limit = { nationalist < 0.10 }
-				set_temp_variable = { rul_party_temp = 20 }
-				set_temp_variable = { disable_elections = 1 }
-				change_ruling_party_effect = yes
-				add_popularity = { ideology = nationalist popularity = 0.30 }
-				recalculate_party = yes
-				random = {
-					chance = 60
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
+			if = {
+				limit = { NOT = { has_government = nationalist } }
+				if = { limit = { nationalist < 0.10 }
+					set_temp_variable = { rul_party_temp = 20 }
+					set_temp_variable = { disable_elections = 1 }
+					change_ruling_party_effect = yes
+					add_popularity = { ideology = nationalist popularity = 0.30 }
+					recalculate_party = yes
+					random = {
+						chance = 60
+						start_civil_war = {
+							ideology = communism
+							size = 0.5
+						}
 					}
 				}
-			}
-			else_if = {
-				limit = {
-					nationalist > 0.09
-					nationalist < 0.31
-				}
-				set_temp_variable = { rul_party_temp = 20 }
-				set_temp_variable = { disable_elections = 1 }
-				change_ruling_party_effect = yes
-				add_popularity = { ideology = nationalist popularity = 0.30 }
-				recalculate_party = yes
-				random = {
-					chance = 40
-					start_civil_war = {
-						ideology = communism
-						size = 0.5
+				else_if = {
+					limit = {
+						nationalist > 0.09
+						nationalist < 0.31
+					}
+					set_temp_variable = { rul_party_temp = 20 }
+					set_temp_variable = { disable_elections = 1 }
+					change_ruling_party_effect = yes
+					add_popularity = { ideology = nationalist popularity = 0.30 }
+					recalculate_party = yes
+					random = {
+						chance = 40
+						start_civil_war = {
+							ideology = communism
+							size = 0.5
+						}
 					}
 				}
-			}
-			else = {
-				set_temp_variable = { rul_party_temp = 20 }
-				set_temp_variable = { disable_elections = 1 }
-				change_ruling_party_effect = yes
-				add_popularity = { ideology = nationalist popularity = 0.30 }
-				recalculate_party = yes
+				else = {
+					set_temp_variable = { rul_party_temp = 20 }
+					set_temp_variable = { disable_elections = 1 }
+					change_ruling_party_effect = yes
+					add_popularity = { ideology = nationalist popularity = 0.30 }
+					recalculate_party = yes
+				}
 			}
 			if = {
 				limit = { has_idea = iranian_quds_force }
@@ -7945,8 +7952,6 @@ focus_tree = {
 			country_event = MD4_election_campaign.0
 			hidden_effect = {
 				set_country_flag = no_leader_change
-				set_temp_variable = { election_year = global.year }
-				subtract_from_temp_variable = { election_year = 3 }
 				meta_effect = {
 					text = {
 						set_politics = {
@@ -7956,8 +7961,8 @@ focus_tree = {
 							election_frequency = 48
 						}
 					}
-					YEAR = global.year
-					MONTH = global.month
+					YEAR = "[?global.year]"
+					MONTH = "[?global.month]"
 				}
 				clr_country_flag = no_leader_change
 			}
@@ -14314,10 +14319,7 @@ shared_focus = {
 
 	available = { NOT = { has_country_flag = Relinquished_Hatay } }
 
-	bypass = {
-		158 = { OWNER = { is_subject_of = SYR } }
-		owns_state = 158
-	}
+	bypass = { 158 = { is_core_of = ROOT } }
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus SYR_reaffirm_claims_on_hatay"

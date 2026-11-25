@@ -169,6 +169,11 @@ SYR_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision renounce_claims_on_golan"
 			set_country_flag = Golan_Negotiations
 			ISR = { country_event = { id = SyriaDecisions.0 days = 3 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				remove_state_core = 587
+				remove_state_claim = 587
+			}
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
 			change_relative_party_popularity = yes
@@ -214,6 +219,11 @@ SYR_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision renounce_claims_on_hatay"
 			set_country_flag = Hatay_Negotiations
 			TUR = { country_event = { id = SyriaDecisions.3 days = 3 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				remove_state_core = 158
+				remove_state_claim = 158
+			}
 			set_temp_variable = { party_popularity_increase = -0.10 }
 			set_temp_variable = { temp_outlook_increase = -0.05 }
 			change_relative_party_popularity = yes
@@ -255,6 +265,20 @@ SYR_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision guarantee_rojava_independence"
 			set_country_flag = Rojava_Negotiations
 			ROJ = { country_event = { id = SyriaDecisions.6 days = 3 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				ROJ = {
+					if = { limit = { ROOT = { has_war_with = SYR } } add_to_war = { targeted_alliance = ROOT enemy = SYR } }
+					if = { limit = { ROOT = { has_war_with = FSA } } add_to_war = { targeted_alliance = ROOT enemy = FSA } }
+					if = { limit = { ROOT = { has_war_with = NUS } } add_to_war = { targeted_alliance = ROOT enemy = NUS } }
+				}
+				remove_state_core = 575
+				remove_state_core = 571
+				remove_state_core = 193
+				if = { limit = { owns_state = 575 } ROJ = { transfer_state = 575 } }
+				if = { limit = { owns_state = 571 } ROJ = { transfer_state = 571 } }
+				if = { limit = { owns_state = 193 } ROJ = { transfer_state = 193 } }
+			}
 			set_temp_variable = { party_popularity_increase = -0.20 }
 			set_temp_variable = { temp_outlook_increase = -0.10 }
 			change_relative_party_popularity = yes
@@ -265,7 +289,7 @@ SYR_decisions = {
 			modifier = {
 				add = 50
 				surrender_progress > 0.8
-				is_historical_focus_on = no
+				SYR_ai_historical_path = no
 			}
 		}
 	}
@@ -289,7 +313,6 @@ SYR_decisions = {
 				add_state_core = 575
 				add_state_core = 191
 				add_state_core = 995
-				hidden_effect = { load_oob = ROJ_2017 }
 			}
 			SYR = {
 				release = ROJ
@@ -545,6 +568,23 @@ SYR_greater_syria_decisions = {
 				}
 				HAM = { country_event = { id = md4.14 hours = 6 } }
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				if = {
+					limit = {
+						country_exists = PAL
+						PAL = { NOT = { is_subject_of = ROOT } }
+					}
+					puppet = PAL
+				}
+				if = {
+					limit = {
+						country_exists = HAM
+						HAM = { NOT = { is_subject_of = ROOT } }
+					}
+					puppet = HAM
+				}
+			}
 		}
 
 		ai_will_do = { base = 10 }
@@ -716,9 +756,17 @@ SYR_greater_syria_decisions = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SYR_ally_with_houthis"
 			HOU = { country_event = { id = SyriaFocus.70 hours = 6 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { add_to_faction = HOU }
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { add = 20 SYR_ai_axis_path = yes }
+			modifier = { add = 15 enemies_strength_ratio > 0.75 }
+			modifier = { factor = 0 SYR_ai_not_axis_path = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	SYR_shia_uprising_in_QTF = {
@@ -757,7 +805,13 @@ SYR_greater_syria_decisions = {
 			QTF = { country_event = { id = SyriaFocus.71 hours = 6 } }
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { add = 20 SYR_ai_axis_path = yes }
+			modifier = { add = 15 enemies_strength_ratio > 0.75 }
+			modifier = { factor = 0 SYR_ai_not_axis_path = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	SYR_operation_eastern_whirlwind = {
@@ -893,6 +947,8 @@ SYR_greater_syria_decisions = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 0 strength_ratio = { tag = PER ratio < 1 } }
+			modifier = { factor = 0 check_variable = { treasury < 1.5 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -923,6 +979,8 @@ SYR_greater_syria_decisions = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 0 strength_ratio = { tag = PER ratio < 1 } }
+			modifier = { factor = 0 check_variable = { treasury < 7.5 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -954,6 +1012,8 @@ SYR_greater_syria_decisions = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 0 strength_ratio = { tag = PER ratio < 1 } }
+			modifier = { factor = 0 check_variable = { treasury < 22.5 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -984,6 +1044,8 @@ SYR_greater_syria_decisions = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 0 strength_ratio = { tag = PER ratio < 1 } }
+			modifier = { factor = 0 check_variable = { treasury < 9 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -1014,6 +1076,8 @@ SYR_greater_syria_decisions = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 0 strength_ratio = { tag = PER ratio < 1 } }
+			modifier = { factor = 0 check_variable = { treasury < 3 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -1565,12 +1629,7 @@ SYR_economic_investments = {
 					limit = {
 						OR = {
 							check_variable = { kurdish_status > 49 }
-							NOT = {
-								has_dynamic_modifier = {
-									modifier = kurdish_political_inclusiveness_dynamic_modifier
-									scope = SYR
-								}
-							}
+							NOT = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
 						}
 					}
 					193 = {
@@ -1660,12 +1719,7 @@ SYR_economic_investments = {
 					limit = {
 						OR = {
 							check_variable = { kurdish_status > 49 }
-							NOT = {
-								has_dynamic_modifier = {
-									modifier = kurdish_political_inclusiveness_dynamic_modifier
-									scope = SYR
-								}
-							}
+							NOT = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
 						}
 					}
 					193 = {
@@ -1754,12 +1808,7 @@ SYR_economic_investments = {
 					limit = {
 						OR = {
 							check_variable = { kurdish_status > 49 }
-							NOT = {
-								has_dynamic_modifier = {
-									modifier = kurdish_political_inclusiveness_dynamic_modifier
-									scope = SYR
-								}
-							}
+							NOT = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
 						}
 					}
 					193 = {
@@ -1823,12 +1872,7 @@ SYR_economic_investments = {
 					limit = {
 						OR = {
 							check_variable = { kurdish_status > 49 }
-							NOT = {
-								has_dynamic_modifier = {
-									modifier = kurdish_political_inclusiveness_dynamic_modifier
-									scope = SYR
-								}
-							}
+							NOT = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
 						}
 						has_completed_focus = SYR_legalise_private_banking
 					}
@@ -2151,17 +2195,17 @@ SYR_centralization_balance_of_power_category = {
 			set_temp_variable = { syrian_centralization_minority_average = 0 }
 			set_temp_variable = { syrian_number_of_minorities = 0 }
 			if = {
-				limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = alawite_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
 			if = {
-				limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = druze_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
 			if = {
-				limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = kurdish_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
@@ -2539,17 +2583,17 @@ SYR_centralization_balance_of_power_category = {
 			set_temp_variable = { syrian_centralization_minority_average = 0 }
 			set_temp_variable = { syrian_number_of_minorities = 0 }
 			if = {
-				limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = alawite_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
 			if = {
-				limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = druze_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
 			if = {
-				limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = kurdish_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
@@ -2690,17 +2734,17 @@ SYR_centralization_balance_of_power_category = {
 			set_temp_variable = { syrian_centralization_minority_average = 0 }
 			set_temp_variable = { syrian_number_of_minorities = 0 }
 			if = {
-				limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = alawite_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
 			if = {
-				limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = druze_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
 			if = {
-				limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = kurdish_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
@@ -2821,17 +2865,17 @@ SYR_centralization_balance_of_power_category = {
 			set_temp_variable = { syrian_centralization_minority_average = 0 }
 			set_temp_variable = { syrian_number_of_minorities = 0 }
 			if = {
-				limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = alawite_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = alawite_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
 			if = {
-				limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = druze_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = druze_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
 			if = {
-				limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier scope = SYR } }
+				limit = { has_dynamic_modifier = { modifier = kurdish_political_inclusiveness_dynamic_modifier } }
 				add_to_temp_variable = { syrian_centralization_minority_average = kurdish_status }
 				add_to_temp_variable = { syrian_number_of_minorities = 1 }
 			}
