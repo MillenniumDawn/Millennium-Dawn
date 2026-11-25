@@ -92,11 +92,11 @@ Brazil starts with 60 factories: 44 civilian industries, 13 military industries,
 
 Brazil starts with $48 billion in the treasury, $1,053 billion in debt (about half of GDP), and $124.8 billion in international investments. GDP is about $2.1 trillion, or $11.9 thousand per person.
 
-Many economy focuses add to one spirit, State of the Brazilian Economy, instead of stacking separate spirits. Three spirits changed with it:
+Many economy focuses add to one spirit, State of the Brazilian Economy, instead of granting separate spirits. Three former spirits now raise it:
 
-- **Efficient Public Sector.** The Effective Public Sector focus, open only under José Serra, now lowers bureaucracy costs by 10% and interest rates by 15%. It no longer speeds construction.
-- **Liberal Economy.** Push for Economic Liberalization raises factory efficiency growth and cuts Foreign Investment costs by 10%.
-- **Revitalize the Economy.** It raises productivity growth and research speed, so it no longer duplicates Liberal Economy.
+- **Effective Public Sector.** The focus, open only under José Serra, lowers bureaucracy costs by 10% and interest rates by 15%. It no longer speeds construction.
+- **Push for Economic Liberalization.** It raises factory efficiency growth and cuts Foreign Investment costs by 10%.
+- **Revitalize the Economy.** It raises productivity growth and research speed.
 
 Brazil can sell Embraer aircraft to a friendly country through a Public Policy decision, for money and opinion. It allows one deal a year. Selling Embraer's commercial arm to Boeing raises the income from each sale.
 
