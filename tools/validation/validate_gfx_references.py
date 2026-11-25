@@ -1078,7 +1078,8 @@ def _rendered_script_refs(raw: str, filepath: str) -> Set[str]:
     parts = filepath.split(os.sep)
     decision_file = parts[:2] == ["common", "decisions"]
     idea_file = parts[:2] == ["common", "ideas"]
-    prefix = "GFX_decision_category_" if parts[2:3] == ["categories"] else "GFX_decision_"
+    category_file = parts[2:3] == ["categories"]
+    prefix = "GFX_decision_category_" if category_file else "GFX_decision_"
     if "GFX_" not in raw and not (decision_file or idea_file):
         return set()
 
@@ -1136,14 +1137,13 @@ def _parse_script_refs(
         return []
 
     if rendered_only:
+        relative = os.path.relpath(filepath, mod_path)
         return disk_cache.per_file_cached_by_content(
             mod_path,
             "gfx_ref.rendered_script",
             filepath,
             raw,
-            lambda: sorted(
-                _rendered_script_refs(raw, os.path.relpath(filepath, mod_path))
-            ),
+            lambda: sorted(_rendered_script_refs(raw, relative)),
         )
 
     def _compute() -> List[str]:

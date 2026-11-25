@@ -1179,9 +1179,8 @@ def _decision_gate_lines(d: "DecisionFactory") -> Dict[str, Set[str]]:
             for line in _gate_statement_lines(getattr(d, field))
             if not _FROM_WORD_RE.search(line)
         }
-        if field != "visible" or not d.cancel_if_not_visible
-        else set()
         for field in fields
+        if field != "visible" or not d.cancel_if_not_visible
     }
 
 
