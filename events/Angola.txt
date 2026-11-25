@@ -136,12 +136,14 @@ country_event = {
 	option = {
 		name = Angola.3.a
 		log = "[GetDateText]: [This.GetName]: Angola.3.a executed"
-		custom_effect_tooltip = {
-			localization_key = modifies_dynamic_modifier_tt
-			MODIFIER = AGL_power_shortages
+		298 = {
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = AGL_luanda_blackouts
+			}
+			add_to_variable = { AGL_blackout_productivity_var = 0.10 tooltip = state_productivity_growth_modifier_tt }
+			add_to_variable = { AGL_blackout_construction_var = 0.05 tooltip = state_production_speed_buildings_factor_tt }
 		}
-		add_to_variable = { AGL_power_shortage_factory_var = 0.04 tooltip = industrial_capacity_factory_tt }
-		add_to_variable = { AGL_power_shortage_construction_var = 0.04 tooltip = production_speed_buildings_factor_tt }
 	}
 }
 
@@ -188,27 +190,31 @@ country_event = {
 		name = Angola.5.a
 		log = "[GetDateText]: [This.GetName]: Angola.5.a executed"
 		if = {
-			limit = { has_dynamic_modifier = { modifier = AGL_power_shortages } }
-			remove_dynamic_modifier = { modifier = AGL_power_shortages }
-		}
-		if = {
 			limit = { has_dynamic_modifier = { modifier = AGL_caculo_cabaca_works } }
 			remove_dynamic_modifier = { modifier = AGL_caculo_cabaca_works }
 		}
 		if = {
 			limit = { owns_state = 298 }
 			298 = {
+				if = {
+					limit = { has_dynamic_modifier = { modifier = AGL_luanda_blackouts } }
+					remove_dynamic_modifier = { modifier = AGL_luanda_blackouts }
+				}
+				add_building_construction = {
+					type = dam
+					province = 13351
+					level = 1
+					instant_build = yes
+				}
 				set_temp_variable = { electric_addition = ROOT.AGL_caculo_cabaca_capacity }
 				set_temp_variable = { storage_addition = 0 }
 				add_hydroelectric_energy_production_effect = yes
-				set_temp_variable = { temp_productivity_change = 25 }
-				state_flat_productivity_change_effect = yes
+				hidden_effect = {
+					clear_variable = AGL_blackout_productivity_var
+					clear_variable = AGL_blackout_construction_var
+				}
 			}
 		}
-		hidden_effect = {
-			clear_variable = AGL_power_shortage_factory_var
-			clear_variable = AGL_power_shortage_construction_var
-			clear_variable = AGL_caculo_cabaca_capacity
-		}
+		hidden_effect = { clear_variable = AGL_caculo_cabaca_capacity }
 	}
 }
