@@ -358,7 +358,7 @@ focus_tree = {
 				set_temp_variable = { add_col_one = 3 }
 				add_coalition_members_effect = yes
 			}
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 		}
 
 		ai_will_do = {
@@ -530,7 +530,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_crush_corruption"
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 		}
 
 		ai_will_do = {
@@ -1472,10 +1472,6 @@ focus_tree = {
 							limit = { has_dynamic_modifier = { modifier = BRA_favela_modifier } }
 							custom_effect_tooltip = { localization_key = adds_dynamic_modifier_tt MODIFIER = BRA_favela_improving_modifier }
 						}
-						else_if = {
-							limit = { has_dynamic_modifier = { modifier = BRA_favela_improving_modifier } }
-							custom_effect_tooltip = BRA_favela_cleared_tt
-						}
 					}
 					add_stability = 0.02
 				}
@@ -2073,7 +2069,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_administrative_reform_serra"
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 			grant_reform_mandate = yes
 		}
 
@@ -2210,8 +2206,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_pay_off_the_debt"
-			set_temp_variable = { debt_change = -100 }
+			set_temp_variable = { debt_change = { value = debt multiply = -1 } }
+			clamp_temp_variable = { var = debt_change max = 0 min = -100 }
 			modify_debt_effect = yes
+			newline = yes
+			set_temp_variable = { treasury_change = { value = debt_change multiply = 0.50 } }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -2223,6 +2223,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 55 }
 			}
 		}
 	}
@@ -2625,7 +2629,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_crackdown_on_corruption"
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = 0.02 }
 			set_temp_variable = { temp_outlook_increase = 0.02 }
@@ -3362,6 +3366,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESOURCE FOCUS_FILTER_EXPENDITURE }
 
 		available = { has_full_control_of_state = 884 }
+
+		bypass = { has_country_flag = BRA_vale_renationalized }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_canadian_vale_incorporation"
@@ -4256,6 +4262,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_santos_oilfields"
+			BRA_queue_contractors_club = yes
 			add_resource = { type = oil amount = 16 state = 882 }
 			newline = yes
 			set_temp_variable = { treasury_change = -15 }
@@ -4287,6 +4294,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_petrobras_tech"
+			BRA_queue_contractors_club = yes
 			add_resource = { type = oil amount = 16 state = 882 }
 			newline = yes
 			set_temp_variable = { treasury_change = -15 }
@@ -4487,6 +4495,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_presal_dev"
+			BRA_queue_contractors_club = yes
 			country_event = brazil.53
 			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
@@ -5302,10 +5311,8 @@ focus_tree = {
 			change_industrial_conglomerates_opinion = yes
 			two_random_agriculture_district = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
-			add_to_variable = { BRA_econ_resource_exports = 0.05 tooltip = resource_export_multiplier_modifier_tt }
-			add_to_variable = { BRA_econ_trade_opinion = 0.1 tooltip = trade_opinion_factor_tt }
-			add_to_variable = { BRA_econ_resources = 0.05 tooltip = BRA_econ_resources_tt }
-			add_to_variable = { BRA_econ_resource_gdp = 0.025 tooltip = gdp_from_resource_sector_modifier_tt }
+			add_to_variable = { BRA_econ_agri_productivity = 0.05 tooltip = agricolture_productivity_modifier_tt }
+			add_to_variable = { BRA_econ_tax_farm = 0.03 tooltip = agriculture_tax_modifier_tt }
 			newline = yes
 			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
@@ -8434,13 +8441,22 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH FOCUS_FILTER_CORRUPTION }
 
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = BRA_car_wash_scheme_tt
+				BRA_took_part_in_scheme = yes
+			}
 			OR = {
 				has_idea = BRA_idea_mensalao
 				date > 2014.3.17
 			}
 		}
 
-		bypass = { has_idea = BRA_idea_car_wash1 }
+		bypass = {
+			OR = {
+				BRA_car_wash_is_open = yes
+				BRA_car_wash_path_is_clean = yes
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_op_car_wash"
@@ -8466,6 +8482,8 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_op_car_wash }
 
+		bypass = { BRA_car_wash_path_is_clean = yes }
+
 		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH FOCUS_FILTER_FOREIGN_POLICY }
 
 		completion_reward = {
@@ -8489,6 +8507,8 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_op_car_wash }
 
+		bypass = { BRA_car_wash_path_is_clean = yes }
+
 		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH FOCUS_FILTER_CORRUPTION }
 
 		completion_reward = {
@@ -8497,15 +8517,19 @@ focus_tree = {
 			country_event = brazil.45
 			newline = yes
 			custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
-			effect_tooltip = {
-				add_political_power = -35
-				decrease_corruption = yes
-			}
+			effect_tooltip = { BRA_uncover_corruption = yes }
+			newline = yes
+			custom_effect_tooltip = TT_ALTERNATIVELY
+			effect_tooltip = { BRA_corruption_plea_bargain = yes }
+			newline = yes
+			custom_effect_tooltip = TT_ALTERNATIVELY
+			effect_tooltip = { BRA_corruption_leniency_deal = yes }
 			newline = yes
 			custom_effect_tooltip = TT_ALTERNATIVELY
 			effect_tooltip = {
 				add_stability = -0.04
 				add_ideas = BRA_idea_nationalism_rise
+				BRA_corruption_cover_up = yes
 			}
 		}
 
@@ -8523,6 +8547,8 @@ focus_tree = {
 		cost = 3
 
 		prerequisite = { focus = BRA_op_car_wash }
+
+		bypass = { BRA_car_wash_path_is_clean = yes }
 
 		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH FOCUS_FILTER_CORRUPTION }
 
@@ -8573,7 +8599,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_anti_corruption_measures"
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 		}
 
 		ai_will_do = {
@@ -9185,7 +9211,7 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_popular_government"
 			add_political_power = 50
 			add_war_support = 0.075
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 			add_country_leader_trait = popular_figurehead
 		}
 
@@ -9513,7 +9539,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_the_corruption_question"
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 		}
 
 		ai_will_do = {
@@ -9723,8 +9749,12 @@ focus_tree = {
 			change_industrial_conglomerates_opinion = yes
 			change_small_medium_business_owners_opinion = yes
 			change_communist_cadres_opinion = yes
-			set_temp_variable = { debt_change = -25 }
+			set_temp_variable = { debt_change = { value = debt multiply = -1 } }
+			clamp_temp_variable = { var = debt_change max = 0 min = -25 }
 			modify_debt_effect = yes
+			newline = yes
+			set_temp_variable = { treasury_change = { value = debt_change multiply = 0.50 } }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -9732,6 +9762,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 15 }
 			}
 		}
 	}
@@ -11069,7 +11103,7 @@ focus_tree = {
 				remove_idea = BRA_idea_olavo_de_carvalho1
 				add_idea = BRA_idea_olavo_de_carvalho2
 			}
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 		}
 
 		ai_will_do = { base = 90 }
@@ -12005,7 +12039,7 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_government_reform"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
 			add_to_variable = { BRA_econ_tax_efficiency = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 			decrease_centralization = yes
 			increase_economic_growth = yes
 			set_temp_variable = { desire_change = -0.5 }
@@ -12072,8 +12106,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_fight_crime"
-			custom_effect_tooltip = BRA_cartel_strength_down_tt
-			subtract_from_variable = { strength_of_cartels = 3 }
+			if = {
+				limit = { has_cartels_penalties = yes }
+				set_temp_variable = { cart_strength_change = -3 }
+				set_temp_variable = { cart_influence_change = 0 }
+				modify_cartel_variables_effect = yes
+			}
 			increase_policing_budget = yes
 			set_temp_variable = { desire_change = 0.5 }
 			change_expected_police_spending = yes
@@ -12326,7 +12364,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_acabar_isso"
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 		}
 
 		ai_will_do = { base = 90 }
@@ -12389,7 +12427,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_ending_mamata"
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 		}
 
 		ai_will_do = { base = 90 }
@@ -13140,8 +13178,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_reduce_debts"
-			set_temp_variable = { debt_change = -125 }
+			set_temp_variable = { debt_change = { value = debt multiply = -1 } }
+			clamp_temp_variable = { var = debt_change max = 0 min = -125 }
 			modify_debt_effect = yes
+			newline = yes
+			set_temp_variable = { treasury_change = { value = debt_change multiply = 0.50 } }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -13149,6 +13191,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 65 }
 			}
 		}
 	}
@@ -13419,7 +13465,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_fight_corruption"
-			decrease_corruption = yes
+			BRA_uncover_corruption = yes
 		}
 
 		ai_will_do = {
