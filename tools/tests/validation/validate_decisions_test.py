@@ -2091,8 +2091,8 @@ _CATEGORY_GATE_CASES = {
         [("dec1: target_root_trigger",)],
         [],
     ),
-    # A mission in a hidden category still ticks, so it need not share the line.
-    "line every decision checks": (
+    # Hiding the category changes mission visibility even when its timer still ticks.
+    "mission alongside shared checks": (
         "",
         {
             "dec1": _block("visible", _WAR),
@@ -2100,7 +2100,34 @@ _CATEGORY_GATE_CASES = {
             "mission": _MISSION,
         },
         [],
+        [],
+    ),
+    "line every decision checks": (
+        "",
+        {
+            "dec1": _block("visible", _WAR),
+            "dec2": _block("target_root_trigger", _WAR),
+        },
+        [],
         [("cat: all 2 decisions", _WAR)],
+    ),
+    "visible when empty is intentional": (
+        "\tvisible_when_empty = yes\n",
+        {"dec1": _block("visible", _WAR), "dec2": _block("visible", _WAR)},
+        [],
+        [],
+    ),
+    "visible when empty disabled": (
+        "\tvisible_when_empty = no\n",
+        {"dec1": _block("visible", _WAR), "dec2": _block("visible", _WAR)},
+        [],
+        [("cat: all 2 decisions", _WAR)],
+    ),
+    "mission does not suppress covered checks for other decisions": (
+        _CAT_WAR,
+        {"dec1": _block("visible", _WAR), "mission": _MISSION},
+        [("dec1: visible repeats", "category visible")],
+        [],
     ),
     "shared availability does not hide decisions": (
         "",

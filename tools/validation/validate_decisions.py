@@ -1197,7 +1197,9 @@ def _find_category_covered_checks(
     Per-decision availability checks can block selection while the card is
     still visible.
 
-    Missions are skipped: one in a hidden category still ticks.
+    Missions are skipped for covered checks: one in a hidden category still
+    ticks. A category with missions is not a move candidate, since hiding the
+    category also hides the missions and their timers.
     Constant checks and statements that set temporary variables are not
     candidates for moving to the category.
     """
@@ -1206,9 +1208,12 @@ def _find_category_covered_checks(
         for tok in dec_tokens:
             token_to_cat.setdefault(tok, cat)
     by_category: Dict[str, List["DecisionFactory"]] = {}
+    categories_with_missions: Set[str] = set()
     for d in factories:
         cat_name = token_to_cat.get(d.token)
-        if cat_name is not None and not d.mission_subtype:
+        if cat_name is not None and d.mission_subtype:
+            categories_with_missions.add(cat_name)
+        elif cat_name is not None:
             by_category.setdefault(cat_name, []).append(d)
 
     covered: List[Tuple[str, str, int]] = []
@@ -1244,7 +1249,15 @@ def _find_category_covered_checks(
             if line not in {"always = yes", "always = no"}
             and not re.search(r"\bset_temp_variable\s*=", blank_quoted_strings(line))
         )
-        if len(decisions) > 1 and repeated:
+        visible_empty = (
+            _top_level_field_value(categories[cat_name], "visible_when_empty") == "yes"
+        )
+        if (
+            len(decisions) > 1
+            and repeated
+            and cat_name not in categories_with_missions
+            and not visible_empty
+        ):
             candidates.append(
                 f"{cat_name}: all {len(decisions)} decisions check "
                 f"{', '.join(f'`{line}`' for line in repeated)}; "
