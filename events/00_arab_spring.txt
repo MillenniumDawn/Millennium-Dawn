@@ -407,7 +407,7 @@ country_event = {
 			start_civil_war = {
 				ideology = neutrality
 				size = arab_spring_mutiny_size
-				states = { 184 185 571 }
+				states = { 184 188 571 }
 			}
 			hidden_effect = {
 				set_global_flag = GLOBAL_syrian_civil_war_started
@@ -443,10 +443,16 @@ country_event = {
 						set_variable = { social_conservatism_government = SYR.social_conservatism_government }
 						set_variable = { social_conservatism_society = SYR.social_conservatism_society }
 						update_social_conservatism_modifier = yes
+						# Cores on all of Syria put rebel surrender progress near capitulation on day one
+						every_owned_state = { add_core_of = FSA }
 						every_state = {
-							limit = { is_core_of = ROOT }
-							add_core_of = FSA
+							limit = {
+								is_core_of = ROOT
+								NOT = { is_owned_by = FSA }
+							}
+							add_claim_by = FSA
 						}
+						add_manpower = 40000
 						if = { limit = { has_dlc = "No Step Back" }
 							load_oob = FSA_2000_nsb
 						}
@@ -1000,7 +1006,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: arab_spring.26 executed"
 		190 = { add_core_of = NUS }
 		release = NUS
-		every_core_state = { add_core_of = NUS }
+		every_core_state = {
+			limit = { NOT = { state = 190 } }
+			add_claim_by = NUS
+		}
 		NUS = {
 			set_country_flag = AS_arab_spring_completed
 			set_variable = { social_conservatism_government = 100 }
