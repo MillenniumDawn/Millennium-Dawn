@@ -304,10 +304,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   re-check. Known gap: the category `allowed` runs once at game start, so it covers only
   lines that cannot change. A dynamic line there is its own bug.
 - `decision-category-gate-candidate` (WARNING, report-only): a category whose decisions,
-  two or more, all hold the same line under the rules above. One category check can
-  replace them. Missions need not share the line. Review before moving it: a line from
-  `available` hides the decision instead of greying it out, and a `visible_when_empty`
-  category disappears with it.
+  two or more, all share a line in `visible` or `target_root_trigger`. Checks that only
+  appear in `available` on a decision control selection and stay on that decision.
+  Review mission timers, active decisions, and `visible_when_empty` before moving
+  a shared visibility check to the category.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
