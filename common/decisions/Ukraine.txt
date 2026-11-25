@@ -26750,6 +26750,7 @@ UKR_modernize_planes_category = {
 				OR = {
 					UKR_an_71_can_buy_kvant = yes
 					UKR_an_71_can_buy_phalcon = yes
+					UKR_an_71_can_build_kvant_domestic = yes
 				}
 			}
 		}
@@ -26810,12 +26811,12 @@ UKR_modernize_planes_category = {
 
 		visible = {
 			date > 2002.01.01
-			date < 2012.01.01
+			date < 2016.01.01
 		}
 
 		available = {
 			date > 2002.01.01
-			date < 2012.01.01
+			date < 2016.01.01
 			has_air_experience > 2
 			controls_state = 695 #Odesa
 			if = {
@@ -26899,12 +26900,12 @@ UKR_modernize_planes_category = {
 
 		visible = {
 			date > 2008.01.01
-			date < 2014.01.01
+			date < 2026.01.01
 		}
 
 		available = {
 			date > 2008.01.01
-			date < 2014.01.01
+			date < 2026.01.01
 			has_country_flag = UKR_developed_l39_m1_flag
 			has_air_experience > 4
 			controls_state = 695 #Odesa
@@ -26991,6 +26992,12 @@ UKR_modernize_planes_category = {
 		visible = {
 			date > 2007.06.01
 			date < 2015.01.01
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				has_tech = gen_4_light
+			}
+			else = { has_tech = MR_Fighter2 }
+			NOT = { has_country_flag = UKR_modernize_mig29_mu1_started_flag }
 		}
 
 		available = {
@@ -27005,7 +27012,6 @@ UKR_modernize_planes_category = {
 				}
 			}
 			has_country_flag = UKR_developed_l39_m1_flag
-			has_completed_focus = UKR_air_improvements
 		}
 
 		custom_cost_trigger = {
@@ -27019,6 +27025,7 @@ UKR_modernize_planes_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mig29_mu1"
+			set_country_flag = UKR_modernize_mig29_mu1_started_flag
 			hidden_effect = {
 				add_political_power = -10
 				air_experience = -4
@@ -27029,6 +27036,111 @@ UKR_modernize_planes_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mig29_mu1"
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				create_equipment_variant = {
+					name = "MiG-29MU1"
+					type = small_plane_airframe_2
+					allow_without_tech = yes
+					parent_version = 0
+					modules = {
+						fixed_main_weapon_slot = weap_a2a_hardpoint_2
+						fixed_gun_slot = weap_multi_gun_3
+						fixed_auxiliary_weapon_slot_1 = weap_mp_light_hardpoint_2
+						engine_type_slot = engine_light_double_2
+						avionics_type_slot = avionics_manned_2
+						wingform_type_slot = wing_swept
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_refuel_1
+						special_slot_type_3 = spec_redundant_2
+					}
+					upgrades = { plane_bba_radar_upgrade = 2 }
+					icon = "GFX_UKR_AIR_MiG_29MU1"
+					model = "SOV_small_plane_airframe_2_entity"
+					design_team = mio:UKR_ldarz_aircraft_manufacturer
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "MiG-29MU1"
+					type = MR_Fighter2
+					allow_without_tech = yes
+					upgrades = {
+						plane_range_upgrade = 1
+						plane_engine_upgrade = 1
+					}
+					design_team = mio:UKR_ldarz_aircraft_manufacturer
+				}
+			}
+			set_country_flag = UKR_developed_mig29mu1_flag
+		}
+	}
+
+	UKR_modernize_mig29_mu1_no_tech = {
+		fire_only_once = yes
+		icon = GFX_decision_icon_UKR_modernize_planes_mig29mu1
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		days_remove = 330
+
+		visible = {
+			date > 2007.06.01
+			date < 2015.01.01
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { has_tech = gen_4_light }
+			}
+			else = { NOT = { has_tech = MR_Fighter2 } }
+			NOT = { has_country_flag = UKR_modernize_mig29_mu1_started_flag }
+		}
+
+		available = {
+			date > 2009.01.01
+			date < 2015.01.01
+			has_air_experience > 8
+			controls_state = 700 #Lviv
+			if = {
+				limit = { is_ai = no }
+				700 = { #Lviv
+					arms_factory > 0
+				}
+			}
+			has_country_flag = UKR_developed_l39_m1_flag
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.3 }
+			has_political_power > 15
+			has_air_experience > 6
+		}
+
+		custom_cost_text = development_cost_0_30_pp_15_air_6
+		ai_hint_pp_cost = 15
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mig29_mu1_no_tech"
+			set_country_flag = UKR_modernize_mig29_mu1_started_flag
+			hidden_effect = {
+				add_political_power = -15
+				air_experience = -6
+				set_temp_variable = { treasury_change = -0.3 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mig29_mu1_no_tech"
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				set_technology = { gen_4_light = 1 popup = no }
+			}
+			else = { set_technology = { MR_Fighter2 = 1 popup = no } }
 			UKR_count_sov_modernization = yes
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
@@ -27088,8 +27200,11 @@ UKR_modernize_planes_category = {
 			has_country_flag = UKR_developed_mig29mu1_flag
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
+				has_tech = avionics_2
 				has_tech = avionics_3
 				has_tech = countermeasures_3
+				has_tech = gen_4_light
+				has_tech = ag_weapons_2
 			}
 			else = { has_tech = MR_Fighter3 }
 			NOT = { has_country_flag = UKR_modernize_mig29_mu2_started_flag }
@@ -27202,7 +27317,7 @@ UKR_modernize_planes_category = {
 			has_country_flag = UKR_developed_mig29mu1_flag
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				NOT = { AND = { has_tech = avionics_3 has_tech = countermeasures_3 } }
+				NOT = { AND = { has_tech = avionics_2 has_tech = avionics_3 has_tech = countermeasures_3 has_tech = gen_4_light has_tech = ag_weapons_2 } }
 			}
 			else = { NOT = { has_tech = MR_Fighter3 } }
 			NOT = { has_country_flag = UKR_modernize_mig29_mu2_started_flag }
@@ -27246,7 +27361,7 @@ UKR_modernize_planes_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mig29_mu2_no_tech"
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				set_technology = { avionics_3 = 1 countermeasures_3 = 1 popup = no }
+				set_technology = { avionics_2 = 1 avionics_3 = 1 countermeasures_3 = 1 gen_4_light = 1 ag_weapons_2 = 1 popup = no }
 			}
 			else = { set_technology = { MR_Fighter3 = 1 popup = no } }
 			UKR_count_sov_modernization = yes
@@ -27317,6 +27432,13 @@ UKR_modernize_planes_category = {
 		visible = {
 			date > 2008.01.01
 			date < 2016.01.01
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				has_tech = countermeasures_2
+				has_tech = ag_weapons_2
+			}
+			else = { has_tech = cas2 }
+			NOT = { has_country_flag = UKR_modernize_su25_m1_started_flag }
 		}
 
 		available = {
@@ -27342,6 +27464,7 @@ UKR_modernize_planes_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_su25_m1"
+			set_country_flag = UKR_modernize_su25_m1_started_flag
 			hidden_effect = {
 				air_experience = -2
 				set_temp_variable = { treasury_change = -0.2 }
@@ -27351,6 +27474,109 @@ UKR_modernize_planes_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_su25_m1"
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				create_equipment_variant = {
+					name = "Su-25M1"
+					type = small_plane_cas_airframe_2
+					parent_version = 0
+					allow_without_tech = yes
+					modules = {
+						fixed_main_weapon_slot = weap_ag_cas_hardpoint_2
+						fixed_gun_slot = weap_multi_gun_3
+						fixed_auxiliary_weapon_slot_1 = weap_mp_light_hardpoint_1
+						engine_type_slot = engine_light_double_2
+						avionics_type_slot = avionics_manned_2
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_2
+						special_slot_type_2 = spec_protection_1
+						special_slot_type_3 = spec_redundant_2
+					}
+					obsolete = yes
+					icon = "GFX_UKR_AIR_Su_25_Green"
+					model = "SOV_small_plane_cas_airframe_2_entity"
+					design_team = mio:UKR_migremont_aircraft_manufacturer
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Su-25M1"
+					type = cas2
+					allow_without_tech = yes
+					upgrades = {
+						plane_range_upgrade = 1
+						plane_engine_upgrade = 1
+					}
+					obsolete = yes
+					design_team = mio:UKR_migremont_aircraft_manufacturer
+				}
+			}
+			set_country_flag = UKR_developed_su25m1_flag
+		}
+	}
+
+	UKR_modernize_su25_m1_no_tech = {
+		fire_only_once = yes
+		icon = GFX_decision_icon_UKR_modernize_planes_su25m1
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		days_remove = 330
+
+		visible = {
+			date > 2008.01.01
+			date < 2016.01.01
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { AND = { has_tech = countermeasures_2 has_tech = ag_weapons_2 } }
+			}
+			else = { NOT = { has_tech = cas2 } }
+			NOT = { has_country_flag = UKR_modernize_su25_m1_started_flag }
+		}
+
+		available = {
+			date > 2009.01.01
+			date < 2016.01.01
+			has_air_experience > 6
+			controls_state = 694 #Zaporizhzia
+			if = {
+				limit = { is_ai = no }
+				694 = { #Zaporizhzia
+					arms_factory > 0
+				}
+			}
+			has_country_flag = UKR_developed_l39_m1_flag
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.3 }
+			has_air_experience > 3
+		}
+
+		custom_cost_text = development_cost_0_3_air_3
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_su25_m1_no_tech"
+			set_country_flag = UKR_modernize_su25_m1_started_flag
+			hidden_effect = {
+				air_experience = -3
+				set_temp_variable = { treasury_change = -0.3 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_su25_m1_no_tech"
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				set_technology = { countermeasures_2 = 1 ag_weapons_2 = 1 popup = no }
+			}
+			else = { set_technology = { cas2 = 1 popup = no } }
 			UKR_count_sov_modernization = yes
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
@@ -27412,6 +27638,7 @@ UKR_modernize_planes_category = {
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				has_tech = countermeasures_3
+				has_tech = ag_weapons_2
 			}
 			else = { has_tech = cas3 }
 			NOT = { has_country_flag = UKR_modernize_su25_m1k_started_flag }
@@ -27510,7 +27737,7 @@ UKR_modernize_planes_category = {
 			has_country_flag = UKR_developed_su25m1_flag
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				NOT = { has_tech = countermeasures_3 }
+				NOT = { AND = { has_tech = countermeasures_3 has_tech = ag_weapons_2 } }
 			}
 			else = { NOT = { has_tech = cas3 } }
 			NOT = { has_country_flag = UKR_modernize_su25_m1k_started_flag }
@@ -27554,7 +27781,7 @@ UKR_modernize_planes_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_su25_m1k_no_tech"
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				set_technology = { countermeasures_3 = 1 popup = no }
+				set_technology = { countermeasures_3 = 1 ag_weapons_2 = 1 popup = no }
 			}
 			else = { set_technology = { cas3 = 1 popup = no } }
 			UKR_count_sov_modernization = yes
@@ -27618,6 +27845,13 @@ UKR_modernize_planes_category = {
 				has_country_flag = UKR_developed_su25m1_flag
 				has_country_flag = UKR_developed_mig29mu1_flag
 			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				has_tech = avionics_2
+				has_tech = ag_weapons_2
+			}
+			else = { has_tech = AS_Fighter2 }
+			NOT = { has_country_flag = UKR_modernize_su27_1m_started_flag }
 		}
 
 		available = {
@@ -27646,6 +27880,7 @@ UKR_modernize_planes_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_su27_1m"
+			set_country_flag = UKR_modernize_su27_1m_started_flag
 			hidden_effect = {
 				add_political_power = -10
 				air_experience = -8
@@ -27710,6 +27945,129 @@ UKR_modernize_planes_category = {
 		}
 	}
 
+	UKR_modernize_su27_1m_no_tech = {
+		fire_only_once = yes
+		icon = GFX_decision_icon_UKR_modernize_planes_su27s1m
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		days_remove = 390
+
+		visible = {
+			date > 2011.01.01
+			date < 2020.01.01
+			OR = {
+				has_country_flag = UKR_developed_su25m1_flag
+				has_country_flag = UKR_developed_mig29mu1_flag
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { AND = { has_tech = avionics_2 has_tech = ag_weapons_2 } }
+			}
+			else = { NOT = { has_tech = AS_Fighter2 } }
+			NOT = { has_country_flag = UKR_modernize_su27_1m_started_flag }
+		}
+
+		available = {
+			date > 2012.01.01
+			date < 2020.01.01
+			has_air_experience > 8
+			controls_state = 694 #Zaporizhzia
+			if = {
+				limit = { is_ai = no }
+				694 = { #Zaporizhzia
+					arms_factory > 0
+				}
+			}
+			has_country_flag = UKR_developed_su25m1_flag
+			has_country_flag = UKR_developed_mig29mu1_flag
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.6 }
+			has_political_power > 15
+			has_air_experience > 12
+		}
+
+		custom_cost_text = development_cost_0_60_pp_15_air_12
+		ai_hint_pp_cost = 15
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_su27_1m_no_tech"
+			set_country_flag = UKR_modernize_su27_1m_started_flag
+			hidden_effect = {
+				add_political_power = -15
+				air_experience = -12
+				set_temp_variable = { treasury_change = -0.6 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_su27_1m_no_tech"
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				set_technology = { avionics_2 = 1 ag_weapons_2 = 1 popup = no }
+			}
+			else = { set_technology = { AS_Fighter2 = 1 popup = no } }
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				create_equipment_variant = {
+					name = "Su-27-1M"
+					type = medium_plane_fighter_airframe_2
+					allow_without_tech = yes
+					parent_version = 1
+					modules = {
+						fixed_main_weapon_slot = weap_a2a_hardpoint_2
+						fixed_gun_slot = weap_multi_gun_3
+						fixed_auxiliary_weapon_slot_1 = weap_mp_med_hardpoint_2
+						fixed_auxiliary_weapon_slot_2 = weap_mp_light_hardpoint_2
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_3
+						wingform_type_slot = wing_swept
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_refuel_1
+						special_slot_type_3 = spec_redundant_2
+					}
+					upgrades = { plane_bba_radar_upgrade = 2 }
+					icon = "GFX_UKR_AIR_Su_27_1M"
+					model = "SOV_medium_plane_fighter_airframe_2_entity"
+					design_team = mio:UKR_migremont_aircraft_manufacturer
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Su-27-1M"
+					type = AS_Fighter2
+					allow_without_tech = yes
+					upgrades = {
+						plane_range_upgrade = 2
+						plane_engine_upgrade = 1
+					}
+					design_team = mio:UKR_migremont_aircraft_manufacturer
+				}
+			}
+			if = {
+				limit = {
+					has_dlc = "By Blood Alone"
+					NOT = { has_country_flag = UKR_developed_su27_1m_flag }
+				}
+				add_tech_bonus = {
+					name = UKR_modernize_su27_1m_no_tech
+					bonus = 0.25
+					uses = 1
+					technology = air_weapons_3
+				}
+			}
+			set_country_flag = UKR_developed_su27_1m_flag
+		}
+	}
+
 	UKR_modernize_su27up2m = {
 		fire_only_once = yes
 		icon = GFX_decision_icon_UKR_modernize_planes_su27s1m
@@ -27729,9 +28087,12 @@ UKR_modernize_planes_category = {
 			has_country_flag = UKR_developed_su25m1k_flag
 			has_country_flag = UKR_developed_mig29mu2_flag
 			if = {
-				limit = { NOT = { has_dlc = "By Blood Alone" } }
-				has_tech = AS_Fighter3
+				limit = { has_dlc = "By Blood Alone" }
+				has_tech = avionics_2
+				has_tech = countermeasures_3
+				has_tech = ag_weapons_2
 			}
+			else = { has_tech = AS_Fighter3 }
 			NOT = { has_country_flag = UKR_modernize_su27up2m_started_flag }
 		}
 
@@ -27830,8 +28191,11 @@ UKR_modernize_planes_category = {
 			has_country_flag = UKR_developed_su27_1m_flag
 			has_country_flag = UKR_developed_su25m1k_flag
 			has_country_flag = UKR_developed_mig29mu2_flag
-			NOT = { has_dlc = "By Blood Alone" }
-			NOT = { has_tech = AS_Fighter3 }
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { AND = { has_tech = avionics_2 has_tech = countermeasures_3 has_tech = ag_weapons_2 } }
+			}
+			else = { NOT = { has_tech = AS_Fighter3 } }
 			NOT = { has_country_flag = UKR_modernize_su27up2m_started_flag }
 		}
 
@@ -27871,9 +28235,10 @@ UKR_modernize_planes_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_su27up2m_no_tech"
 			if = {
-				limit = { NOT = { has_dlc = "By Blood Alone" } }
-				set_technology = { AS_Fighter3 = 1 popup = no }
+				limit = { has_dlc = "By Blood Alone" }
+				set_technology = { avionics_2 = 1 countermeasures_3 = 1 ag_weapons_2 = 1 popup = no }
 			}
+			else = { set_technology = { AS_Fighter3 = 1 popup = no } }
 			UKR_count_sov_modernization = yes
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
@@ -27935,6 +28300,8 @@ UKR_modernize_planes_category = {
 				limit = { has_dlc = "By Blood Alone" }
 				has_tech = naval_weapons_3
 				has_tech = ag_weapons_3
+				has_tech = countermeasures_3
+				has_tech = air_weapons_3
 			}
 			else = { has_tech = Strike_fighter2 }
 			NOT = { has_country_flag = UKR_modernize_su24mu_started_flag }
@@ -28037,7 +28404,7 @@ UKR_modernize_planes_category = {
 			date < 2026.01.01
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				NOT = { AND = { has_tech = naval_weapons_3 has_tech = ag_weapons_3 } }
+				NOT = { AND = { has_tech = naval_weapons_3 has_tech = ag_weapons_3 has_tech = countermeasures_3 has_tech = air_weapons_3 } }
 			}
 			else = { NOT = { has_tech = Strike_fighter2 } }
 			NOT = { has_country_flag = UKR_modernize_su24mu_started_flag }
@@ -28084,7 +28451,7 @@ UKR_modernize_planes_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_su24mu_no_tech"
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				set_technology = { naval_weapons_3 = 1 ag_weapons_3 = 1 popup = no }
+				set_technology = { naval_weapons_3 = 1 ag_weapons_3 = 1 countermeasures_3 = 1 air_weapons_3 = 1 popup = no }
 			}
 			else = { set_technology = { Strike_fighter2 = 1 popup = no } }
 			UKR_count_sov_modernization = yes
@@ -28150,6 +28517,7 @@ UKR_modernize_planes_category = {
 				limit = { has_dlc = "By Blood Alone" }
 				has_tech = drone_2
 				has_tech = ag_weapons_2
+				has_tech = gen_4_light
 			}
 			else = { has_tech = Air_UAV2 }
 			NOT = { has_country_flag = UKR_develop_horlytsia_started_flag }
@@ -28165,8 +28533,10 @@ UKR_modernize_planes_category = {
 					arms_factory > 2
 				}
 			}
-			has_completed_focus = UKR_drone_army
-			has_completed_focus = UKR_antonov
+			OR = {
+				has_completed_focus = UKR_drone_army
+				has_completed_focus = UKR_antonov
+			}
 		}
 
 		custom_cost_trigger = {
@@ -28243,7 +28613,7 @@ UKR_modernize_planes_category = {
 			}
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				NOT = { AND = { has_tech = drone_2 has_tech = ag_weapons_2 } }
+				NOT = { AND = { has_tech = drone_2 has_tech = ag_weapons_2 has_tech = gen_4_light } }
 			}
 			else = { NOT = { has_tech = Air_UAV2 } }
 			NOT = { has_country_flag = UKR_develop_horlytsia_started_flag }
@@ -28259,8 +28629,10 @@ UKR_modernize_planes_category = {
 					arms_factory > 2
 				}
 			}
-			has_completed_focus = UKR_drone_army
-			has_completed_focus = UKR_antonov
+			OR = {
+				has_completed_focus = UKR_drone_army
+				has_completed_focus = UKR_antonov
+			}
 		}
 
 		custom_cost_trigger = {
@@ -28287,7 +28659,7 @@ UKR_modernize_planes_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_horlytsia_no_tech"
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				set_technology = { drone_2 = 1 ag_weapons_2 = 1 popup = no }
+				set_technology = { drone_2 = 1 ag_weapons_2 = 1 gen_4_light = 1 popup = no }
 			}
 			else = { set_technology = { Air_UAV2 = 1 popup = no } }
 			UKR_count_domestic_development = yes
@@ -28332,7 +28704,7 @@ UKR_modernize_planes_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
-		days_remove = 680
+		days_remove = 340
 
 		visible = {
 			date > 2016.01.01
@@ -28343,6 +28715,8 @@ UKR_modernize_planes_category = {
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				has_tech = ag_weapons_3
+				has_tech = avionics_2
+				has_tech = countermeasures_3
 			}
 			else = { has_tech = L_Strike_fighter3 }
 			NOT = { has_country_flag = UKR_develop_an_lbl_started_flag }
@@ -28373,21 +28747,21 @@ UKR_modernize_planes_category = {
 		}
 
 		custom_cost_trigger = {
-			check_variable = { treasury > 3.2 }
-			has_political_power > 20
-			has_air_experience > 12
+			check_variable = { treasury > 1.6 }
+			has_political_power > 10
+			has_air_experience > 6
 		}
 
-		custom_cost_text = development_cost_3_20_pp_20_air_12
-		ai_hint_pp_cost = 20
+		custom_cost_text = development_cost_1_60_pp_10_air_6
+		ai_hint_pp_cost = 10
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_an_lbl"
 			set_country_flag = UKR_develop_an_lbl_started_flag
 			hidden_effect = {
-				add_political_power = -20
-				air_experience = -12
-				set_temp_variable = { treasury_change = -3.2 }
+				add_political_power = -10
+				air_experience = -6
+				set_temp_variable = { treasury_change = -1.6 }
 				modify_treasury_effect = yes
 			}
 		}
@@ -28432,7 +28806,7 @@ UKR_modernize_planes_category = {
 			else = {
 				create_equipment_variant = {
 					name = "An-LBL"
-					type = L_Strike_fighter3
+					type = L_Strike_fighter4
 					allow_without_tech = yes
 					upgrades = {
 						plane_range_upgrade = 2
@@ -28466,7 +28840,7 @@ UKR_modernize_planes_category = {
 			}
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				NOT = { has_tech = ag_weapons_3 }
+				NOT = { AND = { has_tech = ag_weapons_3 has_tech = avionics_2 has_tech = countermeasures_3 } }
 			}
 			else = { NOT = { has_tech = L_Strike_fighter3 } }
 			NOT = { has_country_flag = UKR_develop_an_lbl_started_flag }
@@ -28520,7 +28894,7 @@ UKR_modernize_planes_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_an_lbl_no_tech"
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				set_technology = { ag_weapons_3 = 1 popup = no }
+				set_technology = { ag_weapons_3 = 1 avionics_2 = 1 countermeasures_3 = 1 popup = no }
 			}
 			else = { set_technology = { L_Strike_fighter3 = 1 popup = no } }
 			custom_effect_tooltip = UKR_vote_bonus_military_up_5_tt
@@ -28561,7 +28935,7 @@ UKR_modernize_planes_category = {
 			else = {
 				create_equipment_variant = {
 					name = "An-LBL"
-					type = L_Strike_fighter3
+					type = L_Strike_fighter4
 					allow_without_tech = yes
 					upgrades = {
 						plane_range_upgrade = 2
@@ -28585,7 +28959,7 @@ UKR_modernize_planes_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
-		days_remove = 800
+		days_remove = 270
 
 		highlight_states = {
 			highlight_states_trigger = {
@@ -28595,7 +28969,16 @@ UKR_modernize_planes_category = {
 			highlight_color_before_active = 2
 		}
 
-		visible = { date > 2019.12.01 }
+		visible = {
+			date > 2019.12.01
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				has_tech = countermeasures_3
+				has_tech = ag_weapons_3
+			}
+			else = { has_tech = MR_Fighter3 }
+			NOT = { has_country_flag = UKR_develop_an_bfv_started_flag }
+		}
 
 		available = {
 			date > 2020.01.01
@@ -28618,20 +29001,21 @@ UKR_modernize_planes_category = {
 		}
 
 		custom_cost_trigger = {
-			check_variable = { treasury > 11.2 }
-			has_political_power > 50
-			has_air_experience > 24
+			check_variable = { treasury > 3.7 }
+			has_political_power > 17
+			has_air_experience > 8
 		}
 
-		custom_cost_text = development_cost_11_20_pp_50_air_24
-		ai_hint_pp_cost = 50
+		custom_cost_text = development_cost_3_70_pp_17_air_8
+		ai_hint_pp_cost = 17
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_an_bfv"
+			set_country_flag = UKR_develop_an_bfv_started_flag
 			hidden_effect = {
-				add_political_power = -50
-				air_experience = -24
-				set_temp_variable = { treasury_change = -11.2 }
+				add_political_power = -17
+				air_experience = -8
+				set_temp_variable = { treasury_change = -3.7 }
 				modify_treasury_effect = yes
 			}
 		}
@@ -28684,7 +29068,143 @@ UKR_modernize_planes_category = {
 			else = {
 				create_equipment_variant = {
 					name = "An-BFV"
-					type = MR_Fighter3
+					type = MR_Fighter4
+					allow_without_tech = yes
+					upgrades = {
+						plane_range_upgrade = 2
+						plane_engine_upgrade = 2
+					}
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+					icon = "GFX_UKR_AIR_An_BFV"
+				}
+			}
+		}
+	}
+
+	UKR_develop_an_bfv_no_tech = {
+		fire_only_once = yes
+		icon = GFX_decision_icon_UKR_modernize_planes_antonov_logo
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		days_remove = 800
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 698 #Kyiv
+			}
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		visible = {
+			date > 2019.12.01
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				NOT = { AND = { has_tech = countermeasures_3 has_tech = ag_weapons_3 } }
+			}
+			else = { NOT = { has_tech = MR_Fighter3 } }
+			NOT = { has_country_flag = UKR_develop_an_bfv_started_flag }
+		}
+
+		available = {
+			date > 2021.01.01
+			has_air_experience > 24
+			controls_state = 698 #Kyiv
+			if = {
+				limit = { is_ai = no }
+				698 = { #Kyiv
+					arms_factory > 2
+				}
+			}
+			has_country_flag = UKR_developed_su27up2m_flag
+			has_country_flag = UKR_developed_an_lbl_flag
+			OR = {
+				has_country_flag = UKR_developed_mig29mu2_flag
+				has_country_flag = UKR_developed_su24mu_flag
+				has_country_flag = UKR_developed_su25m1k_flag
+			}
+			has_completed_focus = UKR_antonov
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 11.2 }
+			has_political_power > 50
+			has_air_experience > 24
+		}
+
+		custom_cost_text = development_cost_11_20_pp_50_air_24
+		ai_hint_pp_cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_an_bfv_no_tech"
+			set_country_flag = UKR_develop_an_bfv_started_flag
+			hidden_effect = {
+				add_political_power = -50
+				air_experience = -24
+				set_temp_variable = { treasury_change = -11.2 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_an_bfv_no_tech"
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				set_technology = { countermeasures_3 = 1 ag_weapons_3 = 1 popup = no }
+			}
+			else = { set_technology = { MR_Fighter3 = 1 popup = no } }
+			custom_effect_tooltip = UKR_vote_bonus_military_up_10_tt
+			set_country_flag = UKR_developed_an_bfv_flag
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				if = {
+					limit = { NOT = { has_tech = gen_4_medium } }
+					set_technology = { gen_4_medium = 1 }
+				}
+				if = {
+					limit = { NOT = { has_tech = air_weapons_3 } }
+					set_technology = { air_weapons_3 = 1 }
+				}
+			}
+			else_if = {
+				limit = { NOT = { has_tech = MR_Fighter4 } }
+				set_technology = { MR_Fighter4 = 1 }
+			}
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				create_equipment_variant = {
+					name = "An-BFV"
+					type = medium_plane_fighter_airframe_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+					modules = {
+						fixed_main_weapon_slot = weap_a2a_hardpoint_3
+						fixed_gun_slot = weap_multi_gun_3
+						fixed_auxiliary_weapon_slot_1 = weap_ag_cas_hardpoint_3
+						fixed_auxiliary_weapon_slot_2 = weap_mp_light_hardpoint_3
+						engine_type_slot = engine_jet_double_3
+						avionics_type_slot = avionics_manned_2
+						wingform_type_slot = wing_swept
+						special_slot_type_1 = spec_countermeasures_3
+						special_slot_type_2 = spec_tgp_1
+						special_slot_type_3 = spec_redundant_2
+						special_slot_type_4 = empty
+					}
+					upgrades = { plane_bba_radar_upgrade = 2 }
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+					icon = "GFX_UKR_AIR_An_BFV"
+					model = "eastern_european_gfx_medium_plane_airframe_3_entity"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "An-BFV"
+					type = MR_Fighter4
 					allow_without_tech = yes
 					upgrades = {
 						plane_range_upgrade = 2
