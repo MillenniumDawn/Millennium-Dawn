@@ -207,10 +207,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case` (WARNING, `--id-case`, on in CI): keep words after the uppercase
-  country or system directive lowercase, except one registered country tag. A
-  decision must match that tag to its sole explicit country target, or scope to it
-  directly if the decision is not targeted. Existing IDs are not renamed.
+- `decision-id-case` (WARNING, `--id-case`, on in CI): keep ordinary words after the
+  directive lowercase. The check accepts whole registered tags and tag aliases,
+  formable codes from the formable catalogue, abbreviations from English party and
+  organization names, and `validate_decisions.id_case_abbreviations`
+  from `validation_config.json`. Multiple abbreviations can appear in the same ID.
+  The separate cosmetic targeting check still verifies the decision's country target.
 - `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
   tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are

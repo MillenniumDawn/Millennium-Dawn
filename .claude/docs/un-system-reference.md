@@ -112,7 +112,7 @@ Type 7 only calls `apply_united_nations_sanctions` if the subject doesn't alread
 
 ### The Council has no proposer concept
 
-SC outcomes apply to the **subject** (`var:global.current_sc_vote_nation`). There is no `sc_resolution_proposer` and you should not add one — the GA has `ga_resolution_proposer` because its result event fans out to every member, but the Council's does not need it. If a petitioner needs to react to the outcome, set a flag on the subject in the finisher and have the petitioner read it (this is how the Iraq chain works: `usa_petition_invasion_of_iraq` queues the vote, and `wot.15` triggers on `IRQ = { has_country_flag = unsc_material_breach }`).
+SC outcomes apply to the **subject** (`var:global.current_sc_vote_nation`). There is no `sc_resolution_proposer` and you should not add one — the GA has `ga_resolution_proposer` because its result event fans out to every member, but the Council's does not need it. If a petitioner needs to react to the outcome, set a flag on the subject in the finisher and have the petitioner read it (this is how the Iraq chain works: `usa_petition_invasion_of_IRQ` queues the vote, and `wot.15` triggers on `IRQ = { has_country_flag = unsc_material_breach }`).
 
 ## Adding a new SC resolution type
 
