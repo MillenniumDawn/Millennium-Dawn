@@ -60,8 +60,6 @@ focus_tree = {
 
 		available = { always = no }
 
-		cancel = { date > 2002.12.31 }
-
 		ai_will_do = { base = 90 }
 	}
 
@@ -78,7 +76,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_nossa_economia"
-			add_ideas = BRA_idea_nossa_economia
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_efficiency_cap = 0.05 tooltip = BRA_econ_efficiency_cap_tt }
+			add_to_variable = { BRA_econ_conversion_cost = -0.2 tooltip = BRA_econ_conversion_cost_tt }
+			unlock_decision_category_tooltip = BRA_public_policy_category
 		}
 
 		ai_will_do = {
@@ -97,6 +98,8 @@ focus_tree = {
 		x = 0
 		y = 1
 		relative_position_id = BRA_nossa_economia
+
+		cost = 5.5
 
 		prerequisite = { focus = BRA_nossa_economia }
 
@@ -128,16 +131,12 @@ focus_tree = {
 
 		available = {
 			has_completed_focus = BRA_crippled_currency
-			if = {
-				limit = { has_idea = BRA_idea_crippled_currency_one }
-				has_idea = BRA_idea_crippled_currency_one
-			}
-			else = {
-				has_idea = BRA_idea_crippled_currency_two
-			}
 			OR = {
 				has_idea = BRA_idea_imf_debts
 				has_idea = BRA_idea_foreign_debt_assistance
+				has_idea = BRA_idea_worsening_debt_crisis
+				has_idea = BRA_idea_crippled_currency_one
+				has_idea = BRA_idea_crippled_currency_two
 			}
 		}
 
@@ -145,6 +144,9 @@ focus_tree = {
 			has_completed_focus = BRA_crippled_currency
 			NOT = { has_idea = BRA_idea_imf_debts }
 			NOT = { has_idea = BRA_idea_foreign_debt_assistance }
+			NOT = { has_idea = BRA_idea_worsening_debt_crisis }
+			NOT = { has_idea = BRA_idea_crippled_currency_one }
+			NOT = { has_idea = BRA_idea_crippled_currency_two }
 		}
 
 		completion_reward = {
@@ -164,6 +166,10 @@ focus_tree = {
 			if = {
 				limit = { has_idea = BRA_idea_foreign_debt_assistance }
 				remove_ideas = BRA_idea_foreign_debt_assistance
+			}
+			if = {
+				limit = { has_idea = BRA_idea_worsening_debt_crisis }
+				remove_ideas = BRA_idea_worsening_debt_crisis
 			}
 			set_temp_variable = { debt_change = { value = debt multiply = -0.15 } }
 			clamp_temp_variable = { var = debt_change max = 0 min = -300 }
@@ -201,7 +207,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_brazilian_exports"
-			add_ideas = BRA_idea_brazilian_exports_1
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resource_exports = 0.05 tooltip = resource_export_multiplier_modifier_tt }
+			add_to_variable = { BRA_econ_trade_opinion = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { BRA_econ_resources = 0.05 tooltip = BRA_econ_resources_tt }
+			add_to_variable = { BRA_econ_resource_gdp = 0.025 tooltip = gdp_from_resource_sector_modifier_tt }
 			increase_exports = yes
 		}
 
@@ -229,17 +239,11 @@ focus_tree = {
 			change_international_bankers_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_small_medium_business_owners_opinion = yes
-			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.05 } }
+			set_temp_variable = { treasury_change = 25 }
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = {
-			base = 35
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-		}
+		ai_will_do = { base = 35 }
 	}
 
 	# Lula's 2002 Tree
@@ -342,7 +346,7 @@ focus_tree = {
 			change_relative_party_popularity = yes
 			custom_effect_tooltip = BRA_pdt_coalition_tt
 			add_stability = 0.05
-			add_political_power = 150
+			add_political_power = 75
 			hidden_effect = {
 				set_temp_variable = { add_col_one = 3 }
 				add_coalition_members_effect = yes
@@ -408,7 +412,7 @@ focus_tree = {
 			change_relative_party_popularity = yes
 			custom_effect_tooltip = BRA_mdb_coalition_tt
 			add_stability = 0.05
-			add_political_power = 150
+			add_political_power = 75
 			hidden_effect = {
 				set_temp_variable = { add_col_one = 15 }
 				add_coalition_members_effect = yes
@@ -485,9 +489,11 @@ focus_tree = {
 			set_temp_variable = { party_index = 5 }
 			set_temp_variable = { party_popularity_increase = 0.03 }
 			change_relative_party_popularity = yes
-			add_political_power = 200
+			add_political_power = 75
 			add_ideas = BRA_idea_mensalao
 			increase_corruption = yes
+			hidden_effect = { country_event = { id = brazil.51 days = 90 } }
+			custom_effect_tooltip = BRA_mensalao_inquiry_tt
 		}
 
 		ai_will_do = { base = 0 }
@@ -547,7 +553,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_push_for_an_agrarian_reform"
-			add_ideas = BRA_idea_agrarian_reform
+			add_timed_idea = {
+				idea = BRA_idea_agrarian_reform
+				days = 3650
+			}
 			set_temp_variable = { temp_opinion = -5 }
 			change_farmers_opinion = yes
 			set_temp_variable = { temp_opinion = 5 }
@@ -586,40 +595,48 @@ focus_tree = {
 	}
 
 	focus = {
-		id = BRA_lula_foreign_policy
+		id = BRA_foreign_policy
 		icon = diplomacy
 
-		x = 12
+		x = 14
 		y = 1
 		relative_position_id = BRA_lula
 
 		cost = 5
 
-		prerequisite = { focus = BRA_lula }
+		prerequisite = { focus = BRA_lula focus = BRA_serra }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
-
-		available = { has_country_leader = { name = "Luiz Inácio Lula da Silva" } }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 
 		completion_reward = {
-			log = "[GetDateText]: [THIS.GetName]: Focus BRA_lula_foreign_policy"
-			add_political_power = 150
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_foreign_policy"
+			if = {
+				limit = { has_country_leader = { name = "José Serra" } }
+				add_political_power = 100
+			}
+			else = { add_political_power = 75 }
 		}
 
-		ai_will_do = { base = 90 }
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 9
+				has_country_leader = { name = "Luiz Inácio Lula da Silva" }
+			}
+		}
 	}
 
 	focus = {
 		id = BRA_align_to_cuba
 		icon = align_to_cuba
 
-		x = -1
+		x = -3
 		y = 1
-		relative_position_id = BRA_lula_foreign_policy
+		relative_position_id = BRA_foreign_policy
 
 		cost = 5
 
-		prerequisite = { focus = BRA_lula_foreign_policy }
+		prerequisite = { focus = BRA_foreign_policy }
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY }
 
@@ -630,6 +647,7 @@ focus_tree = {
 		}
 
 		bypass = {
+			has_country_leader = { name = "Luiz Inácio Lula da Silva" }
 			OR = {
 				NOT = { country_exists = CUB }
 				CUB = { is_subject_of = BRA }
@@ -668,6 +686,7 @@ focus_tree = {
 		}
 
 		bypass = {
+			has_country_leader = { name = "Luiz Inácio Lula da Silva" }
 			OR = {
 				NOT = { country_exists = VEN }
 				VEN = { is_subject_of = BRA }
@@ -676,10 +695,18 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_align_to_venezuela"
-			VEN = {
-				add_opinion_modifier = { target = ROOT modifier = friendship }
+			VEN = { country_event = brazil.63 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_opinion_modifier = { target = VEN modifier = friendship }
+				VEN = { add_opinion_modifier = { target = ROOT modifier = friendship } }
 			}
-			add_opinion_modifier = { target = VEN modifier = friendship }
+			if = {
+				limit = { BRA_can_sponsor_ven_mercosur_association = yes }
+				country_event = mercosur.12
+				VEN = { country_event = { id = mercosur.02 days = 1 } }
+				custom_effect_tooltip = BRA_sponsor_ven_mercosur_tt
+			}
 		}
 
 		ai_will_do = { base = 10 }
@@ -706,6 +733,7 @@ focus_tree = {
 		}
 
 		bypass = {
+			has_country_leader = { name = "Luiz Inácio Lula da Silva" }
 			OR = {
 				NOT = { country_exists = BOL }
 				BOL = { is_subject_of = BRA }
@@ -727,13 +755,13 @@ focus_tree = {
 		id = BRA_chinese_alignment
 		icon = align_to_china
 
-		x = 1
+		x = -1
 		y = 1
-		relative_position_id = BRA_lula_foreign_policy
+		relative_position_id = BRA_foreign_policy
 
 		cost = 5
 
-		prerequisite = { focus = BRA_lula_foreign_policy }
+		prerequisite = { focus = BRA_foreign_policy }
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY }
 
@@ -744,6 +772,7 @@ focus_tree = {
 		}
 
 		bypass = {
+			has_country_leader = { name = "Luiz Inácio Lula da Silva" }
 			OR = {
 				NOT = { country_exists = CHI }
 				CHI = { is_subject_of = BRA }
@@ -752,6 +781,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_chinese_alignment"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_trade_opinion = 0.05 tooltip = trade_opinion_factor_tt }
 			add_opinion_modifier = { target = CHI modifier = friendship }
 			reverse_add_opinion_modifier = { target = CHI modifier = friendship }
 		}
@@ -779,13 +810,18 @@ focus_tree = {
 			NOT = { has_war_with = CHI }
 		}
 
-		bypass = { CHI = { has_trade_agreement_with_PREV_nation = yes } }
+		bypass = {
+			has_country_leader = { name = "Luiz Inácio Lula da Silva" }
+			CHI = { has_trade_agreement_with_PREV_nation = yes }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_chinese_trade"
+			CHI = { country_event = brazil.94 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			set_temp_variable = { receiver_nation = BRA.id }
 			set_temp_variable = { sender_nation = CHI.id }
-			set_improved_trade_agreement = yes
+			effect_tooltip = { set_improved_trade_agreement = yes }
 		}
 
 		ai_will_do = { base = 35 }
@@ -813,6 +849,17 @@ focus_tree = {
 			modify_treasury_effect = yes
 			add_offsite_building = { type = industrial_complex level = 2 }
 			add_offsite_building = { type = offices level = 2 }
+			BRA_apply_to_brics = yes
+			custom_effect_tooltip = BRA_brics_application_tt
+			random_scope_in_array = {
+				array = global.BRICS_potential
+				limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
+				country_event = brazil.95
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			set_temp_variable = { sender_nation = BRA.id }
+			set_temp_variable = { receiver_nation = RAJ.id }
+			effect_tooltip = { set_mutual_investment_treaty = yes }
 		}
 
 		ai_will_do = {
@@ -844,6 +891,22 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_international_support"
 			add_political_power = 100
+			if = {
+				limit = {
+					country_exists = FRA
+					NOT = { has_war_with = FRA }
+				}
+				add_opinion_modifier = { target = FRA modifier = friendship }
+				reverse_add_opinion_modifier = { target = FRA modifier = friendship }
+			}
+			if = {
+				limit = {
+					country_exists = ENG
+					NOT = { has_war_with = ENG }
+				}
+				add_opinion_modifier = { target = ENG modifier = friendship }
+				reverse_add_opinion_modifier = { target = ENG modifier = friendship }
+			}
 		}
 
 		ai_will_do = { base = 90 }
@@ -869,7 +932,10 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_improve_workers_rights"
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
-			add_ideas = BRA_idea_pro_unions
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_building_slots = 0.03 tooltip = BRA_econ_building_slots_tt }
+			add_to_variable = { BRA_econ_efficiency_cap = 0.075 tooltip = BRA_econ_efficiency_cap_tt }
+			add_to_variable = { BRA_econ_unions_opinion = 15 tooltip = BRA_econ_unions_opinion_tt }
 		}
 
 		ai_will_do = {
@@ -1021,7 +1087,7 @@ focus_tree = {
 					instant_build = yes
 				}
 			}
-			add_ideas = ITA_capital_flight
+			add_ideas = BRA_idea_capital_controls
 			increase_centralization = yes
 			set_temp_variable = { desire_change = 0.5 }
 			change_expected_bureaucracy_spending = yes
@@ -1120,7 +1186,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_introduce_new_regulations"
-			add_ideas = ITA_rigid_labour_market
+			add_ideas = BRA_idea_labor_protections
 			set_temp_variable = { temp_opinion = -5 }
 			change_small_medium_business_owners_opinion = yes
 		}
@@ -1250,6 +1316,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_social_programs_agenda_lula"
+			country_event = brazil.49
 			add_stability = 0.08
 			add_popularity = { ideology = communism popularity = 0.02 }
 			recalculate_party = yes
@@ -1258,7 +1325,13 @@ focus_tree = {
 			change_communist_cadres_opinion = yes
 		}
 
-		ai_will_do = { base = 90 }
+		ai_will_do = {
+			base = 90
+			modifier = {
+				factor = 2
+				has_stability < 0.6
+			}
+		}
 	}
 
 	focus = {
@@ -1279,6 +1352,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_fome_zero"
+			add_stability = 0.02
 			increase_social_spending = yes
 			set_temp_variable = { temp_change = 3 }
 			BRA_worker_party_alignment_effect = yes
@@ -1307,6 +1381,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_bolsa_familia"
+			if = {
+				limit = { has_full_control_of_state = 883 }
+				country_event = brazil.52
+			}
 			increase_social_spending = yes
 			set_temp_variable = { temp_change = 3 }
 			BRA_worker_party_alignment_effect = yes
@@ -1333,6 +1411,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_expand_social_benefits"
+			add_stability = 0.02
 			increase_social_spending = yes
 			set_temp_variable = { temp_change = 3 }
 			BRA_worker_party_alignment_effect = yes
@@ -1359,6 +1438,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_education_funding"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_research = 0.02 tooltip = BRA_econ_research_tt }
 			increase_education_budget = yes
 			set_temp_variable = { temp_change = 3 }
 			BRA_worker_party_alignment_effect = yes
@@ -1387,6 +1468,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_university_funding"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_research = 0.02 tooltip = BRA_econ_research_tt }
 			increase_education_budget = yes
 			set_temp_variable = { desire_change = 0.5 }
 			change_expected_education_spending = yes
@@ -1491,40 +1574,16 @@ focus_tree = {
 	}
 
 	focus = {
-		id = BRA_foreign_policy_serra
-		icon = diplomacy
-
-		x = -6
-		y = 1
-		relative_position_id = BRA_serra
-
-		cost = 5
-
-		prerequisite = { focus = BRA_serra }
-
-		search_filters = { FOCUS_FILTER_DIPLOMACY }
-
-		available = { has_country_leader = { name = "José Serra" } }
-
-		completion_reward = {
-			log = "[GetDateText]: [THIS.GetName]: Focus BRA_foreign_policy_serra"
-			add_political_power = 100
-		}
-
-		ai_will_do = { base = 10 }
-	}
-
-	focus = {
 		id = BRA_american_diplomacy
 		icon = align_to_america
 
-		x = -1
+		x = 2
 		y = 1
-		relative_position_id = BRA_foreign_policy_serra
+		relative_position_id = BRA_foreign_policy
 
 		cost = 5
 
-		prerequisite = { focus = BRA_foreign_policy_serra }
+		prerequisite = { focus = BRA_foreign_policy }
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_POLITICAL }
 
@@ -1535,6 +1594,7 @@ focus_tree = {
 		}
 
 		bypass = {
+			has_country_leader = { name = "José Serra" }
 			OR = {
 				NOT = { country_exists = USA }
 				USA = { is_subject_of = BRA }
@@ -1572,13 +1632,18 @@ focus_tree = {
 			NOT = { has_war_with = USA }
 		}
 
-		bypass = { USA = { has_trade_agreement_with_PREV_nation = yes } }
+		bypass = {
+			has_country_leader = { name = "José Serra" }
+			USA = { has_trade_agreement_with_PREV_nation = yes }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_american_trade"
+			USA = { country_event = brazil.94 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			set_temp_variable = { receiver_nation = BRA.id }
 			set_temp_variable = { sender_nation = USA.id }
-			set_improved_trade_agreement = yes
+			effect_tooltip = { set_improved_trade_agreement = yes }
 		}
 
 		ai_will_do = { base = 35 }
@@ -1608,6 +1673,14 @@ focus_tree = {
 			add_offsite_building = { type = offices level = 1 }
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
+			if = {
+				limit = { country_exists = USA }
+				USA = { country_event = brazil.95 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			set_temp_variable = { sender_nation = BRA.id }
+			set_temp_variable = { receiver_nation = USA.id }
+			effect_tooltip = { set_mutual_investment_treaty = yes }
 		}
 
 		ai_will_do = {
@@ -1623,13 +1696,13 @@ focus_tree = {
 		id = BRA_looking_to_europe
 		icon = align_to_europe
 
-		x = 1
+		x = 4
 		y = 1
-		relative_position_id = BRA_foreign_policy_serra
+		relative_position_id = BRA_foreign_policy
 
 		cost = 5
 
-		prerequisite = { focus = BRA_foreign_policy_serra }
+		prerequisite = { focus = BRA_foreign_policy }
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
 
@@ -1668,6 +1741,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_european_trade"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_trade_opinion = 0.05 tooltip = trade_opinion_factor_tt }
 			for_each_scope_loop = {
 				array = global.EU_member
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
@@ -1676,6 +1751,24 @@ focus_tree = {
 				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
+			if = {
+				limit = {
+					country_exists = GER
+					GER = { has_idea = EU_member }
+				}
+				GER = { country_event = brazil.94 }
+			}
+			else_if = {
+				limit = {
+					country_exists = FRA
+					FRA = { has_idea = EU_member }
+				}
+				FRA = { country_event = brazil.94 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			set_temp_variable = { receiver_nation = BRA.id }
+			set_temp_variable = { sender_nation = GER.id }
+			effect_tooltip = { set_improved_trade_agreement = yes }
 		}
 
 		ai_will_do = { base = 35 }
@@ -1705,6 +1798,24 @@ focus_tree = {
 			add_offsite_building = { type = offices level = 1 }
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
+			if = {
+				limit = {
+					country_exists = GER
+					GER = { has_idea = EU_member }
+				}
+				GER = { country_event = brazil.95 }
+			}
+			else_if = {
+				limit = {
+					country_exists = FRA
+					FRA = { has_idea = EU_member }
+				}
+				FRA = { country_event = brazil.95 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			set_temp_variable = { sender_nation = BRA.id }
+			set_temp_variable = { receiver_nation = GER.id }
+			effect_tooltip = { set_mutual_investment_treaty = yes }
 		}
 
 		ai_will_do = {
@@ -1797,6 +1908,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_education_investment"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_research = 0.02 tooltip = BRA_econ_research_tt }
 			increase_education_budget = yes
 			set_temp_variable = { desire_change = 0.5 }
 			change_expected_education_spending = yes
@@ -1823,6 +1936,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_improve_healthcare_conditions"
+			add_stability = 0.02
 			increase_healthcare_budget = yes
 		}
 
@@ -1886,6 +2000,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_federalization_ethos"
 			add_ideas = BRA_idea_federalization_1
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resources = 0.05 tooltip = BRA_econ_resources_tt }
 		}
 
 		ai_will_do = { base = 90 }
@@ -1956,7 +2072,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_effective_public_sector"
-			add_ideas = NIG_efficient_government_spending_reform_idea
+			add_ideas = BRA_idea_efficient_public_sector
 		}
 
 		ai_will_do = { base = 90 }
@@ -2017,6 +2133,8 @@ focus_tree = {
 				remove_idea = BRA_idea_federalization_1
 				add_idea = BRA_idea_federalization_2
 			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resources = 0.05 tooltip = BRA_econ_resources_tt }
 		}
 
 		ai_will_do = { base = 90 }
@@ -2072,6 +2190,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_weaken_economic_regulations"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_construction_speed = 0.03 tooltip = production_speed_buildings_factor_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			change_industrial_conglomerates_opinion = yes
@@ -2286,6 +2406,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_guarantee_civil_liberties"
+			add_stability = 0.02
 			add_popularity = { ideology = democratic popularity = 0.05 }
 			recalculate_party = yes
 		}
@@ -2311,6 +2432,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_protect_brazilian_democracy"
+			add_stability = 0.02
 			add_popularity = { ideology = democratic popularity = 0.05 }
 			recalculate_party = yes
 		}
@@ -2591,19 +2713,24 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_align_to_nato }
 
-		search_filters = { FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_western_investments"
-			953 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
+			if = {
+				limit = { has_full_control_of_state = 953 }
+				953 = { one_state_industrial_complex = yes }
 			}
+			else = { one_random_industrial_complex = yes }
 			add_political_power = 50
+			if = {
+				limit = { country_exists = ENG }
+				ENG = { country_event = brazil.95 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			set_temp_variable = { sender_nation = BRA.id }
+			set_temp_variable = { receiver_nation = ENG.id }
+			effect_tooltip = { set_mutual_investment_treaty = yes }
 		}
 
 		ai_will_do = {
@@ -2611,6 +2738,15 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 8 }
+				check_variable = { debt_ratio > 0.4 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2649,18 +2785,15 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_non_aligned }
 
-		search_filters = { FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_our_own_industry"
-			885 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
+			if = {
+				limit = { has_full_control_of_state = 885 }
+				885 = { one_state_industrial_complex = yes }
 			}
+			else = { one_random_industrial_complex = yes }
 			add_political_power = 50
 		}
 
@@ -2669,6 +2802,15 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 8 }
+				check_variable = { debt_ratio > 0.4 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2722,6 +2864,8 @@ focus_tree = {
 				}
 			}
 			add_political_power = 50
+			BRA_apply_to_brics = yes
+			custom_effect_tooltip = BRA_brics_application_tt
 		}
 
 		ai_will_do = { base = 10 }
@@ -2739,19 +2883,24 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_eastern_alignment }
 
-		search_filters = { FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_eastern_investments"
-			954 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
+			if = {
+				limit = { has_full_control_of_state = 954 }
+				954 = { one_state_industrial_complex = yes }
 			}
+			else = { one_random_industrial_complex = yes }
 			add_political_power = 50
+			if = {
+				limit = { country_exists = CHI }
+				CHI = { country_event = brazil.95 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			set_temp_variable = { sender_nation = BRA.id }
+			set_temp_variable = { receiver_nation = CHI.id }
+			effect_tooltip = { set_mutual_investment_treaty = yes }
 		}
 
 		ai_will_do = {
@@ -2759,6 +2908,15 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 8 }
+				check_variable = { debt_ratio > 0.4 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2809,6 +2967,10 @@ focus_tree = {
 					}
 				}
 			}
+			modifier = {
+				factor = 2
+				has_stability < 0.6
+			}
 		}
 	}
 
@@ -2853,19 +3015,11 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = {
-			OR = {
-				has_idea = corruption_level_05
-				has_idea = corruption_level_04
-				has_idea = corruption_level_03
-				has_idea = corruption_level_02
-				has_idea = corruption_level_01
-			}
-		}
-
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_brazilian_research_and_development"
-			add_ideas = BRA_idea_brazilian_research_and_development
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_research = 0.03 tooltip = BRA_econ_research_tt }
+			add_to_variable = { BRA_econ_education_cost = 0.05 tooltip = education_cost_multiplier_modifier_tt }
 		}
 
 		ai_will_do = { base = 35 }
@@ -2887,7 +3041,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_major_development_projects"
-			unlock_decision_category_tooltip = BRA_major_development_projects_decision_category
+			unlock_decision_tooltip = BRA_decision_transposition_saofrancisco
+			unlock_decision_tooltip = BRA_decision_bacia_tocantins
+			unlock_decision_tooltip = BRA_decision_army_projects
+			unlock_decision_tooltip = BRA_decision_improve_dockyards
+			unlock_decision_tooltip = BRA_decision_amazonian_projects
 		}
 
 		ai_will_do = { base = 35 }
@@ -2912,26 +3070,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_presal"
 			883 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = renewable_energy_infra
-					level = 1
-					instant_build = yes
-				}
+				one_state_industrial_complex = yes
+				one_state_infrastructure = yes
+				one_state_renewable_energy_infra = yes
 			}
-			set_temp_variable = { treasury_change = -15.25 }
-			modify_treasury_effect_corruption = yes
-			custom_effect_tooltip = BRA_economic_focuses_advice_tt
 		}
 
 		ai_will_do = {
@@ -2939,6 +3081,11 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 20 }
+				check_variable = { debt_ratio > 0.4 }
 			}
 			modifier = {
 				factor = 0
@@ -2958,6 +3105,7 @@ focus_tree = {
 		cost = 15
 
 		prerequisite = { focus = BRA_presal }
+		prerequisite = { focus = BRA_support_international_bankers }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_AMAZON_CONSERVATION FOCUS_FILTER_EXPENDITURE }
 
@@ -2971,50 +3119,21 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_develop_the_interior_and_amazon"
 			891 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				one_state_industrial_complex = yes
+				one_state_infrastructure = yes
 			}
 			954 = {
 				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				one_state_infrastructure = yes
 			}
 			886 = {
 				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				one_state_infrastructure = yes
 			}
 			885 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				one_state_industrial_complex = yes
+				one_state_infrastructure = yes
 			}
-			set_temp_variable = { treasury_change = -25.5 }
-			modify_treasury_effect_corruption = yes
-			custom_effect_tooltip = BRA_economic_focuses_advice_tt
 		}
 
 		ai_will_do = {
@@ -3022,6 +3141,11 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 29 }
+				check_variable = { debt_ratio > 0.4 }
 			}
 			modifier = {
 				factor = 0
@@ -3041,6 +3165,7 @@ focus_tree = {
 		cost = 6.8
 
 		prerequisite = { focus = BRA_develop_the_interior_and_amazon }
+		prerequisite = { focus = BRA_petrobras_tech }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_AMAZON_CONSERVATION }
 
@@ -3053,16 +3178,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_amazonian_el_dorado"
 			892 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
+				add_extra_state_shared_building_slots = 1
+				one_state_industrial_complex = yes
 			}
-			set_temp_variable = { treasury_change = -8.5 }
-			modify_treasury_effect_corruption = yes
-			custom_effect_tooltip = BRA_economic_focuses_advice_tt
 			set_temp_variable = { temp_change = -15 }
 			BRA_conserv_acreage_effect = yes
 		}
@@ -3072,6 +3190,11 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 8 }
+				check_variable = { debt_ratio > 0.4 }
 			}
 			modifier = {
 				factor = 0
@@ -3117,19 +3240,19 @@ focus_tree = {
 					amount = 5
 				}
 				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = renewable_energy_infra
-					level = 1
-					instant_build = yes
-				}
+				one_state_renewable_energy_infra = yes
 			}
-			set_temp_variable = { treasury_change = -25 }
-			modify_treasury_effect_corruption = yes
-			custom_effect_tooltip = BRA_economic_focuses_advice_tt
+			set_temp_variable = { treasury_change = -16.5 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 35
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 25 }
+				check_variable = { debt_ratio > 0.4 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -3194,50 +3317,22 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_develop_sp_mg_and_the_south"
 			882 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				add_extra_state_shared_building_slots = 1
+				one_state_industrial_complex = yes
+				one_state_infrastructure = yes
 			}
 			884 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				one_state_industrial_complex = yes
+				one_state_infrastructure = yes
 			}
 			880 = {
 				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				one_state_infrastructure = yes
 			}
 			953 = {
 				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				one_state_infrastructure = yes
 			}
-			set_temp_variable = { treasury_change = -29 }
-			modify_treasury_effect_corruption = yes
-			custom_effect_tooltip = BRA_economic_focuses_advice_tt
 		}
 
 		ai_will_do = {
@@ -3245,6 +3340,11 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 29 }
+				check_variable = { debt_ratio > 0.4 }
 			}
 			modifier = {
 				factor = 0
@@ -3272,21 +3372,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_develop_recife"
 			888 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = industrial_complex
-					level = 2
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 2
-					instant_build = yes
-				}
+				two_state_industrial_complex = yes
+				two_state_infrastructure = yes
 			}
-			set_temp_variable = { treasury_change = -22 }
-			modify_treasury_effect_corruption = yes
-			custom_effect_tooltip = BRA_economic_focuses_advice_tt
 		}
 
 		ai_will_do = {
@@ -3294,6 +3382,11 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 22 }
+				check_variable = { debt_ratio > 0.4 }
 			}
 			modifier = {
 				factor = 0
@@ -3313,6 +3406,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = BRA_develop_recife }
+		prerequisite = { focus = BRA_support_industries }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
@@ -3323,25 +3417,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_northeastern_stimulus"
-			890 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-			}
+			890 = { one_state_industrial_complex = yes }
 			887 = {
 				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				one_state_infrastructure = yes
 			}
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect_corruption = yes
-			custom_effect_tooltip = BRA_economic_focuses_advice_tt
 		}
 
 		ai_will_do = {
@@ -3349,6 +3429,11 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 11 }
+				check_variable = { debt_ratio > 0.4 }
 			}
 			modifier = {
 				factor = 0
@@ -3368,6 +3453,7 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = BRA_northeastern_stimulus }
+		prerequisite = { focus = BRA_agrarian_economy }
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
@@ -3376,22 +3462,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_build_fortaleza"
 			889 = {
-				add_extra_state_shared_building_slots = 2
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = infrastructure
-					level = 1
-					instant_build = yes
-				}
+				add_extra_state_shared_building_slots = 1
+				one_state_industrial_complex = yes
+				one_state_infrastructure = yes
 			}
-			# Treasury Effect
-			set_temp_variable = { treasury_change = -15 }
-			modify_treasury_effect_corruption = yes
-			custom_effect_tooltip = BRA_economic_focuses_advice_tt
 		}
 
 		ai_will_do = {
@@ -3399,6 +3473,468 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 11 }
+				check_variable = { debt_ratio > 0.4 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	# Railway Modernization
+	focus = {
+		id = BRA_rffsa_legacy
+		icon = Generic_Railroads
+
+		x = -13
+		y = 1
+		relative_position_id = BRA_growth_through_freedom
+
+		cost = 6.8
+
+		prerequisite = { focus = BRA_growth_through_freedom }
+
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_COUNTER_DEBUFF }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_rffsa_legacy"
+			if = {
+				limit = { has_idea = BRA_idea_neglected_railways }
+				swap_ideas = {
+					remove_idea = BRA_idea_neglected_railways
+					add_idea = BRA_idea_neglected_railways2
+				}
+			}
+			add_tech_bonus = {
+				name = BRA_rffsa_legacy
+				bonus = 0.2
+				uses = 1
+				technology = railway_system_04
+				ahead_reduction = 1
+			}
+		}
+
+		ai_will_do = { base = 35 }
+	}
+
+	focus = {
+		id = BRA_valec_railway_plan
+		icon = industry_communism
+
+		x = -1
+		y = 1
+		relative_position_id = BRA_rffsa_legacy
+
+		cost = 6.8
+
+		prerequisite = { focus = BRA_rffsa_legacy }
+		mutually_exclusive = { focus = BRA_rail_concession_model }
+
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_valec_railway_plan"
+			if = {
+				limit = { has_idea = BRA_idea_neglected_railways2 }
+				swap_ideas = {
+					remove_idea = BRA_idea_neglected_railways2
+					add_idea = BRA_idea_neglected_railways3
+				}
+			}
+			two_random_infrastructure = yes
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_rail_concession_model
+		icon = market_economy
+
+		x = 1
+		y = 1
+		relative_position_id = BRA_rffsa_legacy
+
+		cost = 6.8
+
+		prerequisite = { focus = BRA_rffsa_legacy }
+		mutually_exclusive = { focus = BRA_valec_railway_plan }
+
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_rail_concession_model"
+			if = {
+				limit = { has_idea = BRA_idea_neglected_railways2 }
+				swap_ideas = {
+					remove_idea = BRA_idea_neglected_railways2
+					add_idea = BRA_idea_neglected_railways3
+				}
+			}
+			set_temp_variable = { treasury_change = 6 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = BRA_rail_concession_model
+				bonus = 0.2
+				uses = 1
+				technology = railway_system_05
+				ahead_reduction = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+				}
+			}
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_ferrovia_norte_sul
+		icon = economic_railroads
+
+		x = 0
+		y = 1
+		relative_position_id = BRA_valec_railway_plan
+
+		cost = 8
+
+		prerequisite = { focus = BRA_valec_railway_plan }
+
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			has_full_control_of_state = 890
+			has_full_control_of_state = 885
+			has_full_control_of_state = 882
+		}
+
+		bypass = {
+			OR = {
+				NOT = { owns_state = 890 }
+				NOT = { owns_state = 885 }
+				NOT = { owns_state = 882 }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_ferrovia_norte_sul"
+			build_railway = {
+				level = 2
+				start_state = 890
+				target_state = 885
+			}
+			build_railway = {
+				level = 1
+				start_state = 885
+				target_state = 882
+			}
+			set_temp_variable = { treasury_change = -14 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = BRA_ferrovia_norte_sul
+				bonus = 0.2
+				uses = 1
+				technology = railway_system_05
+				ahead_reduction = 1
+			}
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_rail_concession_renewal
+		icon = focus_generic_railroad
+
+		x = 0
+		y = 1
+		relative_position_id = BRA_rail_concession_model
+
+		cost = 6.8
+
+		prerequisite = { focus = BRA_rail_concession_model }
+
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			has_full_control_of_state = 882
+			has_full_control_of_state = 884
+			has_full_control_of_state = 883
+		}
+
+		bypass = {
+			OR = {
+				NOT = { owns_state = 882 }
+				NOT = { owns_state = 884 }
+				NOT = { owns_state = 883 }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_rail_concession_renewal"
+			build_railway = {
+				level = 2
+				start_state = 882
+				target_state = 884
+			}
+			build_railway = {
+				level = 1
+				start_state = 884
+				target_state = 883
+			}
+		}
+
+		ai_will_do = { base = 35 }
+	}
+
+	focus = {
+		id = BRA_northeast_railways
+		icon = support_rail
+
+		x = 0
+		y = 1
+		relative_position_id = BRA_ferrovia_norte_sul
+
+		cost = 5.5
+
+		prerequisite = { focus = BRA_ferrovia_norte_sul }
+
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			has_full_control_of_state = 1025
+			has_full_control_of_state = 888
+			has_full_control_of_state = 889
+			has_full_control_of_state = 887
+			has_full_control_of_state = 1026
+		}
+
+		bypass = {
+			OR = {
+				NOT = { owns_state = 1025 }
+				NOT = { owns_state = 888 }
+				NOT = { owns_state = 889 }
+				NOT = { owns_state = 887 }
+				NOT = { owns_state = 1026 }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_northeast_railways"
+			if = {
+				limit = { has_idea = BRA_idea_neglected_railways3 }
+				remove_ideas = BRA_idea_neglected_railways3
+			}
+			build_railway = {
+				level = 2
+				start_state = 1025
+				target_state = 888
+			}
+			build_railway = {
+				level = 2
+				start_state = 888
+				target_state = 889
+			}
+			build_railway = {
+				level = 1
+				start_state = 1026
+				target_state = 887
+			}
+			set_temp_variable = { treasury_change = -18 }
+			modify_treasury_effect = yes
+		}
+
+		bypass_effect = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_northeast_railways"
+			if = {
+				limit = { has_idea = BRA_idea_neglected_railways3 }
+				remove_ideas = BRA_idea_neglected_railways3
+			}
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_ferrograo
+		icon = Generic_Train
+
+		x = 0
+		y = 1
+		relative_position_id = BRA_rail_concession_renewal
+
+		cost = 5.5
+
+		prerequisite = { focus = BRA_rail_concession_renewal }
+
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			has_full_control_of_state = 886
+			has_full_control_of_state = 891
+		}
+
+		bypass = {
+			OR = {
+				NOT = { owns_state = 886 }
+				NOT = { owns_state = 891 }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_ferrograo"
+			if = {
+				limit = { has_idea = BRA_idea_neglected_railways3 }
+				remove_ideas = BRA_idea_neglected_railways3
+			}
+			build_railway = {
+				level = 2
+				start_state = 886
+				target_state = 891
+			}
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+		}
+
+		bypass_effect = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_ferrograo"
+			if = {
+				limit = { has_idea = BRA_idea_neglected_railways3 }
+				remove_ideas = BRA_idea_neglected_railways3
+			}
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_trem_de_alta_velocidade
+		icon = grants_for_high_speed_trains
+
+		x = 1
+		y = 1
+		relative_position_id = BRA_northeast_railways
+
+		prerequisite = { focus = BRA_northeast_railways focus = BRA_ferrograo }
+
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			has_full_control_of_state = 883
+			has_full_control_of_state = 882
+		}
+
+		bypass = {
+			OR = {
+				NOT = { owns_state = 883 }
+				NOT = { owns_state = 882 }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_trem_de_alta_velocidade"
+			build_railway = {
+				level = 3
+				start_state = 883
+				target_state = 882
+			}
+			set_temp_variable = { treasury_change = -40 }
+			modify_treasury_effect = yes
+			add_tech_bonus = {
+				name = BRA_trem_de_alta_velocidade
+				bonus = 0.25
+				uses = 1
+				technology = railway_system_06
+				ahead_reduction = 2
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 45 }
 			}
 			modifier = {
 				factor = 0
@@ -3423,6 +3959,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_help_business_owners"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_tax_efficiency = 0.03 tooltip = corporate_tax_income_multiplier_modifier_tt }
 			set_temp_variable = { temp_opinion = 10 }
 			change_small_medium_business_owners_opinion = yes
 			change_industrial_conglomerates_opinion = yes
@@ -3494,10 +4032,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_foreign_research_methods"
-			swap_ideas = {
-				remove_idea = BRA_idea_brazilian_research_and_development
-				add_idea = BRA_idea_foreign_research_and_development
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_research = 0.07 tooltip = BRA_econ_research_tt }
+			add_to_variable = { BRA_econ_education_cost = -0.15 tooltip = education_cost_multiplier_modifier_tt }
 		}
 
 		ai_will_do = { base = 35 }
@@ -3520,6 +4057,11 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_energy_mining_ministry"
 			add_political_power = 100
+			unlock_decision_tooltip = BRA_decision_carajas_s11d
+			unlock_decision_tooltip = BRA_decision_carajas_mineral_processing
+			unlock_decision_tooltip = BRA_decision_bahia_chromite
+			unlock_decision_tooltip = BRA_decision_goias_rare_earths
+			unlock_decision_tooltip = BRA_decision_aerostructure_composites
 		}
 
 		ai_will_do = { base = 90 }
@@ -3602,13 +4144,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_fossil_fuel_industry"
-			add_ideas = BRA_idea_fossil_fuel_industry
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resources = 0.025 tooltip = BRA_econ_resources_tt }
+			add_to_variable = { BRA_econ_fossil_gen = 0.1 tooltip = fossil_pp_energy_generation_modifier_tt }
+			add_to_variable = { BRA_econ_fossil_fuel = -0.075 tooltip = fossil_pp_fuel_consumption_modifier_tt }
 			set_temp_variable = { temp_opinion = 10 }
 			change_fossil_fuel_industry_opinion = yes
 		}
 
 		ai_will_do = {
 			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				western_conservatism_are_in_power = yes
+			}
 			modifier = {
 				factor = 3
 				OR = {
@@ -3651,6 +4201,15 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					neutrality_neutral_green_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
 			modifier = {
 				factor = 3
 				OR = {
@@ -3748,10 +4307,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_presal_dev"
-			swap_ideas = {
-				remove_idea = BRA_idea_fossil_fuel_industry
-				add_idea = BRA_idea_fossil_fuel_industry_2
-			}
+			country_event = brazil.53
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resources = 0.025 tooltip = BRA_econ_resources_tt }
+			add_to_variable = { BRA_econ_fossil_gen = 0.1 tooltip = fossil_pp_energy_generation_modifier_tt }
+			add_to_variable = { BRA_econ_fossil_fuel = -0.075 tooltip = fossil_pp_fuel_consumption_modifier_tt }
 			add_resource = { type = oil amount = 16 state = 883 }
 			set_temp_variable = { treasury_change = -7.50 }
 			modify_treasury_effect = yes
@@ -3815,6 +4375,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_help_the_farmers"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_tax_farm = 0.02 tooltip = agriculture_tax_modifier_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
 			set_temp_variable = { temp_opinion = -5 }
@@ -3880,7 +4442,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_further_industrialization"
-			add_ideas = BRA_idea_pro_industries
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_building_slots = 0.04 tooltip = BRA_econ_building_slots_tt }
+			add_to_variable = { BRA_econ_efficiency_cap = 0.075 tooltip = BRA_econ_efficiency_cap_tt }
+			add_to_variable = { BRA_econ_ind_capacity = 0.05 tooltip = industrial_capacity_factory_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_industrial_conglomerates_opinion = yes
 			two_random_industrial_complex = yes
@@ -3919,7 +4484,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_agrarian_economy"
-			add_ideas = BRA_idea_pro_farmers
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_agri_build_speed = 0.1 tooltip = production_speed_agriculture_district_factor_tt }
+			add_to_variable = { BRA_econ_agri_productivity = 0.1 tooltip = agricolture_productivity_modifier_tt }
+			add_to_variable = { BRA_econ_tax_farm = 0.1 tooltip = agriculture_tax_modifier_tt }
+			add_to_variable = { BRA_econ_workers_farm = 0.05 tooltip = agriculture_workers_modifier_tt }
+			add_to_variable = { BRA_econ_farmers_opinion = 5 tooltip = BRA_econ_farmers_opinion_tt }
 			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
 			change_landowners_opinion = yes
@@ -3945,10 +4515,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_agrotech"
-			swap_ideas = {
-				remove_idea = BRA_idea_pro_farmers
-				add_idea = BRA_idea_pro_farmers_2
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_building_slots = 0.03 tooltip = BRA_econ_building_slots_tt }
+			add_to_variable = { BRA_econ_resources = 0.05 tooltip = BRA_econ_resources_tt }
+			add_to_variable = { BRA_econ_agri_productivity = 0.1 tooltip = agricolture_productivity_modifier_tt }
+			add_to_variable = { BRA_econ_tax_farm = 0.05 tooltip = agriculture_tax_modifier_tt }
+			add_to_variable = { BRA_econ_workers_farm = 0.05 tooltip = agriculture_workers_modifier_tt }
+			add_to_variable = { BRA_econ_farmers_opinion = 5 tooltip = BRA_econ_farmers_opinion_tt }
 			set_temp_variable = { temp_opinion = 10 }
 			change_farmers_opinion = yes
 		}
@@ -3973,8 +4546,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_agricultural_protectionism"
-			954 = {
-				add_extra_state_shared_building_slots = 2
+			if = { limit = { owns_state = 954 }
+				954 = { add_extra_state_shared_building_slots = 2 }
 			}
 			add_stability = 0.02
 			set_temp_variable = { temp_opinion = 5 }
@@ -3983,6 +4556,15 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					emerging_anarchist_communism_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					western_social_democrats_are_in_power = yes
+				}
+			}
 			modifier = {
 				factor = 3
 				OR = {
@@ -4020,8 +4602,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_free_trade_agro_producs"
-			954 = {
-				add_extra_state_shared_building_slots = 2
+			if = { limit = { owns_state = 954 }
+				954 = { add_extra_state_shared_building_slots = 2 }
 			}
 			add_political_power = 50
 			set_temp_variable = { temp_opinion = 5 }
@@ -4030,6 +4612,14 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+				}
+			}
 			modifier = {
 				factor = 3
 				OR = {
@@ -4050,6 +4640,319 @@ focus_tree = {
 		}
 	}
 
+	# CEITEC and Brazilian Microchips
+	focus = {
+		id = BRA_padis_incentives
+		icon = science2
+
+		x = 0
+		y = 1
+		relative_position_id = BRA_expanded_brazilian_economy
+
+		cost = 6.8
+
+		prerequisite = { focus = BRA_expanded_brazilian_economy }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_padis_incentives"
+			add_ideas = BRA_idea_padis_incentives
+			add_breakthrough_points = {
+				specialization = specialization_nuclear
+				value = 1
+			}
+			if = {
+				limit = { NOT = { is_special_project_completed = sp:sp_microchip_production } }
+				sp:sp_microchip_production = {
+					add_project_progress_ratio = 0.15
+				}
+			}
+			unlock_decision_tooltip = BRA_decision_ht_micron_packaging
+			unlock_decision_tooltip = BRA_decision_padis_extension
+		}
+
+		ai_will_do = { base = 35 }
+	}
+
+	focus = {
+		id = BRA_expand_ceitec
+		icon = microschip_production
+
+		x = -1
+		y = 1
+		relative_position_id = BRA_padis_incentives
+
+		cost = 6.8
+
+		prerequisite = { focus = BRA_padis_incentives }
+		mutually_exclusive = { focus = BRA_privatize_ceitec }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = BRA_ceitec_not_liquidated_tt
+				NOT = { has_country_flag = BRA_ceitec_liquidated }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_expand_ceitec"
+			add_ideas = BRA_idea_ceitec_state_chipmaker
+			if = {
+				limit = { NOT = { is_special_project_completed = sp:sp_microchip_production } }
+				sp:sp_microchip_production = {
+					add_project_progress_ratio = 0.15
+				}
+			}
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_social_democrats_are_in_power = yes
+					emerging_communist_state_are_in_power = yes
+					emerging_anarchist_communism_are_in_power = yes
+				}
+			}
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_privatize_ceitec
+		icon = money
+
+		x = 1
+		y = 1
+		relative_position_id = BRA_padis_incentives
+
+		cost = 6.8
+
+		prerequisite = { focus = BRA_padis_incentives }
+		mutually_exclusive = { focus = BRA_expand_ceitec }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_INDUSTRY }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_privatize_ceitec"
+			add_ideas = BRA_idea_ceitec_private_fab
+			if = {
+				limit = { NOT = { is_special_project_completed = sp:sp_microchip_production } }
+				sp:sp_microchip_production = {
+					add_project_progress_ratio = 0.1
+				}
+			}
+			set_temp_variable = { treasury_change = 4 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_liberals_are_in_power = yes
+					western_conservatism_are_in_power = yes
+					nationalist_monarchists_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
+			}
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_ceitec_porto_alegre_fab
+		icon = focus_chips
+
+		x = 0
+		y = 1
+		relative_position_id = BRA_expand_ceitec
+
+		cost = 8
+
+		prerequisite = { focus = BRA_expand_ceitec }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			has_full_control_of_state = 879
+			is_special_project_completed = sp:sp_microchip_production
+		}
+
+		bypass = {
+			OR = {
+				NOT = { owns_state = 879 }
+				# An AI that never finishes the project would lock BRA_brasil_semicon
+				AND = {
+					is_ai = yes
+					date > 2010.1.1
+					NOT = { is_special_project_completed = sp:sp_microchip_production }
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_ceitec_porto_alegre_fab"
+			879 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = microchip_plant
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -10.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 0
+				can_staff_an_microchip_plant = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_foreign_chipmaker_partnership
+		icon = industry_democratic
+
+		x = 0
+		y = 1
+		relative_position_id = BRA_privatize_ceitec
+
+		cost = 8
+
+		prerequisite = { focus = BRA_privatize_ceitec }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			has_full_control_of_state = 882
+			is_special_project_completed = sp:sp_microchip_production
+		}
+
+		bypass = {
+			OR = {
+				NOT = { owns_state = 882 }
+				AND = {
+					is_ai = yes
+					date > 2010.1.1
+					NOT = { is_special_project_completed = sp:sp_microchip_production }
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_foreign_chipmaker_partnership"
+			882 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = microchip_plant
+					level = 1
+					instant_build = yes
+				}
+			}
+			set_temp_variable = { treasury_change = -10.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 0
+				can_staff_an_microchip_plant = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 11 }
+				check_variable = { debt_ratio > 0.4 }
+			}
+		}
+	}
+
+	focus = {
+		id = BRA_brasil_semicon
+		icon = research3
+
+		x = 1
+		y = 1
+		relative_position_id = BRA_ceitec_porto_alegre_fab
+
+		cost = 6.8
+
+		prerequisite = { focus = BRA_ceitec_porto_alegre_fab focus = BRA_foreign_chipmaker_partnership }
+
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
+
+		completion_reward = {
+			log = "[GetDateText]: [THIS.GetName]: Focus BRA_brasil_semicon"
+			add_ideas = BRA_idea_brasil_semicon
+			add_tech_bonus = {
+				name = BRA_brasil_semicon
+				bonus = 0.25
+				uses = 2
+				category = CAT_microchips
+			}
+		}
+
+		ai_will_do = { base = 35 }
+	}
+
 	# Agriculture Section
 	focus = {
 		id = BRA_the_countryside
@@ -4067,6 +4970,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_the_countryside"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_agri_build_speed = 0.05 tooltip = production_speed_agriculture_district_factor_tt }
 			set_temp_variable = { temp_opinion = 8 }
 			change_farmers_opinion = yes
 			change_landowners_opinion = yes
@@ -4117,6 +5022,9 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 			change_industrial_conglomerates_opinion = yes
+			unlock_decision_tooltip = BRA_decision_flex_fuel_conversion
+			unlock_decision_tooltip = BRA_decision_scale_sugarcane_ethanol
+			unlock_decision_tooltip = BRA_decision_ethanol_export_push
 			hidden_effect = {
 				country_event = { id = brazil.44 days = 21 random_days = 3 }
 			}
@@ -4159,10 +5067,11 @@ focus_tree = {
 			change_small_medium_business_owners_opinion = yes
 			change_industrial_conglomerates_opinion = yes
 			two_random_agriculture_district = yes
-			swap_ideas = {
-				remove_idea = BRA_idea_brazilian_exports_1
-				add_idea = BRA_idea_brazilian_exports_2
-			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resource_exports = 0.05 tooltip = resource_export_multiplier_modifier_tt }
+			add_to_variable = { BRA_econ_trade_opinion = 0.1 tooltip = trade_opinion_factor_tt }
+			add_to_variable = { BRA_econ_resources = 0.05 tooltip = BRA_econ_resources_tt }
+			add_to_variable = { BRA_econ_resource_gdp = 0.025 tooltip = gdp_from_resource_sector_modifier_tt }
 		}
 
 		ai_will_do = {
@@ -4580,6 +5489,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_brazil_first"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resources = 0.03 tooltip = BRA_econ_resources_tt }
 			add_political_power = 100
 			set_temp_variable = { percent_change = 2 }
 			change_domestic_influence_percentage = yes
@@ -4809,13 +5720,37 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_INFLUENCE }
 
-		available = { has_at_least_great_power_status = yes }
+		available = { can_seek_permanent_unsc_seat = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_a_global_power"
 			add_ideas = BRA_idea_a_global_power
 			set_temp_variable = { percent_change = 2 }
 			change_domestic_influence_percentage = yes
+			if = {
+				limit = {
+					country_exists = GER
+					NOT = { has_war_with = GER }
+				}
+				add_opinion_modifier = { target = GER modifier = friendship }
+				reverse_add_opinion_modifier = { target = GER modifier = friendship }
+			}
+			if = {
+				limit = {
+					country_exists = JAP
+					NOT = { has_war_with = JAP }
+				}
+				add_opinion_modifier = { target = JAP modifier = friendship }
+				reverse_add_opinion_modifier = { target = JAP modifier = friendship }
+			}
+			if = {
+				limit = {
+					country_exists = RAJ
+					NOT = { has_war_with = RAJ }
+				}
+				add_opinion_modifier = { target = RAJ modifier = friendship }
+				reverse_add_opinion_modifier = { target = RAJ modifier = friendship }
+			}
 			unlock_decision_category_tooltip = UNSC_permanent_seat_campaign
 		}
 
@@ -5063,7 +5998,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_homemade_rifles"
-			add_ideas = BRA_idea_homemade_rifles
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resources = 0.03 tooltip = BRA_econ_resources_tt }
+			add_to_variable = { BRA_econ_ind_capacity = 0.05 tooltip = industrial_capacity_factory_tt }
 		}
 
 		ai_will_do = {
@@ -5170,62 +6107,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_northeastern_military_factories"
-			if = { limit = { has_full_control_of_state = 889 }
-				889 = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
+			if = {
+				limit = { has_full_control_of_state = 889 }
+				889 = { one_state_arms_factory = yes }
 			}
-			else = {
-				random_owned_controlled_state = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
+			else = { one_random_arms_factory = yes }
+			if = {
+				limit = { has_full_control_of_state = 888 }
+				888 = { two_state_arms_factory = yes }
 			}
-			if = { limit = { has_full_control_of_state = 888 }
-				888 = {
-					add_extra_state_shared_building_slots = 2
-					add_building_construction = {
-						type = arms_factory
-						level = 2
-						instant_build = yes
-					}
-				}
-			}
-			else = {
-				random_owned_controlled_state = {
-					limit = {
-						free_building_slots = {
-							building = arms_factory
-							size > 0
-							include_locked = yes
-						}
-					}
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = arms_factory
-						level = 1
-						instant_build = yes
-					}
-				}
-			}
-			set_temp_variable = { treasury_change = -15.00 }
-			modify_treasury_effect = yes
+			else = { one_random_arms_factory = yes }
 			set_temp_variable = { temp_opinion = 3 }
 			change_the_military_opinion = yes
 			change_defense_industry_opinion = yes
@@ -5248,6 +6139,11 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_arms_industry = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 23 }
+				check_variable = { debt_ratio > 0.4 }
 			}
 		}
 	}
@@ -6114,6 +7010,7 @@ focus_tree = {
 				limit = {
 					air_base > 1
 					air_base < 3
+					free_building_slots = { building = air_base size > 1 }
 				}
 				add_building_construction = {
 					type = air_base
@@ -6125,6 +7022,7 @@ focus_tree = {
 				limit = {
 					air_base > 1
 					air_base < 3
+					free_building_slots = { building = air_base size > 1 }
 				}
 				add_building_construction = {
 					type = air_base
@@ -6136,6 +7034,7 @@ focus_tree = {
 				limit = {
 					air_base > 1
 					air_base < 3
+					free_building_slots = { building = air_base size > 0 }
 				}
 				add_building_construction = {
 					type = air_base
@@ -6430,7 +7329,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_SPACE }
 
-		available = { has_at_least_major_power_status = yes }
+		available = { has_at_least_regional_power_status = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_brazilian_space_program"
@@ -6454,7 +7353,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_SPACE }
 
-		available = { has_at_least_major_power_status = yes }
+		available = { has_at_least_regional_power_status = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_cooperate_with_nasa"
@@ -6489,11 +7388,11 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_SPACE FOCUS_FILTER_EXPENDITURE }
 
-		available = { has_at_least_major_power_status = yes }
+		available = { has_at_least_regional_power_status = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_create_launchpads"
-			889 = {
+			890 = {
 				add_building_construction = {
 					type = infrastructure level = 1 instant_build = yes
 				}
@@ -6668,7 +7567,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_cardosos_last_years"
-			add_political_power = 150
+			add_political_power = 100
 		}
 
 		ai_will_do = { base = 100 }
@@ -6717,6 +7616,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_preserve_amazon"
+			set_temp_variable = { temp_change = 10 }
+			BRA_conserv_acreage_effect = yes
 			add_stability = 0.05
 			add_political_power = 100
 			set_temp_variable = { party_index = 17 }
@@ -6727,6 +7628,18 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 35
+			modifier = {
+				factor = 2
+				has_stability < 0.6
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					check_variable = { party_pop_array^17 > 0.05 }
+					western_social_democrats_are_in_power = yes
+				}
+			}
 			modifier = {
 				factor = 3
 				OR = {
@@ -6803,6 +7716,14 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 35
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					western_conservatism_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
+				}
+			}
 			modifier = {
 				factor = 3
 				OR = {
@@ -6945,6 +7866,11 @@ focus_tree = {
 		ai_will_do = {
 			base = 90
 			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				check_variable = { party_pop_array^5 > 0.25 }
+			}
+			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
@@ -7024,6 +7950,11 @@ focus_tree = {
 			modifier = {
 				factor = 3
 				has_global_flag = BRA_LIBERALS_FOCUS_PATH
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				check_variable = { party_pop_array^5 < 0.25 }
 			}
 			modifier = {
 				factor = 0
@@ -7111,6 +8042,10 @@ focus_tree = {
 				}
 			}
 			modifier = {
+				factor = 0.25
+				check_variable = { debt_ratio > 0.4 }
+			}
+			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
@@ -7148,7 +8083,7 @@ focus_tree = {
 		ai_will_do = { base = 100 }
 	}
 
-	# Operation Car-Wash Focus Tree.
+	# Operation Car Wash
 	focus = {
 		id = BRA_op_car_wash
 		icon = BRA_car_wash_initial
@@ -7158,18 +8093,21 @@ focus_tree = {
 
 		cost = 5
 
-		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH }
+		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH FOCUS_FILTER_CORRUPTION }
 
 		available = {
-			date < 2018.10.01
-			date > 2014.01.01
+			OR = {
+				has_idea = BRA_idea_mensalao
+				date > 2014.3.17
+			}
 		}
+
+		bypass = { has_idea = BRA_idea_car_wash1 }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_op_car_wash"
-			country_event = { id = brazil.19 days = 0 }
-			country_event = { id = brazil.45 days = 5 }
-			custom_effect_tooltip = BRA_car_wash_TT
+			country_event = brazil.19
+			unlock_decision_category_tooltip = BRA_car_wash_category
 		}
 
 		ai_will_do = { base = 90 }
@@ -7187,11 +8125,12 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_op_car_wash }
 
-		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH }
+		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH FOCUS_FILTER_FOREIGN_POLICY }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_odebrecht_corruption"
 			BRA_operation_car_wash_switch = yes
+			unlock_decision_tooltip = BRA_car_wash_share_odebrecht_evidence
 		}
 
 		ai_will_do = { base = 90 }
@@ -7209,11 +8148,12 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_op_car_wash }
 
-		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH }
+		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH FOCUS_FILTER_CORRUPTION }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_petrobras_indictment"
 			BRA_operation_car_wash_switch = yes
+			country_event = brazil.45
 		}
 
 		ai_will_do = { base = 90 }
@@ -7231,11 +8171,12 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_op_car_wash }
 
-		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH }
+		search_filters = { FOCUS_FILTER_OPERATION_CAR_WASH FOCUS_FILTER_CORRUPTION }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_searchandseizure"
 			BRA_operation_car_wash_switch = yes
+			unlock_decision_tooltip = BRA_car_wash_submit_lula_case
 		}
 
 		ai_will_do = { base = 90 }
@@ -7308,9 +8249,6 @@ focus_tree = {
 		cost = 4
 
 		prerequisite = { focus = BRA_anti_corruption_measures }
-		prerequisite = { focus = BRA_odebrecht_corruption }
-		prerequisite = { focus = BRA_petrobras_indictment }
-		prerequisite = { focus = BRA_searchandseizure }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -7336,9 +8274,6 @@ focus_tree = {
 		cost = 4
 
 		prerequisite = { focus = BRA_anti_corruption_measures }
-		prerequisite = { focus = BRA_odebrecht_corruption }
-		prerequisite = { focus = BRA_petrobras_indictment }
-		prerequisite = { focus = BRA_searchandseizure }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
@@ -7364,20 +8299,25 @@ focus_tree = {
 		cost = 2.5
 
 		prerequisite = {
-			focus = BRA_psl_growth
 			focus = BRA_parties_of_the_left
+			focus = BRA_psl_growth
 		}
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			date < 2018.10.01
-			date > 2010.01.01
+			has_elections = yes
+			hidden_trigger = {
+				OR = {
+					is_ai = no
+					date > 2014.10.6
+				}
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_the_new_elections"
-			country_event = brazil.18
+			custom_effect_tooltip = BRA_special_election_tt
 		}
 
 		ai_will_do = { base = 90 }
@@ -7447,6 +8387,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_rw_populist"
+			add_war_support = 0.02
 			set_temp_variable = { party_index = 20 }
 			set_temp_variable = { party_popularity_increase = 0.04 }
 			set_temp_variable = { temp_outlook_increase = 0.04 }
@@ -7484,6 +8425,11 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 90
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				check_variable = { party_pop_array^5 < 0.45 }
+			}
 			modifier = {
 				factor = 3
 				has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
@@ -7531,6 +8477,11 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 90
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				check_variable = { party_pop_array^5 > 0.45 }
+			}
 			modifier = {
 				factor = 3
 				has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
@@ -7736,7 +8687,10 @@ focus_tree = {
 				ideology = communism
 				popularity = 0.1
 			}
-			add_ideas = BRA_idea_lulismo
+			add_timed_idea = {
+				idea = BRA_idea_lulismo
+				days = 3650
+			}
 		}
 
 		ai_will_do = { base = 90 }
@@ -7816,7 +8770,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_mst"
-			add_ideas = BRA_idea_agrarian_reform
+			add_timed_idea = {
+				idea = BRA_idea_agrarian_reform
+				days = 3650
+			}
 		}
 
 		ai_will_do = { base = 90 }
@@ -7843,6 +8800,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_pro_workers"
+			add_stability = 0.02
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 		}
@@ -7991,7 +8949,7 @@ focus_tree = {
 		prerequisite = { focus = BRA_mst }
 		prerequisite = { focus = BRA_pro_workers }
 
-		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_AMAZON_CONSERVATION }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_AMAZON_CONSERVATION FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			set_temp_variable = { needed_acreage = 12 }
@@ -8008,22 +8966,16 @@ focus_tree = {
 			change_industrial_conglomerates_opinion = yes
 			change_small_medium_business_owners_opinion = yes
 			change_labour_unions_opinion = yes
-			884 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
+			if = {
+				limit = { has_full_control_of_state = 884 }
+				884 = { one_state_industrial_complex = yes }
 			}
-			892 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = industrial_complex
-					level = 1
-					instant_build = yes
-				}
+			else = { one_random_industrial_complex = yes }
+			if = {
+				limit = { has_full_control_of_state = 892 }
+				892 = { one_state_industrial_complex = yes }
 			}
+			else = { one_random_industrial_complex = yes }
 			set_temp_variable = { temp_change = -12 }
 			BRA_acres_conserved_change_effect = yes
 			increase_economic_growth = yes
@@ -8041,6 +8993,15 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 15 }
+				check_variable = { debt_ratio > 0.4 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -8191,7 +9152,14 @@ focus_tree = {
 			decrease_corruption = yes
 		}
 
-		ai_will_do = { base = 90 }
+		ai_will_do = {
+			base = 90
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				emerging_anarchist_communism_are_in_power = yes
+			}
+		}
 	}
 
 	focus = {
@@ -8216,6 +9184,11 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 90
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				emerging_communist_state_are_in_power = yes
+			}
 			modifier = {
 				factor = 3
 				has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
@@ -8250,6 +9223,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_better_sus"
+			add_stability = 0.02
 			increase_healthcare_budget = yes
 		}
 
@@ -8275,7 +9249,8 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 10 }
 			change_labour_unions_opinion = yes
 			change_communist_cadres_opinion = yes
-			add_ideas = BRA_idea_pro_unions
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_unions_opinion = 5 tooltip = BRA_econ_unions_opinion_tt }
 		}
 
 		ai_will_do = { base = 35 }
@@ -8486,7 +9461,13 @@ focus_tree = {
 			change_international_bankers_opinion = yes
 		}
 
-		ai_will_do = { base = 35 }
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 0.25
+				has_stability < 0.6
+			}
+		}
 	}
 
 	focus = {
@@ -8704,7 +9685,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_brazilian_diplomacy"
-			add_political_power = 200
+			add_political_power = 75
 			set_temp_variable = { percent_change = 2 }
 			change_domestic_influence_percentage = yes
 		}
@@ -8728,6 +9709,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_ensure_military_support"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_research = 0.03 tooltip = BRA_econ_research_tt }
 			add_war_support = 0.10
 			army_experience = 25
 			#custom_effect_tooltip = BRA_army_aproval_increase_tt
@@ -8775,7 +9758,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_bolsonarismo"
 			add_popularity = { ideology = nationalist popularity = 0.1 }
-			add_ideas = BRA_idea_bolsonarismo
+			add_timed_idea = {
+				idea = BRA_idea_bolsonarismo
+				days = 3650
+			}
 		}
 
 		ai_will_do = { base = 90 }
@@ -8905,6 +9891,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_increase_mil_budget"
+			add_war_support = 0.02
 			increase_military_spending = yes
 		}
 
@@ -8954,7 +9941,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_court_evangelicals"
-			add_ideas = BRA_idea_christian_values
+			add_timed_idea = {
+				idea = BRA_idea_christian_values
+				days = 3650
+			}
 		}
 
 		ai_will_do = { base = 90 }
@@ -8976,8 +9966,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_call_paulo_guedes"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_tax_efficiency = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
 			add_stability = 0.03
-			add_political_power = 250
+			add_political_power = 100
 			custom_effect_tooltip = BRA_paulo_guedes_tt
 		}
 
@@ -9008,20 +10000,12 @@ focus_tree = {
 					NOT = { has_idea = NATO_member }
 					has_idea = Major_Non_NATO_Ally
 				}
-				remove_ideas = Major_Non_NATO_Ally
-				clr_country_flag = Major_Non_NATO_Ally
-				remove_from_tech_sharing_group = Major_Non_NATO_Ally_Share
+				NATO_major_non_nato_ally_leave = yes
 				USA = {
 					add_opinion_modifier = { target = BRA modifier = left_alliance }
 				}
-				every_other_country = {
-					limit = { has_opinion_modifier = Major_Non_NATO_Ally }
-					remove_opinion_modifier = { target = BRA modifier = Major_Non_NATO_Ally }
-					hidden_effect = {
-						BRA = { remove_opinion_modifier = { target = PREV modifier = Major_Non_NATO_Ally } }
-					}
-				}
 			}
+			UNASUL_leave = yes
 		}
 
 		ai_will_do = { base = 10 }
@@ -9048,17 +10032,9 @@ focus_tree = {
 			}
 			if = {
 				limit = { has_full_control_of_state = 882 }
-				882 = {
-					add_extra_state_shared_building_slots = 1
-					add_building_construction = {
-						type = industrial_complex
-						level = 1
-						instant_build = yes
-					}
-				}
-				set_temp_variable = { treasury_change = -12 }
-				modify_treasury_effect_corruption = yes
+				882 = { one_state_industrial_complex = yes }
 			}
+			UNASUL_leave = yes
 		}
 
 		ai_will_do = {
@@ -9095,6 +10071,7 @@ focus_tree = {
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				add_opinion_modifier = { target = BRA modifier = broke_off_diplomatic_relations }
 			}
+			UNASUL_leave = yes
 		}
 
 		ai_will_do = { base = 10 }
@@ -9152,6 +10129,8 @@ focus_tree = {
 
 		bypass = {
 			OR = {
+				NOT = { country_exists = VEN }
+				NOT = { country_exists = BOL }
 				has_war_with = VEN
 				has_war_with = BOL
 				VEN = { is_subject_of = BRA }
@@ -9173,6 +10152,7 @@ focus_tree = {
 				type = puppet_wargoal_focus
 				target = BOL
 			}
+			UNASUL_leave = yes
 		}
 
 		ai_will_do = {
@@ -9223,6 +10203,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
+				NOT = { country_exists = CUB }
 				has_war_with = CUB
 				CUB = { is_subject_of = BRA }
 			}
@@ -9291,6 +10272,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_court_usa"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_research = 0.03 tooltip = BRA_econ_research_tt }
 			if = {
 				limit = { USA = { has_opinion = { target = BRA value > 50 } } }
 				if = {
@@ -9338,11 +10321,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_court_israel"
-			ISR = {
-				add_opinion_modifier = { target = ROOT modifier = friendship }
-				add_political_power = 15
-			}
-			add_opinion_modifier = { target = ISR modifier = friendship }
+			ISR = { country_event = brazil.96 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_partner_package_tt
 			add_political_power = 50
 		}
 
@@ -9368,37 +10349,25 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_talks_with_china"
 			if = {
 				limit = { country_exists = SOV }
-				add_opinion_modifier = { target = SOV modifier = friendship }
-				SOV = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 25
-				}
+				SOV = { country_event = brazil.96 }
 			}
 			if = {
 				limit = { country_exists = RAJ }
-				add_opinion_modifier = { target = RAJ modifier = friendship }
-				RAJ = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 25
-				}
+				RAJ = { country_event = brazil.96 }
 			}
 			if = {
 				limit = { country_exists = CHI }
-				add_opinion_modifier = { target = CHI modifier = friendship }
-				CHI = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 25
-				}
+				CHI = { country_event = brazil.96 }
 			}
 			if = {
 				limit = { country_exists = SAF }
-				add_opinion_modifier = { target = SAF modifier = friendship }
-				SAF = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 25
-				}
+				SAF = { country_event = brazil.96 }
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_partner_package_tt
 			add_political_power = 50
+			BRA_apply_to_brics = yes
+			custom_effect_tooltip = BRA_brics_application_tt
 		}
 
 		ai_will_do = { base = 10 }
@@ -9421,56 +10390,36 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_our_south_american_allies"
-			set_temp_variable = { pp_gain = 0 }
 			if = {
 				limit = {
 					country_exists = ARG
 					NOT = { has_war_with = ARG }
 				}
-				ARG = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					reverse_add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 15
-					add_to_temp_variable = { pp_gain = 15 }
-				}
+				ARG = { country_event = brazil.96 }
 			}
 			if = {
 				limit = {
 					country_exists = PAR
 					NOT = { has_war_with = PAR }
 				}
-				PAR = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					reverse_add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 15
-					add_to_temp_variable = { pp_gain = 15 }
-				}
+				PAR = { country_event = brazil.96 }
 			}
 			if = {
 				limit = {
 					country_exists = COL
 					NOT = { has_war_with = COL }
 				}
-				COL = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					reverse_add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 15
-					add_to_temp_variable = { pp_gain = 15 }
-				}
+				COL = { country_event = brazil.96 }
 			}
 			if = {
 				limit = {
 					country_exists = PRU
 					NOT = { has_war_with = PRU }
 				}
-				PRU = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					reverse_add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 15
-					add_to_temp_variable = { pp_gain = 15 }
-				}
+				PRU = { country_event = brazil.96 }
 			}
-			add_political_power = var:pp_gain
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_partner_package_tt
 		}
 
 		ai_will_do = { base = 10 }
@@ -9493,56 +10442,36 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_be_friend_european_conservatives"
-			set_temp_variable = { pp_gain = 0 }
 			if = {
 				limit = {
 					country_exists = POL
 					NOT = { has_war_with = POL }
 				}
-				POL = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					reverse_add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 15
-					add_to_temp_variable = { pp_gain = 15 }
-				}
+				POL = { country_event = brazil.96 }
 			}
 			if = {
 				limit = {
 					country_exists = GER
 					NOT = { has_war_with = GER }
 				}
-				GER = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					reverse_add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 15
-					add_to_temp_variable = { pp_gain = 15 }
-				}
+				GER = { country_event = brazil.96 }
 			}
 			if = {
 				limit = {
 					country_exists = SPR
 					NOT = { has_war_with = SPR }
 				}
-				SPR = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					reverse_add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 15
-					add_to_temp_variable = { pp_gain = 15 }
-				}
+				SPR = { country_event = brazil.96 }
 			}
 			if = {
 				limit = {
 					country_exists = ENG
 					NOT = { has_war_with = ENG }
 				}
-				ENG = {
-					add_opinion_modifier = { target = ROOT modifier = friendship }
-					reverse_add_opinion_modifier = { target = ROOT modifier = friendship }
-					add_political_power = 15
-					add_to_temp_variable = { pp_gain = 15 }
-				}
+				ENG = { country_event = brazil.96 }
 			}
-			add_political_power = var:pp_gain
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = BRA_partner_package_tt
 		}
 
 		ai_will_do = { base = 10 }
@@ -9634,6 +10563,11 @@ focus_tree = {
 			base = 90
 			modifier = {
 				factor = 3
+				BRA_ai_has_focus_path = no
+				ai_is_threatened = yes
+			}
+			modifier = {
+				factor = 3
 				OR = {
 					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
 					has_global_flag = BRA_MONARCHY_FOCUS_PATH
@@ -9674,6 +10608,11 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 90
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				ai_is_threatened = no
+			}
 			modifier = {
 				factor = 3
 				has_global_flag = BRA_HISTORICAL_FOCUS_PATH
@@ -9772,7 +10711,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_appease_centrao"
-			add_political_power = 200
+			add_political_power = 75
 		}
 
 		ai_will_do = {
@@ -9815,7 +10754,13 @@ focus_tree = {
 			country_event = { id = brazil.22 days = 0 }
 		}
 
-		ai_will_do = { base = 90 }
+		ai_will_do = {
+			base = 90
+			modifier = {
+				factor = 0.25
+				has_stability < 0.6
+			}
+		}
 	}
 
 	focus = {
@@ -9946,13 +10891,21 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_new_ministries"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_construction_speed = 0.05 tooltip = production_speed_buildings_factor_tt }
 			increase_centralization = yes
 			add_stability = -0.02
 			set_temp_variable = { desire_change = 0.5 }
 			change_expected_bureaucracy_spending = yes
 		}
 
-		ai_will_do = { base = 35 }
+		ai_will_do = {
+			base = 35
+			modifier = {
+				factor = 0.25
+				has_stability < 0.6
+			}
+		}
 	}
 
 	focus = {
@@ -9972,6 +10925,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_push_for_economic_liberalisation"
 			add_ideas = BRA_idea_liberal_economy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resources = 0.05 tooltip = BRA_econ_resources_tt }
 			increase_economic_growth = yes
 			grant_reform_mandate = yes
 		}
@@ -10020,6 +10975,11 @@ focus_tree = {
 				has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
 			}
 			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				check_variable = { party_pop_array^22 > 0.15 }
+			}
+			modifier = {
 				factor = 0
 				OR = {
 					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
@@ -10049,11 +11009,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_assign_military_cabinet"
-			add_political_power = 150
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_construction_speed = 0.05 tooltip = production_speed_buildings_factor_tt }
+			add_political_power = 75
 			add_stability = -0.2
 		}
 
-		ai_will_do = { base = 90 }
+		ai_will_do = {
+			base = 90
+			modifier = {
+				factor = 0.25
+				has_stability < 0.6
+			}
+		}
 	}
 
 	focus = {
@@ -10079,7 +11047,13 @@ focus_tree = {
 			add_stability = -0.05
 		}
 
-		ai_will_do = { base = 90 }
+		ai_will_do = {
+			base = 90
+			modifier = {
+				factor = 0.25
+				has_stability < 0.6
+			}
+		}
 	}
 
 	focus = {
@@ -10174,11 +11148,17 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
-			add_political_power = 150
+			add_political_power = 75
 			add_stability = -0.03
 		}
 
-		ai_will_do = { base = 90 }
+		ai_will_do = {
+			base = 90
+			modifier = {
+				factor = 0.25
+				has_stability < 0.6
+			}
+		}
 	}
 
 	focus = {
@@ -10266,6 +11246,11 @@ focus_tree = {
 			modifier = {
 				factor = 3
 				has_global_flag = BRA_MONARCHY_FOCUS_PATH
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				check_variable = { party_pop_array^23 > 0.15 }
 			}
 			modifier = {
 				factor = 0
@@ -10433,9 +11418,10 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
-			swap_ideas = {
-				remove_idea = BRA_idea_monarchism2
-				add_idea = BRA_idea_monarchism3
+			remove_ideas = BRA_idea_monarchism2
+			add_timed_idea = {
+				idea = BRA_idea_monarchism3
+				days = 3650
 			}
 		}
 
@@ -10561,6 +11547,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_government_reform"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_tax_efficiency = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
 			decrease_corruption = yes
 			decrease_centralization = yes
 			increase_economic_growth = yes
@@ -10628,6 +11616,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_fight_crime"
+			custom_effect_tooltip = BRA_cartel_strength_down_tt
+			subtract_from_variable = { strength_of_cartels = 3 }
 			increase_policing_budget = yes
 			set_temp_variable = { desire_change = 0.5 }
 			change_expected_police_spending = yes
@@ -10660,6 +11650,7 @@ focus_tree = {
 
 		bypass = {
 			OR = {
+				NOT = { country_exists = URG }
 				URG = { is_subject_of = BRA }
 				AND = {
 					894 = { is_core_of = BRA }
@@ -10738,6 +11729,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_modern_monarchies"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_trade_opinion = 0.1 tooltip = trade_opinion_factor_tt }
 			add_political_power = 100
 			if = {
 				limit = {
@@ -10783,6 +11776,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_empire_proud"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_construction_speed = 0.05 tooltip = production_speed_buildings_factor_tt }
 			add_political_power = 50
 			add_popularity = { ideology = nationalist popularity = 0.075 }
 			recalculate_party = yes
@@ -10834,6 +11829,14 @@ focus_tree = {
 				OR = {
 					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
 					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				OR = {
+					nationalist_monarchists_are_in_power = yes
+					nationalist_right_wing_populists_are_in_power = yes
 				}
 			}
 			modifier = {
@@ -10966,6 +11969,11 @@ focus_tree = {
 				has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
 			}
 			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				nationalist_military_junta_are_in_power = yes
+			}
+			modifier = {
 				factor = 0
 				OR = {
 					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
@@ -11001,7 +12009,7 @@ focus_tree = {
 			increase_economic_growth = yes
 			set_temp_variable = { treasury_change = 0 }
 			if = { limit = { owns_state = 883 }
-				add_to_temp_variable = { treasury_change = 8.5 }
+				add_to_temp_variable = { treasury_change = -8.5 }
 				883 = {
 					add_extra_state_shared_building_slots = 1
 					add_building_construction = {
@@ -11016,7 +12024,7 @@ focus_tree = {
 				}
 			}
 			if = { limit = { owns_state = 884 }
-				add_to_temp_variable = { treasury_change = 8.5 }
+				add_to_temp_variable = { treasury_change = -8.5 }
 				884 = {
 					add_extra_state_shared_building_slots = 1
 					add_building_construction = {
@@ -11031,8 +12039,7 @@ focus_tree = {
 				}
 			}
 			if = {
-				limit = { check_variable = { treasury_change > 0 } }
-				multiply_temp_variable = { treasury_change = -1 }
+				limit = { check_variable = { treasury_change < 0 } }
 				modify_treasury_effect = yes
 			}
 		}
@@ -11180,7 +12187,13 @@ focus_tree = {
 			add_stability = -0.05
 		}
 
-		ai_will_do = { base = 90 }
+		ai_will_do = {
+			base = 90
+			modifier = {
+				factor = 0.25
+				has_stability < 0.6
+			}
+		}
 	}
 
 	focus = {
@@ -11257,9 +12270,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
+		bypass = { has_idea = BRA_idea_tax_reformation }
+
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_tax_reform"
-			add_ideas = BRA_idea_tax_reformation
+			add_timed_idea = {
+				idea = BRA_idea_tax_reformation
+				days = 3650
+			}
 			set_temp_variable = { debt_change = -25 }
 			modify_debt_effect = yes
 			set_temp_variable = { treasury_change = -25 }
@@ -11491,7 +12509,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_cardoso_legacy"
 			add_stability = 0.03
-			add_political_power = 150
+			add_political_power = 100
 			set_temp_variable = { party_index = 2 }
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.10 }
@@ -11503,6 +12521,11 @@ focus_tree = {
 			modifier = {
 				factor = 3
 				has_global_flag = BRA_LIBERALS_FOCUS_PATH
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				check_variable = { party_pop_array^3 < 0.10 }
 			}
 			modifier = {
 				factor = 0
@@ -11541,7 +12564,7 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_psdb_pdt_coalition"
 			custom_effect_tooltip = BRA_pdt_coalition_tt
 			add_stability = 0.03
-			add_political_power = 150
+			add_political_power = 75
 			hidden_effect = {
 				set_temp_variable = { party_index = 3 }
 				set_temp_variable = { party_popularity_increase = 0.1 }
@@ -11559,6 +12582,11 @@ focus_tree = {
 			modifier = {
 				factor = 3
 				has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+			}
+			modifier = {
+				factor = 3
+				BRA_ai_has_focus_path = no
+				check_variable = { party_pop_array^3 > 0.10 }
 			}
 			modifier = {
 				factor = 0
@@ -11623,7 +12651,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_social_democracy"
-			add_ideas = BRA_idea_social_democracy
+			add_timed_idea = {
+				idea = BRA_idea_social_democracy
+				days = 3650
+			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_labour_unions_opinion = yes
 			change_communist_cadres_opinion = yes
@@ -11735,7 +12766,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_liberal_resurgence"
-			add_ideas = BRA_idea_liberalism
+			add_timed_idea = {
+				idea = BRA_idea_liberalism
+				days = 3650
+			}
 		}
 
 		ai_will_do = { base = 90 }
@@ -11875,6 +12909,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_business_deregulation"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_construction_speed = 0.03 tooltip = production_speed_buildings_factor_tt }
 			decrease_centralization = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
@@ -11941,7 +12977,10 @@ focus_tree = {
 				ideology = democratic
 				popularity = 0.10
 			}
-			add_ideas = BRA_idea_pro_psdb_youth
+			add_timed_idea = {
+				idea = BRA_idea_pro_psdb_youth
+				days = 3650
+			}
 		}
 
 		ai_will_do = { base = 90 }
@@ -12062,6 +13101,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_revitalize_economy"
 			add_ideas = BRA_revitalize_economy
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_economy_modifier }
+			add_to_variable = { BRA_econ_resources = 0.05 tooltip = BRA_econ_resources_tt }
 			increase_economic_growth = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
@@ -12124,7 +13165,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_education_reforms"
 			increase_education_budget = yes
-			add_ideas = BRA_idea_education_reforms
+			add_timed_idea = {
+				idea = BRA_idea_education_reforms
+				days = 3650
+			}
 			set_temp_variable = { treasury_change = -10 }
 			modify_treasury_effect = yes
 			set_temp_variable = { desire_change = 0.5 }
@@ -12156,7 +13200,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_agrarian_reform"
-			add_ideas = BRA_idea_agrarian_reform
+			add_timed_idea = {
+				idea = BRA_idea_agrarian_reform
+				days = 3650
+			}
 		}
 
 		ai_will_do = { base = 90 }
@@ -12318,10 +13365,12 @@ focus_tree = {
 
 		prerequisite = { focus = BRA_seek_young_vote }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_embrace_free_market"
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
 			add_offsite_building = { type = industrial_complex level = 2 }
 			increase_economic_growth = yes
 		}
@@ -12339,6 +13388,15 @@ focus_tree = {
 					has_idea = recession
 					has_idea = stagnation
 				}
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 15 }
+				check_variable = { debt_ratio > 0.4 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -12404,6 +13462,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus BRA_alliances_with_unions"
+			add_stability = 0.02
 			set_temp_variable = { temp_opinion = 10 }
 			change_labour_unions_opinion = yes
 			change_communist_cadres_opinion = yes
