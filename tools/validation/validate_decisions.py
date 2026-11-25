@@ -2450,9 +2450,7 @@ class Validator(BaseValidator):
                 continue
             if targets == [_named_country(d.token, country_tags)]:
                 continue
-            if len(targets) == 1 and _names_country(
-                d.token, targets[0], country_names
-            ):
+            if len(targets) == 1 and _names_country(d.token, targets[0], country_names):
                 continue
             if len(targets) == 1:
                 advice = (
