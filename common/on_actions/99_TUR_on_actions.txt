@@ -1,9 +1,12 @@
 on_actions = {
 	on_weekly_TUR = {
 		effect = {
-			set_variable = { kurdish_resistance_cap = { value = TUR_PKK_strength multiply = 0.005 } }
-			set_variable = { kurdish_resistance_garrison_requirement = { value = TUR_PKK_strength multiply = 0.03 } }
-			set_variable = { kurdish_resistance_garrison_damage = { value = TUR_PKK_strength multiply = 0.019 subtract = 0.999 } }
+			clamp_variable = { var = TUR_PKK_strength min = 0 max = 100 }
+			set_variable = { TUR_pkk_resolution = { value = 100 subtract = TUR_PKK_strength } }
+			set_variable = { TUR_pkk_peace_progress = { value = TUR_pkk_peace_stage multiply = 16.67 round = yes min = 100 } }
+			set_variable = { TUR_pkk_construction_penalty = { value = TUR_PKK_strength multiply = -0.004 } }
+			set_variable = { TUR_pkk_manpower_penalty = { value = TUR_PKK_strength multiply = -0.005 } }
+			set_variable = { TUR_pkk_org_regain_penalty = { value = TUR_PKK_strength multiply = -0.003 } }
 
 			if = { limit = { has_idea = the_military }
 				# Calculate current tier
@@ -65,36 +68,6 @@ on_actions = {
 				}
 			}
 			TUR_update_military_standing = yes
-			# Automatic Assaults
-			if = { # If you cut spending, you can't continue attacks!
-				limit = {
-					OR = {
-						has_country_flag = TUR_auto_attacks_van
-						has_country_flag = TUR_auto_attacks_euphrates
-						has_country_flag = TUR_auto_attacks_diyarbakir
-					}
-					OR = {
-						has_idea = defence_01
-						has_idea = defence_02
-						has_idea = defence_03
-						has_idea = defence_04
-					}
-				}
-				clr_country_flag = TUR_auto_attacks_van
-				clr_country_flag = TUR_auto_attacks_euphrates
-				clr_country_flag = TUR_auto_attacks_diyarbakir
-			}
-			if = {
-				limit = {
-					OR = {
-						has_country_flag = TUR_auto_attacks_van
-						has_country_flag = TUR_auto_attacks_euphrates
-						has_country_flag = TUR_auto_attacks_diyarbakir
-					}
-				}
-				TUR_pkk_events = yes
-				TUR_PKK_attack = yes
-			}
 		}
 	}
 
@@ -125,73 +98,45 @@ on_actions = {
 				country_event = { id = Turkey.4 days = 5 random_days = 25 }
 			}
 
-			# PKK STUFF
 			if = {
-				limit = {
-					NOT = {
-						has_country_flag = TUR_PKK_gone
-					}
-					check_variable = {
-						TUR_PKK_yearly_strength < 12
-					}
+				limit = { has_country_flag = TUR_pkk_breakaway }
+				if = {
+					limit = { NOT = { country_exists = PKK } }
+					clr_country_flag = TUR_pkk_breakaway
+					set_variable = { TUR_PKK_strength = 0 }
+					country_event = TUR_pkk.3
 				}
-				add_to_variable = { var = TUR_PKK_yearly_strength value = 1 }
-				clamp_variable = { var = TUR_PKK_yearly_strength min = 0 max = 12 }
+				else_if = {
+					limit = { NOT = { has_war_with = PKK } }
+					clr_country_flag = TUR_pkk_breakaway
+					set_country_flag = TUR_PKK_gone
+				}
 			}
 			else_if = {
 				limit = {
-					NOT = {
-						has_country_flag = TUR_PKK_gone
-					}
-					check_variable = {
-						TUR_PKK_yearly_strength > 11
-					}
+					NOT = { has_country_flag = TUR_PKK_gone }
+					check_variable = { TUR_PKK_strength > 99 }
 				}
-				random_list = {
-					50 = {
-						add_to_variable = { TUR_PKK_strength = 5 }
+				if = {
+					limit = {
+						NOT = { country_exists = PKK }
+						OR = {
+							has_country_flag = TUR_pkk_uprising_seen
+							check_variable = { TUR_kurdish_grievance > 74 }
+						}
 					}
-					50 = {
-						add_to_variable = { TUR_PKK_strength = 10 }
-					}
+					country_event = TUR_pkk.5
 				}
-				add_to_variable = { var = TUR_PKK_yearly_strength value = -12 }
-				clamp_variable = { var = TUR_PKK_yearly_strength min = 0 max = 12 }
-			}
-			if = {
-				limit = {
-					OR = {
-						has_country_flag = TUR_auto_attacks_van
-						has_country_flag = TUR_auto_attacks_euphrates
-						has_country_flag = TUR_auto_attacks_diyarbakir
-					}
+				else = {
+					country_event = TUR_pkk.4
 				}
-				clr_country_flag = TUR_auto_attacks_van
-				clr_country_flag = TUR_auto_attacks_euphrates
-				clr_country_flag = TUR_auto_attacks_diyarbakir
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_country_flag = TUR_PKK_gone
-					}
-					check_variable = {
-						TUR_PKK_strength > 99
-					}
-					TUR_ai_keeps_the_southeast = yes
-				}
-				country_event = TUR_pkk.605
 			}
 			else_if = {
 				limit = {
-					NOT = {
-						has_country_flag = TUR_PKK_gone
-					}
-					check_variable = {
-						TUR_PKK_strength > 99
-					}
+					NOT = { has_country_flag = TUR_PKK_gone }
+					check_variable = { TUR_PKK_strength < 1 }
 				}
-				country_event = TUR_pkk.604
+				country_event = TUR_pkk.3
 			}
 		}
 	}

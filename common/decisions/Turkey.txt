@@ -105,7 +105,8 @@ TUR_domestic_politics_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout TUR_olive_branch"
 			custom_effect_tooltip = TUR_severe_damage_to_pkk_tt
-			#JUMP ADD EFFECT FOR PKK DAMAGE ONCE PKK SYSTEM IS COMPLETED!
+			set_temp_variable = { TUR_pkk_damage = 15 }
+			TUR_pkk_military_damage = yes
 			newline = yes
 			army_experience = 100
 			newline	= yes
@@ -6064,4 +6065,83 @@ tur_nukden_development = {
 		modifier = { factor = 0.5 ai_has_high_deficit = yes }
 	}
 }
+}
+
+TUR_PKK_mechanic = {
+
+	TUR_pkk_redeploy = {
+		icon = generic_army_support
+
+		visible = {
+			has_country_flag = TUR_pkk_campaign_revealed
+			NOT = { check_variable = { TUR_PKK_stance = TUR_PKK_campaign } }
+		}
+
+		custom_cost_trigger = { command_power > 29 }
+		custom_cost_text = command_power_more_than_30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_pkk_redeploy"
+			add_command_power = -30
+			custom_effect_tooltip = TUR_pkk_redeploy_tt
+			set_variable = { TUR_PKK_stance = TUR_PKK_campaign }
+		}
+
+		ai_will_do = {
+			base = 20
+		}
+	}
+
+	TUR_pkk_cross_border_strikes = {
+		icon = generic_air
+		cost = 50
+		days_re_enable = 180
+
+		available = {
+			NOT = { has_country_flag = TUR_pkk_breakaway }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_pkk_cross_border_strikes"
+			air_experience = 10
+			set_temp_variable = { TUR_pkk_damage = 6 }
+			TUR_pkk_military_damage = yes
+			TUR_pkk_end_ceasefire = yes
+			if = {
+				limit = { 630 = { NOT = { is_owned_by = ROOT } } }
+				630 = { OWNER = { add_opinion_modifier = { target = ROOT modifier = medium_decrease } } }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 2 check_variable = { TUR_PKK_strength > 49 } }
+			modifier = { factor = 2 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+			modifier = { factor = 0.2 has_country_flag = TUR_pkk_peace_open }
+		}
+	}
+
+	TUR_pkk_southeast_investment = {
+		icon = generic_construction
+		days_re_enable = 365
+
+		available = {
+			NOT = { has_country_flag = TUR_pkk_breakaway }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_pkk_southeast_investment"
+			medium_expenditure = yes
+			set_temp_variable = { TUR_grievance_change = -6 }
+			TUR_pkk_change_grievance = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 2 check_variable = { TUR_kurdish_grievance > 59 } }
+			modifier = { factor = 2 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
 }
