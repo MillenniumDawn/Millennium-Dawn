@@ -190,6 +190,8 @@ country_event = {
 	desc = turkish_events.6.d
 	is_triggered_only = yes
 
+	trigger = { has_idea = TUR_disinflation_gamble }
+
 	option = {
 		name = turkish_events.6.a
 		log = "[GetDateText]: [This.GetName]:turkish_events.6.a executed"
@@ -209,6 +211,8 @@ country_event = {
 	title = turkish_events.7.t
 	desc = turkish_events.7.d
 	is_triggered_only = yes
+
+	trigger = { has_idea = TUR_disinflation_gamble }
 
 	option = {
 		name = turkish_events.7.a
@@ -235,6 +239,8 @@ country_event = {
 	desc = turkish_events.8.d
 	is_triggered_only = yes
 
+	trigger = { has_idea = TUR_disinflation_gamble }
+
 	option = {
 		name = turkish_events.8.a
 		log = "[GetDateText]: [This.GetName]:turkish_events.8.a executed"
@@ -260,6 +266,8 @@ country_event = {
 	desc = turkish_events.9.d
 	is_triggered_only = yes
 
+	trigger = { has_idea = TUR_disinflation_gamble }
+
 	option = {
 		name = turkish_events.9.a
 		log = "[GetDateText]: [This.GetName]:turkish_events.9.a executed"
@@ -284,6 +292,8 @@ country_event = {
 	title = turkish_events.10.t
 	desc = turkish_events.10.d
 	is_triggered_only = yes
+
+	trigger = { has_idea = TUR_disinflation_gamble }
 
 	option = {
 		name = turkish_events.10.a
@@ -312,6 +322,8 @@ country_event = {
 	desc = turkish_events.11.d
 	is_triggered_only = yes
 
+	trigger = { has_idea = TUR_disinflation_gamble }
+
 	option = {
 		name = turkish_events.11.a
 		log = "[GetDateText]: [This.GetName]:turkish_events.11.a executed"
@@ -336,6 +348,8 @@ country_event = {
 	title = turkish_events.12.t
 	desc = turkish_events.12.d
 	is_triggered_only = yes
+
+	trigger = { has_idea = TUR_disinflation_gamble }
 
 	option = {
 		name = turkish_events.12.a
@@ -363,6 +377,8 @@ country_event = {
 	desc = turkish_events.13.d
 	is_triggered_only = yes
 
+	trigger = { has_idea = TUR_disinflation_gamble }
+
 	option = {
 		name = turkish_events.13.a
 		log = "[GetDateText]: [This.GetName]:turkish_events.13.a executed"
@@ -374,6 +390,8 @@ country_event = {
 	title = turkish_events.14.t
 	desc = turkish_events.14.d
 	is_triggered_only = yes
+
+	trigger = { has_idea = TUR_disinflation_gamble }
 
 	option = {
 		name = turkish_events.14.a
@@ -387,6 +405,8 @@ country_event = {
 	title = turkish_events.15.t
 	desc = turkish_events.15.d
 	is_triggered_only = yes
+
+	trigger = { has_idea = TUR_disinflation_gamble }
 
 	option = {
 		name = turkish_events.15.a
@@ -18738,5 +18758,594 @@ country_event = {
 	option = {
 		name = tur_tenders.150.a
 		log = "[GetDateText]: [Root.GetName]: Event tur_tenders.150.a"
+	}
+}
+
+add_namespace = TUR_pkk
+
+# The PKK's yearly campaign. Fired at game start and rescheduled by TUR_pkk.2.
+country_event = {
+	id = TUR_pkk.1
+	title = TUR_pkk.1.t
+	desc = {
+		text = TUR_pkk.1.d_known
+		trigger = {
+			OR = {
+				agency_upgrade_number > 3
+				check_variable = { TUR_PKK_hint_first = 0 }
+			}
+		}
+	}
+	desc = {
+		text = TUR_pkk.1.d_unclear
+		trigger = {
+			NOT = { agency_upgrade_number > 3 }
+			check_variable = { TUR_PKK_hint_first > 0 }
+		}
+	}
+	picture = GFX_TUR_PKK_generic
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { has_country_flag = TUR_pkk_breakaway }
+	}
+
+	immediate = {
+		hidden_effect = {
+			clear_variable = TUR_PKK_campaign
+			TUR_pkk_roll_campaign = yes
+			set_variable = { TUR_PKK_campaign = TUR_pkk_rolled_campaign }
+			TUR_pkk_roll_campaign = yes
+			set_variable = { TUR_PKK_hint_first = { value = TUR_PKK_campaign min = TUR_pkk_rolled_campaign } }
+			set_variable = { TUR_PKK_hint_second = { value = TUR_PKK_campaign max = TUR_pkk_rolled_campaign } }
+			country_event = { id = TUR_pkk.10 days = 100 }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.1.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.a executed"
+		add_command_power = -20
+		custom_effect_tooltip = TUR_pkk_stance_commandos_tt
+		hidden_effect = {
+			set_variable = { TUR_PKK_stance = 1 }
+			country_event = { id = TUR_pkk.2 days = 214 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 check_variable = { TUR_PKK_campaign = 1 } }
+			modifier = { factor = 0.2 command_power < 20 }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.1.b
+		trigger = { check_variable = { TUR_kurdish_grievance > 49 } }
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.b executed"
+		add_stability = -0.02
+		set_temp_variable = { TUR_grievance_change = 5 }
+		TUR_pkk_change_grievance = yes
+		custom_effect_tooltip = TUR_pkk_stance_curfews_tt
+		hidden_effect = {
+			set_variable = { TUR_PKK_stance = 2 }
+			country_event = { id = TUR_pkk.2 days = 214 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 check_variable = { TUR_PKK_campaign = 2 } }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.1.c
+		trigger = { has_global_flag = GLOBAL_syrian_civil_war_started }
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.c executed"
+		medium_expenditure = yes
+		custom_effect_tooltip = TUR_pkk_stance_border_tt
+		hidden_effect = {
+			set_variable = { TUR_PKK_stance = 3 }
+			country_event = { id = TUR_pkk.2 days = 214 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 check_variable = { TUR_PKK_campaign = 3 } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.1.d
+		trigger = { has_idea = TUR_PKK_insurgency_ceasefire }
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.1.d executed"
+		add_political_power = -35
+		custom_effect_tooltip = TUR_pkk_stance_talks_tt
+		hidden_effect = {
+			set_variable = { TUR_PKK_stance = 4 }
+			country_event = { id = TUR_pkk.2 days = 214 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 check_variable = { TUR_PKK_campaign = 4 } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Autumn result of the campaign, then yearly recruitment from Kurdish Grievance.
+country_event = {
+	id = TUR_pkk.2
+	title = TUR_pkk.2.t
+	desc = {
+		text = TUR_pkk.2.d_hit
+		trigger = { check_variable = { TUR_PKK_stance = TUR_PKK_campaign } }
+	}
+	desc = {
+		text = TUR_pkk.2.d_miss
+		trigger = { NOT = { check_variable = { TUR_PKK_stance = TUR_PKK_campaign } } }
+	}
+	picture = GFX_TUR_attack_PKK
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { has_country_flag = TUR_pkk_breakaway }
+	}
+
+	option = {
+		name = TUR_pkk.2.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.2.a executed"
+		if = {
+			limit = { check_variable = { TUR_PKK_stance = TUR_PKK_campaign } }
+			if = {
+				limit = { check_variable = { TUR_PKK_campaign = 4 } }
+				set_temp_variable = { TUR_pkk_strength_change = -5 }
+				TUR_pkk_change_strength = yes
+				set_temp_variable = { TUR_grievance_change = -10 }
+				TUR_pkk_change_grievance = yes
+			}
+			else_if = {
+				limit = { check_variable = { TUR_PKK_campaign = 2 } }
+				set_temp_variable = { TUR_pkk_damage = 15 }
+				TUR_pkk_military_damage = yes
+			}
+			else = {
+				set_temp_variable = { TUR_pkk_damage = 12 }
+				TUR_pkk_military_damage = yes
+			}
+		}
+		else = {
+			add_stability = -0.03
+			set_temp_variable = { TUR_pkk_strength_change = 4 }
+			TUR_pkk_change_strength = yes
+			set_temp_variable = { TUR_grievance_change = 3 }
+			TUR_pkk_change_grievance = yes
+		}
+		if = {
+			limit = { NOT = { check_variable = { TUR_PKK_campaign = 4 } } }
+			TUR_pkk_end_ceasefire = yes
+		}
+		TUR_pkk_yearly_recruitment = yes
+		hidden_effect = {
+			clr_country_flag = TUR_pkk_campaign_revealed
+			country_event = { id = TUR_pkk.1 days = 151 }
+			if = {
+				limit = {
+					has_country_flag = TUR_pkk_peace_open
+					NOT = { has_country_flag = TUR_pkk_peace_locked }
+				}
+				random_list = {
+					70 = { country_event = { id = TUR_pkk.7 days = 30 } }
+					30 = {
+						modifier = { factor = 2 check_variable = { TUR_PKK_strength > 49 } }
+						modifier = { factor = 0 check_variable = { TUR_pkk_peace_stage = 0 } }
+						country_event = { id = TUR_pkk.8 days = 30 }
+					}
+				}
+			}
+			if = {
+				limit = { has_idea = TUR_village_guards }
+				random_list = {
+					20 = { country_event = { id = TUR_pkk.9 days = 60 } }
+					80 = { }
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = TUR_pkk.3
+	title = TUR_pkk.3.t
+	desc = TUR_pkk.3.d
+	picture = GFX_TUR_attack_PKK3
+
+	is_triggered_only = yes
+
+	trigger = { NOT = { has_country_flag = TUR_PKK_gone } }
+
+	option = {
+		name = TUR_pkk.3.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.3.a executed"
+		custom_effect_tooltip = TUR_pkk_gone_tt
+		set_country_flag = TUR_PKK_gone
+		add_stability = 0.10
+		hidden_effect = { TUR_pkk_clear_southeast = yes }
+	}
+}
+
+country_event = {
+	id = TUR_pkk.4
+	title = TUR_pkk.4.t
+	desc = TUR_pkk.4.d
+	picture = GFX_kurd_riot
+
+	is_triggered_only = yes
+
+	trigger = { NOT = { has_country_flag = TUR_PKK_gone } }
+
+	immediate = { hidden_effect = { set_country_flag = TUR_pkk_uprising_seen } }
+
+	option = {
+		name = TUR_pkk.4.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.4.a executed"
+		add_stability = -0.10
+		set_temp_variable = { TUR_pkk_damage = 30 }
+		TUR_pkk_military_damage = yes
+		set_temp_variable = { TUR_grievance_change = 15 }
+		TUR_pkk_change_grievance = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 TUR_ai_keeps_the_southeast = yes }
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.4.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.4.b executed"
+		add_political_power = -100
+		set_temp_variable = { TUR_pkk_strength_change = -20 }
+		TUR_pkk_change_strength = yes
+		set_temp_variable = { TUR_grievance_change = -10 }
+		TUR_pkk_change_grievance = yes
+		TUR_pkk_start_ceasefire = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Strength at 100 after an earlier uprising, or with Grievance at 75 or more: the PKK breaks away and goes to war.
+country_event = {
+	id = TUR_pkk.5
+	title = TUR_pkk.5.t
+	desc = TUR_pkk.5.d
+	picture = GFX_Kurdish_autonomous1
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { country_exists = PKK }
+	}
+
+	option = {
+		name = TUR_pkk.5.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.5.a executed"
+		custom_effect_tooltip = TUR_pkk_breakaway_tt
+		set_country_flag = TUR_pkk_breakaway
+		hidden_effect = {
+			set_variable = { TUR_PKK_strength = 50 }
+			162 = {
+				if = {
+					limit = { is_owned_by = ROOT }
+					transfer_state_to = PKK
+				}
+			}
+			935 = {
+				if = {
+					limit = { is_owned_by = ROOT }
+					transfer_state_to = PKK
+				}
+			}
+			1205 = {
+				if = {
+					limit = { is_owned_by = ROOT }
+					transfer_state_to = PKK
+				}
+			}
+			PKK = {
+				division_template = {
+					name = "HPG Guerrillas"
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 1 y = 0 }
+						Militia_Bat = { x = 1 y = 1 }
+						Militia_Bat = { x = 1 y = 2 }
+					}
+					priority = 2
+				}
+				every_owned_state = {
+					create_unit = {
+						division = "name = \"HPG Brigade\" division_template = \"HPG Guerrillas\" start_experience_factor = 0.3"
+						owner = PKK
+						count = 3
+					}
+				}
+				declare_war_on = { target = ROOT type = annex_everything }
+			}
+		}
+	}
+}
+
+# Fired by TUR_deal_with_ocalan.
+country_event = {
+	id = TUR_pkk.6
+	title = TUR_pkk.6.t
+	desc = TUR_pkk.6.d
+	picture = GFX_kurd_event
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { has_country_flag = TUR_pkk_peace_locked }
+	}
+
+	option = {
+		name = TUR_pkk.6.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.6.a executed"
+		custom_effect_tooltip = TUR_pkk_peace_locked_tt
+		set_country_flag = TUR_pkk_peace_locked
+		add_war_support = 0.05
+		set_temp_variable = { TUR_pkk_strength_change = 10 }
+		TUR_pkk_change_strength = yes
+		set_temp_variable = { TUR_grievance_change = 15 }
+		TUR_pkk_change_grievance = yes
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			add_opinion_modifier = { target = ROOT modifier = medium_decrease }
+		}
+		ai_chance = {
+			base = 2
+			modifier = { factor = 5 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.6.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.6.b executed"
+		custom_effect_tooltip = TUR_pkk_peace_open_tt
+		set_country_flag = TUR_pkk_peace_open
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 has_global_flag = TUR_HISTORICAL_AI_FOCUS }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.6.c
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.6.c executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_military_opinion = yes
+		custom_effect_tooltip = TUR_pkk_peace_open_tt
+		set_country_flag = TUR_pkk_peace_open
+		TUR_pkk_peace_step = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 4 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# A rung of the Solution Process, fired from TUR_pkk.2 while the process is open.
+country_event = {
+	id = TUR_pkk.7
+	title = TUR_pkk.7.t
+	desc = {
+		text = TUR_pkk.7.d1
+		trigger = { check_variable = { TUR_pkk_peace_stage = 0 } }
+	}
+	desc = {
+		text = TUR_pkk.7.d2
+		trigger = { check_variable = { TUR_pkk_peace_stage = 1 } }
+	}
+	desc = {
+		text = TUR_pkk.7.d3
+		trigger = { check_variable = { TUR_pkk_peace_stage = 2 } }
+	}
+	desc = {
+		text = TUR_pkk.7.d4
+		trigger = { check_variable = { TUR_pkk_peace_stage = 3 } }
+	}
+	desc = {
+		text = TUR_pkk.7.d5
+		trigger = { check_variable = { TUR_pkk_peace_stage = 4 } }
+	}
+	desc = {
+		text = TUR_pkk.7.d6
+		trigger = { check_variable = { TUR_pkk_peace_stage = 5 } }
+	}
+	picture = GFX_kurd_rally
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { has_country_flag = TUR_pkk_peace_locked }
+		check_variable = { TUR_pkk_peace_stage < 6 }
+	}
+
+	option = {
+		name = TUR_pkk.7.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.7.a executed"
+		TUR_pkk_peace_step = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
+			modifier = { factor = 1.5 has_global_flag = TUR_HISTORICAL_AI_FOCUS }
+			modifier = { factor = 0.2 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+			modifier = { factor = 0.3 has_global_flag = TUR_KEMALIST_GUARD_AI_FOCUS }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.7.b
+		custom_effect_tooltip = TUR_pkk_peace_stall_tt
+		ai_chance = {
+			base = 3
+		}
+	}
+}
+
+# A spoiler attack between rungs of the Solution Process.
+country_event = {
+	id = TUR_pkk.8
+	title = TUR_pkk.8.t
+	desc = {
+		text = TUR_pkk.8.d_bombing
+		trigger = { NOT = { has_global_flag = GLOBAL_syrian_civil_war_started } }
+	}
+	desc = {
+		text = TUR_pkk.8.d_kobani
+		trigger = { has_global_flag = GLOBAL_syrian_civil_war_started }
+	}
+	picture = GFX_pkk_ambush
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { has_country_flag = TUR_pkk_peace_locked }
+		check_variable = { TUR_pkk_peace_stage > 0 }
+	}
+
+	option = {
+		name = TUR_pkk.8.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.8.a executed"
+		add_stability = -0.03
+		custom_effect_tooltip = TUR_pkk_spoiler_absorb_tt
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
+			modifier = { factor = 0.3 has_stability < 0.3 }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.8.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.8.b executed"
+		custom_effect_tooltip = TUR_pkk_peace_setback_tt
+		subtract_from_variable = { TUR_pkk_peace_stage = 1 }
+		TUR_pkk_end_ceasefire = yes
+		set_temp_variable = { TUR_pkk_damage = 10 }
+		TUR_pkk_military_damage = yes
+		set_temp_variable = { TUR_grievance_change = 5 }
+		TUR_pkk_change_grievance = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+			modifier = { factor = 3 has_global_flag = TUR_KEMALIST_GUARD_AI_FOCUS }
+		}
+	}
+}
+
+# Village guard abuse scandal, rolled each autumn while the guards serve.
+country_event = {
+	id = TUR_pkk.9
+	title = TUR_pkk.9.t
+	desc = TUR_pkk.9.d
+	picture = GFX_pkk_munic
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		has_idea = TUR_village_guards
+	}
+
+	option = {
+		name = TUR_pkk.9.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.9.a executed"
+		set_temp_variable = { TUR_grievance_change = 8 }
+		TUR_pkk_change_grievance = yes
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
+			add_opinion_modifier = { target = ROOT modifier = small_decrease }
+		}
+	}
+}
+
+# Mid-season report, 100 days after the spring campaign event. Reveals the campaign so a wrong guess can be fixed with TUR_pkk_redeploy.
+country_event = {
+	id = TUR_pkk.10
+	title = TUR_pkk.10.t
+	desc = {
+		text = TUR_pkk.10.d1
+		trigger = { check_variable = { TUR_PKK_campaign = 1 } }
+	}
+	desc = {
+		text = TUR_pkk.10.d2
+		trigger = { check_variable = { TUR_PKK_campaign = 2 } }
+	}
+	desc = {
+		text = TUR_pkk.10.d3
+		trigger = { check_variable = { TUR_PKK_campaign = 3 } }
+	}
+	desc = {
+		text = TUR_pkk.10.d4
+		trigger = { check_variable = { TUR_PKK_campaign = 4 } }
+	}
+	picture = GFX_pkk_ambush
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { has_country_flag = TUR_pkk_breakaway }
+	}
+
+	immediate = { hidden_effect = { set_country_flag = TUR_pkk_campaign_revealed } }
+
+	option = {
+		name = TUR_pkk.10.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.10.a executed"
+		add_command_power = -10
+		set_temp_variable = { TUR_pkk_damage = 4 }
+		TUR_pkk_military_damage = yes
+		set_temp_variable = { TUR_grievance_change = 2 }
+		TUR_pkk_change_grievance = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+			modifier = { factor = 0.2 command_power < 10 }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.10.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.10.b executed"
+		set_temp_variable = { TUR_pkk_strength_change = 2 }
+		TUR_pkk_change_strength = yes
+		set_temp_variable = { TUR_grievance_change = -3 }
+		TUR_pkk_change_grievance = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
+		}
 	}
 }

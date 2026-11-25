@@ -568,224 +568,201 @@ TUR_government_change = {
 	}
 }
 
-# PKK Random Events
+# PKK Insurgency
 
-TUR_pkk_events = {
-	random = {
-		chance = 50
-		add_to_variable = { TUR_event_counter_1_kurds = 1 }
-	}
+# Effect: TUR_pkk_military_damage
+# Purpose: Lowers PKK Strength by force, stopping at 6 per surviving PKK base, plus 10 while Rojava shelters it,
+#          unless Strength is already lower. Pressure that would push Strength below that floor destroys the next base, Qandil last.
+# Parameters:
+# - TUR_pkk_damage: Strength points to remove
+TUR_pkk_military_damage = {
+	set_temp_variable = { TUR_pkk_floor = { value = TUR_PKK_base_states^num multiply = 6 } }
 	if = {
-		limit = { check_variable = { TUR_event_counter_1_kurds > 3 } }
-		set_variable = { TUR_event_counter_1_kurds = 0 }
-		random_list = {
-			10 = { country_event = TUR_pkk.200 }
-			10 = { country_event = TUR_pkk.201 }
-			10 = { country_event = TUR_pkk.202 }
-			10 = { country_event = TUR_pkk.203 }
-			10 = { country_event = TUR_pkk.204 }
-			10 = { country_event = TUR_pkk.205 }
-			10 = { country_event = TUR_pkk.209 }
-			10 = { country_event = TUR_pkk.210 }
+		limit = {
+			country_exists = ROJ
+			NOT = { ROJ = { is_subject_of = ROOT } }
+		}
+		add_to_temp_variable = { TUR_pkk_floor = 10 }
+	}
+	set_temp_variable = { TUR_pkk_floor = { value = TUR_pkk_floor min = TUR_PKK_strength } }
+	set_temp_variable = { TUR_pkk_new_strength = { value = TUR_PKK_strength subtract = TUR_pkk_damage } }
+	custom_effect_tooltip = TUR_pkk_military_damage_tt
+	if = {
+		limit = {
+			check_variable = { TUR_pkk_new_strength < TUR_pkk_floor }
+			check_variable = { TUR_PKK_base_states^num > 0 }
+		}
+		set_temp_variable = { TUR_pkk_fallen_base = TUR_PKK_base_states^0 }
+		custom_effect_tooltip = TUR_pkk_base_destroyed_tt
+		remove_from_array = { TUR_PKK_base_states = TUR_pkk_fallen_base }
+		var:TUR_pkk_fallen_base = {
+			if = {
+				limit = { has_dynamic_modifier = { modifier = kurdish_resistance_dynamic_modifier } }
+				remove_dynamic_modifier = { modifier = kurdish_resistance_dynamic_modifier }
+			}
+		}
+		if = {
+			limit = { check_variable = { TUR_pkk_fallen_base = 630 } }
+			army_experience = 25
+			if = {
+				limit = { NOT = { 630 = { is_owned_by = ROOT } } }
+				630 = { OWNER = { add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty } } }
+			}
+		}
+	}
+	set_variable = { TUR_PKK_strength = { value = TUR_pkk_new_strength max = TUR_pkk_floor } }
+}
+
+# Effect: TUR_pkk_change_strength
+# Purpose: Changes PKK Strength by non-military means, kept within 0-100
+# Parameters:
+# - TUR_pkk_strength_change: Strength points to add, negative to remove
+TUR_pkk_change_strength = {
+	custom_effect_tooltip = TUR_pkk_change_strength_tt
+	add_to_variable = { TUR_PKK_strength = TUR_pkk_strength_change }
+	clamp_variable = { var = TUR_PKK_strength min = 0 max = 100 }
+}
+
+# Effect: TUR_pkk_change_grievance
+# Purpose: Changes Kurdish Grievance, kept within 0-100
+# Parameters:
+# - TUR_grievance_change: Grievance points to add, negative to remove
+TUR_pkk_change_grievance = {
+	custom_effect_tooltip = TUR_pkk_change_grievance_tt
+	add_to_variable = { TUR_kurdish_grievance = TUR_grievance_change }
+	clamp_variable = { var = TUR_kurdish_grievance min = 0 max = 100 }
+}
+
+TUR_pkk_yearly_recruitment = {
+	custom_effect_tooltip = TUR_pkk_recruitment_tt
+	set_temp_variable = { TUR_pkk_strength_change = { value = TUR_kurdish_grievance subtract = 30 multiply = 0.25 round = yes } }
+	if = {
+		limit = { has_idea = TUR_village_guards }
+		subtract_from_temp_variable = { TUR_pkk_strength_change = 3 }
+	}
+	TUR_pkk_change_strength = yes
+}
+
+# Effect: TUR_pkk_roll_campaign
+# Purpose: Picks a PKK campaign weighted by the state of the conflict, skipping the campaign already chosen
+# Output: TUR_pkk_rolled_campaign, 1-4, or 0 when no other campaign is possible
+# Parameters:
+# - TUR_PKK_campaign (variable): campaign to skip, 0 for none
+TUR_pkk_roll_campaign = {
+	set_temp_variable = { TUR_pkk_rolled_campaign = 0 }
+	random_list = {
+		40 = { # Mountain Guerrilla War
+			modifier = { factor = 0.25 has_idea = TUR_PKK_insurgency_ceasefire }
+			modifier = { factor = 0 check_variable = { TUR_PKK_campaign = 1 } }
+			set_temp_variable = { TUR_pkk_rolled_campaign = 1 }
+		}
+		30 = { # Urban Uprising
+			modifier = { factor = 2 check_variable = { TUR_kurdish_grievance > 74 } }
+			modifier = { factor = 0.25 has_idea = TUR_PKK_insurgency_ceasefire }
+			modifier = { factor = 0 check_variable = { TUR_kurdish_grievance < 50 } }
+			modifier = { factor = 0 check_variable = { TUR_PKK_campaign = 2 } }
+			set_temp_variable = { TUR_pkk_rolled_campaign = 2 }
+		}
+		30 = { # Southern Front
+			modifier = { factor = 0.25 has_idea = TUR_PKK_insurgency_ceasefire }
+			modifier = { factor = 0 NOT = { has_global_flag = GLOBAL_syrian_civil_war_started } }
+			modifier = { factor = 0 check_variable = { TUR_PKK_campaign = 3 } }
+			set_temp_variable = { TUR_pkk_rolled_campaign = 3 }
+		}
+		60 = { # Political Offensive
+			modifier = { factor = 0 NOT = { has_idea = TUR_PKK_insurgency_ceasefire } }
+			modifier = { factor = 0 check_variable = { TUR_PKK_campaign = 4 } }
+			set_temp_variable = { TUR_pkk_rolled_campaign = 4 }
 		}
 	}
 }
 
-# Applies TUR_preop_damage to whichever base is currently targeted.
-TUR_pkk_damage_targeted_base = {
+TUR_pkk_end_ceasefire = {
 	if = {
-		limit = {
-			has_country_flag = TUR_targeting_van
-		}
-		add_to_variable = { var = var_pkk_van value = TUR_preop_damage }
-		clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-	}
-	if = {
-		limit = {
-			has_country_flag = TUR_targeting_diyarbakir
-		}
-		add_to_variable = { var = var_pkk_diyarbakir value = TUR_preop_damage }
-		clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-	}
-	if = {
-		limit = {
-			has_country_flag = TUR_targeting_euphrates
-		}
-		add_to_variable = { var = var_pkk_euphrates value = TUR_preop_damage }
-		clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
+		limit = { has_idea = TUR_PKK_insurgency_ceasefire }
+		swap_ideas = { remove_idea = TUR_PKK_insurgency_ceasefire add_idea = TUR_PKK_insurgency_active }
 	}
 }
 
-TUR_PKK_attack = {
-	custom_effect_tooltip = TUR_assault_this_base_TT
-	newline = yes
-	custom_effect_tooltip = TUR_spend_equipment_TT
-	hidden_effect = {
-		random_list = {
-			25 = {
-				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -150 producer = TUR }
-				add_equipment_to_stockpile = { type = util_vehicle_type amount = -25 producer = TUR }
-			}
-			25 = {
-				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -200 producer = TUR }
-				add_equipment_to_stockpile = { type = util_vehicle_type amount = -90 producer = TUR }
-			}
-			25 = {
-				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -380 producer = TUR }
-				add_equipment_to_stockpile = { type = util_vehicle_type amount = -135 producer = TUR }
-			}
-			25 = {
-				add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -460 producer = TUR }
-				add_equipment_to_stockpile = { type = util_vehicle_type amount = -190 producer = TUR }
-			}
+TUR_pkk_start_ceasefire = {
+	if = {
+		limit = { has_idea = TUR_PKK_insurgency_active }
+		swap_ideas = { remove_idea = TUR_PKK_insurgency_active add_idea = TUR_PKK_insurgency_ceasefire }
+	}
+}
+
+TUR_pkk_clear_southeast = {
+	162 = {
+		if = {
+			limit = { has_dynamic_modifier = { modifier = kurdish_resistance_dynamic_modifier } }
+			remove_dynamic_modifier = { modifier = kurdish_resistance_dynamic_modifier }
 		}
 	}
-	hidden_effect = {
-		# Euphrates
+	935 = {
 		if = {
-			limit = {
-				has_country_flag = TUR_targeting_euphrates
-			}
-			random_list = {
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -150 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -120 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -110 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -100 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -90 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -80 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -70 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -60 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -50 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_euphrates = -40 }
-					clamp_variable = { var = var_pkk_euphrates min = 0 max = 5000 }
-				}
-			}
-		}
-		# Diyarbakir
-		if = {
-			limit = {
-				has_country_flag = TUR_targeting_diyarbakir
-			}
-			random_list = {
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -150 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -120 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -110 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -100 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -90 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -80 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -70 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -60 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -50 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_diyarbakir = -40 }
-					clamp_variable = { var = var_pkk_diyarbakir min = 0 max = 5000 }
-				}
-			}
-		}
-		# Van
-		if = {
-			limit = {
-				has_country_flag = TUR_targeting_van
-			}
-			random_list = {
-				10 = {
-					add_to_variable = { var_pkk_van = -150 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -120 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -110 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -100 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -90 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -80 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -70 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -60 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -50 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-				10 = {
-					add_to_variable = { var_pkk_van = -40 }
-					clamp_variable = { var = var_pkk_van min = 0 max = 5000 }
-				}
-			}
+			limit = { has_dynamic_modifier = { modifier = kurdish_resistance_dynamic_modifier } }
+			remove_dynamic_modifier = { modifier = kurdish_resistance_dynamic_modifier }
 		}
 	}
+	1205 = {
+		if = {
+			limit = { has_dynamic_modifier = { modifier = kurdish_resistance_dynamic_modifier } }
+			remove_dynamic_modifier = { modifier = kurdish_resistance_dynamic_modifier }
+		}
+	}
+}
+
+# Effect: TUR_pkk_peace_step
+# Purpose: Takes the next rung of the Solution Process and restores the ceasefire. The sixth rung dissolves the PKK.
+# Parameters:
+# - TUR_pkk_peace_stage (variable): rungs already taken, 0-5
+TUR_pkk_peace_step = {
+	custom_effect_tooltip = TUR_pkk_peace_step_tt
+	TUR_pkk_start_ceasefire = yes
+	if = {
+		limit = { check_variable = { TUR_pkk_peace_stage = 0 } }
+		add_political_power = -25
+	}
+	else_if = {
+		limit = { check_variable = { TUR_pkk_peace_stage = 1 } }
+		add_stability = -0.02
+		set_temp_variable = { TUR_grievance_change = -10 }
+		TUR_pkk_change_grievance = yes
+	}
+	else_if = {
+		limit = { check_variable = { TUR_pkk_peace_stage = 2 } }
+		add_political_power = -50
+		set_temp_variable = { TUR_grievance_change = -5 }
+		TUR_pkk_change_grievance = yes
+	}
+	else_if = {
+		limit = { check_variable = { TUR_pkk_peace_stage = 3 } }
+		set_temp_variable = { TUR_pkk_strength_change = -10 }
+		TUR_pkk_change_strength = yes
+	}
+	else_if = {
+		limit = { check_variable = { TUR_pkk_peace_stage = 4 } }
+		if = {
+			limit = { has_idea = TUR_village_guards }
+			custom_effect_tooltip = TUR_pkk_disband_guards_tt
+			remove_ideas = TUR_village_guards
+			medium_expenditure = yes
+			add_stability = -0.05
+		}
+		add_stability = -0.03
+		set_temp_variable = { TUR_grievance_change = -10 }
+		TUR_pkk_change_grievance = yes
+	}
+	else = {
+		custom_effect_tooltip = TUR_pkk_dissolved_tt
+		set_country_flag = TUR_PKK_reconciliation
+		set_country_flag = TUR_PKK_gone
+		set_variable = { TUR_PKK_strength = 0 }
+		add_stability = 0.10
+		add_ideas = TUR_peace_in_the_southeast
+		hidden_effect = { TUR_pkk_clear_southeast = yes }
+	}
+	add_to_variable = { TUR_pkk_peace_stage = 1 }
 }
 
 #Equipment
@@ -808,15 +785,6 @@ create_equipment_variant = {
 				}
 				design_team = mio:TUR_mkek_manufacturer
 			}
-
-
-# QUICK CHANGES TO THE MECHANIC
-# Instead of having effectiveness, etc, the mechanic will have 3 things to do
-# 1. Attacking bases. Basically, you spend man power to take out PKK manpower
-# 2. Launches operations. This basically kills more PKK but requires a new variable, readiness
-# 3. You gain readiness overtime by killing PKK
-# 4. You can use readiness to activate an operation
-
 
 
 TUR_create_syrian_buffer = {
