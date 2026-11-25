@@ -1462,7 +1462,7 @@ def test_loc_consolidation_only_suggests_true_duplicates(tmp_path):
         ' RENAMED_idea:0 "Shared Name"\n',
     )
     ideas_file = str(_write(tmp_path, "common/ideas/test.txt", "ideas = { }\n"))
-    defined = {
+    defined: dict[str, tuple[str, str | None, str | None]] = {
         name: ("country", None, None)
         for name in ("TIER_one", "TIER_two", "SOLO_idea", "SPLIT_one", "SPLIT_two")
     }
@@ -1592,6 +1592,59 @@ def test_type_and_child_equipment_bonus_is_flagged(tmp_path):
         ("bonus-type-archetype-stack", "common/ideas/navy.txt")
     ]
     assert "helicopter_operator" in validator._issues[0].message
+
+
+_BASE = "frame = { cost = -0.1 instant = yes }"
+_CHILD = "scout = { cost = -0.2 instant = yes }"
+_TARGETS = f"{_CHILD}\n{_BASE}"
+_GRANT = "add_equipment_bonus = { name = demo bonus = { %s } }"
+_IDEA = "equipment_bonus = { %s }"
+
+# path, script, expected line of the child (zero for no warning)
+_OVERLAPS = {
+    "idea clone before base": ("common/ideas", _IDEA % _TARGETS, 1),
+    "scripted effect": ("common/scripted_effects", _GRANT % f"{_BASE}\n{_CHILD}", 2),
+    "variant of clone": ("events", _GRANT % _TARGETS.replace("scout", "model"), 1),
+    "siblings": ("common/ideas", _IDEA % _TARGETS.replace("frame =", "cargo ="), 0),
+    "only instant shared": (
+        "common/ideas",
+        _IDEA % f"{_BASE} scout = {{ instant = yes }}",
+        0,
+    ),
+    "separate grants": ("history/countries", (_GRANT % _BASE) + (_GRANT % _CHILD), 0),
+    "unrelated bonus": ("events", "other = { bonus = { %s } }" % _TARGETS, 0),
+    "quoted grant": ("events", 'log = "%s"' % (_GRANT % _TARGETS), 0),
+    "commented target": ("common/ideas", _IDEA % f"{_BASE} # {_CHILD}\n", 0),
+}
+
+
+@pytest.mark.parametrize("case", _OVERLAPS)
+def test_equipment_bonus_archetype_warning(tmp_path, case):
+    directory, script, line = _OVERLAPS[case]
+    _write(
+        tmp_path,
+        "common/units/equipment/frames.txt",
+        (
+            "equipments = { frame = { is_archetype = yes } model = { archetype = scout } }\n"
+            "duplicate_archetypes = { scout = { archetype = frame } cargo = { archetype = frame } }"
+        ),
+    )
+    path = f"{directory}/demo.txt"
+    _write(tmp_path, path, script)
+    validator = _validator(tmp_path)
+    validator.validate_equipment_bonus_stack()
+    expected = (
+        [(Severity.WARNING, "equipment-bonus-overlap", path, line)] if line else []
+    )
+    assert [
+        (i.severity, i.category, i.file, i.line) for i in validator._issues
+    ] == expected
+    if line:
+        child = "model" if "model" in script else "scout"
+        assert (
+            f"cost on {child} also applies via archetype 'frame'"
+            in validator._issues[0].message
+        )
 
 
 # ---- the run -------------------------------------------------------------------------
@@ -1740,7 +1793,9 @@ def test_staged_idea_tags_change_runs_the_full_quality_scan():
     }
     validator._parse_all_ideas = lambda: ({}, all_issues, {})
     calls = []
-    validator.validate_idea_quality = calls.append
+    validator.validate_idea_quality = lambda issues_by_file: calls.append(
+        issues_by_file
+    )
     for name in (
         "validate_undefined_idea_refs",
         "validate_category_icon_frames",

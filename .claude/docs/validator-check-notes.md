@@ -51,11 +51,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   selected country. Event pools, automatic firing, unsupported dispatches, and
   definitions without a known caller keep unknown contexts alongside known ones.
   Broadcast events also have an unspecified audience context.
-- A decision's ROOT is its actor, targeted or not. In a targeted decision FROM
-  (the target) stays unknown, and so does THIS inside `target_trigger` and
-  `target_root_trigger`. Other unmodeled blocks, state/variable/event-target
-  scopes, and other entry points remain conservative. Templates and effect
-  previews are skipped. This is not a reachability solver or an audit of
+- A decision's ROOT is its actor. Country-targeted decisions bind FROM to each
+  literal target, or to an unnamed country for `target_array` and dynamic targets.
+  `allowed` and `target_root_trigger` run before FROM is bound. State targets
+  remain unknown. A scope loop member is treated as a country inside an `if`
+  whose `limit` directly checks `exists = yes`, a country-only trigger.
+  Unmodeled and variable/event-target scopes remain conservative. Templates and
+  effect previews are skipped. This is not a reachability solver or an audit of
   arbitrary array reads.
   Each definition keeps at most 64 distinct contexts before adding an unknown
   context; recursive calls are deduplicated. Scope chains retain the depth used
@@ -155,12 +157,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   stale name leaves the tooltip empty while the unlock still happens. The category form
   takes the bare token only.
 - `validate_formable_commitment_sync` (ERROR): contract in `formable-reference.md`.
-- `decision-cosmetic-targeting` (WARNING): a single explicit country target is a
-  candidate for a normal decision with a custom icon. Multiple explicit country
-  targets without unquoted `FROM` use need review for target-dependent behavior.
-  State/map targeting, script-only `allowed = { always = no }`, target arrays, and
-  dynamic country variants are skipped. For multiple targets, an enabled
-  `war_with_target_on_*` hint also counts as target use. Comments and quoted text
+- `decision-cosmetic-targeting` (WARNING): explicit country targeting is a review
+  candidate when the script does not use `FROM` or a `war_with_target_on_*` hint.
+  A single target named by a matching uppercase country token in the decision ID
+  is explicit enough. State/map targeting, script-only `allowed = { always = no }`,
+  target arrays, and dynamic country variants are skipped. Comments and quoted text
   such as logs do not count as script use. This is advisory: localisation and called
   scripts may consume `FROM`, and a single-target decision may depend on it too.
   Verify those dependencies and visibility before removing targeting. The check
@@ -208,9 +209,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case` (WARNING, `--id-case`, on in CI): the case rule in the stylization
-  guide. Existing ids are never renamed, so the main baseline holds them and a PR report
-  marks only ids the PR adds as NEW. It stays a warning while that backlog stands.
+- `decision-id-case` (WARNING, `--id-case`, on in CI): keep words after the uppercase
+  country or system directive lowercase, except one registered country tag. A
+  decision must match that tag to its sole explicit country target, or scope to it
+  directly if the decision is not targeted. Existing IDs are not renamed.
 - `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
   tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are
@@ -583,6 +585,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `equipment_bonus` naming a type category (`carrier`) and a child archetype of that type
   with the same modifier stacks twice. Helicopter operators are `type = carrier`.
   Distinct stats on the child are allowed.
+- `equipment-bonus-overlap` (WARNING): an idea's `equipment_bonus` or an
+  `add_equipment_bonus` effect grants the same stat to an archetype and its descendant
+  in one bonus block. This includes `duplicate_archetypes`, such as amphibious chassis.
+  Effects also warn on overlapping type categories and their children. Sibling targets
+  and entries that share only `instant` do not stack.
 
 ## validate_localisation.py and validate_scripted_localisation.py
 

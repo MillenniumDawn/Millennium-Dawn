@@ -503,9 +503,12 @@ Metrics, reference analysis, and review tools.
 | **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership, killswitch orphans, and the burdens/mechanics the AI must be able to resolve (issue #3162)     |
 | **benchmark_report.py**             | Reports headless runs from game.log and error.log: run comparisons, country series, spreads, wars, decision and option counts, law churn, error shapes           |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                        |
+| **content_coverage.py**             | Reports how much of one tag's focuses, decisions, and events fired in a headless run's game.log, and what never did                                              |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags, reading every GDP factor from the `@gdp_*` constants in `00_money_system.txt`                                           |
 | **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                                |
-| **headless_run.py**                 | Turns benchmark logging on without -debug, adds test wars, and saves a run's logs and newest save, using untracked on_actions files                              |
+| **focus_reward_audit.py**           | Reports what one tag's focus rewards grant per focus and per branch: buildings, money, spirits, modifier variables, fork ranges, and spirit stacking             |
+| **headless_run.py**                 | Turns benchmark logging on without -debug, adds test wars, logs a country with `probe`, and saves a run's logs and newest save, using untracked on_actions files |
+| **hoi4_probes/**                    | Script probes that log a country's stats or per-state infrastructure room in a headless run; `headless_run.py probe add TAG` installs them                       |
 | **inspect_save.py**                 | Reports countries in a text save: economy, spending laws, resources, divisions and fielded against needed equipment, production, construction, market, buildings |
 | **validation_timing_report.py**     | Summarizes saved GitHub Actions validation job and step timings, grouped by compatible revision and environment                                                  |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                           |
@@ -513,6 +516,42 @@ Metrics, reference analysis, and review tools.
 | **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup.  |
 | **review_branch.py**                | Generates a diff summary of the current branch vs main                                                                                                           |
 | **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase                                                                                            |
+
+`content_coverage.py --tag TAG --log game.log` answers how much of a country's
+scripted content a headless run reached. Per kind (focuses, decisions, events) it
+prints fired over defined with a percent, the fired ids by first date and count
+(event options are grouped under their event), the never-fired ids, and ids that
+fired but were not in the mod scan, which marks a gap in the scan. `--json` gives
+the same data for machines. Focuses and decisions are matched by their `TAG_`
+prefix. Events are matched by namespace: a namespace belongs to the tag that its
+events' top-level `original_tag` triggers name most often, and `--namespace NS`
+(repeatable) replaces that rule when it misses one, such as a news namespace with
+no tag trigger. The log names countries by display name, so lines are matched by id,
+not by who fired them. Events and options with no `log` line never reach the log
+and read as never fired.
+
+`focus_reward_audit.py --tag TAG` reports what a tag's focus rewards grant. Per
+focus it totals buildings by type (direct adds plus the standard effects of
+`00_scripted_effects.txt`, read at run time with their prices), constant treasury
+changes, political power, stability, war support, spirits (permanent, timed,
+swapped), dynamic modifier variable adds, and days (`cost` times 7). Focuses group
+into branches by root ancestor. `mutually_exclusive` forks are never summed: a branch
+total is a min..max range over the valid paths, and `--forks` lists what each
+alternative leads to. Stacking flags a factor-style modifier key (`_factor`,
+`_multiplier`, `_modifier`) whose permanent spirits and variable adds pass
+`--stack-limit` (default 0.20) on the best path. Two `available` gates also split a
+branch the same way: a path flag (a flag that a focus on an exclusive arm sets and
+another focus tests) and each `has_country_leader` name a branch needs. A stacking
+row names its choice, and `--paths` lists the choices. A flag that no focus on an
+exclusive arm sets is not a path flag, so paths that an event or on_action chooses
+can still be summed (issue #6878). Outliers rank buildings, money
+gained, and PP per day of focus time (`--top` rows), and list spirits with more than
+five modifiers. `--focuses` lists every focus, `--file PATH` reads a named focus
+file, and `--json` gives the same data for machines. Formulas, `if`, `random` and
+`random_list` rewards, and effects the tool does not expand are not totaled as
+constants. A loop (`every_*`, `for_each_loop`, `for_each_scope_loop`,
+`while_loop_effect`) counts its effects once and is flagged as unquantified. The
+module docstring lists what it misses.
 
 ### Generators (`generators/`)
 
