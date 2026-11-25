@@ -1498,7 +1498,13 @@ _DROPPED_CASES = {
     ),
     "conditional decision icon": (
         {"common/decisions/x.txt": 'x = { pick = { icon = { key = "lost" } } }\n'},
-        [("dropped-vanilla-sprite", "interface/topbar.gfx", "Sprite 'GFX_decision_lost'")],
+        [
+            (
+                "dropped-vanilla-sprite",
+                "interface/topbar.gfx",
+                "Sprite 'GFX_decision_lost'",
+            )
+        ],
     ),
     "bare category icon": (
         {"common/decisions/categories/x.txt": "x = { icon = lost }\n"},

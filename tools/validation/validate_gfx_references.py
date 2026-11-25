@@ -1078,9 +1078,7 @@ def _rendered_script_refs(raw: str, filepath: str) -> Set[str]:
     parts = filepath.split(os.sep)
     decision_file = parts[:2] == ["common", "decisions"]
     idea_file = parts[:2] == ["common", "ideas"]
-    prefix = (
-        "GFX_decision_category_" if parts[2:3] == ["categories"] else "GFX_decision_"
-    )
+    prefix = "GFX_decision_category_" if parts[2:3] == ["categories"] else "GFX_decision_"
     if "GFX_" not in raw and not (decision_file or idea_file):
         return set()
 
@@ -1121,7 +1119,9 @@ def _rendered_script_refs(raw: str, filepath: str) -> Set[str]:
     return refs
 
 
-def _parse_script_refs(args: Tuple[str, str], *, rendered_only: bool = False) -> List[str]:
+def _parse_script_refs(
+    args: Tuple[str, str], *, rendered_only: bool = False
+) -> List[str]:
     """Return every GFX sprite a game-script .txt file references.
 
     Picks up literal `GFX_xxx` tokens (event pictures, focus/decision icons,

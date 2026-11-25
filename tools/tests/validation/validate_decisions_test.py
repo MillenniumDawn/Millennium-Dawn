@@ -2111,6 +2111,27 @@ _CATEGORY_GATE_CASES = {
         [],
         [("cat: all 2 decisions", _WAR)],
     ),
+    "shared decision visibility still drives cancellation": (
+        "",
+        {
+            "dec1": "\t\tdays_remove = 100\n\t\tcancel_if_not_visible = yes\n"
+            + _block("visible", _WAR),
+            "dec2": _block("visible", _WAR),
+        },
+        [],
+        [],
+    ),
+    "covered decision visibility still drives cancellation": (
+        _CAT_WAR,
+        {
+            "dec1": "\t\tdays_remove = 100\n\t\tcancel_if_not_visible = yes\n"
+            + _block("visible", _WAR)
+            + _block("available", _WAR),
+            "dec2": _block("visible", _WAR),
+        },
+        [("dec1: available repeats",), ("dec2: visible repeats",)],
+        [],
+    ),
     "visible when empty is intentional": (
         "\tvisible_when_empty = yes\n",
         {"dec1": _block("visible", _WAR), "dec2": _block("visible", _WAR)},

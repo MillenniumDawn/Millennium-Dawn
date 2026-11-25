@@ -1165,7 +1165,8 @@ def _decision_gate_lines(d: "DecisionFactory") -> Dict[str, Set[str]]:
 
     A state target reads visible and available on the state, so only its
     target_root_trigger counts. FROM is the target, which a category gate does
-    not have.
+    not have. A decision that cancels when invisible needs its own visible
+    checks even when the category already makes the same checks.
     """
     fields = (
         ("target_root_trigger",)
@@ -1178,6 +1179,8 @@ def _decision_gate_lines(d: "DecisionFactory") -> Dict[str, Set[str]]:
             for line in _gate_statement_lines(getattr(d, field))
             if not _FROM_WORD_RE.search(line)
         }
+        if field != "visible" or not d.cancel_if_not_visible
+        else set()
         for field in fields
     }
 
