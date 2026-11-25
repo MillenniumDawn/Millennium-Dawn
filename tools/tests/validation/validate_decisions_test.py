@@ -2096,11 +2096,23 @@ _CATEGORY_GATE_CASES = {
         "",
         {
             "dec1": _block("visible", _WAR),
-            "dec2": _block("available", _WAR),
+            "dec2": _block("target_root_trigger", _WAR),
             "mission": _MISSION,
         },
         [],
         [("cat: all 2 decisions", _WAR)],
+    ),
+    "shared availability does not hide decisions": (
+        "",
+        {"dec1": _block("available", _WAR), "dec2": _block("available", _WAR)},
+        [],
+        [],
+    ),
+    "visibility shared with an availability-only check": (
+        "",
+        {"dec1": _block("visible", _WAR), "dec2": _block("available", _WAR)},
+        [],
+        [],
     ),
     "line only some decisions check": (
         "",
@@ -2109,6 +2121,41 @@ _CATEGORY_GATE_CASES = {
         [],
     ),
     "one decision": ("", {"dec1": _block("visible", _WAR)}, [], []),
+    "constant true is not a category gate": (
+        "",
+        {
+            "dec1": _block("visible", "always = yes"),
+            "dec2": _block("visible", "always = yes"),
+        },
+        [],
+        [],
+    ),
+    "individual scripted activation keeps decisions hidden": (
+        "",
+        {
+            "dec1": _block("visible", "always = no"),
+            "dec2": _block("visible", "always = no"),
+        },
+        [],
+        [],
+    ),
+    "temporary variables stay in the decision trigger": (
+        "",
+        {
+            "dec1": _block(
+                "visible",
+                "set_temp_variable = { temp_value = 5 }\n"
+                "hidden_trigger = { set_temp_variable = { temp_other = 6 } }",
+            ),
+            "dec2": _block(
+                "visible",
+                "set_temp_variable = { temp_value = 5 }\n"
+                "hidden_trigger = { set_temp_variable = { temp_other = 6 } }",
+            ),
+        },
+        [],
+        [],
+    ),
     # A state scope is one line, not the lines inside it.
     "state scope": (
         _CAT_WAR,
