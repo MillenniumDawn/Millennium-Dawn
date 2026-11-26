@@ -6096,6 +6096,7 @@ TUR_PKK_mechanic = {
 		icon = generic_air
 		cost = 50
 		days_re_enable = 180
+		fixed_random_seed = no
 
 		available = {
 			NOT = { has_country_flag = TUR_pkk_breakaway }
@@ -6106,11 +6107,14 @@ TUR_PKK_mechanic = {
 			air_experience = 10
 			set_temp_variable = { TUR_pkk_damage = 6 }
 			TUR_pkk_military_damage = yes
+			TUR_pkk_escalate = yes
 			TUR_pkk_end_ceasefire = yes
 			if = {
 				limit = { 630 = { NOT = { is_owned_by = ROOT } } }
 				630 = { OWNER = { add_opinion_modifier = { target = ROOT modifier = medium_decrease } } }
 			}
+			custom_effect_tooltip = TUR_pkk_strikes_prep_tt
+			set_country_flag = { flag = TUR_pkk_recent_strikes days = 180 value = 1 }
 		}
 
 		ai_will_do = {
@@ -6142,6 +6146,250 @@ TUR_PKK_mechanic = {
 			modifier = { factor = 2 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	TUR_pkk_mountain_sweep = {
+		icon = generic_operation
+		days_remove = 60
+		days_re_enable = 240
+		fixed_random_seed = no
+
+		custom_cost_trigger = { command_power > 24 }
+		custom_cost_text = command_power_more_than_25
+
+		available = {
+			NOT = { has_country_flag = TUR_pkk_breakaway }
+			NOT = { has_country_flag = TUR_pkk_operation_running }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_pkk_mountain_sweep"
+			add_command_power = -25
+			set_country_flag = TUR_pkk_operation_running
+			TUR_pkk_escalate = yes
+			TUR_pkk_end_ceasefire = yes
+			if = {
+				limit = {
+					has_country_flag = TUR_pkk_peace_open
+					check_variable = { TUR_pkk_peace_stage > 0 }
+				}
+				custom_effect_tooltip = TUR_pkk_peace_setback_tt
+				subtract_from_variable = { TUR_pkk_peace_stage = 1 }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_pkk_mountain_sweep"
+			clr_country_flag = TUR_pkk_operation_running
+			custom_effect_tooltip = TUR_pkk_mountain_sweep_outcome_tt
+			hidden_effect = {
+				set_variable = { TUR_pkk_op_type = 1 }
+				random_list = {
+					40 = {
+						modifier = { factor = 1.5 has_country_flag = TUR_pkk_campaign_revealed check_variable = { TUR_PKK_campaign = 1 } }
+						modifier = { factor = 1.25 has_idea = TUR_village_guards }
+						modifier = { factor = 1.25 agency_upgrade_number > 3 }
+						set_variable = { TUR_pkk_op_result = 1 }
+					}
+					35 = {
+						set_variable = { TUR_pkk_op_result = 2 }
+					}
+					25 = {
+						modifier = { factor = 0.5 has_idea = TUR_village_guards }
+						set_variable = { TUR_pkk_op_result = 3 }
+					}
+				}
+				country_event = { id = TUR_pkk.11 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 2 check_variable = { TUR_PKK_strength > 49 } }
+			modifier = { factor = 2 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+			modifier = { factor = 0.2 has_country_flag = TUR_pkk_peace_open }
+		}
+	}
+
+	TUR_pkk_operation_claw = {
+		icon = generic_military
+		days_remove = 90
+		days_re_enable = 365
+		fixed_random_seed = no
+
+		custom_cost_trigger = { command_power > 49 }
+		custom_cost_text = command_power_more_than_50
+
+		available = {
+			NOT = { has_country_flag = TUR_pkk_breakaway }
+			NOT = { has_country_flag = TUR_pkk_operation_running }
+			custom_trigger_tooltip = {
+				tooltip = TUR_pkk_claw_qandil_stands_tt
+				is_in_array = { TUR_PKK_base_states = 630 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = TUR_pkk_claw_needs_base_tt
+				check_variable = { TUR_PKK_base_states^num < 4 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_pkk_operation_claw"
+			add_command_power = -50
+			medium_expenditure = yes
+			set_country_flag = TUR_pkk_operation_running
+			TUR_pkk_escalate = yes
+			TUR_pkk_end_ceasefire = yes
+			if = {
+				limit = {
+					has_country_flag = TUR_pkk_peace_open
+					check_variable = { TUR_pkk_peace_stage > 0 }
+				}
+				custom_effect_tooltip = TUR_pkk_peace_setback_tt
+				subtract_from_variable = { TUR_pkk_peace_stage = 1 }
+			}
+			if = {
+				limit = { 630 = { NOT = { is_owned_by = ROOT } } }
+				630 = { OWNER = { add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty } } }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_pkk_operation_claw"
+			clr_country_flag = TUR_pkk_operation_running
+			custom_effect_tooltip = TUR_pkk_operation_claw_outcome_tt
+			hidden_effect = {
+				set_variable = { TUR_pkk_op_type = 2 }
+				random_list = {
+					35 = {
+						modifier = { factor = 1.5 has_country_flag = TUR_pkk_recent_strikes }
+						modifier = { factor = 1.5 agency_upgrade_number > 3 }
+						set_variable = { TUR_pkk_op_result = 1 }
+					}
+					35 = {
+						set_variable = { TUR_pkk_op_result = 2 }
+					}
+					30 = {
+						modifier = { factor = 0.5 has_country_flag = TUR_pkk_recent_strikes }
+						set_variable = { TUR_pkk_op_result = 3 }
+					}
+				}
+				country_event = { id = TUR_pkk.11 }
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = { factor = 3 has_country_flag = TUR_pkk_recent_strikes }
+			modifier = { factor = 2 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+			modifier = { factor = 0.2 has_country_flag = TUR_pkk_peace_open }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	TUR_pkk_counterinsurgency_op = {
+		icon = generic_police_action
+		days_remove = 30
+		days_re_enable = 150
+		fixed_random_seed = no
+
+		custom_cost_trigger = { command_power > 29 }
+		custom_cost_text = command_power_more_than_30
+
+		available = {
+			NOT = { has_country_flag = TUR_pkk_breakaway }
+			NOT = { has_country_flag = TUR_pkk_operation_running }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_pkk_counterinsurgency_op"
+			add_command_power = -30
+			small_expenditure = yes
+			add_stability = -0.01
+			set_country_flag = TUR_pkk_operation_running
+			TUR_pkk_escalate = yes
+			TUR_pkk_end_ceasefire = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_pkk_counterinsurgency_op"
+			clr_country_flag = TUR_pkk_operation_running
+			custom_effect_tooltip = TUR_pkk_counterinsurgency_op_outcome_tt
+			hidden_effect = {
+				set_variable = { TUR_pkk_op_type = 3 }
+				random_list = {
+					40 = {
+						modifier = { factor = 1.5 has_country_flag = TUR_pkk_campaign_revealed check_variable = { TUR_PKK_campaign = 2 } }
+						modifier = { factor = 1.25 has_idea = TUR_village_guards }
+						modifier = { factor = 1.25 agency_upgrade_number > 3 }
+						set_variable = { TUR_pkk_op_result = 1 }
+					}
+					30 = {
+						set_variable = { TUR_pkk_op_result = 2 }
+					}
+					30 = {
+						modifier = { factor = 1.5 check_variable = { TUR_pkk_escalation > 5 } }
+						set_variable = { TUR_pkk_op_result = 3 }
+					}
+				}
+				country_event = { id = TUR_pkk.11 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 2 check_variable = { TUR_PKK_strength > 49 } }
+			modifier = { factor = 0.3 check_variable = { TUR_pkk_escalation > 5 } }
+			modifier = { factor = 0.2 has_country_flag = TUR_pkk_peace_open }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	TUR_pkk_open_negotiations = {
+		icon = generic_political_discourse
+		cost = 75
+		days_remove = 60
+		days_re_enable = 365
+		fixed_random_seed = no
+
+		visible = {
+			NOT = { has_country_flag = TUR_pkk_peace_open }
+			NOT = { has_country_flag = TUR_pkk_peace_locked }
+		}
+
+		available = {
+			NOT = { has_country_flag = TUR_pkk_breakaway }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove TUR_pkk_open_negotiations"
+			custom_effect_tooltip = TUR_pkk_negotiations_outcome_tt
+			hidden_effect = {
+				random_list = {
+					50 = {
+						modifier = { factor = 1.5 has_idea = TUR_PKK_insurgency_ceasefire }
+						modifier = { factor = 1.5 check_variable = { TUR_kurdish_grievance < 50 } }
+						modifier = { factor = 0.5 check_variable = { TUR_pkk_escalation > 3 } }
+						modifier = { factor = 0.5 check_variable = { TUR_pkk_escalation > 6 } }
+						set_variable = { TUR_pkk_talks_result = 1 }
+					}
+					50 = {
+						set_variable = { TUR_pkk_talks_result = 2 }
+					}
+				}
+				country_event = { id = TUR_pkk.13 }
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = { factor = 3 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
+			modifier = { factor = 2 has_global_flag = TUR_HISTORICAL_AI_FOCUS }
+			modifier = { factor = 0.1 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+			modifier = { factor = 0.3 check_variable = { TUR_pkk_escalation > 5 } }
 		}
 	}
 }

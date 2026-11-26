@@ -575,6 +575,7 @@ TUR_government_change = {
 #          unless Strength is already lower. Pressure that would push Strength below that floor destroys the next base, Qandil last.
 # Parameters:
 # - TUR_pkk_damage: Strength points to remove
+# - TUR_pkk_light_damage (optional): 1 for small operations, which stop at the floor and never destroy a base
 TUR_pkk_military_damage = {
 	set_temp_variable = { TUR_pkk_floor = { value = TUR_PKK_base_states^num multiply = 6 } }
 	if = {
@@ -586,9 +587,16 @@ TUR_pkk_military_damage = {
 	}
 	set_temp_variable = { TUR_pkk_floor = { value = TUR_pkk_floor min = TUR_PKK_strength } }
 	set_temp_variable = { TUR_pkk_new_strength = { value = TUR_PKK_strength subtract = TUR_pkk_damage } }
-	custom_effect_tooltip = TUR_pkk_military_damage_tt
+	if = {
+		limit = { check_variable = { TUR_pkk_light_damage = 1 } }
+		custom_effect_tooltip = TUR_pkk_military_damage_light_tt
+	}
+	else = {
+		custom_effect_tooltip = TUR_pkk_military_damage_tt
+	}
 	if = {
 		limit = {
+			NOT = { check_variable = { TUR_pkk_light_damage = 1 } }
 			check_variable = { TUR_pkk_new_strength < TUR_pkk_floor }
 			check_variable = { TUR_PKK_base_states^num > 0 }
 		}
@@ -681,6 +689,27 @@ TUR_pkk_end_ceasefire = {
 	if = {
 		limit = { has_idea = TUR_PKK_insurgency_ceasefire }
 		swap_ideas = { remove_idea = TUR_PKK_insurgency_ceasefire add_idea = TUR_PKK_insurgency_active }
+	}
+}
+
+# Called by every attack decision. Raises Escalation, then Grievance by half the new Escalation,
+# and may provoke a PKK reprisal. The caller decision needs fixed_random_seed = no.
+TUR_pkk_escalate = {
+	custom_effect_tooltip = TUR_pkk_escalate_tt
+	add_to_variable = { TUR_pkk_escalation = 1 }
+	clamp_variable = { var = TUR_pkk_escalation min = 0 max = 10 }
+	set_temp_variable = { TUR_grievance_change = { value = TUR_pkk_escalation multiply = 0.5 round = yes } }
+	TUR_pkk_change_grievance = yes
+	hidden_effect = {
+		random_list = {
+			10 = {
+				modifier = { add = 10 check_variable = { TUR_pkk_escalation > 2 } }
+				modifier = { add = 20 check_variable = { TUR_pkk_escalation > 5 } }
+				modifier = { add = 20 check_variable = { TUR_pkk_escalation > 8 } }
+				country_event = { id = TUR_pkk.12 days = 7 random_days = 14 }
+			}
+			80 = { }
+		}
 	}
 }
 

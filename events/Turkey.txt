@@ -19349,3 +19349,200 @@ country_event = {
 		}
 	}
 }
+
+# After-action report for TUR_pkk_mountain_sweep (TUR_pkk_op_type 1), TUR_pkk_operation_claw (2) and TUR_pkk_counterinsurgency_op (3).
+# TUR_pkk_op_result: 1 success, 2 partial, 3 failure, rolled in the decision's remove_effect.
+country_event = {
+	id = TUR_pkk.11
+	title = TUR_pkk.11.t
+	desc = {
+		text = TUR_pkk.11.d_sweep_success
+		trigger = { check_variable = { TUR_pkk_op_type = 1 } check_variable = { TUR_pkk_op_result = 1 } }
+	}
+	desc = {
+		text = TUR_pkk.11.d_sweep_partial
+		trigger = { check_variable = { TUR_pkk_op_type = 1 } check_variable = { TUR_pkk_op_result = 2 } }
+	}
+	desc = {
+		text = TUR_pkk.11.d_sweep_failure
+		trigger = { check_variable = { TUR_pkk_op_type = 1 } check_variable = { TUR_pkk_op_result = 3 } }
+	}
+	desc = {
+		text = TUR_pkk.11.d_claw_success
+		trigger = { check_variable = { TUR_pkk_op_type = 2 } check_variable = { TUR_pkk_op_result = 1 } }
+	}
+	desc = {
+		text = TUR_pkk.11.d_claw_partial
+		trigger = { check_variable = { TUR_pkk_op_type = 2 } check_variable = { TUR_pkk_op_result = 2 } }
+	}
+	desc = {
+		text = TUR_pkk.11.d_claw_failure
+		trigger = { check_variable = { TUR_pkk_op_type = 2 } check_variable = { TUR_pkk_op_result = 3 } }
+	}
+	desc = {
+		text = TUR_pkk.11.d_coin_success
+		trigger = { check_variable = { TUR_pkk_op_type = 3 } check_variable = { TUR_pkk_op_result = 1 } }
+	}
+	desc = {
+		text = TUR_pkk.11.d_coin_partial
+		trigger = { check_variable = { TUR_pkk_op_type = 3 } check_variable = { TUR_pkk_op_result = 2 } }
+	}
+	desc = {
+		text = TUR_pkk.11.d_coin_failure
+		trigger = { check_variable = { TUR_pkk_op_type = 3 } check_variable = { TUR_pkk_op_result = 3 } }
+	}
+	picture = GFX_raiding_pkk
+
+	is_triggered_only = yes
+
+	trigger = { NOT = { has_country_flag = TUR_PKK_gone } }
+
+	option = {
+		name = TUR_pkk.11.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.11.a executed"
+		if = {
+			limit = { check_variable = { TUR_pkk_op_result = 1 } }
+			if = {
+				limit = {
+					check_variable = { TUR_pkk_op_type = 2 }
+					is_in_array = { TUR_PKK_base_states = 630 }
+				}
+				custom_effect_tooltip = TUR_pkk_qandil_destroyed_tt
+				remove_from_array = { TUR_PKK_base_states = 630 }
+				army_experience = 25
+			}
+			if = {
+				limit = { check_variable = { TUR_pkk_op_type = 1 } }
+				army_experience = 10
+				set_temp_variable = { TUR_pkk_damage = 12 }
+			}
+			else_if = {
+				limit = { check_variable = { TUR_pkk_op_type = 3 } }
+				set_temp_variable = { TUR_pkk_damage = 3 }
+				set_temp_variable = { TUR_pkk_light_damage = 1 }
+			}
+			else = {
+				set_temp_variable = { TUR_pkk_damage = 10 }
+			}
+			TUR_pkk_military_damage = yes
+		}
+		else_if = {
+			limit = { check_variable = { TUR_pkk_op_result = 2 } }
+			if = {
+				limit = { check_variable = { TUR_pkk_op_type = 1 } }
+				set_temp_variable = { TUR_pkk_damage = 6 }
+			}
+			else_if = {
+				limit = { check_variable = { TUR_pkk_op_type = 3 } }
+				set_temp_variable = { TUR_pkk_damage = 1 }
+				set_temp_variable = { TUR_pkk_light_damage = 1 }
+			}
+			else = {
+				set_temp_variable = { TUR_pkk_damage = 8 }
+			}
+			TUR_pkk_military_damage = yes
+		}
+		else = {
+			set_temp_variable = { TUR_pkk_strength_change = 3 }
+			TUR_pkk_change_strength = yes
+			set_temp_variable = { TUR_grievance_change = 3 }
+			TUR_pkk_change_grievance = yes
+			if = {
+				limit = { check_variable = { TUR_pkk_op_type = 3 } }
+				add_stability = -0.02
+				add_political_power = -25
+			}
+			else_if = {
+				limit = { check_variable = { TUR_pkk_op_type = 1 } }
+				add_stability = -0.02
+			}
+			else = {
+				add_stability = -0.03
+				add_war_support = -0.02
+			}
+		}
+	}
+}
+
+# PKK reprisal, rolled by TUR_pkk_escalate. The higher Escalation, the likelier.
+country_event = {
+	id = TUR_pkk.12
+	title = TUR_pkk.12.t
+	desc = TUR_pkk.12.d
+	picture = GFX_pkk_ambush_lose
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { has_country_flag = TUR_pkk_breakaway }
+	}
+
+	option = {
+		name = TUR_pkk.12.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.12.a executed"
+		add_stability = -0.02
+		set_temp_variable = { TUR_pkk_strength_change = 2 }
+		TUR_pkk_change_strength = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.3 has_stability < 0.3 }
+		}
+	}
+
+	option = {
+		name = TUR_pkk.12.b
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.12.b executed"
+		add_war_support = 0.02
+		set_temp_variable = { TUR_pkk_strength_change = 2 }
+		TUR_pkk_change_strength = yes
+		custom_effect_tooltip = TUR_pkk_escalation_up_tt
+		add_to_variable = { TUR_pkk_escalation = 1 }
+		clamp_variable = { var = TUR_pkk_escalation min = 0 max = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 has_global_flag = TUR_GREY_WOLVES_AI_FOCUS }
+			modifier = { factor = 0.5 has_global_flag = TUR_TURKISH_LEFT_AI_FOCUS }
+		}
+	}
+}
+
+# Result of TUR_pkk_open_negotiations. TUR_pkk_talks_result: 1 success, 2 failure.
+country_event = {
+	id = TUR_pkk.13
+	title = TUR_pkk.13.t
+	desc = {
+		text = TUR_pkk.13.d_success
+		trigger = { check_variable = { TUR_pkk_talks_result = 1 } }
+	}
+	desc = {
+		text = TUR_pkk.13.d_failure
+		trigger = { check_variable = { TUR_pkk_talks_result = 2 } }
+	}
+	picture = GFX_kurd_event
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = TUR_PKK_gone }
+		NOT = { has_country_flag = TUR_pkk_peace_locked }
+	}
+
+	option = {
+		name = TUR_pkk.13.a
+		log = "[GetDateText]: [This.GetName]: TUR_pkk.13.a executed"
+		if = {
+			limit = { check_variable = { TUR_pkk_talks_result = 1 } }
+			custom_effect_tooltip = TUR_pkk_peace_open_tt
+			set_country_flag = TUR_pkk_peace_open
+			TUR_pkk_start_ceasefire = yes
+			custom_effect_tooltip = TUR_pkk_escalation_reset_tt
+			set_variable = { TUR_pkk_escalation = 0 }
+			set_temp_variable = { TUR_grievance_change = -3 }
+			TUR_pkk_change_grievance = yes
+		}
+		else = {
+			add_stability = -0.02
+		}
+	}
+}
