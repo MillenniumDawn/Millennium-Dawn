@@ -4373,3 +4373,76 @@ cartels_decision_category = {
 		}
 	}
 }
+
+# The Cartels category hides once Brazil concedes to the narcos, so retaking gang-ruled favelas lives here
+BRA_gang_ruled_favelas_category = {
+	BRA_retake_the_favelas_decision = {
+		icon = generic_police_action
+		cost = 100
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+		targets = { 882 883 887 888 891 }
+		days_remove = 365
+
+		target_trigger = {
+			FROM = {
+				is_owned_by = ROOT
+				is_fully_controlled_by = ROOT
+				has_dynamic_modifier = { modifier = BRA_favela_gang_ruled_modifier }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = BRA_favela_project_free_tt
+				NOT = { has_country_flag = BRA_favela_project_active }
+			}
+			hidden_trigger = { FROM = { has_dynamic_modifier = { modifier = BRA_favela_gang_ruled_modifier } } }
+		}
+
+		cancel_trigger = { NOT = { FROM = { is_fully_controlled_by = ROOT } } }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_retake_the_favelas_decision"
+			set_country_flag = { flag = BRA_favela_project_active value = 1 days = 366 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.015 } }
+			modify_treasury_effect = yes
+			add_stability = -0.03
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_retake_the_favelas_decision"
+			clr_country_flag = BRA_favela_project_active
+			FROM = {
+				if = {
+					limit = { has_dynamic_modifier = { modifier = BRA_favela_gang_ruled_modifier } }
+					custom_effect_tooltip = BRA_favela_cleared_tt
+					remove_dynamic_modifier = { modifier = BRA_favela_gang_ruled_modifier }
+				}
+			}
+			BRA_favela_narco_feed_effect = yes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BRA_retake_the_favelas_decision"
+			clr_country_flag = BRA_favela_project_active
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 1.5 FROM = { OR = { state = 882 state = 883 } } }
+			modifier = { factor = 0.5 has_stability < 0.5 }
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = gdp_total
+					multiply = 0.015
+					add = 5
+					greater_than = { value = treasury }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}

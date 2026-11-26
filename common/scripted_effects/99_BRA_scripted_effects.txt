@@ -400,19 +400,25 @@ BRA_monthly_amazon_acreage_change = {
 # Favelas keep the cartels alive. Strength and influence stay at 5 or more while one remains, which holds off cartel_event.52
 BRA_favela_cartel_floor_effect = {
 	if = {
+		limit = { has_dynamic_modifier = { modifier = narco_state_bonuses } }
+		BRA_favela_narco_takeover_effect = yes
+	}
+	else_if = {
 		limit = { has_cartels_penalties = yes }
 		set_temp_variable = { favela_full_count = 0 }
 		set_temp_variable = { favela_improving_count = 0 }
 		every_owned_state = {
 			limit = { BRA_state_has_favelas = yes }
 			if = {
-				limit = { has_dynamic_modifier = { modifier = BRA_favela_modifier } }
-				add_to_temp_variable = { favela_full_count = 1 }
-			}
-			else = {
+				limit = { has_dynamic_modifier = { modifier = BRA_favela_improving_modifier } }
 				add_to_temp_variable = { favela_improving_count = 1 }
 			}
+			else = {
+				add_to_temp_variable = { favela_full_count = 1 }
+			}
 		}
+		set_variable = { BRA_favela_strength_floor = 0 }
+		set_variable = { BRA_favela_influence_floor = 0 }
 		if = {
 			limit = {
 				OR = {
@@ -431,11 +437,13 @@ BRA_favela_cartel_floor_effect = {
 			set_temp_variable = {
 				favela_influence_floor = {
 					value = favela_full_count
-					multiply = 3
+					multiply = 2
 					add = favela_improving_count
 					max = 5
 				}
 			}
+			set_variable = { BRA_favela_strength_floor = favela_strength_floor }
+			set_variable = { BRA_favela_influence_floor = favela_influence_floor }
 			set_temp_variable = { cart_strength_change = { value = favela_strength_floor subtract = strength_of_cartels max = 0 } }
 			set_temp_variable = { cart_influence_change = { value = favela_influence_floor subtract = cartel_political_influence max = 0 } }
 			if = {
@@ -448,5 +456,53 @@ BRA_favela_cartel_floor_effect = {
 				modify_cartel_variables_effect = yes
 			}
 		}
+	}
+}
+
+# Conceding to the narcos hands every remaining favela to the gangs, once
+BRA_favela_narco_takeover_effect = {
+	if = {
+		limit = {
+			any_owned_state = {
+				OR = {
+					has_dynamic_modifier = { modifier = BRA_favela_modifier }
+					has_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
+				}
+			}
+		}
+		every_owned_state = {
+			limit = {
+				OR = {
+					has_dynamic_modifier = { modifier = BRA_favela_modifier }
+					has_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
+				}
+			}
+			if = {
+				limit = { has_dynamic_modifier = { modifier = BRA_favela_modifier } }
+				remove_dynamic_modifier = { modifier = BRA_favela_modifier }
+			}
+			if = {
+				limit = { has_dynamic_modifier = { modifier = BRA_favela_improving_modifier } }
+				remove_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
+			}
+			add_dynamic_modifier = { modifier = BRA_favela_gang_ruled_modifier }
+		}
+		BRA_favela_narco_feed_effect = yes
+		country_event = brazil.192
+	}
+}
+
+# Each gang-ruled favela puts 5 cartel strength and 3 influence behind the narco deal
+BRA_favela_narco_feed_effect = {
+	set_temp_variable = { gang_favela_count = 0 }
+	every_owned_state = {
+		limit = { has_dynamic_modifier = { modifier = BRA_favela_gang_ruled_modifier } }
+		add_to_temp_variable = { gang_favela_count = 1 }
+	}
+	set_variable = { strength_of_cartels = { value = gang_favela_count multiply = 5 } }
+	set_variable = { cartel_political_influence = { value = gang_favela_count multiply = 3 } }
+	if = {
+		limit = { has_dynamic_modifier = { modifier = narco_state_bonuses } }
+		calculate_cartel_bonuses = yes
 	}
 }
