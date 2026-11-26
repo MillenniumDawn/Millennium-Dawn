@@ -396,6 +396,76 @@ SYR_decisions = {
 		}
 	}
 
+	# Hezbollah's networks carry arms over the Qalamoun mountains into Homs
+	SYR_lebanese_supply_line = {
+		allowed = { original_tag = SYR }
+		icon = generic_operation
+
+		visible = {
+			SYR_civil_war_ongoing = yes
+			country_exists = HEZ
+		}
+
+		available = {
+			controls_state = 188
+			HEZ = { NOT = { has_war_with = ROOT } }
+		}
+
+		days_remove = 15
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SYR_lebanese_supply_line"
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SYR_lebanese_supply_line"
+			add_equipment_to_stockpile = { type = infantry_weapons_type amount = 500 }
+			add_equipment_to_stockpile = { type = L_AT_Equipment amount = 30 }
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = { add = 10 has_equipment = { infantry_weapons_type < 2000 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# The pill trade pays for the war and floods the Gulf
+	SYR_captagon_trade = {
+		allowed = { original_tag = SYR }
+		icon = generic_fundraising
+
+		visible = { SYR_civil_war_ongoing = yes }
+
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SYR_captagon_trade"
+			set_temp_variable = { treasury_change = 1.5 }
+			modify_treasury_effect = yes
+			add_stability = -0.01
+			if = {
+				limit = { country_exists = JOR }
+				JOR = { add_opinion_modifier = { target = ROOT modifier = SYR_captagon_smuggling } }
+			}
+			if = {
+				limit = { country_exists = SAU }
+				SAU = { add_opinion_modifier = { target = ROOT modifier = SYR_captagon_smuggling } }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { add = 15 ai_has_high_deficit = yes }
+			modifier = { add = 20 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 SYR_ai_moderate_path = yes }
+		}
+	}
+
 	sectarian_groups_start_to_seek_independence = {
 		allowed = { original_tag = SYR }
 		war_with_on_timeout = DRU
