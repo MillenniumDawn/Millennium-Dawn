@@ -121,3 +121,297 @@ country_event = {
 		}
 	}
 }
+
+# The civil war is over. ROOT is the side left standing
+country_event = {
+	id = SyriaCivilWar.30
+	title = SyriaCivilWar.30.t
+	desc = SyriaCivilWar.30.d
+	picture = GFX_syrian_arab_army
+	is_triggered_only = yes
+
+	# Declare a general amnesty
+	option = {
+		name = SyriaCivilWar.30.a
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.30.a executed"
+		add_stability = 0.05
+		add_war_support = -0.05
+		add_manpower = 5000
+		hidden_effect = {
+			country_event = { id = SyriaCivilWar.31 days = 180 random_days = 60 }
+			country_event = { id = SyriaCivilWar.32 days = 365 random_days = 60 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_moderate_path = yes }
+			modifier = { factor = 0.5 original_tag = NUS }
+		}
+	}
+
+	# Hunt down the collaborators
+	option = {
+		name = SyriaCivilWar.30.b
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.30.b executed"
+		add_stability = -0.03
+		add_war_support = 0.03
+		add_political_power = 50
+		hidden_effect = {
+			country_event = { id = SyriaCivilWar.31 days = 180 random_days = 60 }
+			country_event = { id = SyriaCivilWar.32 days = 365 random_days = 60 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_hardline_path = yes }
+			modifier = { factor = 2 original_tag = NUS }
+		}
+	}
+}
+
+# Refugees start to come home from Lebanon, Jordan, and Turkey
+country_event = {
+	id = SyriaCivilWar.31
+	title = SyriaCivilWar.31.t
+	desc = SyriaCivilWar.31.d
+	picture = GFX_politics_speak
+	is_triggered_only = yes
+
+	trigger = { has_global_flag = GLOBAL_syrian_civil_war_over }
+
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = {
+					country_exists = LEB
+					LEB = { has_idea = LEB_syrian_refugees }
+				}
+				LEB = { remove_ideas = LEB_syrian_refugees }
+			}
+		}
+	}
+
+	# Welcome them back
+	option = {
+		name = SyriaCivilWar.31.a
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.31.a executed"
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		add_manpower = 10000
+		add_stability = 0.02
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Screen everyone who returns
+	option = {
+		name = SyriaCivilWar.31.b
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.31.b executed"
+		add_manpower = 4000
+		add_political_power = 25
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_hardline_path = yes }
+		}
+	}
+}
+
+# Donors gather to decide who pays to rebuild the country
+country_event = {
+	id = SyriaCivilWar.32
+	title = SyriaCivilWar.32.t
+	desc = SyriaCivilWar.32.d
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+
+	trigger = { has_global_flag = GLOBAL_syrian_civil_war_over }
+
+	# Court the Gulf and Western donors
+	option = {
+		name = SyriaCivilWar.32.a
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.32.a executed"
+		trigger = { NOT = { original_tag = NUS } }
+		set_temp_variable = { treasury_change = 6 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_moderate_path = yes }
+			modifier = { factor = 2 original_tag = FSA }
+		}
+	}
+
+	# Sign reconstruction contracts with Moscow and Tehran
+	option = {
+		name = SyriaCivilWar.32.b
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.32.b executed"
+		trigger = {
+			country_exists = SOV
+			country_exists = PER
+		}
+		set_temp_variable = { treasury_change = 3 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV.id }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = PER.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 SYR_ai_historical_path = yes }
+			modifier = { factor = 0 original_tag = FSA }
+		}
+	}
+
+	# Take Chinese loans to rebuild the roads and rails
+	option = {
+		name = SyriaCivilWar.32.c
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.32.c executed"
+		trigger = { country_exists = CHI }
+		set_temp_variable = { treasury_change = 7 }
+		modify_treasury_effect = yes
+		two_random_infrastructure = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = CHI.id }
+		change_influence_percentage = yes
+		ai_chance = { base = 5 }
+	}
+}
+
+# Neither side can win, and the front has gone quiet. ROOT is the regime
+country_event = {
+	id = SyriaCivilWar.35
+	title = SyriaCivilWar.35.t
+	desc = SyriaCivilWar.35.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		has_global_flag = GLOBAL_syrian_civil_war_started
+		NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+		SYR_civil_war_ongoing = no
+		OR = {
+			country_exists = FSA
+			country_exists = NUS
+		}
+	}
+
+	# Accept the ceasefire lines
+	option = {
+		name = SyriaCivilWar.35.a
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.35.a executed"
+		custom_effect_tooltip = SYR_ceasefire_lines_tt
+		hidden_effect = {
+			every_owned_state = {
+				remove_claim_by = FSA
+				remove_claim_by = NUS
+			}
+		}
+		set_global_flag = GLOBAL_syrian_civil_war_over
+		hidden_effect = { country_event = { id = SyriaCivilWar.30 days = 7 } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 10 has_war_support < 0.3 }
+			modifier = { factor = 2 SYR_ai_moderate_path = yes }
+		}
+	}
+
+	# This war is not over
+	option = {
+		name = SyriaCivilWar.35.b
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.35.b executed"
+		add_war_support = 0.03
+		custom_effect_tooltip = SYR_ceasefire_ask_again_tt
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_hardline_path = yes }
+		}
+	}
+}
+
+# The Islamic State regroups in the desert. ROOT owns the state it rises in
+country_event = {
+	id = SyriaCivilWar.40
+	title = SyriaCivilWar.40.t
+	desc = SyriaCivilWar.40.d
+	picture = GFX_SYR_tahrir_al_sham
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { country_exists = ISI }
+		any_owned_state = {
+			OR = {
+				state = 192
+				state = 995
+				state = 561
+				state = 994
+			}
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			clr_global_flag = ISIS_resurgence_queued
+			add_to_variable = { global.isis_resurgences = 1 }
+			random_owned_state = {
+				limit = {
+					OR = {
+						state = 192
+						state = 995
+						state = 561
+						state = 994
+					}
+				}
+				save_event_target_as = isis_resurgence_state
+			}
+			# Leftover cores would hand the new insurgency every state we own
+			every_state = {
+				limit = { is_core_of = ISI }
+				remove_core_of = ISI
+			}
+			event_target:isis_resurgence_state = { add_core_of = ISI }
+			release = ISI
+			ISI = {
+				ingame_startup_nations_effect = yes
+				if = {
+					limit = { NOT = { has_template = "Liwa Milisha" } }
+					division_template = {
+						name = "Liwa Milisha"
+						regiments = {
+							Mot_Militia_Bat = { x = 0 y = 0 }
+							Mot_Militia_Bat = { x = 0 y = 1 }
+							Mot_Militia_Bat = { x = 0 y = 2 }
+						}
+					}
+				}
+				capital_scope = {
+					create_unit = {
+						division = "name = \"Liwa Milisha\" division_template = \"Liwa Milisha\" start_experience_factor = 0.5"
+						owner = ISI
+						count = 3
+					}
+				}
+				declare_war_on = { target = ROOT type = annex_everything }
+			}
+			news_event = { id = SyriaCivilWar.41 hours = 6 }
+		}
+	}
+
+	option = {
+		name = SyriaCivilWar.40.a
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.40.a executed"
+		custom_effect_tooltip = SYR_isis_resurgence_tt
+	}
+}
+
+news_event = {
+	id = SyriaCivilWar.41
+	title = SyriaCivilWar.41.t
+	desc = SyriaCivilWar.41.d
+	picture = GFX_isis
+	is_triggered_only = yes
+	major = yes
+
+	option = { name = SyriaCivilWar.41.a }
+}

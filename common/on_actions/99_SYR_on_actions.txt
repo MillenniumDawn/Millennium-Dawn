@@ -1,6 +1,13 @@
 on_actions = {
 	on_monthly_FSA = {
 		effect = {
+			if = {
+				limit = {
+					has_global_flag = GLOBAL_syrian_civil_war_started
+					NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+				}
+				civil_war_cleanup_syria = yes
+			}
 			#FSA deals with Al-Nusra
 			if = {
 				limit = {
@@ -32,6 +39,13 @@ on_actions = {
 
 	on_monthly_NUS = {
 		effect = {
+			if = {
+				limit = {
+					has_global_flag = GLOBAL_syrian_civil_war_started
+					NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+				}
+				civil_war_cleanup_syria = yes
+			}
 			#Annex FSA if they are losing and we are not
 			if = {
 				limit = {
@@ -201,6 +215,41 @@ on_actions = {
 				}
 				clr_country_flag = SYR_arab_spring_nusra_pending
 				country_event = arab_spring.26
+			}
+
+			# The war-ending hooks can fire while the war still runs, so retry the cleanup each month
+			if = {
+				limit = {
+					has_global_flag = GLOBAL_syrian_civil_war_started
+					NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+				}
+				civil_war_cleanup_syria = yes
+				# A white peace leaves the rebels standing with no war to end
+				if = {
+					limit = {
+						NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+						SYR_civil_war_ongoing = no
+						OR = {
+							country_exists = FSA
+							country_exists = NUS
+						}
+						NOT = { has_country_flag = SYR_ceasefire_offered }
+					}
+					set_country_flag = { flag = SYR_ceasefire_offered days = 180 value = 1 }
+					country_event = { id = SyriaCivilWar.35 days = 1 }
+				}
+			}
+			SYR_queue_isis_resurgence = yes
+			# Refugees reach Lebanon three months into the war
+			if = {
+				limit = {
+					SYR_civil_war_ongoing = yes
+					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 89 }
+					country_exists = LEB
+					NOT = { has_global_flag = LEB_syrian_refugees_arrived }
+				}
+				set_global_flag = LEB_syrian_refugees_arrived
+				LEB = { country_event = { id = lebanon.1 days = 1 random_days = 10 } }
 			}
 
 			# ISIS Spawns - Syrian Historical ISIS Spawn
