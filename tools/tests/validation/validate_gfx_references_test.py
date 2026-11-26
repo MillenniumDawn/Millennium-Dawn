@@ -1445,7 +1445,14 @@ def test_staged_report_unused_run_skips_the_full_repo_passes(tmp_path, monkeypat
 
 # Every case exempts `view legacy`, which no fixture defines.
 _UI_PATHS = {
-    "interface/topbar.gfx": [["GFX_kept"], ["GFX_lost"], ["GFX_still_loaded"]],
+    "interface/topbar.gfx": [
+        ["GFX_kept"],
+        ["GFX_lost"],
+        ["GFX_still_loaded"],
+        ["GFX_decision_lost"],
+        ["GFX_decision_category_lost"],
+        ["GFX_idea_lost"],
+    ],
     "interface/other.gfx": [["GFX_still_loaded"]],
     "interface/factions/topbar.gfx": [["GFX_other_path"]],
     "interface/engine.gfx": [["GFX_engine", "engine"]],
@@ -1480,6 +1487,42 @@ _DROPPED_CASES = {
     "script ref": (
         {"events/x.txt": "x = { picture = GFX_lost }\n"},
         [("dropped-vanilla-sprite", "interface/topbar.gfx", "events/x.txt uses")],
+    ),
+    "sprite mentioned only in a log": (
+        {"events/x.txt": 'x = { log = "picture = GFX_lost" }\n'},
+        [],
+    ),
+    "decision key outside icon block": (
+        {"common/decisions/x.txt": "x = { unrelated = {\n key = lost\n } }\n"},
+        [],
+    ),
+    "conditional decision icon": (
+        {"common/decisions/x.txt": 'x = { pick = { icon = { key = "lost" } } }\n'},
+        [
+            (
+                "dropped-vanilla-sprite",
+                "interface/topbar.gfx",
+                "Sprite 'GFX_decision_lost'",
+            )
+        ],
+    ),
+    "bare category icon": (
+        {"common/decisions/categories/x.txt": "x = { icon = lost }\n"},
+        [
+            (
+                "dropped-vanilla-sprite",
+                "interface/topbar.gfx",
+                "Sprite 'GFX_decision_category_lost'",
+            )
+        ],
+    ),
+    "bare idea picture": (
+        {"common/ideas/x.txt": "ideas = { x = { picture = lost } }\n"},
+        [("dropped-vanilla-sprite", "interface/topbar.gfx", "Sprite 'GFX_idea_lost'")],
+    ),
+    "equipment icon pool": (
+        {"gfx/interface/equipmentdesigner/graphic_db/x.txt": "icons = { GFX_lost }\n"},
+        [("dropped-vanilla-sprite", "interface/topbar.gfx", "graphic_db/x.txt uses")],
     ),
     "english loc ref": (
         {"localisation/english/x_l_english.yml": 'l_english:\n x: "£lost"\n'},
