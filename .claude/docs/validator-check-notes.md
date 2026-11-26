@@ -306,8 +306,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `decision-category-gate-candidate` (WARNING, report-only): a category whose decisions,
   two or more, all share a line in `visible` or `target_root_trigger`. Checks that only
   appear in `available` on a decision control selection and stay on that decision.
-  Review mission timers, active decisions, and `visible_when_empty` before moving
-  a shared visibility check to the category.
+  Categories with missions or `visible_when_empty = yes` are excluded because
+  moving a gate can hide the category UI even if its mission timers still tick.
+  A decision's `visible` checks are not move or removal candidates when
+  `cancel_if_not_visible = yes` uses them to cancel the active decision.
+  Review active decisions before moving a shared visibility check.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
@@ -555,6 +558,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   sprite names (`resource_item_background`) are not read. Sprites the engine resolves
   from MD declarations (equipment, tech, `GFX_EMI_`, focus-filter icons) do not count as
   uses. A window counts as kept when any MD `.gui` defines it. Skipped under `--staged`.
+  Script usage needs a render field or an equipment icon pool. A mention in a log
+  or a decision `key` outside an icon block is not a render reference.
   Deliberate drops go in `dropped_gui_elements`.
 
 ## validate_ideas.py
