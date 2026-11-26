@@ -33,10 +33,13 @@ Three number modifiers per faction, where `<faction>` is the faction idea name
 | Modifier                       | Effect                                                              |
 | ------------------------------ | ------------------------------------------------------------------- |
 | `if_<faction>_monthly_opinion` | Added to opinion every month, even with the no-decay game rule on   |
-| `if_<faction>_minimum_opinion` | Decay floor becomes 50 + value. Hard floor becomes the value itself |
+| `if_<faction>_minimum_opinion` | Sets the monthly target to 50 + value and the hard floor to value |
 | `if_<faction>_maximum_opinion` | Ceiling becomes 100 + value. Use negative values                    |
 
-- A negative minimum only lowers the decay floor. Opinion never goes above 100.
+- Opinion above the target decays toward it. A positive minimum also lets opinion
+  below the target recover at the same rate. A zero tick rate disables both, but
+  the separate monthly-opinion modifier and clamps still apply. A negative minimum
+  lowers the target without enabling recovery. Opinion never goes above 100.
 - Values stack across every source. `change_<faction>_opinion` and
   `monthly_tick_internal_factions_opinion` in `00_internal_faction_effects.txt` read
   them. The Wahhabi Ulema effect is `change_the_wahabi_ulema_opinion`.
