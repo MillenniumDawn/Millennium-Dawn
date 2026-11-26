@@ -1,0 +1,210 @@
+add_namespace = civil_war_support
+
+# A civil war faction asks us for help. FROM is the faction that asked
+country_event = {
+	id = civil_war_support.1
+	title = civil_war_support.1.t
+	desc = {
+		text = civil_war_support.1.d_fsa
+		trigger = { FROM = { original_tag = FSA } }
+	}
+	desc = {
+		text = civil_war_support.1.d_syr
+		trigger = { FROM = { original_tag = SYR } }
+	}
+	desc = {
+		text = civil_war_support.1.d_roj
+		trigger = { FROM = { original_tag = ROJ } }
+	}
+	desc = {
+		text = civil_war_support.1.d_somali
+		trigger = { FROM = { is_somali_nation = yes } }
+	}
+	desc = {
+		text = civil_war_support.1.d
+		trigger = {
+			FROM = {
+				NOT = {
+					OR = {
+						original_tag = FSA
+						original_tag = SYR
+						original_tag = ROJ
+						is_somali_nation = yes
+					}
+				}
+			}
+		}
+	}
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Send weapons
+	option = {
+		name = civil_war_support.1.a
+		log = "[GetDateText]: [This.GetName]: civil_war_support.1.a executed for [From.GetTag]"
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		FROM = {
+			add_equipment_to_stockpile = { type = infantry_weapons_type amount = 1500 producer = ROOT }
+			add_equipment_to_stockpile = { type = L_AT_Equipment amount = 100 producer = ROOT }
+			add_equipment_to_stockpile = { type = AA_Equipment amount = 30 producer = ROOT }
+			add_opinion_modifier = { target = ROOT modifier = military_aid }
+		}
+		hidden_effect = { FROM = { country_event = { id = civil_war_support.2 days = 1 } } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 15 has_opinion = { target = FROM value > 24 } }
+			modifier = { add = 10 has_opinion = { target = FROM value > 49 } }
+			modifier = { add = 10 is_in_faction_with = FROM }
+			modifier = {
+				add = 20
+				FROM = { original_tag = FSA }
+				OR = {
+					has_completed_focus = TUR_back_fsa
+					has_completed_focus = GCC_back_the_syrian_opposition
+					has_completed_focus = SAU_fund_the_free_syrian_army
+					has_completed_focus = USA_focus_the_arab_spring
+				}
+			}
+			modifier = {
+				add = 20
+				FROM = { original_tag = SYR }
+				OR = {
+					has_completed_focus = TUR_back_assad
+					has_completed_focus = GCC_denounce_the_opposition
+					SYR = { has_country_flag = SYR_invited_russian_forces }
+				}
+				original_tag = SOV
+			}
+			modifier = {
+				add = 20
+				FROM = { original_tag = ROJ }
+				country_exists = ISI
+				OR = {
+					original_tag = USA
+					original_tag = FRA
+					original_tag = ENG
+				}
+			}
+			modifier = {
+				add = 15
+				FROM = { is_somali_nation = yes }
+				OR = {
+					original_tag = ETH
+					original_tag = KEN
+					original_tag = UAE
+				}
+			}
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 has_opinion = { target = FROM value < -24 } }
+			modifier = { factor = 0 civil_war_support_backs_other_side = yes }
+		}
+	}
+
+	# Send money
+	option = {
+		name = civil_war_support.1.b
+		log = "[GetDateText]: [This.GetName]: civil_war_support.1.b executed for [From.GetTag]"
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		FROM = {
+			set_temp_variable = { treasury_change = 2 }
+			modify_treasury_effect = yes
+			add_opinion_modifier = { target = ROOT modifier = military_aid }
+		}
+		hidden_effect = { FROM = { country_event = { id = civil_war_support.2 days = 1 } } }
+		ai_chance = {
+			base = 5
+			modifier = { add = 10 check_variable = { treasury > 20 } }
+			modifier = { add = 10 has_opinion = { target = FROM value > 24 } }
+			modifier = { add = 10 OR = { original_tag = SAU original_tag = QAT original_tag = UAE } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 has_opinion = { target = FROM value < -24 } }
+			modifier = { factor = 0 civil_war_support_backs_other_side = yes }
+		}
+	}
+
+	# Send advisors
+	option = {
+		name = civil_war_support.1.c
+		log = "[GetDateText]: [This.GetName]: civil_war_support.1.c executed for [From.GetTag]"
+		trigger = { num_divisions > 29 }
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		FROM = {
+			add_timed_idea = { idea = civil_war_foreign_advisors days = 180 }
+			add_opinion_modifier = { target = ROOT modifier = military_aid }
+		}
+		hidden_effect = { FROM = { country_event = { id = civil_war_support.2 days = 1 } } }
+		ai_chance = {
+			base = 0
+			modifier = { add = 10 has_opinion = { target = FROM value > 49 } }
+			modifier = { add = 10 is_in_faction_with = FROM }
+			modifier = {
+				add = 20
+				FROM = { original_tag = SYR }
+				SYR = {
+					OR = {
+						has_country_flag = SYR_invited_russian_forces
+						has_country_flag = SYR_invited_iranian_forces
+					}
+				}
+				OR = {
+					original_tag = SOV
+					original_tag = PER
+				}
+			}
+			modifier = {
+				add = 20
+				FROM = { original_tag = ROJ }
+				country_exists = ISI
+				original_tag = USA
+			}
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 FROM = { has_idea = civil_war_foreign_advisors } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 civil_war_support_backs_other_side = yes }
+		}
+	}
+
+	# Decline
+	option = {
+		name = civil_war_support.1.e
+		log = "[GetDateText]: [This.GetName]: civil_war_support.1.e executed for [From.GetTag]"
+		hidden_effect = { FROM = { country_event = { id = civil_war_support.3 days = 1 } } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 15 has_opinion = { target = FROM value < 0 } }
+			modifier = { add = 10 has_war = yes }
+			modifier = { add = 20 civil_war_support_backs_other_side = yes }
+		}
+	}
+}
+
+# Our request was answered. FROM is the country that sent help
+country_event = {
+	id = civil_war_support.2
+	title = civil_war_support.2.t
+	desc = civil_war_support.2.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = civil_war_support.2.a }
+}
+
+# Our request was refused. FROM is the country that refused
+country_event = {
+	id = civil_war_support.3
+	title = civil_war_support.3.t
+	desc = civil_war_support.3.d
+	picture = GFX_treaty_rejected
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = civil_war_support.3.a }
+}
