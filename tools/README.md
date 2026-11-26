@@ -542,9 +542,11 @@ alternative leads to. Stacking flags a factor-style modifier key (`_factor`,
 `--stack-limit` (default 0.20) on the best path. Two `available` gates also split a
 branch the same way: a path flag (a flag that a focus on an exclusive arm sets and
 another focus tests) and each `has_country_leader` name a branch needs. A stacking
-row names its choice, and `--paths` lists the choices. A flag that no focus on an
-exclusive arm sets is not a path flag, so paths that an event or on_action chooses
-can still be summed (issue #6878). Outliers rank buildings, money
+row names its choice, and `--paths` lists the choices. A flag that no focus sets but
+the options of one event do (an election result, for example) is a choice too: each
+option is totaled on its own. A flag set by a second event, an event's `immediate`,
+or an on_action, decision, or scripted effect is not read as a choice, so those
+paths can still be summed. Outliers rank buildings, money
 gained, and PP per day of focus time (`--top` rows), and list spirits with more than
 five modifiers. `--focuses` lists every focus, `--file PATH` reads a named focus
 file, and `--json` gives the same data for machines. Formulas, `if`, `random` and

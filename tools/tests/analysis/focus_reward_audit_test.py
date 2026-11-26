@@ -113,11 +113,23 @@ def _widgets(level):
     return f"add_building_construction = {{ type = widget_plant level = {level} }}"
 
 
-def _mod(tmp_path, *focuses):
-    return write_tree(
-        tmp_path / "mod",
-        {**_CONTEXT, "common/national_focus/tst.txt": _tree(*focuses)},
-    )
+def _mod(tmp_path, *focuses, events=""):
+    files = {**_CONTEXT, "common/national_focus/tst.txt": _tree(*focuses)}
+    if events:
+        files["events/tst.txt"] = events
+    return write_tree(tmp_path / "mod", files)
+
+
+def _event(event_id, *options, immediate=""):
+    """One country event; each option is the body of a named `option`."""
+    lines = [f"country_event = {{\n\tid = {event_id}"]
+    if immediate:
+        lines.append(f"\timmediate = {{ {immediate} }}")
+    lines += [
+        f"\toption = {{ name = {event_id}.{chr(97 + n)} {body} }}"
+        for n, body in enumerate(options)
+    ]
+    return "\n".join(lines) + "\n}\n"
 
 
 def _audit(capsys, root, *args):
@@ -721,6 +733,114 @@ def test_leaders_are_exclusive_choices_in_totals_and_stacking(tmp_path, capsys):
         "TST_idea_gate_big",
         "TST_idea_gate_shared",
     ]
+
+
+_SET_A = "set_country_flag = TST_A"
+_SET_B = "set_country_flag = TST_B"
+
+# case: (events file, buildings of the focus that needs each TST_ flag, extra focuses,
+# lowest and highest buildings of the branch). A choice gives the worst and best
+# option, 3..5 here. A flag that gates nothing gives the sum of every focus, 8..8.
+_EVENT_PATHS = {
+    "options of one event, set in a hidden_effect": (
+        _event("tst.1", f"hidden_effect = {{ {_SET_A} }}", _SET_B),
+        {"A": 5, "B": 3},
+        (),
+        (3, 5),
+    ),
+    "a flag that two options of the event set": (
+        _event("tst.1", _SET_A, _SET_B, _SET_A),
+        {"A": 5, "B": 3},
+        (),
+        (3, 5),
+    ),
+    "a flag that a second event sets": (
+        _event("tst.1", _SET_A, _SET_B) + _event("tst.2", _SET_A),
+        {"A": 5, "B": 3},
+        (),
+        (8, 8),
+    ),
+    "a flag that immediate sets": (
+        _event("tst.1", _SET_A, _SET_B, immediate=_SET_A),
+        {"A": 5, "B": 3},
+        (),
+        (8, 8),
+    ),
+    "a flag that a focus sets under an if": (
+        _event("tst.1", _SET_A, _SET_B),
+        {"A": 5, "B": 3},
+        (
+            _focus(
+                "TST_sets_a",
+                after=["TST_root"],
+                reward="if = { limit = { always = yes } " + _SET_A + " }",
+            ),
+        ),
+        (8, 8),
+    ),
+    "an option that sets no flag a focus needs": (
+        _event("tst.1", _SET_A, _SET_B),
+        {"A": 5},
+        (),
+        (5, 5),
+    ),
+    "two flags of one option are no alternatives": (
+        _event("tst.1", _SET_A + " set_country_flag = TST_C", _SET_B),
+        {"A": 5, "B": 3, "C": 2},
+        (),
+        (3, 7),
+    ),
+    "a path takes an option of each event": (
+        _event("tst.1", _SET_A, _SET_B)
+        + _event("tst.2", "set_country_flag = TST_C", "set_country_flag = TST_D"),
+        {"A": 5, "B": 3, "C": 4, "D": 1},
+        (),
+        (4, 9),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("events", "gates", "extra", "expected"), _EVENT_PATHS.values(), ids=_EVENT_PATHS
+)
+def test_branch_totals_count_only_paths_an_event_allows(
+    tmp_path, capsys, events, gates, extra, expected
+):
+    gated = [
+        _gated(f"TST_needs_{flag}", f"has_country_flag = TST_{flag}", _widgets(n))
+        for flag, n in gates.items()
+    ]
+    tree = (_focus("TST_root"), *gated, *extra)
+
+    report = _audit(capsys, _mod(tmp_path, *tree, events=events))
+
+    assert _buildings(report) == expected
+
+
+def test_paths_section_lists_event_options_and_stacking_names_the_choice(
+    tmp_path, capsys
+):
+    tree = (
+        _focus("TST_root"),
+        _gated("TST_only_a", "has_country_flag = TST_A", "add_ideas = TST_idea_gate_a"),
+        _gated("TST_only_b", "has_country_flag = TST_B", "add_ideas = TST_idea_gate_b"),
+    )
+    # The second option has no name, so it is labeled by its place in the event.
+    events = (
+        f"country_event = {{ id = tst.1 option = {{ name = tst.1.a {_SET_A} }} "
+        f"option = {{ {_SET_B} }} }}"
+    )
+    root = _mod(tmp_path, *tree, events=events)
+
+    A.main(["--tag", "TST", "--root", str(root), "--stack-limit", "0.1", "--paths"])
+
+    assert {
+        "  country flag TST_A: set by tst.1.a; gates 1 focuses; branches TST_root",
+        "  country flag TST_B: set by tst.1 option 2; gates 1 focuses; "
+        "branches TST_root",
+        "  TST_root: stability_factor +0.15  <- TST_idea_gate_a +0.15"
+        "  [country flag TST_A]",
+    } <= set(capsys.readouterr().out.splitlines())
 
 
 # case: (an `available` body, the sets of which one must hold, the forbidden tokens)
