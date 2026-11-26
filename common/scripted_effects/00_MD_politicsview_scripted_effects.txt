@@ -565,6 +565,9 @@ recalculate_party_strength = {
 add_up_party_totals = {
 	# Outlook slices by party slot: democratic 0-3, communism 4-9, fascism 10-11, neutrality 12-19, nationalist 20-23.
 	# Each party is scaled to its outlook's real popularity as x1000, divide, multiply, x0.001, clamp, in that order.
+	# An outlook with support but no party gets the region's likely parties first, as at startup
+	set_failsafe_values = yes
+
 	set_temp_variable = { outlook_total_0 = { value = party_pop_array^0 add = party_pop_array^1 add = party_pop_array^2 add = party_pop_array^3 } }
 	if = {
 		limit = { check_variable = { outlook_total_0 > 0 } }
@@ -652,77 +655,6 @@ add_up_party_totals = {
 		set_variable = { party_pop_array^22 = 0 }
 		set_variable = { party_pop_array^23 = 0 }
 	}
-
-	#Make sure there are no Outlooks with popularity without any party popularities
-	#Make 1% the limit, as smaller than that isn't visible on the chart
-	if = {
-		limit = {
-			democratic > 0.01
-			check_variable = { outlook_total_0 < 0.01 }
-		}
-		random_list = {
-			10 = { add_to_variable = { party_pop_array^0 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^1 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^2 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^3 = 0.01 } }
-		}
-	}
-	if = {
-		limit = {
-			communism > 0.01
-			check_variable = { outlook_total_1 < 0.01 }
-		}
-		random_list = {
-			10 = { add_to_variable = { party_pop_array^4 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^5 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^6 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^7 = 0.01 } }
-			10 = { modifier = { factor = 0 NOT = { has_idea = shia } } add_to_variable = { party_pop_array^8 = 0.01 } }
-			10 = { modifier = { factor = 0 NOT = { has_idea = shia } } add_to_variable = { party_pop_array^9 = 0.01 } }
-		}
-	}
-	if = {
-		limit = {
-			fascism > 0.01
-			check_variable = { outlook_total_2 < 0.01 }
-		}
-		if = {
-			limit = { Is_Muslim_Country = yes }
-			random_list = {
-				10 = { add_to_variable = { party_pop_array^10 = 0.01 } }
-				10 = { add_to_variable = { party_pop_array^11 = 0.01 } }
-			}
-		}
-	}
-	if = {
-		limit = {
-			neutrality > 0.01
-			check_variable = { outlook_total_3 < 0.01 }
-		}
-		random_list = {
-			10 = { add_to_variable = { party_pop_array^12 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^13 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^14 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^15 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^16 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^17 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^18 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^19 = 0.01 } }
-		}
-	}
-	if = {
-		limit = {
-			nationalist > 0.01
-			check_variable = { outlook_total_4 < 0.01 }
-		}
-		random_list = {
-			10 = { add_to_variable = { party_pop_array^20 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^21 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^22 = 0.01 } }
-			10 = { add_to_variable = { party_pop_array^23 = 0.01 } }
-		}
-	}
-
 }
 
 set_party_positions = {
