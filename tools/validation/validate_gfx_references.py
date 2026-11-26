@@ -218,7 +218,7 @@ _DECISION_ICON_REF = re.compile(
 )
 _SCRIPT_ASSIGNMENT = re.compile(
     r'#[^\n]*|"(?:\\.|[^"\\])*"|[{}]|'
-    r'(?<![\w@.\-])(?P<key>[\w.\-]+)\s*=(?!=)\s*'
+    r"(?<![\w@.\-])(?P<key>[\w.\-]+)\s*=(?!=)\s*"
     r'(?P<value>\{|"(?:\\.|[^"\\])*"|[^\s{}"#=<>]+)'
 )
 _RENDER_FIELDS = frozenset(
