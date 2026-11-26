@@ -402,6 +402,8 @@ BRA_public_policy_category = {
 
 		visible = { date > 2010.5.1 }
 
+		available = { any_controlled_state = { network_infrastructure_random_build_loc = yes } }
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_decision_telebras_reactivation"
 			set_temp_variable = { treasury_change = -4 }
@@ -483,6 +485,7 @@ BRA_public_policy_category = {
 				tooltip = BRA_can_staff_industrial_complex_tt
 				can_staff_an_industrial_complex = yes
 			}
+			892 = { free_building_slots = { building = industrial_complex size > 0 } }
 		}
 
 		highlight_states = { highlight_state_targets = { state = 892 } }
@@ -1877,7 +1880,10 @@ BRA_national_development_category = {
 			has_completed_focus = BRA_acquire_new_equipment
 		}
 
-		available = { has_full_control_of_state = 882 }
+		available = {
+			has_full_control_of_state = 882
+			882 = { free_building_slots = { building = arms_factory size > 0 } }
+		}
 
 		highlight_states = { highlight_state_targets = { state = 882 } }
 
@@ -4226,16 +4232,17 @@ cartels_decision_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision BRA_favela_pacification_decision"
 			clr_country_flag = BRA_favela_project_active
-			add_stability = -0.02
+			# An event can upgrade the state mid-project; don't pay out twice
 			if = {
-				limit = { has_cartels_penalties = yes }
-				set_temp_variable = { cart_strength_change = -4 }
-				set_temp_variable = { cart_influence_change = -2 }
-				modify_cartel_variables_effect = yes
-			}
-			FROM = {
+				limit = { FROM = { has_dynamic_modifier = { modifier = BRA_favela_modifier } } }
+				add_stability = -0.02
 				if = {
-					limit = { has_dynamic_modifier = { modifier = BRA_favela_modifier } }
+					limit = { has_cartels_penalties = yes }
+					set_temp_variable = { cart_strength_change = -4 }
+					set_temp_variable = { cart_influence_change = -2 }
+					modify_cartel_variables_effect = yes
+				}
+				FROM = {
 					custom_effect_tooltip = { localization_key = adds_dynamic_modifier_tt MODIFIER = BRA_favela_improving_modifier }
 					remove_dynamic_modifier = { modifier = BRA_favela_modifier }
 					add_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
