@@ -358,3 +358,107 @@ FSA_internal_revolt_category = {
 		}
 	}
 }
+
+FSA_war_effort_category = {
+
+	FSA_raise_local_militia = {
+		icon = generic_prepare_civil_war_new
+
+		cost = 15
+		days_remove = 7
+		days_re_enable = 21
+
+		available = { has_manpower > 999 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_raise_local_militia"
+			add_manpower = -1000
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_raise_local_militia"
+			if = {
+				limit = { NOT = { has_template = "Militia Brigade" } }
+				division_template = {
+					name = "Militia Brigade"
+					is_locked = yes
+					division_names_group = SYR_FSA_UNITS
+					regiments = {
+						Mot_Militia_Bat = { x = 0 y = 0 }
+						Mot_Militia_Bat = { x = 0 y = 1 }
+						Mot_Militia_Bat = { x = 0 y = 2 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
+					}
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.3 start_equipment_factor = 0.5"
+					owner = FSA
+					count = 2
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { add = 10 surrender_progress > 0.2 }
+		}
+	}
+
+	FSA_appeal_to_defectors = {
+		icon = generic_political_rally
+
+		cost = 20
+		days_remove = 10
+		days_re_enable = 60
+
+		visible = { country_exists = SYR }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_appeal_to_defectors"
+			SYR = {
+				set_temp_variable = { party_popularity_increase = -0.02 }
+				change_relative_party_popularity = yes
+			}
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	FSA_request_foreign_support = {
+		icon = generic_civil_support
+
+		targets = { TUR SAU QAT USA JOR FRA }
+		target_trigger = {
+			FROM = {
+				NOT = { has_war_with = ROOT }
+				NOT = { is_in_faction_with = SYR }
+				NOT = { is_subject_of = SYR }
+			}
+		}
+
+		cost = 15
+		days_remove = 10
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_request_foreign_support"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = SYR_foreign_support_offer_tt }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_request_foreign_support"
+			FROM = { country_event = { id = SyriaCivilWar.10 } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { add = 10 FROM = { has_opinion = { target = ROOT value > 24 } } }
+			modifier = { factor = 0.25 FROM = { has_opinion = { target = SYR value > 49 } } }
+		}
+	}
+}

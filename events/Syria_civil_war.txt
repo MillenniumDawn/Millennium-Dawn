@@ -71,3 +71,154 @@ country_event = {
 		ai_chance = { base = 5 }
 	}
 }
+
+# A side in the Syrian civil war asks us for support. FROM is the side asking.
+country_event = {
+	id = SyriaCivilWar.10
+	title = SyriaCivilWar.10.t
+	desc = {
+		text = SyriaCivilWar.10.d_rebels
+		trigger = { FROM = { original_tag = FSA } }
+	}
+	desc = {
+		text = SyriaCivilWar.10.d_regime
+		trigger = { NOT = { FROM = { original_tag = FSA } } }
+	}
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	# Send weapons
+	option = {
+		name = SyriaCivilWar.10.a
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.10.a executed for [From.GetTag]"
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		FROM = {
+			add_equipment_to_stockpile = { type = infantry_weapons_type amount = 1500 producer = ROOT }
+			add_equipment_to_stockpile = { type = L_AT_Equipment amount = 100 producer = ROOT }
+			add_equipment_to_stockpile = { type = AA_Equipment amount = 30 producer = ROOT }
+			add_opinion_modifier = { target = ROOT modifier = military_aid }
+		}
+		hidden_effect = { FROM = { country_event = { id = SyriaCivilWar.11 days = 1 } } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 15 has_opinion = { target = FROM value > 24 } }
+			modifier = { add = 10 has_opinion = { target = FROM value > 49 } }
+			modifier = {
+				add = 20
+				FROM = { original_tag = FSA }
+				OR = {
+					has_completed_focus = TUR_back_fsa
+					has_completed_focus = GCC_back_the_syrian_opposition
+					has_completed_focus = SAU_fund_the_free_syrian_army
+					has_completed_focus = USA_focus_the_arab_spring
+				}
+			}
+			modifier = {
+				add = 20
+				FROM = { original_tag = SYR }
+				OR = {
+					has_completed_focus = TUR_back_assad
+					has_completed_focus = GCC_denounce_the_opposition
+					is_in_faction_with = FROM
+				}
+			}
+			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 has_opinion = { target = FROM value < -24 } }
+			modifier = {
+				factor = 0
+				FROM = { original_tag = FSA }
+				OR = {
+					has_completed_focus = TUR_back_assad
+					has_completed_focus = GCC_denounce_the_opposition
+				}
+			}
+			modifier = {
+				factor = 0
+				FROM = { original_tag = SYR }
+				OR = {
+					has_completed_focus = TUR_back_fsa
+					has_completed_focus = GCC_back_the_syrian_opposition
+					has_completed_focus = SAU_fund_the_free_syrian_army
+				}
+			}
+		}
+	}
+
+	# Send money
+	option = {
+		name = SyriaCivilWar.10.b
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.10.b executed for [From.GetTag]"
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		FROM = {
+			set_temp_variable = { treasury_change = 2 }
+			modify_treasury_effect = yes
+			add_opinion_modifier = { target = ROOT modifier = military_aid }
+		}
+		hidden_effect = { FROM = { country_event = { id = SyriaCivilWar.11 days = 1 } } }
+		ai_chance = {
+			base = 5
+			modifier = { add = 10 check_variable = { treasury > 20 } }
+			modifier = { add = 10 has_opinion = { target = FROM value > 24 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 has_opinion = { target = FROM value < -24 } }
+		}
+	}
+
+	# Decline
+	option = {
+		name = SyriaCivilWar.10.c
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.10.c executed for [From.GetTag]"
+		hidden_effect = { FROM = { country_event = { id = SyriaCivilWar.12 days = 1 } } }
+		ai_chance = {
+			base = 10
+			modifier = { add = 15 has_opinion = { target = FROM value < 0 } }
+			modifier = { add = 10 has_war = yes }
+			modifier = {
+				add = 20
+				FROM = { original_tag = FSA }
+				OR = {
+					has_completed_focus = TUR_back_assad
+					has_completed_focus = GCC_denounce_the_opposition
+				}
+			}
+			modifier = {
+				add = 20
+				FROM = { original_tag = SYR }
+				OR = {
+					has_completed_focus = TUR_back_fsa
+					has_completed_focus = GCC_back_the_syrian_opposition
+					has_completed_focus = SAU_fund_the_free_syrian_army
+				}
+			}
+		}
+	}
+}
+
+# Our request for support was answered. FROM is the country that sent it.
+country_event = {
+	id = SyriaCivilWar.11
+	title = SyriaCivilWar.11.t
+	desc = SyriaCivilWar.11.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = SyriaCivilWar.11.a }
+}
+
+# Our request for support was refused. FROM is the country that refused.
+country_event = {
+	id = SyriaCivilWar.12
+	title = SyriaCivilWar.12.t
+	desc = SyriaCivilWar.12.d
+	picture = GFX_treaty_rejected
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = SyriaCivilWar.12.a }
+}
