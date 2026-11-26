@@ -18,6 +18,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Iterable,
     List,
     Mapping,
@@ -546,6 +547,52 @@ def idea_money_modifiers(texts: Iterable[str]) -> Dict[str, Dict[str, Decimal]]:
                         money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
         ideas[name] = money
     return ideas
+
+
+def _limit_ideas(limit: str) -> Set[str]:
+    """Ideas a `limit` requires: has_idea at its top or under OR and AND, not NOT."""
+    found: Set[str] = set()
+    for key, value, block in iter_statements(limit):
+        if key == "has_idea" and value:
+            found.add(value)
+        elif key in ("OR", "AND") and block is not None:
+            found |= _limit_ideas(block)
+    return found
+
+
+def mark_running_expense_ideas(
+    ideas: Dict[str, Dict[str, Decimal]], texts: Iterable[str]
+) -> None:
+    """Mark in *ideas* every idea that gates an `additional_expenses_rate` charge.
+
+    The money system bills those ideas every month from a scripted effect, so
+    adding one commits money although the idea has no money modifier. *texts*
+    are scripted effect files with comments stripped.
+    """
+
+    def walk(body: str, gates: FrozenSet[str]) -> None:
+        for key, _value, block in iter_statements(body):
+            if block is None:
+                continue
+            if key == "add_to_variable" and "additional_expenses_rate" in block:
+                for name in gates:
+                    ideas.setdefault(name, {})[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
+            elif key in ("if", "else_if"):
+                limit = next(
+                    (
+                        inner
+                        for field, _v, inner in iter_statements(block)
+                        if field == "limit"
+                    ),
+                    None,
+                )
+                walk(block, gates | _limit_ideas(limit or ""))
+            else:
+                walk(block, gates)
+
+    for text in texts:
+        if "additional_expenses_rate" in text:
+            walk(blank_quoted_strings(text), frozenset())
 
 
 def script_commits_money(text: str, ideas: Mapping[str, Mapping[str, Decimal]]) -> bool:

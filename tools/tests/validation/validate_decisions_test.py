@@ -1608,6 +1608,37 @@ def test_idea_on_add_can_justify_decision_guard(tmp_path):
     assert issue_rows(validator) == []
 
 
+@pytest.mark.parametrize(
+    "gate, flagged",
+    [
+        ("OR = { has_idea = TAG_subsidy has_idea = TAG_other }", False),
+        ("NOT = { has_idea = TAG_subsidy }", True),
+    ],
+)
+def test_running_expense_idea_justifies_decision_guard(tmp_path, gate, flagged):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/ideas/ideas.txt": "ideas = { country = { TAG_subsidy = { } } }",
+            "common/scripted_effects/00_money.txt": "calc_expenses = {\n"
+            f"\tif = {{ limit = {{ {gate} }}\n"
+            "\t\tadd_to_variable = { additional_expenses_rate = 1 }\n\t}\n}\n",
+            "common/decisions/Subsidy.txt": "subsidy_category = {\n"
+            + _nested(
+                "dec_subsidy",
+                _block("complete_effect", "add_ideas = TAG_subsidy")
+                + _block(
+                    "ai_will_do",
+                    "base = 1\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
+                ),
+            )
+            + "}\n",
+        },
+    )
+    validator.validate_unneeded_treasury_guard()
+    assert bool(issue_rows(validator)) is flagged
+
+
 def test_unneeded_guard_on_immediately_readded_idea(tmp_path):
     validator = _mod(
         tmp_path,

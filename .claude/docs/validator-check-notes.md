@@ -420,7 +420,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     modifier moved the costly way, which means cost or interest up, tax or income down,
     matching `color_type`; a value that is not a literal; and idea changes whose net in
     one block raises a money modifier or a spending law level (`spending_new_level` in
-    the idea's `on_add`). The `spending_law_scripted_change` flag alone commits nothing,
+    the idea's `on_add`). Adding an idea that gates an `additional_expenses_rate` charge
+    in a scripted effect commits money too (`mark_running_expense_ideas`); a `NOT`
+    gate does not count. The `spending_law_scripted_change` flag alone commits nothing,
     and `tax_rate_change_multiplier_modifier` prices political power, not money.
   - Chains: fired events and called effects are followed to a fixed point. A fired
     event's FROM is its sender, and an explicit ROOT in a scripted effect is the
