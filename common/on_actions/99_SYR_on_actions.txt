@@ -178,8 +178,27 @@ on_actions = {
 					country_event = { id = SyriaCivilWar.1 days = 1 random_days = 20 }
 				}
 			}
+			# Four months in, the regime decides whether to keep its northern garrisons, and again every 180 days it holds
 			if = {
-				limit = { has_country_flag = { flag = SYR_arab_spring_nusra_pending days > 179 } }
+				limit = {
+					has_war_with = FSA
+					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 119 }
+					NOT = { has_country_flag = SYR_kurdish_north_decided }
+					NOT = { country_exists = ROJ }
+					controls_state = 193
+				}
+				set_country_flag = { flag = SYR_kurdish_north_decided days = 180 value = 1 }
+				country_event = { id = SyriaCivilWar.20 days = 1 random_days = 10 }
+			}
+			# Keep the Nusra flag until arab_spring.26 can fire, so losing Idlib only delays it
+			if = {
+				limit = {
+					has_country_flag = { flag = SYR_arab_spring_nusra_pending days > 179 }
+					has_war_with = FSA
+					owns_state = 190
+					controls_state = 190
+					NOT = { country_exists = NUS }
+				}
 				clr_country_flag = SYR_arab_spring_nusra_pending
 				country_event = arab_spring.26
 			}

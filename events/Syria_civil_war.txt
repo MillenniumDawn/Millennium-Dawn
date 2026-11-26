@@ -199,6 +199,56 @@ country_event = {
 	}
 }
 
+# The northern garrisons are needed on the main front
+country_event = {
+	id = SyriaCivilWar.20
+	title = SyriaCivilWar.20.t
+	desc = SyriaCivilWar.20.d
+	picture = GFX_SYR_rojava
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = FSA
+		controls_state = 193
+		NOT = { country_exists = ROJ }
+	}
+
+	# Withdraw and leave the north to the Kurds
+	option = {
+		name = SyriaCivilWar.20.a
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.20.a executed"
+		SYR_release_rojava = yes
+		custom_effect_tooltip = SYR_history_kurdish_trust_up_tt
+		hidden_effect = {
+			add_to_variable = { SYR_kurdish_trust = 2 }
+			clamp_variable = { var = SYR_kurdish_trust min = -10 max = 10 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 10 surrender_progress > 0.2 }
+			modifier = { factor = 3 SYR_ai_historical_path = yes }
+		}
+	}
+
+	# Hold the north
+	option = {
+		name = SyriaCivilWar.20.b
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.20.b executed"
+		add_political_power = -25
+		custom_effect_tooltip = SYR_history_kurdish_trust_down_tt
+		custom_effect_tooltip = SYR_kurdish_north_ask_again_tt
+		hidden_effect = {
+			add_to_variable = { SYR_kurdish_trust = -3 }
+			clamp_variable = { var = SYR_kurdish_trust min = -10 max = 10 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_not_historical_path = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
 # Our request for support was answered. FROM is the country that sent it.
 country_event = {
 	id = SyriaCivilWar.11
