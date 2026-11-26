@@ -219,10 +219,15 @@ BRA_corruption_plea_bargain = {
 		limit = { BRA_car_wash_is_open = yes }
 		BRA_operation_car_wash_switch = yes
 	}
-	else = {
+	else_if = {
+		limit = { NOT = { has_completed_focus = BRA_op_car_wash } }
 		hidden_effect = { set_country_flag = BRA_car_wash_evidence }
 		custom_effect_tooltip = BRA_car_wash_evidence_tt
 		BRA_queue_car_wash_raids = yes
+	}
+	# Car Wash has run or been skipped, so the testimony goes straight to the courts
+	else = {
+		decrease_corruption = yes
 	}
 }
 
@@ -231,7 +236,10 @@ BRA_corruption_cover_up = {
 	add_political_power = 25
 	hidden_effect = { set_country_flag = BRA_petrolao_scheme }
 	if = {
-		limit = { BRA_car_wash_is_open = no }
+		limit = {
+			BRA_car_wash_is_open = no
+			NOT = { has_completed_focus = BRA_op_car_wash }
+		}
 		custom_effect_tooltip = BRA_petrolao_scheme_tt
 	}
 	BRA_queue_car_wash_raids = yes
@@ -242,6 +250,7 @@ BRA_queue_car_wash_raids = {
 		limit = {
 			date > 2014.3.17
 			BRA_car_wash_is_open = no
+			NOT = { has_completed_focus = BRA_op_car_wash }
 		}
 		hidden_effect = { country_event = { id = brazil.163 days = 90 } }
 	}
