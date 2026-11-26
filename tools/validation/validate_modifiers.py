@@ -673,6 +673,7 @@ _NEGATIVE_BONUS_KEYS: FrozenSet[str] = frozenset(
         "wounded_chance_factor",
         "general_death_chance_modifier",
         "tax_rate_change_multiplier_modifier",
+        "international_market_purchase_modifier",
     }
 )
 _TIMED_GRANT_RE = re.compile(
