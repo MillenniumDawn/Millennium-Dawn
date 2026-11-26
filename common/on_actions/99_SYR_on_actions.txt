@@ -160,6 +160,24 @@ on_actions = {
 				set_country_flag = SYR_anime_boom_queued
 				country_event = { id = SyriaFocus.108 days = 30 }
 			}
+			# 35% monthly at 75% regime support, 65% once it falls to 25%
+			if = {
+				limit = {
+					has_war_with = FSA
+					NOT = { has_country_flag = SYR_defections_suppressed }
+					NOT = { has_country_flag = SYR_defection_wave_pending }
+					FSA = { num_of_controlled_states > 0 }
+				}
+				set_temp_variable = { defection_chance = party_pop_array^ruling_party }
+				multiply_temp_variable = { defection_chance = -60 }
+				add_to_temp_variable = { defection_chance = 80 }
+				set_temp_variable_to_random = { var = defection_roll min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { defection_roll < defection_chance } }
+					set_country_flag = { flag = SYR_defection_wave_pending days = 22 value = 1 }
+					country_event = { id = SyriaCivilWar.1 days = 1 random_days = 20 }
+				}
+			}
 			if = {
 				limit = { has_country_flag = { flag = SYR_arab_spring_nusra_pending days > 179 } }
 				clr_country_flag = SYR_arab_spring_nusra_pending

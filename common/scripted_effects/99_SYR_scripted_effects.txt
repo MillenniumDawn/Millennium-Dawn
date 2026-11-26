@@ -425,3 +425,67 @@ syrian_corrcost_off = {
 	}
 	modify_treasury_effect = yes
 }
+
+# Hands the Kurdish north to Rojava with its cores and army
+SYR_release_rojava = {
+	ROJ = {
+		add_state_core = 193
+		add_state_core = 575
+		add_state_core = 191
+		add_state_core = 995
+	}
+	release = ROJ
+	hidden_effect = {
+		add_state_core = 193
+		add_state_core = 575
+		add_state_core = 191
+		add_state_core = 995
+		ROJ = { load_oob = ROJ_2017 }
+	}
+}
+
+# Effect: SYR_defectors_join_fsa
+# Purpose: Turns a wave of regime defectors into new FSA brigades at the FSA capital, carrying their rifles and anti-tank weapons
+# Parameters:
+# - SYR_defector_count: brigades that reach the FSA
+SYR_defectors_join_fsa = {
+	set_temp_variable = { defector_manpower = { value = SYR_defector_count multiply = -1500 } }
+	set_temp_variable = { defector_rifles = { value = SYR_defector_count multiply = 600 } }
+	set_temp_variable = { defector_at = { value = SYR_defector_count multiply = 60 } }
+	set_temp_variable = { defector_rifles_lost = { value = defector_rifles multiply = -1 } }
+	set_temp_variable = { defector_at_lost = { value = defector_at multiply = -1 } }
+	add_manpower = defector_manpower
+	add_equipment_to_stockpile = { type = infantry_weapons_type amount = defector_rifles_lost }
+	add_equipment_to_stockpile = { type = L_AT_Equipment amount = defector_at_lost }
+	FSA = {
+		if = {
+			limit = { NOT = { has_template = "Defected Army Brigade" } }
+			division_template = {
+				name = "Defected Army Brigade"
+				is_locked = yes
+				division_names_group = SYR_FSA_UNITS
+				regiments = {
+					Mot_Inf_Bat = { x = 0 y = 0 }
+					Mot_Inf_Bat = { x = 0 y = 1 }
+					Mot_Inf_Bat = { x = 0 y = 2 }
+				}
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
+				}
+			}
+		}
+		add_equipment_to_stockpile = { type = infantry_weapons_type amount = defector_rifles producer = SYR }
+		add_equipment_to_stockpile = { type = L_AT_Equipment amount = defector_at producer = SYR }
+		set_temp_variable = { defectors_left = SYR_defector_count }
+		while_loop_effect = {
+			limit = { check_variable = { defectors_left > 0 } }
+			capital_scope = {
+				create_unit = {
+					division = "name = \"Defected Army Brigade\" division_template = \"Defected Army Brigade\" start_experience_factor = 0.5 start_equipment_factor = 0.7"
+					owner = FSA
+				}
+			}
+			subtract_from_temp_variable = { defectors_left = 1 }
+		}
+	}
+}

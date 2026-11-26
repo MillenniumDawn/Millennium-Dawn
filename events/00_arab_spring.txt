@@ -404,9 +404,11 @@ country_event = {
 		}
 		if = {
 			limit = { tag = SYR }
-			# The regime fields armoured brigades against militia, so a small split ends the war in weeks
-			set_temp_variable = { arab_spring_army_ratio = arab_spring_mutiny_size }
-			clamp_temp_variable = { var = arab_spring_army_ratio min = 0.35 }
+			# The less support the regime keeps, the more of its army defects at the outbreak
+			set_temp_variable = { arab_spring_army_ratio = party_pop_array^ruling_party }
+			multiply_temp_variable = { arab_spring_army_ratio = -0.25 }
+			add_to_temp_variable = { arab_spring_army_ratio = 0.4 }
+			clamp_temp_variable = { var = arab_spring_army_ratio min = 0.15 max = 0.35 }
 			start_civil_war = {
 				ideology = neutrality
 				size = arab_spring_mutiny_size
@@ -471,7 +473,7 @@ country_event = {
 								division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"
 								prioritize_location = 6302
 								owner = FSA
-								count = 2
+								count = 4
 							}
 							if = {
 								limit = { SYR = { is_ai = no } difficulty > 2 }
@@ -505,6 +507,9 @@ country_event = {
 					}
 				}
 				set_country_flag = SYR_arab_spring_nusra_pending
+				# The first wave of defectors follows within weeks, later ones from on_monthly_SYR
+				set_country_flag = { flag = SYR_defection_wave_pending days = 25 value = 1 }
+				country_event = { id = SyriaCivilWar.1 days = 14 random_days = 10 }
 				capital_scope = {
 					create_unit = {
 						division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.9"

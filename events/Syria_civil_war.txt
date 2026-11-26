@@ -1,0 +1,73 @@
+add_namespace = SyriaCivilWar
+
+# Regime officers defect to the Free Syrian Army
+country_event = {
+	id = SyriaCivilWar.1
+	title = SyriaCivilWar.1.t
+	desc = SyriaCivilWar.1.d
+	picture = GFX_arab_spring_defection
+	is_triggered_only = yes
+
+	trigger = {
+		has_war_with = FSA
+		FSA = { num_of_controlled_states > 0 }
+	}
+
+	immediate = {
+		# One brigade at 90% support, up to four once support collapses
+		set_temp_variable = { regime_support = party_pop_array^ruling_party }
+		set_temp_variable = { wave_size = { value = 1 subtract = regime_support multiply = 4 add = 0.5 } }
+		set_variable = { SYR_defector_wave_size = wave_size }
+		round_variable = SYR_defector_wave_size
+		clamp_variable = { var = SYR_defector_wave_size min = 1 max = 4 }
+	}
+
+	# Hunt down the deserters
+	option = {
+		name = SyriaCivilWar.1.a
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.1.a executed ([?SYR_defector_wave_size] brigades)"
+		set_temp_variable = { SYR_defector_count = SYR_defector_wave_size }
+		SYR_defectors_join_fsa = yes
+		add_stability = -0.02
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		change_relative_party_popularity = yes
+		custom_effect_tooltip = SYR_defections_suppressed_tt
+		set_country_flag = { flag = SYR_defections_suppressed days = 90 value = 1 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_hardline_path = yes }
+			modifier = { factor = 0 has_stability < 0.25 }
+		}
+	}
+
+	# Offer an amnesty to those who return
+	option = {
+		name = SyriaCivilWar.1.b
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.1.b executed ([?SYR_defector_wave_size] brigades)"
+		add_political_power = -50
+		custom_effect_tooltip = SYR_defectors_amnesty_tt
+		set_temp_variable = { SYR_defector_count = SYR_defector_wave_size }
+		subtract_from_temp_variable = { SYR_defector_count = 1 }
+		if = {
+			limit = { check_variable = { SYR_defector_count > 0 } }
+			SYR_defectors_join_fsa = yes
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_moderate_path = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Blame foreign conspirators
+	option = {
+		name = SyriaCivilWar.1.c
+		log = "[GetDateText]: [This.GetName]: SyriaCivilWar.1.c executed ([?SYR_defector_wave_size] brigades)"
+		set_temp_variable = { SYR_defector_count = SYR_defector_wave_size }
+		SYR_defectors_join_fsa = yes
+		add_war_support = 0.01
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		change_relative_party_popularity = yes
+		ai_chance = { base = 5 }
+	}
+}
