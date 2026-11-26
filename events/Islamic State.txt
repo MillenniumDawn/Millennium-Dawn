@@ -1,5 +1,6 @@
 add_namespace = isis
 add_namespace = isisNews
+add_namespace = isis_coalition
 
 # Infiltrate Tahrir al-Sham
 country_event = {
@@ -1184,5 +1185,99 @@ news_event = {
 	option = {
 		name = isis.11301.a
 		trigger = { TAG = ISI }
+	}
+}
+
+# Washington weighs a coalition against the Islamic State
+country_event = {
+	id = isis_coalition.1
+	title = isis_coalition.1.t
+	desc = isis_coalition.1.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	# Lead the coalition
+	option = {
+		name = isis_coalition.1.a
+		log = "[GetDateText]: [This.GetName]: isis_coalition.1.a executed"
+		add_political_power = -50
+		set_country_flag = joined_anti_isis_coalition
+		set_global_flag = anti_isis_coalition_formed
+		if = {
+			limit = { country_exists = ISI ISI = { NOT = { has_idea = ISI_coalition_airstrikes } } }
+			ISI = { add_ideas = ISI_coalition_airstrikes }
+		}
+		custom_effect_tooltip = isis_coalition_member_tt
+		for_each_scope_loop = {
+			array = global.nato_members
+			tooltip = TT_ALL_NATO_MEMBER_NATIONS_GAIN
+			if = {
+				limit = {
+					exists = yes
+					NOT = { tag = ROOT }
+					NOT = { has_country_flag = joined_anti_isis_coalition }
+					NOT = { has_war_with = ROOT }
+				}
+				country_event = { id = isis_coalition.2 days = 3 random_days = 7 }
+			}
+		}
+		for_each_scope_loop = {
+			array = global.arab_league_members
+			tooltip = TT_ALL_ARAB_LEAGUE_MEMBER_NATIONS_GAIN
+			if = {
+				limit = {
+					exists = yes
+					NOT = { original_tag = SYR }
+					NOT = { has_idea = NATO_member }
+					NOT = { has_country_flag = joined_anti_isis_coalition }
+					NOT = { has_war_with = ROOT }
+					jihadist_government = no
+				}
+				country_event = { id = isis_coalition.2 days = 3 random_days = 7 }
+			}
+		}
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0 has_political_power < 50 }
+		}
+	}
+
+	# Leave it to the region
+	option = {
+		name = isis_coalition.1.b
+		ai_chance = { base = 5 }
+	}
+}
+
+# FROM asks us to join the coalition against the Islamic State
+country_event = {
+	id = isis_coalition.2
+	title = isis_coalition.2.t
+	desc = isis_coalition.2.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	# Join the coalition
+	option = {
+		name = isis_coalition.2.a
+		log = "[GetDateText]: [This.GetName]: isis_coalition.2.a executed"
+		add_political_power = -25
+		set_country_flag = joined_anti_isis_coalition
+		custom_effect_tooltip = isis_coalition_member_tt
+		add_opinion_modifier = { target = FROM modifier = USA_Inherent_Resolve }
+		reverse_add_opinion_modifier = { target = FROM modifier = USA_Inherent_Resolve }
+		ai_chance = {
+			base = 10
+			modifier = { add = 10 has_idea = NATO_member }
+			modifier = { add = 10 has_opinion = { target = FROM value > 49 } }
+			modifier = { factor = 0 has_political_power < 25 }
+			modifier = { factor = 0 has_opinion = { target = FROM value < -24 } }
+		}
+	}
+
+	# Stay out
+	option = {
+		name = isis_coalition.2.b
+		ai_chance = { base = 10 }
 	}
 }

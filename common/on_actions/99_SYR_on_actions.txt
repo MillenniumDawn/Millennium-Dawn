@@ -240,16 +240,27 @@ on_actions = {
 				}
 			}
 			SYR_queue_isis_resurgence = yes
-			# Refugees reach Lebanon three months into the war
+			# A month into the war, refugees reach Lebanon, Jordan, and Turkey
 			if = {
 				limit = {
 					SYR_civil_war_ongoing = yes
-					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 89 }
-					country_exists = LEB
-					NOT = { has_global_flag = LEB_syrian_refugees_arrived }
+					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 29 }
+					NOT = { has_global_flag = syrian_refugee_wave_started }
 				}
-				set_global_flag = LEB_syrian_refugees_arrived
-				LEB = { country_event = { id = lebanon.1 days = 1 random_days = 10 } }
+				set_global_flag = syrian_refugee_wave_started
+				if = { limit = { country_exists = LEB } LEB = { country_event = { id = lebanon.1 days = 1 random_days = 10 } } }
+				if = { limit = { country_exists = JOR } JOR = { country_event = { id = jordan.1 days = 1 random_days = 10 } } }
+				if = { limit = { country_exists = TUR } TUR = { country_event = { id = TUR_flavor_event.6 days = 1 random_days = 10 } } }
+			}
+			# Two months into the war, the Arab League votes on suspending the regime
+			if = {
+				limit = {
+					SYR_civil_war_ongoing = yes
+					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 59 }
+					NOT = { has_country_flag = SYR_arab_league_vote_held }
+				}
+				set_country_flag = SYR_arab_league_vote_held
+				country_event = { id = SyriaHistory.6 days = 1 random_days = 10 }
 			}
 
 			# ISIS Spawns - Syrian Historical ISIS Spawn
