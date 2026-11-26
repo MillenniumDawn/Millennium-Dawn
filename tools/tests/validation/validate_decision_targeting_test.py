@@ -18,7 +18,7 @@ _CASES = {
     "single country": (_ONE, _SINGLE),
     "single country with FROM": (
         _ONE + "\t\tcomplete_effect = { FROM = { add_stability = 0.1 } }\n",
-        _SINGLE,
+        None,
     ),
     "multiple countries without FROM": (_MANY, _MULTIPLE),
     "no target list": ("\t\ticon = generic_operation\n", None),

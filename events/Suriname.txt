@@ -1,0 +1,547 @@
+add_namespace = suriname
+
+# The New Front wins the May 2000 election. ROOT = Suriname.
+country_event = {
+	id = suriname.1
+	title = suriname.1.t
+	desc = suriname.1.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+
+	trigger = { original_tag = SUR }
+
+	immediate = {
+		hidden_effect = {
+			if = { limit = { has_elections = yes } set_elections_60_months = yes }
+		}
+	}
+
+	# Govern with the new majority
+	option = {
+		name = suriname.1.a
+		log = "[GetDateText]: [This.GetName]: suriname.1.a executed"
+		add_stability = 0.03
+		add_political_power = 25
+		ai_chance = { base = 80 }
+	}
+
+	# Reach out to the opposition
+	option = {
+		name = suriname.1.b
+		log = "[GetDateText]: [This.GetName]: suriname.1.b executed"
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		change_relative_party_popularity = yes
+		add_political_power = 10
+		ai_chance = { base = 20 }
+	}
+}
+
+# The National Assembly elects Desi Bouterse president after the 2010 election. ROOT = Suriname.
+country_event = {
+	id = suriname.2
+	title = suriname.2.t
+	desc = suriname.2.d
+	picture = GFX_election_rally
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SUR
+		has_elections = yes
+		check_variable = { party_banned_array^1 = 0 }
+	}
+
+	# Elect Bouterse
+	option = {
+		name = suriname.2.a
+		log = "[GetDateText]: [This.GetName]: suriname.2.a executed"
+		if = {
+			limit = { check_variable = { party_pop_array^1 < 0.5 } }
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.25 }
+			set_temp_variable = { temp_outlook_increase = 0.25 }
+			change_relative_party_popularity = yes
+		}
+		if = {
+			limit = { check_variable = { party_pop_array^20 < 0.04 } }
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+		set_variable = { conservatism_leader = 1 }
+		if = {
+			limit = { check_variable = { ruling_party = 1 } }
+			hidden_effect = { set_leader = yes }
+		}
+		else = {
+			set_temp_variable = { rul_party_temp = 1 }
+			set_temp_variable = { col_one = 20 }
+			set_temp_variable = { disable_elections = 0 }
+			change_ruling_party_effect = yes
+		}
+		ai_chance = { base = 90 }
+	}
+
+	# Keep the New Front in office
+	option = {
+		name = suriname.2.b
+		log = "[GetDateText]: [This.GetName]: suriname.2.b executed"
+		add_stability = -0.03
+		add_political_power = 25
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+}
+
+# A military court convicts Bouterse of the December murders. ROOT = Suriname.
+country_event = {
+	id = suriname.3
+	title = suriname.3.t
+	desc = suriname.3.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = { original_tag = SUR }
+
+	# Rally behind Bouterse
+	option = {
+		name = suriname.3.a
+		log = "[GetDateText]: [This.GetName]: suriname.3.a executed"
+		add_stability = -0.02
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		change_relative_party_popularity = yes
+		ai_chance = {
+			base = 40
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+
+	# Demand that he answers to the court
+	option = {
+		name = suriname.3.b
+		log = "[GetDateText]: [This.GetName]: suriname.3.b executed"
+		add_stability = 0.02
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = -0.03 }
+		set_temp_variable = { temp_outlook_increase = -0.03 }
+		change_relative_party_popularity = yes
+		ai_chance = {
+			base = 60
+			modifier = { add = 20 has_stability < 0.4 }
+		}
+	}
+}
+
+# The highest court upholds Bouterse's conviction. ROOT = Suriname.
+country_event = {
+	id = suriname.4
+	title = suriname.4.t
+	desc = suriname.4.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = { original_tag = SUR }
+
+	# Respect the ruling
+	option = {
+		name = suriname.4.a
+		log = "[GetDateText]: [This.GetName]: suriname.4.a executed"
+		add_stability = 0.02
+		ai_chance = { base = 70 }
+	}
+
+	# Protest the ruling
+	option = {
+		name = suriname.4.b
+		log = "[GetDateText]: [This.GetName]: suriname.4.b executed"
+		add_stability = -0.03
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		change_relative_party_popularity = yes
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+}
+
+# Bouterse fails to report to the prison authorities and goes into hiding. ROOT = Suriname.
+country_event = {
+	id = suriname.5
+	title = suriname.5.t
+	desc = suriname.5.d
+	picture = GFX_politics_surveillence
+	is_triggered_only = yes
+
+	trigger = { original_tag = SUR }
+
+	# Order a manhunt
+	option = {
+		name = suriname.5.a
+		log = "[GetDateText]: [This.GetName]: suriname.5.a executed"
+		add_stability = 0.01
+		add_political_power = -15
+		ai_chance = {
+			base = 70
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Leave the matter to the courts
+	option = {
+		name = suriname.5.b
+		log = "[GetDateText]: [This.GetName]: suriname.5.b executed"
+		add_stability = -0.02
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		change_relative_party_popularity = yes
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
+	}
+}
+
+# Bouterse dies in hiding. ROOT = Suriname.
+country_event = {
+	id = suriname.6
+	title = suriname.6.t
+	desc = suriname.6.d
+	picture = GFX_politics_dictatorship
+	is_triggered_only = yes
+
+	trigger = { original_tag = SUR }
+
+	immediate = {
+		hidden_effect = {
+			if = { limit = { check_variable = { conservatism_leader < 2 } } set_variable = { conservatism_leader = 2 } }
+			if = {
+				limit = {
+					check_variable = { ruling_party = 1 }
+					has_country_leader = { name = "Desi Bouterse" ruling_only = yes }
+				}
+				set_leader = yes
+			}
+		}
+	}
+
+	# Rule out a state funeral
+	option = {
+		name = suriname.6.a
+		log = "[GetDateText]: [This.GetName]: suriname.6.a executed"
+		add_stability = 0.01
+		ai_chance = { base = 70 }
+	}
+
+	# Honor him as a former president
+	option = {
+		name = suriname.6.b
+		log = "[GetDateText]: [This.GetName]: suriname.6.b executed"
+		add_stability = -0.02
+		set_temp_variable = { party_index = 1 }
+		set_temp_variable = { party_popularity_increase = 0.03 }
+		set_temp_variable = { temp_outlook_increase = 0.03 }
+		change_relative_party_popularity = yes
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+}
+
+# Chan Santokhi and Ronnie Brunswijk take office after the 2020 election. ROOT = Suriname.
+country_event = {
+	id = suriname.7
+	title = suriname.7.t
+	desc = suriname.7.d
+	picture = GFX_election_day
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SUR
+		has_elections = yes
+		check_variable = { party_banned_array^2 = 0 }
+	}
+
+	# Seat the Santokhi government
+	option = {
+		name = suriname.7.a
+		log = "[GetDateText]: [This.GetName]: suriname.7.a executed"
+		if = {
+			limit = { NOT = { check_variable = { ruling_party = 2 } } }
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { target_party_index = 2 }
+			set_temp_variable = { party_popularity_fraction = 0.5 }
+			move_party_popularity = yes
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.2 }
+			set_temp_variable = { temp_outlook_increase = 0.2 }
+			change_relative_party_popularity = yes
+		}
+		if = {
+			limit = { check_variable = { party_pop_array^20 < 0.08 } }
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+		set_variable = { liberalism_leader = 1 }
+		if = {
+			limit = { check_variable = { ruling_party = 2 } }
+			hidden_effect = { set_leader = yes }
+		}
+		else = {
+			set_temp_variable = { rul_party_temp = 2 }
+			set_temp_variable = { col_one = 20 }
+			set_temp_variable = { col_two = 3 }
+			set_temp_variable = { disable_elections = 0 }
+			change_ruling_party_effect = yes
+		}
+		ai_chance = { base = 90 }
+	}
+
+	# Keep the current government
+	option = {
+		name = suriname.7.b
+		log = "[GetDateText]: [This.GetName]: suriname.7.b executed"
+		add_stability = -0.02
+		add_political_power = 25
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+}
+
+# Suriname defaults on its Eurobonds after a grace period expires. ROOT = Suriname.
+country_event = {
+	id = suriname.8
+	title = suriname.8.t
+	desc = suriname.8.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SUR
+		OR = {
+			has_active_mission = bankruptcy_incoming_collapse
+			check_variable = { debt_ratio > 0.8 }
+		}
+	}
+
+	# Suspend payments and open talks
+	option = {
+		name = suriname.8.a
+		log = "[GetDateText]: [This.GetName]: suriname.8.a executed"
+		disable_debt_rate_payments = yes
+		add_stability = -0.03
+		ai_chance = {
+			base = 80
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
+	}
+
+	# Pay the bondholders from the treasury
+	option = {
+		name = suriname.8.b
+		log = "[GetDateText]: [This.GetName]: suriname.8.b executed"
+		set_temp_variable = { treasury_change = -0.2 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 check_variable = { treasury < 0.2 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# The IMF approves a 36-month program for Suriname. ROOT = Suriname.
+country_event = {
+	id = suriname.9
+	title = suriname.9.t
+	desc = suriname.9.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SUR
+		OR = {
+			has_active_mission = bankruptcy_incoming_collapse
+			check_variable = { debt_ratio > 0.8 }
+		}
+	}
+
+	# Accept the program
+	option = {
+		name = suriname.9.a
+		log = "[GetDateText]: [This.GetName]: suriname.9.a executed"
+		set_temp_variable = { treasury_change = 0.3 }
+		modify_treasury_effect = yes
+		add_stability = -0.02
+		ai_chance = {
+			base = 85
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	# Refuse the conditions
+	option = {
+		name = suriname.9.b
+		log = "[GetDateText]: [This.GetName]: suriname.9.b executed"
+		add_stability = 0.02
+		ai_chance = { base = 15 }
+	}
+}
+
+# Protesters break into the National Assembly. ROOT = Suriname.
+country_event = {
+	id = suriname.10
+	title = suriname.10.t
+	desc = suriname.10.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SUR
+		has_elections = yes
+	}
+
+	# Impose a curfew and make arrests
+	option = {
+		name = suriname.10.a
+		log = "[GetDateText]: [This.GetName]: suriname.10.a executed"
+		add_stability = -0.02
+		add_political_power = 20
+		ai_chance = {
+			base = 60
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
+	}
+
+	# Delay the subsidy cuts
+	option = {
+		name = suriname.10.b
+		log = "[GetDateText]: [This.GetName]: suriname.10.b executed"
+		set_temp_variable = { treasury_change = -0.15 }
+		modify_treasury_effect = yes
+		add_stability = 0.03
+		ai_chance = {
+			base = 40
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 check_variable = { treasury < 0.15 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Jennifer Geerlings-Simons becomes Suriname's first female president. ROOT = Suriname.
+country_event = {
+	id = suriname.11
+	title = suriname.11.t
+	desc = suriname.11.d
+	picture = GFX_election_rally
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SUR
+		has_elections = yes
+		check_variable = { party_banned_array^1 = 0 }
+	}
+
+	# Swear in President Geerlings-Simons
+	option = {
+		name = suriname.11.a
+		log = "[GetDateText]: [This.GetName]: suriname.11.a executed"
+		if = {
+			limit = { NOT = { check_variable = { ruling_party = 1 } } }
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { target_party_index = 1 }
+			set_temp_variable = { party_popularity_fraction = 0.6 }
+			move_party_popularity = yes
+		}
+		set_variable = { conservatism_leader = 2 }
+		if = {
+			limit = { check_variable = { ruling_party = 1 } }
+			if = {
+				limit = { NOT = { has_country_leader = { name = "Jennifer Geerlings-Simons" ruling_only = yes } } }
+				hidden_effect = { set_leader = yes }
+			}
+		}
+		else = {
+			set_temp_variable = { rul_party_temp = 1 }
+			set_temp_variable = { col_one = 20 }
+			set_temp_variable = { col_two = 3 }
+			set_temp_variable = { col_three = 14 }
+			set_temp_variable = { disable_elections = 0 }
+			change_ruling_party_effect = yes
+		}
+		ai_chance = { base = 90 }
+	}
+
+	# Keep the current government
+	option = {
+		name = suriname.11.b
+		log = "[GetDateText]: [This.GetName]: suriname.11.b executed"
+		add_stability = -0.02
+		add_political_power = 25
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+}
+
+# Alcoa ends a century of bauxite mining and refining in Suriname. ROOT = Suriname.
+country_event = {
+	id = suriname.12
+	title = suriname.12.t
+	desc = suriname.12.d
+	picture = GFX_mining
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SUR
+		owns_state = 878
+	}
+
+	option = {
+		name = suriname.12.a
+		log = "[GetDateText]: [This.GetName]: suriname.12.a executed"
+		add_resource = {
+			type = aluminium
+			amount = -6
+			state = 878
+		}
+		add_stability = -0.02
+	}
+}
+
+# Alternative 2020 is founded, June 2019. Scheduled in trigger_year_2019_events. ROOT = Suriname. Names the Neutral_conservatism slot.
+# TODO: confirm A20 as the fit for this slot and its founding day (1 June is a placeholder), and whether a Christian-democrat party should hold it before 2019
+country_event = {
+	id = suriname.13
+	title = suriname.13.t
+	desc = suriname.13.d
+	picture = GFX_election_rally
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = SUR }
+
+	option = {
+		name = suriname.13.a
+		log = "[GetDateText]: [This.GetName]: suriname.13.a executed"
+		set_country_flag = SUR_a20_founded
+		update_party_name = yes
+	}
+}
