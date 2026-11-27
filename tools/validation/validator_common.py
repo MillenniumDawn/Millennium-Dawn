@@ -85,6 +85,7 @@ _IDEA_CALLBACK = "_idea_callback"
 _RUNNING_EXPENSE = "_running_expense"
 _SPENDING_LEVEL_RE = re.compile(r"\bspending_new_level\s*=\s*([^\s}]+)")
 _LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
+_PLAIN_VARIABLE_RE = re.compile(r"[A-Za-z_]\w*")
 _IDEA_LIST_KEYS = frozenset({"add_ideas", "remove_ideas"})
 _TOOLTIP_VARIABLE_KEYS = frozenset({"add_to_variable", "subtract_from_variable"})
 _MONEY_HINT_RE = re.compile(
@@ -562,16 +563,14 @@ def _limit_ideas(limit: str) -> Set[str]:
     return found
 
 
-def _charges_running_expenses(block: str) -> bool:
-    """Whether an `add_to_variable` block raises `additional_expenses_rate`."""
+def _added_variable(block: str) -> Tuple[str, str]:
+    """The target variable and amount of an `add_to_variable` block."""
     fields = {field: scalar for field, scalar, _nested in iter_statements(block)}
     fields.pop("tooltip", None)
     if "var" in fields:
-        variable, amount = fields.get("var") or "", fields.get("value") or ""
-    else:
-        variable = next(iter(fields), "")
-        amount = fields.get(variable) or ""
-    return variable == "additional_expenses_rate" and not amount.startswith("-")
+        return fields.get("var") or "", fields.get("value") or ""
+    variable = next(iter(fields), "")
+    return variable, fields.get(variable) or ""
 
 
 def mark_running_expense_ideas(
@@ -580,13 +579,39 @@ def mark_running_expense_ideas(
     """Mark in *ideas* every idea that gates an `additional_expenses_rate` charge.
 
     The money system bills those ideas each week from a scripted effect, so
-    adding one commits money although the idea has no money modifier. *texts*
-    are scripted effect files with comments stripped.
+    adding one commits money although the idea has no money modifier. A plain
+    variable later added into the rate counts as the rate, so ideas that feed a
+    subtotal are marked too. *texts* are scripted effect files with comments
+    stripped.
     """
+
+    def additions(block: str) -> Iterable[Tuple[str, str]]:
+        for key, _value, inner in iter_statements(block):
+            if inner is None:
+                continue
+            if key == "add_to_variable":
+                yield _added_variable(inner)
+            else:
+                yield from additions(inner)
+
+    rate_texts = [
+        blank_quoted_strings(text)
+        for text in texts
+        if "additional_expenses_rate" in text
+    ]
+    charged = {"additional_expenses_rate"}
+    for text in rate_texts:
+        charged.update(
+            amount
+            for variable, amount in additions(text)
+            if variable == "additional_expenses_rate"
+            and _PLAIN_VARIABLE_RE.fullmatch(amount)
+        )
 
     def visit(key: str, block: str, gates: FrozenSet[str]) -> None:
         if key == "add_to_variable":
-            if _charges_running_expenses(block):
+            variable, amount = _added_variable(block)
+            if variable in charged and not amount.startswith("-"):
                 for name in gates:
                     ideas.setdefault(name, {})[_RUNNING_EXPENSE] = Decimal(0)
             return
@@ -609,10 +634,8 @@ def mark_running_expense_ideas(
             nested_else = branch and child in ("else", "else_if")
             visit(child, child_block, gates if nested_else else inner_gates)
 
-    for text in texts:
-        if "additional_expenses_rate" not in text:
-            continue
-        for key, _value, block in iter_statements(blank_quoted_strings(text)):
+    for text in rate_texts:
+        for key, _value, block in iter_statements(text):
             if block is not None:
                 visit(key, block, frozenset())
 

@@ -1631,6 +1631,13 @@ _CHARGE = "add_to_variable = { additional_expenses_rate = 1 }"
             False,
         ),
         (
+            "if = { limit = { has_idea = TAG_subsidy }"
+            " add_to_variable = { TAG_subtotal = 1 } }"
+            " add_to_variable = { additional_expenses_rate = TAG_subtotal }",
+            "add_ideas = TAG_subsidy",
+            False,
+        ),
+        (
             f"if = {{ limit = {{ NOT = {{ has_idea = TAG_subsidy }} }} {_CHARGE} }}",
             "add_ideas = TAG_subsidy",
             True,
