@@ -544,9 +544,10 @@ branch the same way: a path flag (a flag that a focus on an exclusive arm sets a
 another focus tests) and each `has_country_leader` name a branch needs. A stacking
 row names its choice, and `--paths` lists the choices. A flag that no focus sets but
 the options of one event do (an election result, for example) is a choice too: each
-option is totaled on its own. A flag set by a second event, an event's `immediate`,
-or an on_action, decision, or scripted effect is not read as a choice, so those
-paths can still be summed. Outliers rank buildings, money
+option is totaled on its own. A flag set by a second event or an event's `immediate`
+is not read as a choice, so those paths can still be summed. Only `events/` is read:
+a decision, on_action, or scripted effect that also sets the flag goes unseen, and
+its focuses are wrongly gated. Outliers rank buildings, money
 gained, and PP per day of focus time (`--top` rows), and list spirits with more than
 five modifiers. `--focuses` lists every focus, `--file PATH` reads a named focus
 file, and `--json` gives the same data for machines. Formulas, `if`, `random` and
