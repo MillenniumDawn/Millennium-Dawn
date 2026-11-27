@@ -1236,6 +1236,61 @@ def test_staged_duplicates_need_a_staged_definition(tmp_path, gfx, category, rep
     assert len(issues) == len(reported)
 
 
+# --- sprite texture folders -------------------------------------------------
+
+# case: (sprite name, texture, expected folders in the finding or None)
+_TEXTURE_FOLDER_CASES = {
+    "idea on focus art": (
+        "GFX_idea_x",
+        "gfx/interface/goals/x.dds",
+        "gfx/interface/ideas/ or gfx/interface/officer_corp/",
+    ),
+    "idea on idea art": ("GFX_idea_x", "gfx/interface/ideas/x.dds", None),
+    "idea on officer corps art": (
+        "GFX_idea_x",
+        "gfx/interface/officer_corp/x.dds",
+        None,
+    ),
+    "mixed-case idea prefix and path": (
+        "GFX_Idea_x",
+        r"GFX\Interface\Ideas\x.dds",
+        None,
+    ),
+    "decision on idea art": (
+        "GFX_decision_x",
+        "gfx/interface/ideas/x.dds",
+        "gfx/interface/decisions/ or gfx/texticons/",
+    ),
+    "decision on texticon art": ("GFX_decision_x", "gfx/texticons/x.dds", None),
+    "other prefix is not checked": ("GFX_focus_x", "gfx/interface/ideas/x.dds", None),
+}
+
+
+@pytest.mark.parametrize(
+    "name, texture, expected", _TEXTURE_FOLDER_CASES.values(), ids=_TEXTURE_FOLDER_CASES
+)
+def test_sprite_texture_folder_mismatch(name, texture, expected):
+    assert vg.sprite_texture_folder_mismatch(name, texture) == expected
+
+
+def test_sprite_texture_folder_check_reports_only_staged_files(tmp_path):
+    _write_gfx(
+        tmp_path, "a.gfx", _sprite("GFX_idea_staged", "gfx/interface/goals/a.dds")
+    )
+    _write_gfx(
+        tmp_path, "b.gfx", _sprite("GFX_idea_other", "gfx/interface/goals/b.dds")
+    )
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [_iface(tmp_path, "a.gfx")]
+    validator._build_gfx_definitions()
+    validator._check_sprite_texture_folders()
+
+    issues = _categories(validator, "sprite-texture-folder")
+    assert [i.message.split(" ->")[0] for i in issues] == ["GFX_idea_staged"]
+    assert issues[0].severity == Severity.WARNING
+
+
 # --- unused sprites ---------------------------------------------------------
 
 # case: (defined sprites, references, vanilla names, (category, sprite) per finding)
