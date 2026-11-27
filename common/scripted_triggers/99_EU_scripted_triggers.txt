@@ -344,22 +344,43 @@ EU_is_leader_of_trade_policy = {
 EU_influence_on_leader_of_foreign_policy_25_percent = {
 	custom_trigger_tooltip = {
 		tooltip = EU_influence_on_leader_of_foreign_policy_25_percent_TT
-		OR = {
-			# A foreign-policy office holder exists: negotiate exit with them.
-			var:global.EU_high_repr_office_idea = { influence_higher_25 = yes }
-			var:global.EU_commission_office_idea = { influence_higher_25 = yes }
-			var:global.EU_parliament_office_idea = { influence_higher_25 = yes }
-			# No EU foreign-policy office is filled (foreign minister, commission president and
-			# parliament president are all vacant — they are 5-year timed ideas that can lapse).
-			# Fall back to the broad-influence bar so exit is never hard-locked on an office that
-			# does not currently exist.
-			AND = {
-				NOT = { has_global_flag = EU_foreign_taken_flag }
-				NOT = { has_global_flag = EU_commission_taken_flag }
-				NOT = { has_global_flag = EU_parliament_taken_flag }
-				EU_influence_on_all_other_members_5_percent = yes
+		if = {
+			limit = {
+				check_variable = { global.eu_high_repr > 0 }
+				var:global.eu_high_repr = { has_idea = EU_high_repr_office_idea }
+			}
+			var:global.eu_high_repr = {
+				OR = {
+					tag = ROOT
+					influence_higher_25 = yes
+				}
 			}
 		}
+		else_if = {
+			limit = {
+				check_variable = { global.eu_commission > 0 }
+				var:global.eu_commission = { has_idea = EU_commission_office_idea }
+			}
+			var:global.eu_commission = {
+				OR = {
+					tag = ROOT
+					influence_higher_25 = yes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { global.eu_parliament > 0 }
+				var:global.eu_parliament = { has_idea = EU_parliament_office_idea }
+			}
+			var:global.eu_parliament = {
+				OR = {
+					tag = ROOT
+					influence_higher_25 = yes
+				}
+			}
+		}
+		else = { EU_influence_on_all_other_members_5_percent = yes }
 	}
 }
 
