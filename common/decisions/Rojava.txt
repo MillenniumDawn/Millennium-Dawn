@@ -1,0 +1,97 @@
+ROJ_war_effort_category = {
+
+	ROJ_mobilize_the_communes = {
+		icon = generic_prepare_civil_war_new
+
+		days_remove = 7
+		days_re_enable = 30
+
+		available = { has_manpower > 999 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROJ_mobilize_the_communes"
+			add_manpower = -1000
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROJ_mobilize_the_communes"
+			if = {
+				limit = { NOT = { has_template = "YPG Brigade" } }
+				division_template = {
+					name = "YPG Brigade"
+					is_locked = yes
+					regiments = {
+						Mot_Militia_Bat = { x = 0 y = 0 }
+						Mot_Militia_Bat = { x = 0 y = 1 }
+						Mot_Militia_Bat = { x = 0 y = 2 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
+					}
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name = \"YPG Brigade\" division_template = \"YPG Brigade\" start_experience_factor = 0.3 start_equipment_factor = 0.5"
+					owner = ROJ
+				}
+				create_unit = {
+					division = "name = \"YPJ Brigade\" division_template = \"YPG Brigade\" start_experience_factor = 0.3 start_equipment_factor = 0.5"
+					owner = ROJ
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 30
+			modifier = { add = 20 surrender_progress > 0.1 }
+		}
+	}
+
+	# Rumeilan crude leaves by tanker truck for Iraqi Kurdistan
+	ROJ_rumeilan_oil_trade = {
+		icon = generic_fundraising
+
+		visible = { country_exists = KUR }
+
+		available = {
+			controls_state = 193
+			KUR = { NOT = { has_war_with = ROOT } }
+		}
+
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROJ_rumeilan_oil_trade"
+			set_temp_variable = { treasury_change = 0.75 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = { add = 10 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Arab tribal fighters join the Kurdish militias under one command
+	ROJ_form_the_syrian_democratic_forces = {
+		icon = generic_political_discourse
+		fire_only_once = yes
+
+		available = {
+			OR = {
+				controls_state = 191
+				controls_state = 995
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROJ_form_the_syrian_democratic_forces"
+			add_manpower = 5000
+			army_experience = 5
+			add_stability = -0.02
+		}
+
+		ai_will_do = { base = 20 }
+	}
+}
