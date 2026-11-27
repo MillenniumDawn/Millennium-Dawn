@@ -69,50 +69,6 @@ defined_text = {
 	}
 }
 
-# Recompute dockyards in use when rendering the production readout.
-defined_text = {
-	name = shipyard_readout
-	text = {
-		trigger = {
-			has_dynamic_modifier = { modifier = shipyard_crisis_modifier }
-			set_temp_variable = { shipyard_readout_total = num_of_naval_factories }
-			set_temp_variable = {
-				shipyard_readout_in_use = {
-					value = num_of_naval_factories
-					subtract = num_of_available_naval_factories
-				}
-			}
-			check_variable = { shipyard_readout_in_use > shipyard_effective_dockyards }
-		}
-		localization_key = SHIPYARD_READOUT_OVER
-	}
-	text = {
-		trigger = {
-			has_dynamic_modifier = { modifier = shipyard_crisis_modifier }
-			set_temp_variable = { shipyard_readout_total = num_of_naval_factories }
-			set_temp_variable = {
-				shipyard_readout_in_use = {
-					value = num_of_naval_factories
-					subtract = num_of_available_naval_factories
-				}
-			}
-		}
-		localization_key = SHIPYARD_READOUT_OK
-	}
-	text = {
-		trigger = {
-			set_temp_variable = { shipyard_readout_total = num_of_naval_factories }
-			set_temp_variable = {
-				shipyard_readout_in_use = {
-					value = num_of_naval_factories
-					subtract = num_of_available_naval_factories
-				}
-			}
-		}
-		localization_key = SHIPYARD_READOUT_FACILITIES_ONLY
-	}
-}
-
 defined_text = {
 	name = shipyard_panel_overview
 	text = {
@@ -174,19 +130,6 @@ defined_text = {
 	}
 	text = {
 		localization_key = SHIPYARD_BACKLOG_LEVEL_LINE
-	}
-}
-
-defined_text = {
-	name = shipyard_staffing_status
-	text = {
-		trigger = {
-			has_dynamic_modifier = { modifier = shipyard_crisis_modifier }
-		}
-		localization_key = SHIPYARD_STAFFING_ACTIVE_TT
-	}
-	text = {
-		localization_key = SHIPYARD_STAFFING_FACILITIES_ONLY_TT
 	}
 }
 
@@ -293,69 +236,6 @@ defined_text = {
 }
 
 defined_text = {
-	name = shipyard_destroyer_project_status
-	text = {
-		trigger = {
-			original_tag = UKR
-			has_dynamic_modifier = { modifier = shipyard_crisis_modifier }
-		}
-		localization_key = SHIPYARD_DESTROYER_PROJECT_UKR_TT
-	}
-	text = {
-		trigger = {
-			original_tag = POL
-			has_dynamic_modifier = { modifier = shipyard_crisis_modifier }
-		}
-		localization_key = SHIPYARD_DESTROYER_PROJECT_POL_TT
-	}
-	text = {
-		localization_key = SHIPYARD_EMPTY_TT
-	}
-}
-
-defined_text = {
-	name = shipyard_frigate_project_status
-	text = {
-		trigger = {
-			original_tag = UKR
-			has_dynamic_modifier = { modifier = shipyard_crisis_modifier }
-		}
-		localization_key = SHIPYARD_FRIGATE_PROJECT_UKR_TT
-	}
-	text = {
-		localization_key = SHIPYARD_EMPTY_TT
-	}
-}
-
-defined_text = {
-	name = shipyard_filter_backlog_status
-	text = {
-		trigger = {
-			original_tag = UKR
-			has_dynamic_modifier = { modifier = shipyard_crisis_modifier }
-		}
-		localization_key = SHIPYARD_FILTER_BACKLOG_UKR_TT
-	}
-	text = {
-		trigger = {
-			has_dynamic_modifier = { modifier = shipyard_crisis_modifier }
-			check_variable = { shipyard_eq_steps > 0 }
-		}
-		localization_key = SHIPYARD_FILTER_BACKLOG_TT
-	}
-	text = {
-		localization_key = SHIPYARD_EMPTY_TT
-	}
-}
-
-defined_text = {
-	name = shipyard_production_status_tooltip
-	text = {
-		localization_key = SHIPYARD_READOUT_TT
-	}
-}
-
-defined_text = {
 	name = shipyard_drydock_row_tooltip
 	text = {
 		trigger = { shipyard_is_recovering = yes }
@@ -374,5 +254,128 @@ defined_text = {
 	}
 	text = {
 		localization_key = shipyard_workforce_row_tt
+	}
+}
+
+defined_text = {
+	name = shipyard_production_hull_costs
+	text = {
+		trigger = {
+			# Start from the same per-step rates as the shipyard equipment effects.
+			set_temp_variable = { shipyard_cost_small = 0.01 }
+			set_temp_variable = { shipyard_cost_frigate = 0.02 }
+			set_temp_variable = { shipyard_cost_destroyer = 0.03 }
+			set_temp_variable = { shipyard_cost_heavy = 0.04 }
+			set_temp_variable = { shipyard_cost_helicopter = 0.05 }
+			set_temp_variable = { shipyard_cost_carrier = 0.05 }
+			set_temp_variable = { shipyard_cost_attack_sub = 0.04 }
+			set_temp_variable = { shipyard_cost_missile_sub = 0.05 }
+			if = {
+				limit = { original_tag = UKR }
+				set_temp_variable = { shipyard_cost_small = 0.03 }
+				set_temp_variable = { shipyard_cost_frigate = 0.03 }
+				set_temp_variable = { shipyard_cost_destroyer = 0.04 }
+				set_temp_variable = { shipyard_cost_heavy = 0.05 }
+				set_temp_variable = { shipyard_cost_carrier = 0.06 }
+				set_temp_variable = { shipyard_cost_attack_sub = 0.05 }
+				set_temp_variable = { shipyard_cost_missile_sub = 0.06 }
+			}
+			else_if = {
+				limit = { original_tag = SOV }
+				set_temp_variable = { shipyard_cost_destroyer = 0.05 }
+				set_temp_variable = { shipyard_cost_heavy = 0.05 }
+				set_temp_variable = { shipyard_cost_helicopter = 0.06 }
+				set_temp_variable = { shipyard_cost_carrier = 0.06 }
+				set_temp_variable = { shipyard_cost_attack_sub = 0.03 }
+				set_temp_variable = { shipyard_cost_missile_sub = 0.04 }
+			}
+			else_if = {
+				limit = { original_tag = TUR }
+				set_temp_variable = { shipyard_cost_destroyer = 0.04 }
+				set_temp_variable = { shipyard_cost_heavy = 0.06 }
+				set_temp_variable = { shipyard_cost_helicopter = 0.06 }
+				set_temp_variable = { shipyard_cost_carrier = 0.07 }
+				set_temp_variable = { shipyard_cost_attack_sub = 0.02 }
+				set_temp_variable = { shipyard_cost_missile_sub = 0.06 }
+			}
+			else_if = {
+				limit = { original_tag = CHI }
+				set_temp_variable = { shipyard_cost_destroyer = 0.02 }
+				set_temp_variable = { shipyard_cost_helicopter = 0.04 }
+				set_temp_variable = { shipyard_cost_carrier = 0.06 }
+				set_temp_variable = { shipyard_cost_attack_sub = 0.02 }
+				set_temp_variable = { shipyard_cost_missile_sub = 0.04 }
+			}
+			else_if = {
+				limit = { original_tag = JAP }
+				set_temp_variable = { shipyard_cost_frigate = 0.01 }
+				set_temp_variable = { shipyard_cost_destroyer = 0.01 }
+				set_temp_variable = { shipyard_cost_heavy = 0.03 }
+				set_temp_variable = { shipyard_cost_helicopter = 0.02 }
+				set_temp_variable = { shipyard_cost_attack_sub = 0.01 }
+				set_temp_variable = { shipyard_cost_missile_sub = 0.06 }
+			}
+			else_if = {
+				limit = { original_tag = KOR }
+				set_temp_variable = { shipyard_cost_frigate = 0.01 }
+				set_temp_variable = { shipyard_cost_helicopter = 0.03 }
+				set_temp_variable = { shipyard_cost_carrier = 0.06 }
+				set_temp_variable = { shipyard_cost_attack_sub = 0.02 }
+			}
+
+			multiply_temp_variable = { shipyard_cost_small = shipyard_eq_steps }
+			multiply_temp_variable = { shipyard_cost_frigate = shipyard_eq_steps }
+			multiply_temp_variable = { shipyard_cost_destroyer = shipyard_eq_steps }
+			multiply_temp_variable = { shipyard_cost_heavy = shipyard_eq_steps }
+			multiply_temp_variable = { shipyard_cost_helicopter = shipyard_eq_steps }
+			multiply_temp_variable = { shipyard_cost_carrier = shipyard_eq_steps }
+			multiply_temp_variable = { shipyard_cost_attack_sub = shipyard_eq_steps }
+			multiply_temp_variable = { shipyard_cost_missile_sub = shipyard_eq_steps }
+			set_temp_variable = { shipyard_cost_cruiser = shipyard_cost_heavy }
+
+			if = {
+				limit = { original_tag = UKR has_dynamic_modifier = { modifier = shipyard_crisis_modifier } }
+				add_to_temp_variable = { shipyard_cost_small = 0.05 }
+				add_to_temp_variable = { shipyard_cost_frigate = 0.1 }
+				add_to_temp_variable = { shipyard_cost_destroyer = 0.3 }
+				add_to_temp_variable = { shipyard_cost_heavy = 0.5 }
+				add_to_temp_variable = { shipyard_cost_helicopter = 0.5 }
+				add_to_temp_variable = { shipyard_cost_carrier = 0.6 }
+				add_to_temp_variable = { shipyard_cost_attack_sub = 0.5 }
+				add_to_temp_variable = { shipyard_cost_missile_sub = 0.6 }
+				add_to_temp_variable = { shipyard_cost_cruiser = 0.5 }
+				if = {
+					limit = { check_variable = { ukr_yard_tier < 3 } }
+					add_to_temp_variable = { shipyard_cost_frigate = 2.0 }
+				}
+				if = {
+					limit = { check_variable = { ukr_yard_tier < 4 } }
+					add_to_temp_variable = { shipyard_cost_destroyer = 2.0 }
+				}
+			}
+			if = {
+				limit = { check_variable = { POL_shipyard_destroyer_penalty = 1 } }
+				add_to_temp_variable = { shipyard_cost_destroyer = 1.0 }
+			}
+
+			if = {
+				limit = { check_variable = { shipyard_capital_locked = 1 } }
+				add_to_temp_variable = { shipyard_cost_cruiser = 2.0 }
+				add_to_temp_variable = { shipyard_cost_heavy = 3.0 }
+				add_to_temp_variable = { shipyard_cost_carrier = 3.0 }
+				if = {
+					limit = { original_tag = POL }
+					add_to_temp_variable = { shipyard_cost_helicopter = 0.5 }
+				}
+				else = { add_to_temp_variable = { shipyard_cost_helicopter = 2.0 } }
+			}
+			if = {
+				limit = { check_variable = { shipyard_submarine_locked = 1 } }
+				add_to_temp_variable = { shipyard_cost_missile_sub = 3.0 }
+			}
+			add_to_temp_variable = { shipyard_cost_destroyer = { value = shipyard_slipway_discount_steps multiply = -0.15 } }
+			add_to_temp_variable = { shipyard_cost_attack_sub = { value = shipyard_hall_discount_steps multiply = -0.15 } }
+		}
+		localization_key = shipyard_production_hull_costs_tt
 	}
 }
