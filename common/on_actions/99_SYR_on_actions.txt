@@ -1,6 +1,13 @@
 on_actions = {
 	on_monthly_FSA = {
 		effect = {
+			if = {
+				limit = {
+					has_global_flag = GLOBAL_syrian_civil_war_started
+					NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+				}
+				civil_war_cleanup_syria = yes
+			}
 			#FSA deals with Al-Nusra
 			if = {
 				limit = {
@@ -32,6 +39,13 @@ on_actions = {
 
 	on_monthly_NUS = {
 		effect = {
+			if = {
+				limit = {
+					has_global_flag = GLOBAL_syrian_civil_war_started
+					NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+				}
+				civil_war_cleanup_syria = yes
+			}
 			#Annex FSA if they are losing and we are not
 			if = {
 				limit = {
@@ -160,10 +174,115 @@ on_actions = {
 				set_country_flag = SYR_anime_boom_queued
 				country_event = { id = SyriaFocus.108 days = 30 }
 			}
+			# 35% monthly at 75% regime support, 65% once it falls to 25%
 			if = {
-				limit = { has_country_flag = { flag = SYR_arab_spring_nusra_pending days > 179 } }
+				limit = {
+					has_war_with = FSA
+					NOT = { has_country_flag = SYR_defections_suppressed }
+					NOT = { has_country_flag = SYR_defection_wave_pending }
+					FSA = { num_of_controlled_states > 0 }
+				}
+				set_temp_variable = { defection_chance = party_pop_array^ruling_party }
+				multiply_temp_variable = { defection_chance = -60 }
+				add_to_temp_variable = { defection_chance = 80 }
+				set_temp_variable_to_random = { var = defection_roll min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { defection_roll < defection_chance } }
+					set_country_flag = { flag = SYR_defection_wave_pending days = 22 value = 1 }
+					country_event = { id = SyriaCivilWar.1 days = 1 random_days = 20 }
+				}
+			}
+			# Four months in, the regime decides whether to keep its northern garrisons, and again every 180 days it holds
+			if = {
+				limit = {
+					SYR_civil_war_ongoing = yes
+					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 119 }
+					NOT = { has_country_flag = SYR_kurdish_north_decided }
+					NOT = { country_exists = ROJ }
+					controls_state = 193
+				}
+				set_country_flag = { flag = SYR_kurdish_north_decided days = 180 value = 1 }
+				country_event = { id = SyriaCivilWar.20 days = 1 random_days = 10 }
+			}
+			# Keep the Nusra flag until arab_spring.26 can fire, so losing Idlib only delays it
+			if = {
+				limit = {
+					has_country_flag = { flag = SYR_arab_spring_nusra_pending days > 179 }
+					has_war_with = FSA
+					owns_state = 190
+					controls_state = 190
+					NOT = { country_exists = NUS }
+				}
 				clr_country_flag = SYR_arab_spring_nusra_pending
 				country_event = arab_spring.26
+			}
+
+			# The war-ending hooks can fire while the war still runs, so retry the cleanup each month
+			if = {
+				limit = {
+					has_global_flag = GLOBAL_syrian_civil_war_started
+					NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+				}
+				civil_war_cleanup_syria = yes
+				# A white peace leaves the rebels standing with no war to end
+				if = {
+					limit = {
+						NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+						SYR_civil_war_ongoing = no
+						OR = {
+							country_exists = FSA
+							country_exists = NUS
+						}
+						NOT = { has_country_flag = SYR_ceasefire_offered }
+					}
+					set_country_flag = { flag = SYR_ceasefire_offered days = 180 value = 1 }
+					country_event = { id = SyriaCivilWar.35 days = 1 }
+				}
+			}
+			# A month into the war, refugees reach Lebanon, Jordan, and Turkey
+			if = {
+				limit = {
+					SYR_civil_war_ongoing = yes
+					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 29 }
+					NOT = { has_global_flag = syrian_refugee_wave_started }
+				}
+				set_global_flag = syrian_refugee_wave_started
+				if = { limit = { country_exists = LEB } LEB = { country_event = { id = lebanon.1 days = 1 random_days = 10 } } }
+				if = { limit = { country_exists = JOR } JOR = { country_event = { id = jordan.1 days = 1 random_days = 10 } } }
+				if = { limit = { country_exists = TUR } TUR = { country_event = { id = TUR_flavor_event.6 days = 1 random_days = 10 } } }
+			}
+			# Two months into the war, the Arab League votes on suspending the regime
+			if = {
+				limit = {
+					SYR_civil_war_ongoing = yes
+					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 59 }
+					NOT = { has_country_flag = SYR_arab_league_vote_held }
+				}
+				set_country_flag = SYR_arab_league_vote_held
+				country_event = { id = SyriaHistory.6 days = 1 random_days = 10 }
+			}
+			# A regime losing ground, or three months in, asks Moscow and Tehran for troops
+			if = {
+				limit = {
+					SYR_civil_war_ongoing = yes
+					NOT = { has_country_flag = SYR_outside_forces_requested }
+					OR = {
+						surrender_progress > 0.1
+						has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 89 }
+					}
+				}
+				set_country_flag = SYR_outside_forces_requested
+				country_event = { id = SyriaHistory.9 days = 1 random_days = 10 }
+			}
+			# Four months in, Moscow offers to take the chemical stockpile
+			if = {
+				limit = {
+					SYR_civil_war_ongoing = yes
+					has_global_flag = { flag = GLOBAL_syrian_civil_war_started days > 119 }
+					NOT = { has_country_flag = SYR_chemical_deal_offered }
+				}
+				set_country_flag = SYR_chemical_deal_offered
+				country_event = { id = SyriaHistory.8 days = 1 random_days = 10 }
 			}
 
 			# ISIS Spawns - Syrian Historical ISIS Spawn
@@ -245,9 +364,15 @@ on_actions = {
 
 	on_weekly_SYR = {
 		effect = {
+			if = {
+				limit = { check_variable = { SYR_islamist_grievance > 0 } }
+				subtract_from_variable = { SYR_islamist_grievance = 0.25 }
+				clamp_variable = { var = SYR_islamist_grievance min = 0 }
+			}
 			SYR_alawite_political_activity_modifier = yes
 			SYR_kurdish_political_activity_modifier = yes
 			SYR_druze_political_activity_modifier = yes
+			SYR_denied_seats_riots = yes
 			if = {
 				limit = {
 					check_variable = { alawite_status > 50 }
@@ -257,21 +382,25 @@ on_actions = {
 				if = {
 					limit = {
 						NOT = { has_idea = syria_federal_government }
+						NOT = { has_country_flag = SYR_state_formation_queued }
 						is_power_balance_in_range = {
 							id = Syria_centralization_balance_of_power_category
 							range = SYR_federal_state_formation_bop_left_side
 						}
 					}
+					set_country_flag = SYR_state_formation_queued
 					country_event = { id = SyriaFocus.103 days = 1 }
 				}
 				if = {
 					limit = {
 						NOT = { has_idea = syria_bureaucratic_government }
+						NOT = { has_country_flag = SYR_state_formation_queued }
 						is_power_balance_in_range = {
 							id = Syria_centralization_balance_of_power_category
 							range = SYR_new_republic_formation_bop_right_side
 						}
 					}
+					set_country_flag = SYR_state_formation_queued
 					country_event = { id = SyriaFocus.104 days = 1 }
 				}
 			}

@@ -621,12 +621,16 @@ civil_war_cleanup_syria = {
 				limit = { NOT = { original_tag = NUS } }
 				NOT = { country_exists = NUS }
 			}
-			NOT = { country_exists = ISI }
+			has_civil_war = no
 		}
-		every_state = {
-			limit = { OR = { is_core_of = ISI is_claimed_by = ISI } }
-			remove_claim_by = ISI
-			remove_core_of = ISI
+		# A surviving Islamic State keeps its cores and claims until it falls
+		if = {
+			limit = { NOT = { country_exists = ISI } }
+			every_state = {
+				limit = { OR = { is_core_of = ISI is_claimed_by = ISI } }
+				remove_claim_by = ISI
+				remove_core_of = ISI
+			}
 		}
 		587 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
 		184 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
@@ -643,6 +647,8 @@ civil_war_cleanup_syria = {
 		193 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
 		571 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
 		575 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		994 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
+		995 = { remove_core_of = SYR remove_core_of = FSA remove_core_of = NUS }
 		if = { limit = { NOT = { has_country_flag = Relinquished_Golan } } add_state_core = 587 }
 		add_state_core = 184
 		add_state_core = 185
@@ -651,9 +657,10 @@ civil_war_cleanup_syria = {
 		add_state_core = 188
 		add_state_core = 189
 		add_state_core = 192
-		add_state_core = 191
 		add_state_core = 566
 		add_state_core = 190
+		add_state_core = 571
+		add_state_core = 994
 		if = {
 			limit = {
 				NOT = { original_tag = FSA }
@@ -664,11 +671,11 @@ civil_war_cleanup_syria = {
 		if = {
 			limit = { NOT = { has_country_flag = Deal_With_Rojava } }
 			add_state_core = 193
-			add_state_core = 571
 			add_state_core = 575
+			add_state_core = 191
 			add_state_core = 995
 		}
-		set_capital = { state = 186 }
+		if = { limit = { owns_state = 186 } set_capital = { state = 186 } }
 		if = {
 			limit = { NOT = { original_tag = SYR } }
 			set_cosmetic_tag = SYR
@@ -683,8 +690,29 @@ civil_war_cleanup_syria = {
 			add_ideas = intervention_neo_imperialism
 			remove_ideas = non_state_actor
 		}
+		# The side that won takes Syria's UN seat, and its Arab League seat unless it is jihadist or an Assad still rules
+		if = {
+			limit = {
+				OR = {
+					has_idea = lacks_international_recognition
+					has_idea = non_state_actor
+					NOT = { is_in_array = { global.UN_general_assembly = THIS } }
+				}
+			}
+			un_admit_member = yes
+		}
+		if = {
+			limit = {
+				SYR_assad_regime_in_power = no
+				jihadist_government = no
+				NOT = { has_idea = LoAS_member }
+				NOT = { has_idea = LoAS_member_upd }
+			}
+			add_ideas = LoAS_member
+		}
 		set_global_flag = GLOBAL_syrian_civil_war_over
 		hidden_effect = { news_event = { id = SyriaNews.1 hours = 6 } }
+		country_event = { id = SyriaCivilWar.30 days = 7 }
 	}
 }
 
