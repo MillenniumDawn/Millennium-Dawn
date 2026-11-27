@@ -81,6 +81,8 @@ MONEY_MODIFIER_RE = re.compile(
 SPENDING_LEVEL = "spending_level"
 _UNKNOWN_MONEY_MODIFIER = "_unknown_money_modifier"
 _IDEA_CALLBACK = "_idea_callback"
+# Billed by the money system while held, so only adding the idea commits money.
+_RUNNING_EXPENSE = "_running_expense"
 _SPENDING_LEVEL_RE = re.compile(r"\bspending_new_level\s*=\s*([^\s}]+)")
 _LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
 _IDEA_LIST_KEYS = frozenset({"add_ideas", "remove_ideas"})
@@ -553,11 +555,23 @@ def _limit_ideas(limit: str) -> Set[str]:
     """Ideas a `limit` requires: has_idea at its top or under OR and AND, not NOT."""
     found: Set[str] = set()
     for key, value, block in iter_statements(limit):
-        if key == "has_idea" and value:
+        if key == "has_idea" and value and value.strip():
             found.add(value)
         elif key in ("OR", "AND") and block is not None:
             found |= _limit_ideas(block)
     return found
+
+
+def _charges_running_expenses(block: str) -> bool:
+    """Whether an `add_to_variable` block raises `additional_expenses_rate`."""
+    fields = {field: scalar for field, scalar, _nested in iter_statements(block)}
+    fields.pop("tooltip", None)
+    if "var" in fields:
+        variable, amount = fields.get("var") or "", fields.get("value") or ""
+    else:
+        variable = next(iter(fields), "")
+        amount = fields.get(variable) or ""
+    return variable == "additional_expenses_rate" and not amount.startswith("-")
 
 
 def mark_running_expense_ideas(
@@ -565,34 +579,42 @@ def mark_running_expense_ideas(
 ) -> None:
     """Mark in *ideas* every idea that gates an `additional_expenses_rate` charge.
 
-    The money system bills those ideas every month from a scripted effect, so
+    The money system bills those ideas each week from a scripted effect, so
     adding one commits money although the idea has no money modifier. *texts*
     are scripted effect files with comments stripped.
     """
 
-    def walk(body: str, gates: FrozenSet[str]) -> None:
-        for key, _value, block in iter_statements(body):
-            if block is None:
-                continue
-            if key == "add_to_variable" and "additional_expenses_rate" in block:
+    def visit(key: str, block: str, gates: FrozenSet[str]) -> None:
+        if key == "add_to_variable":
+            if _charges_running_expenses(block):
                 for name in gates:
-                    ideas.setdefault(name, {})[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
-            elif key in ("if", "else_if"):
-                limit = next(
-                    (
-                        inner
-                        for field, _v, inner in iter_statements(block)
-                        if field == "limit"
-                    ),
-                    None,
-                )
-                walk(block, gates | _limit_ideas(limit or ""))
-            else:
-                walk(block, gates)
+                    ideas.setdefault(name, {})[_RUNNING_EXPENSE] = Decimal(0)
+            return
+        branch = key in ("if", "else_if")
+        inner_gates = gates
+        if branch:
+            limit = next(
+                (
+                    inner
+                    for field, _v, inner in iter_statements(block)
+                    if field == "limit"
+                ),
+                None,
+            )
+            inner_gates = gates | _limit_ideas(limit or "")
+        for child, _v, child_block in iter_statements(block):
+            if child_block is None or child == "limit":
+                continue
+            # A nested else runs when this limit fails, so it keeps the outer gates
+            nested_else = branch and child in ("else", "else_if")
+            visit(child, child_block, gates if nested_else else inner_gates)
 
     for text in texts:
-        if "additional_expenses_rate" in text:
-            walk(blank_quoted_strings(text), frozenset())
+        if "additional_expenses_rate" not in text:
+            continue
+        for key, _value, block in iter_statements(blank_quoted_strings(text)):
+            if block is not None:
+                visit(key, block, frozenset())
 
 
 def script_commits_money(text: str, ideas: Mapping[str, Mapping[str, Decimal]]) -> bool:
@@ -681,8 +703,10 @@ def _block_commits_money(body: str, ideas: Mapping[str, Mapping[str, Decimal]]) 
         for idea in names:
             if idea not in ideas or _UNKNOWN_MONEY_MODIFIER in ideas[idea]:
                 return True
+            if sign == 1 and _RUNNING_EXPENSE in ideas[idea]:
+                return True
             for modifier, level in ideas[idea].items():
-                if modifier == _IDEA_CALLBACK:
+                if modifier in (_IDEA_CALLBACK, _RUNNING_EXPENSE):
                     continue
                 delta[modifier] = delta.get(modifier, Decimal(0)) + sign * level
     return any(money_modifier_raises_cost(name, net) for name, net in delta.items())

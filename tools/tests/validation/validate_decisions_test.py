@@ -1608,25 +1608,69 @@ def test_idea_on_add_can_justify_decision_guard(tmp_path):
     assert issue_rows(validator) == []
 
 
+_CHARGE = "add_to_variable = { additional_expenses_rate = 1 }"
+
+
 @pytest.mark.parametrize(
-    "gate, flagged",
+    "money, effect, flagged",
     [
-        ("OR = { has_idea = TAG_subsidy has_idea = TAG_other }", False),
-        ("NOT = { has_idea = TAG_subsidy }", True),
+        (
+            f"if = {{ limit = {{ OR = {{ has_idea = TAG_subsidy has_war = no }} }} {_CHARGE} }}",
+            "add_ideas = TAG_subsidy",
+            False,
+        ),
+        (
+            f"if = {{ limit = {{ AND = {{ has_idea = TAG_subsidy has_war = no }} }} {_CHARGE} }}",
+            "add_ideas = TAG_subsidy",
+            False,
+        ),
+        (
+            "if = { limit = { has_war = yes } }"
+            f" else_if = {{ limit = {{ has_idea = TAG_subsidy }} {_CHARGE} }}",
+            "add_ideas = TAG_subsidy",
+            False,
+        ),
+        (
+            f"if = {{ limit = {{ NOT = {{ has_idea = TAG_subsidy }} }} {_CHARGE} }}",
+            "add_ideas = TAG_subsidy",
+            True,
+        ),
+        (
+            f"if = {{ limit = {{ has_idea = TAG_subsidy }} else = {{ {_CHARGE} }} }}",
+            "add_ideas = TAG_subsidy",
+            True,
+        ),
+        (
+            "if = { limit = { has_idea = TAG_subsidy }"
+            " add_to_variable = { additional_expenses_rate_shown = 1 } }",
+            "add_ideas = TAG_subsidy",
+            True,
+        ),
+        (
+            "if = { limit = { has_idea = TAG_subsidy }"
+            " add_to_variable = { additional_expenses_rate = -1 } }",
+            "add_ideas = TAG_subsidy",
+            True,
+        ),
+        (
+            f"if = {{ limit = {{ has_idea = TAG_subsidy }} {_CHARGE} }}",
+            "remove_ideas = TAG_subsidy",
+            True,
+        ),
     ],
 )
-def test_running_expense_idea_justifies_decision_guard(tmp_path, gate, flagged):
+def test_running_expense_idea_justifies_decision_guard(
+    tmp_path, money, effect, flagged
+):
     validator = _mod(
         tmp_path,
         {
             "common/ideas/ideas.txt": "ideas = { country = { TAG_subsidy = { } } }",
-            "common/scripted_effects/00_money.txt": "calc_expenses = {\n"
-            f"\tif = {{ limit = {{ {gate} }}\n"
-            "\t\tadd_to_variable = { additional_expenses_rate = 1 }\n\t}\n}\n",
+            "common/scripted_effects/00_money.txt": f"calc_expenses = {{\n\t{money}\n}}\n",
             "common/decisions/Subsidy.txt": "subsidy_category = {\n"
             + _nested(
                 "dec_subsidy",
-                _block("complete_effect", "add_ideas = TAG_subsidy")
+                _block("complete_effect", effect)
                 + _block(
                     "ai_will_do",
                     "base = 1\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
