@@ -171,8 +171,9 @@ mission and halve it on a high deficit:
   A bankruptcy check on it is still fine, a deficit check is not.
 - Do not lower the weight on bankruptcy or a high deficit for a decision that costs its
   own country no money. A war, a spending law raise, an idea or money modifier that
-  raises a cost, and a bill an event it fires sends back count as money. A charge to
-  the target or another tag does not.
+  raises a cost, an idea the money system bills through `additional_expenses_rate`, and
+  a bill an event it fires sends back count as money. A charge to the target or another
+  tag does not.
 
 The Spanish decisions in `common/decisions/Spain.txt` are the reference.
 
