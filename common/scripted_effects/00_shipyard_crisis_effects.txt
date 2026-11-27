@@ -81,33 +81,114 @@ shipyard_recalc = {
 	set_variable = { shipyard_dockyards_in_use = num_of_naval_factories }
 	subtract_from_variable = { shipyard_dockyards_in_use = num_of_available_naval_factories }
 
-	set_variable = { shipyard_capital_yard = 0 }
-	if = {
-		limit = {
-			any_owned_state = {
-				is_controlled_by = PREV
-				non_damaged_building_level = { building = large_slipway level > 0 }
-			}
-		}
-		set_variable = { shipyard_capital_yard = 1 }
-	}
-
-	set_variable = { shipyard_submarine_yard = 0 }
-	if = {
-		limit = {
-			any_owned_state = {
-				is_controlled_by = PREV
-				non_damaged_building_level = { building = submarine_hall level > 0 }
-			}
-		}
-		set_variable = { shipyard_submarine_yard = 1 }
-	}
+	shipyard_refresh_facilities = yes
 
 	shipyard_country_recalc = yes
 	force_update_dynamic_modifier = yes
 	shipyard_sync_equipment = yes
-	shipyard_sync_yard_locks = yes
 	shipyard_update_dirty_variable = yes
+}
+
+shipyard_refresh_facilities = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = shipyard_facilities_active }
+			shipyard_can_activate_facilities = yes
+		}
+		set_temp_variable = { shipyard_owned_dockyards = 0 }
+		every_owned_state = {
+			limit = { is_controlled_by = PREV }
+			add_to_temp_variable = { shipyard_owned_dockyards = building_level@dockyard }
+		}
+		if = {
+			limit = { check_variable = { shipyard_owned_dockyards > 1 } }
+			set_country_flag = shipyard_facilities_active
+		}
+	}
+	if = {
+		limit = { has_country_flag = shipyard_facilities_active }
+		set_temp_variable = { shipyard_working_slipways = 0 }
+		set_temp_variable = { shipyard_working_halls = 0 }
+		set_temp_variable = { shipyard_total_slipways = 0 }
+		set_temp_variable = { shipyard_total_halls = 0 }
+		every_owned_state = {
+			limit = { is_controlled_by = PREV }
+			add_to_temp_variable = { shipyard_working_slipways = non_damaged_building_level@large_slipway }
+			add_to_temp_variable = { shipyard_working_halls = non_damaged_building_level@submarine_hall }
+			add_to_temp_variable = { shipyard_total_slipways = building_level@large_slipway }
+			add_to_temp_variable = { shipyard_total_halls = building_level@submarine_hall }
+		}
+		set_variable = { shipyard_capital_yard = shipyard_working_slipways }
+		set_variable = { shipyard_submarine_yard = shipyard_working_halls }
+		set_variable = { shipyard_capital_yard_total = shipyard_total_slipways }
+		set_variable = { shipyard_submarine_yard_total = shipyard_total_halls }
+		shipyard_sync_yard_locks = yes
+		shipyard_sync_yard_discounts = yes
+	}
+}
+
+# Count up to four working facilities of each type for the construction discounts.
+shipyard_sync_yard_discounts = {
+	clamp_temp_variable = { var = shipyard_working_slipways min = 0 max = 4 }
+	clamp_temp_variable = { var = shipyard_working_halls min = 0 max = 4 }
+	while_loop_effect = {
+		limit = { check_variable = { shipyard_slipway_discount_steps < shipyard_working_slipways } }
+		shipyard_add_slipway_discount = yes
+		add_to_variable = { shipyard_slipway_discount_steps = 1 }
+	}
+	while_loop_effect = {
+		limit = { check_variable = { shipyard_slipway_discount_steps > shipyard_working_slipways } }
+		shipyard_remove_slipway_discount = yes
+		subtract_from_variable = { shipyard_slipway_discount_steps = 1 }
+	}
+	while_loop_effect = {
+		limit = { check_variable = { shipyard_hall_discount_steps < shipyard_working_halls } }
+		shipyard_add_hall_discount = yes
+		add_to_variable = { shipyard_hall_discount_steps = 1 }
+	}
+	while_loop_effect = {
+		limit = { check_variable = { shipyard_hall_discount_steps > shipyard_working_halls } }
+		shipyard_remove_hall_discount = yes
+		subtract_from_variable = { shipyard_hall_discount_steps = 1 }
+	}
+}
+
+shipyard_add_slipway_discount = {
+	add_equipment_bonus = {
+		name = shipyard_slipway_discount
+		bonus = {
+			destroyer = { instant = yes build_cost_ic = -0.15 }
+			stealth_destroyer = { instant = yes build_cost_ic = -0.15 }
+		}
+	}
+}
+
+shipyard_remove_slipway_discount = {
+	add_equipment_bonus = {
+		name = shipyard_slipway_discount
+		bonus = {
+			destroyer = { instant = yes build_cost_ic = 0.15 }
+			stealth_destroyer = { instant = yes build_cost_ic = 0.15 }
+		}
+	}
+}
+
+shipyard_add_hall_discount = {
+	add_equipment_bonus = {
+		name = shipyard_hall_discount
+		bonus = {
+			attack_submarine = { instant = yes build_cost_ic = -0.15 }
+		}
+	}
+}
+
+shipyard_remove_hall_discount = {
+	add_equipment_bonus = {
+		name = shipyard_hall_discount
+		bonus = {
+			attack_submarine = { instant = yes build_cost_ic = 0.15 }
+		}
+	}
 }
 
 shipyard_monthly = {
@@ -331,7 +412,7 @@ shipyard_country_recalc = {
 }
 
 # A country with no large slipway can still lay a capital ship down, at a price nobody
-# pays twice. The same for submarines without a submarine hall. add_equipment_bonus cannot
+# pays twice. The same for missile submarines without a submarine hall. add_equipment_bonus cannot
 # be removed, so each lock is toggled with its own negative.
 # Carrier bonuses also reach helicopter operators (type = carrier), so their entries hold only the difference.
 shipyard_sync_yard_locks = {
@@ -339,14 +420,18 @@ shipyard_sync_yard_locks = {
 		limit = {
 			check_variable = { shipyard_capital_yard = 0 }
 			check_variable = { shipyard_capital_locked = 0 }
+			shipyard_has_large_hull_tech = yes
 		}
 		shipyard_capital_lock_on = yes
 		set_variable = { shipyard_capital_locked = 1 }
 	}
 	else_if = {
 		limit = {
-			check_variable = { shipyard_capital_yard = 1 }
 			check_variable = { shipyard_capital_locked = 1 }
+			OR = {
+				check_variable = { shipyard_capital_yard > 0 }
+				shipyard_has_large_hull_tech = no
+			}
 		}
 		shipyard_capital_lock_off = yes
 		set_variable = { shipyard_capital_locked = 0 }
@@ -355,14 +440,18 @@ shipyard_sync_yard_locks = {
 		limit = {
 			check_variable = { shipyard_submarine_yard = 0 }
 			check_variable = { shipyard_submarine_locked = 0 }
+			shipyard_has_missile_submarine_tech = yes
 		}
 		shipyard_submarine_lock_on = yes
 		set_variable = { shipyard_submarine_locked = 1 }
 	}
 	else_if = {
 		limit = {
-			check_variable = { shipyard_submarine_yard = 1 }
 			check_variable = { shipyard_submarine_locked = 1 }
+			OR = {
+				check_variable = { shipyard_submarine_yard > 0 }
+				shipyard_has_missile_submarine_tech = no
+			}
 		}
 		shipyard_submarine_lock_off = yes
 		set_variable = { shipyard_submarine_locked = 0 }
@@ -453,10 +542,6 @@ shipyard_submarine_lock_on = {
 	add_equipment_bonus = {
 		name = shipyard_yard_class_equipment
 		bonus = {
-			attack_submarine = {
-				instant = yes
-				build_cost_ic = 2.0
-			}
 			missile_submarine = {
 				instant = yes
 				build_cost_ic = 3.0
@@ -469,10 +554,6 @@ shipyard_submarine_lock_off = {
 	add_equipment_bonus = {
 		name = shipyard_yard_class_equipment
 		bonus = {
-			attack_submarine = {
-				instant = yes
-				build_cost_ic = -2.0
-			}
 			missile_submarine = {
 				instant = yes
 				build_cost_ic = -3.0
