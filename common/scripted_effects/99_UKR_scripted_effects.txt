@@ -8158,6 +8158,80 @@ UKR_an_71_complete_awacs_project = {
 	}
 }
 
+# Iskra (Zaporizhzhia) rebuilds the Kvant radar without Vega-M: twice the Russian price, twice the time
+UKR_an_71_order_kvant_domestic = {
+	if = {
+		limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	else = {
+		set_temp_variable = { treasury_change = -0.5 }
+	}
+	modify_treasury_effect = yes
+
+	set_temp_variable = { percent_change = 0.2 }
+	change_domestic_influence_percentage = yes
+
+	694 = { #Zaporizhzhia
+		add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.1 } }
+	}
+
+	set_country_flag = UKR_an_71_kvant_domestic_flag
+
+	if = {
+		limit = { has_country_flag = UKR_an_71_phalcon_failed_flag }
+		custom_effect_tooltip = UKR_modernize_planes_restore_an_71_kvant_domestic_after_israel_tt
+		if = {
+			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 180 }
+		}
+		else = {
+			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 300 }
+		}
+	}
+	else_if = {
+		limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+		custom_effect_tooltip = UKR_modernize_planes_restore_an_71_kvant_domestic_fast_tt
+		country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 240 }
+	}
+	else = {
+		custom_effect_tooltip = UKR_modernize_planes_restore_an_71_kvant_domestic_slow_tt
+		country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 360 }
+	}
+}
+
+UKR_an_71_order_kvant = {
+	if = {
+		limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+		set_temp_variable = { treasury_change = -0.15 }
+	}
+	else = {
+		set_temp_variable = { treasury_change = -0.25 }
+	}
+	modify_treasury_effect = yes
+
+	if = {
+		limit = { has_country_flag = UKR_an_71_phalcon_failed_flag }
+		custom_effect_tooltip = UKR_modernize_planes_restore_an_71_kvant_after_israel_tt
+		if = {
+			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 90 }
+		}
+		else = {
+			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 150 }
+		}
+	}
+	else_if = {
+		limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+		custom_effect_tooltip = UKR_modernize_planes_restore_an_71_kvant_fast_tt
+		country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 120 }
+	}
+	else = {
+		custom_effect_tooltip = UKR_modernize_planes_restore_an_71_kvant_slow_tt
+		country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 180 }
+	}
+}
+
 # ---------------------------------------------------------------------------------------------
 # T-54/T-55 and T-62 reactivation (UKR_reactivate_sov_category, UKR_war_trophies_category):
 # equipment variants and deliveries with and without No Step Back. Without NSB every tank design
@@ -20008,4 +20082,38 @@ UKR_mrls_clear_kyiv = {
 	clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_kraz_flag
 	clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_tatra_flag
 	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_kyiv_flag
+}
+
+UKR_storage_update_naval_aviation_museum = {
+	# The Naval Aviation Museum Program fades: 100% in its first year, 75% in the second, 50% in the third
+	# and 25% in the fourth and fifth; the flag (1825 days) ends it and the modifier's remove_trigger removes it.
+	# UKR_storage_museum_extra_share is the already faded share of the other aircraft in the program (Ka-25 helicopters)
+	if = {
+		limit = { NOT = { has_variable = UKR_storage_museum_extra_share } }
+		set_variable = { UKR_storage_museum_extra_share = 0 }
+	}
+	set_temp_variable = { museum_share = 0 }
+	if = {
+		limit = { has_country_flag = UKR_storage_yak38_museum_active_flag }
+		set_temp_variable = { museum_share = 1 }
+		if = {
+			limit = { has_country_flag = { flag = UKR_storage_yak38_museum_active_flag days > 1095 } }
+			set_temp_variable = { museum_share = 0.25 }
+		}
+		else_if = {
+			limit = { has_country_flag = { flag = UKR_storage_yak38_museum_active_flag days > 730 } }
+			set_temp_variable = { museum_share = 0.5 }
+		}
+		else_if = {
+			limit = { has_country_flag = { flag = UKR_storage_yak38_museum_active_flag days > 365 } }
+			set_temp_variable = { museum_share = 0.75 }
+		}
+	}
+	add_to_temp_variable = { museum_share = UKR_storage_museum_extra_share }
+	set_variable = { UKR_storage_museum_recruitment = museum_share }
+	multiply_variable = { UKR_storage_museum_recruitment = 0.005 }
+	set_variable = { UKR_storage_museum_ace_chance = museum_share }
+	multiply_variable = { UKR_storage_museum_ace_chance = 0.02 }
+	set_variable = { UKR_storage_museum_navy_xp = museum_share }
+	multiply_variable = { UKR_storage_museum_navy_xp = 0.01 }
 }
