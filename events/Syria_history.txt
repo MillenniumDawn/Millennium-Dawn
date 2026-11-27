@@ -1,0 +1,851 @@
+add_namespace = SyriaHistory
+
+# March 2004, the Qamishli riots
+country_event = {
+	id = SyriaHistory.1
+	title = SyriaHistory.1.t
+	desc = SyriaHistory.1.d
+	picture = GFX_kurd_riot
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = SYR }
+
+	# Send in the security services
+	option = {
+		name = SyriaHistory.1.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.1.a executed"
+		add_stability = -0.02
+		custom_effect_tooltip = SYR_history_kurdish_trust_down_tt
+		hidden_effect = {
+			add_to_variable = { SYR_kurdish_trust = -3 }
+			clamp_variable = { var = SYR_kurdish_trust min = -10 max = 10 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 10 check_variable = { kurdish_status < 30 } }
+			modifier = { factor = 2 SYR_ai_axis_path = yes }
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	# Open talks and release the detainees
+	option = {
+		name = SyriaHistory.1.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.1.b executed"
+		add_political_power = -25
+		custom_effect_tooltip = SYR_history_kurdish_trust_up_tt
+		hidden_effect = {
+			add_to_variable = { SYR_kurdish_trust = 2 }
+			clamp_variable = { var = SYR_kurdish_trust min = -10 max = 10 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 10 check_variable = { kurdish_status > 50 } }
+			modifier = { factor = 2 SYR_ai_moderate_path = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# September 2004, Security Council Resolution 1559
+country_event = {
+	id = SyriaHistory.2
+	title = SyriaHistory.2.t
+	desc = SyriaHistory.2.d
+	picture = GFX_Syrian_Occupation_Lebanon
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		country_exists = LEB
+		LEB = { is_subject_of = ROOT }
+		NOT = { has_completed_focus = SYR_withdraw_from_lebanon }
+	}
+
+	# Reject the resolution and keep our hold
+	option = {
+		name = SyriaHistory.2.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.2.a executed"
+		add_war_support = 0.03
+		LEB = { add_autonomy_score = { value = -50 } }
+		if = {
+			limit = { country_exists = USA }
+			reverse_add_opinion_modifier = { target = USA modifier = harshly_worded_letter }
+		}
+		if = {
+			limit = { country_exists = FRA }
+			reverse_add_opinion_modifier = { target = FRA modifier = harshly_worded_letter }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 SYR_ai_axis_path = yes }
+		}
+	}
+
+	# Announce a phased redeployment
+	option = {
+		name = SyriaHistory.2.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.2.b executed"
+		add_stability = -0.02
+		LEB = { add_autonomy_score = { value = 100 } }
+		if = {
+			limit = { country_exists = USA }
+			reverse_add_opinion_modifier = { target = USA modifier = peace_talks }
+		}
+		if = {
+			limit = { country_exists = FRA }
+			reverse_add_opinion_modifier = { target = FRA modifier = peace_talks }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 SYR_ai_gulf_path = yes }
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+}
+
+# September 2007, the strike near Al-Kibar. Israel's own Operation Orchard focus covers the case where Israel plans it.
+country_event = {
+	id = SyriaHistory.3
+	title = SyriaHistory.3.t
+	desc = SyriaHistory.3.d
+	picture = GFX_Isra_Syria_bombado
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		country_exists = ISR
+		ISR = { NOT = { has_completed_focus = ISR_operation_orchard } }
+	}
+
+	# Deny everything and bulldoze the site
+	option = {
+		name = SyriaHistory.3.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.3.a executed"
+		add_political_power = 25
+		add_war_support = -0.02
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_gulf_path = yes }
+			modifier = { factor = 0.5 has_war_support < 0.3 }
+		}
+	}
+
+	# Protest the violation of our airspace
+	option = {
+		name = SyriaHistory.3.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.3.b executed"
+		add_political_power = -25
+		add_war_support = 0.04
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 SYR_ai_hardline_path = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Purge the officers who failed us
+	option = {
+		name = SyriaHistory.3.c
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.3.c executed"
+		add_political_power = 50
+		set_temp_variable = { temp_opinion = -15 }
+		change_intelligence_community_opinion = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 has_global_flag = SYR_SYRIAN_SAVAGE_FOCUS_PATH }
+		}
+	}
+}
+
+# 2008, Cham Holding and the Makhlouf network
+country_event = {
+	id = SyriaHistory.4
+	title = SyriaHistory.4.t
+	desc = SyriaHistory.4.d
+	picture = GFX_aleppo_spring_industr
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { SYR_assad_regime_in_power = yes }
+
+	# Give Cham Holding first call
+	option = {
+		name = SyriaHistory.4.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.4.a executed"
+		add_stability = 0.02
+		increase_corruption = yes
+		if = {
+			limit = { NOT = { has_idea = SYR_makhlouf_capital } }
+			add_timed_idea = { idea = SYR_makhlouf_capital days = 365 }
+		}
+		set_temp_variable = { temp_opinion = 10 }
+		change_oligarchs_opinion = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 SYR_ai_axis_path = yes }
+			modifier = { factor = 2 has_stability < 0.4 }
+		}
+	}
+
+	# Make Cham Holding bid like everyone else
+	option = {
+		name = SyriaHistory.4.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.4.b executed"
+		add_stability = -0.03
+		decrease_corruption = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_oligarchs_opinion = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 SYR_ai_moderate_path = yes }
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+}
+
+# April 2011, the end of the emergency law
+country_event = {
+	id = SyriaHistory.5
+	title = SyriaHistory.5.t
+	desc = SyriaHistory.5.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		arab_spring_protests_active = yes
+	}
+
+	# Lift the emergency law
+	option = {
+		name = SyriaHistory.5.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.5.a executed"
+		add_stability = -0.03
+		custom_effect_tooltip = SYR_history_arab_spring_down_60_tt
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { arab_spring > 60 } }
+				subtract_from_variable = { arab_spring = 60 }
+			}
+			else = { set_variable = { arab_spring = 0 } }
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 3 SYR_ai_moderate_path = yes }
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+
+	# Replace it with a counterterrorism law
+	option = {
+		name = SyriaHistory.5.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.5.b executed"
+		add_stability = -0.01
+		custom_effect_tooltip = SYR_history_arab_spring_down_30_tt
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { arab_spring > 30 } }
+				subtract_from_variable = { arab_spring = 30 }
+			}
+			else = { set_variable = { arab_spring = 0 } }
+		}
+		ai_chance = {
+			base = 15
+			modifier = { factor = 0.75 has_stability < 0.3 }
+		}
+	}
+
+	# Keep the emergency law
+	option = {
+		name = SyriaHistory.5.c
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.5.c executed"
+		add_political_power = 50
+		custom_effect_tooltip = SYR_history_arab_spring_up_40_tt
+		hidden_effect = { add_to_variable = { arab_spring = 40 } }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 SYR_ai_hardline_path = yes }
+		}
+	}
+}
+
+# Two months into the civil war, the Arab League suspends the regime
+country_event = {
+	id = SyriaHistory.6
+	title = SyriaHistory.6.t
+	desc = SyriaHistory.6.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		OR = {
+			has_idea = LoAS_member
+			has_idea = LoAS_member_upd
+		}
+		OR = {
+			has_global_flag = GLOBAL_syrian_civil_war_started
+			has_country_flag = arab_spring_active
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = { has_idea = LoAS_member }
+			remove_ideas = LoAS_member
+		}
+		if = {
+			limit = { has_idea = LoAS_member_upd }
+			remove_ideas = LoAS_member_upd
+		}
+		for_each_scope_loop = {
+			array = global.arab_league_members
+			if = {
+				limit = {
+					OR = {
+						tag = SAU
+						tag = QAT
+						tag = UAE
+						tag = BHR
+						tag = KUW
+						tag = OMA
+					}
+				}
+				add_opinion_modifier = { target = ROOT modifier = major_breach_of_trust }
+			}
+		}
+	}
+
+	# Denounce the vote as a foreign plot
+	option = {
+		name = SyriaHistory.6.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.6.a executed"
+		add_war_support = 0.05
+		add_political_power = 25
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 SYR_ai_axis_path = yes }
+		}
+	}
+
+	# Accept the League's observer mission
+	option = {
+		name = SyriaHistory.6.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.6.b executed"
+		add_stability = -0.02
+		custom_effect_tooltip = SYR_history_gulf_opinion_up_tt
+		hidden_effect = {
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				if = {
+					limit = {
+						OR = {
+							tag = SAU
+							tag = QAT
+							tag = UAE
+							tag = BHR
+							tag = KUW
+							tag = OMA
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = peace_talks }
+				}
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = { factor = 4 SYR_ai_gulf_path = yes }
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	# Turn to Moscow and Tehran
+	option = {
+		name = SyriaHistory.6.c
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.6.c executed"
+		trigger = {
+			country_exists = SOV
+			country_exists = PER
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = SOV.id }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = PER.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 3 SYR_ai_russian_path = yes }
+		}
+	}
+}
+
+# February 2012, the new constitution
+country_event = {
+	id = SyriaHistory.7
+	title = SyriaHistory.7.t
+	desc = SyriaHistory.7.d
+	picture = GFX_baath_party
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		OR = {
+			has_country_flag = arab_spring_active
+			has_global_flag = GLOBAL_syrian_civil_war_started
+		}
+	}
+
+	# Put the multiparty draft to a referendum
+	option = {
+		name = SyriaHistory.7.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.7.a executed"
+		add_stability = -0.02
+		custom_effect_tooltip = SYR_history_arab_spring_down_60_tt
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { arab_spring > 60 } }
+				subtract_from_variable = { arab_spring = 60 }
+			}
+			else = { set_variable = { arab_spring = 0 } }
+		}
+		ai_chance = {
+			base = 5
+			modifier = { factor = 4 SYR_ai_moderate_path = yes }
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	# Keep the Baath in charge through licensing rules
+	option = {
+		name = SyriaHistory.7.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.7.b executed"
+		increase_corruption = yes
+		custom_effect_tooltip = SYR_history_arab_spring_down_30_tt
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { arab_spring > 30 } }
+				subtract_from_variable = { arab_spring = 30 }
+			}
+			else = { set_variable = { arab_spring = 0 } }
+		}
+		ai_chance = { base = 12 }
+	}
+
+	# Shelve the draft
+	option = {
+		name = SyriaHistory.7.c
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.7.c executed"
+		add_stability = 0.02
+		custom_effect_tooltip = SYR_history_arab_spring_up_40_tt
+		hidden_effect = { add_to_variable = { arab_spring = 40 } }
+		ai_chance = {
+			base = 3
+			modifier = { factor = 3 SYR_ai_hardline_path = yes }
+		}
+	}
+}
+
+# Four months into the civil war, the Russian chemical weapons proposal
+country_event = {
+	id = SyriaHistory.8
+	title = SyriaHistory.8.t
+	desc = SyriaHistory.8.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		country_exists = SOV
+		has_global_flag = GLOBAL_syrian_civil_war_started
+		NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+	}
+
+	# Accept the Russian proposal
+	option = {
+		name = SyriaHistory.8.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.8.a executed"
+		add_war_support = -0.03
+		reverse_add_opinion_modifier = { target = SOV modifier = diplomatic_support }
+		if = {
+			limit = { country_exists = USA }
+			reverse_add_opinion_modifier = { target = USA modifier = peace_talks }
+		}
+		set_temp_variable = { percent_change = 3 }
+		set_temp_variable = { tag_index = SOV.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 20
+			modifier = { factor = 3 SYR_ai_russian_path = yes }
+			modifier = { factor = 0.5 has_war_support < 0.3 }
+		}
+	}
+
+	# Defy the world and keep the stockpile
+	option = {
+		name = SyriaHistory.8.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.8.b executed"
+		add_war_support = 0.03
+		reverse_add_opinion_modifier = { target = SOV modifier = harshly_worded_letter }
+		if = {
+			limit = { country_exists = USA }
+			reverse_add_opinion_modifier = { target = USA modifier = major_breach_of_trust }
+		}
+		if = {
+			limit = {
+				NOT = { has_idea = international_sanctions }
+				NOT = { has_idea = Massive_International_Sanctions }
+			}
+			add_timed_idea = { idea = international_sanctions days = 365 }
+		}
+		ai_chance = {
+			base = 5
+			modifier = { factor = 6 has_global_flag = SYR_SYRIAN_SAVAGE_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# A regime losing the civil war requests outside forces
+country_event = {
+	id = SyriaHistory.9
+	title = SyriaHistory.9.t
+	desc = SyriaHistory.9.d
+	picture = GFX_syrian_arab_army
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		has_global_flag = GLOBAL_syrian_civil_war_started
+		NOT = { has_global_flag = GLOBAL_syrian_civil_war_over }
+		OR = {
+			has_war_with = FSA
+			has_war_with = NUS
+		}
+	}
+
+	# Invite Russian forces
+	option = {
+		name = SyriaHistory.9.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.9.a executed"
+		trigger = { country_exists = SOV }
+		add_war_support = 0.05
+		custom_effect_tooltip = SYR_history_russian_support_tt
+		set_country_flag = SYR_invited_russian_forces
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = SOV.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 15
+			modifier = { factor = 3 SYR_ai_russian_path = yes }
+		}
+	}
+
+	# Lean on Iran and its militias
+	option = {
+		name = SyriaHistory.9.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.9.b executed"
+		trigger = { country_exists = PER }
+		add_war_support = 0.03
+		custom_effect_tooltip = SYR_history_iranian_support_tt
+		set_country_flag = SYR_invited_iranian_forces
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = PER.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 8
+			modifier = { factor = 4 has_global_flag = SYR_SYRIAN_SAVAGE_FOCUS_PATH }
+		}
+	}
+
+	# Fight on with what we have
+	option = {
+		name = SyriaHistory.9.c
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.9.c executed"
+		add_stability = -0.03
+		add_war_support = 0.05
+		ai_chance = {
+			base = 3
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+}
+
+# June 2020, the Caesar Act takes effect
+country_event = {
+	id = SyriaHistory.10
+	title = SyriaHistory.10.t
+	desc = SyriaHistory.10.d
+	picture = GFX_raid_international_sanctions
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		has_global_flag = GLOBAL_syrian_civil_war_started
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_idea = international_sanctions }
+				NOT = { has_idea = Massive_International_Sanctions }
+			}
+			add_timed_idea = { idea = international_sanctions days = 2200 }
+			set_country_flag = SYR_caesar_act_sanctions
+		}
+	}
+
+	# Ask Tehran and Moscow for credit
+	option = {
+		name = SyriaHistory.10.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.10.a executed"
+		trigger = {
+			country_exists = SOV
+			country_exists = PER
+		}
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV.id }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = PER.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 SYR_ai_axis_path = yes }
+		}
+	}
+
+	# Reach out to the Gulf for a way back
+	option = {
+		name = SyriaHistory.10.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.10.b executed"
+		add_political_power = -25
+		custom_effect_tooltip = SYR_history_gulf_opinion_up_tt
+		hidden_effect = {
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				if = {
+					limit = {
+						OR = {
+							tag = SAU
+							tag = QAT
+							tag = UAE
+							tag = BHR
+							tag = KUW
+							tag = OMA
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = peace_talks }
+				}
+			}
+		}
+		ai_chance = {
+			base = 8
+			modifier = { factor = 3 SYR_ai_gulf_path = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Rally the country against the siege
+	option = {
+		name = SyriaHistory.10.c
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.10.c executed"
+		add_stability = 0.03
+		add_war_support = 0.03
+		increase_corruption = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 2 SYR_ai_hardline_path = yes }
+		}
+	}
+}
+
+# February 2023, the earthquake
+country_event = {
+	id = SyriaHistory.11
+	title = SyriaHistory.11.t
+	desc = SyriaHistory.11.d
+	picture = GFX_bam_earthquake
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { SYR_assad_regime_in_power = yes }
+
+	# Open the crossings to Gulf and Western relief
+	option = {
+		name = SyriaHistory.11.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.11.a executed"
+		small_expenditure = yes
+		add_stability = 0.03
+		custom_effect_tooltip = SYR_history_gulf_opinion_up_tt
+		hidden_effect = {
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				if = {
+					limit = {
+						OR = {
+							tag = SAU
+							tag = QAT
+							tag = UAE
+							tag = BHR
+							tag = KUW
+							tag = OMA
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = peace_talks }
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 SYR_ai_gulf_path = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Accept Iranian and Russian aid
+	option = {
+		name = SyriaHistory.11.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.11.b executed"
+		trigger = {
+			country_exists = SOV
+			country_exists = PER
+		}
+		add_stability = 0.015
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = SOV.id }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = PER.id }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 8
+			modifier = { factor = 3 SYR_ai_axis_path = yes }
+		}
+	}
+
+	# Route the relief through loyalist networks
+	option = {
+		name = SyriaHistory.11.c
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.11.c executed"
+		add_stability = 0.01
+		add_political_power = 75
+		increase_corruption = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_oligarchs_opinion = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 2 SYR_ai_hardline_path = yes }
+		}
+	}
+}
+
+# Two years after the civil war, the Arab League readmits the regime
+country_event = {
+	id = SyriaHistory.12
+	title = SyriaHistory.12.t
+	desc = SyriaHistory.12.d
+	picture = GFX_Assad_parade
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		has_country_flag = SYR_arab_league_vote_held
+		jihadist_government = no
+		NOT = { has_idea = LoAS_member }
+		NOT = { has_idea = LoAS_member_upd }
+	}
+
+	# Take our seat at the summit
+	option = {
+		name = SyriaHistory.12.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.12.a executed"
+		add_ideas = LoAS_member
+		custom_effect_tooltip = SYR_history_gulf_opinion_up_tt
+		hidden_effect = {
+			for_each_scope_loop = {
+				array = global.arab_league_members
+				if = {
+					limit = {
+						OR = {
+							tag = SAU
+							tag = QAT
+							tag = UAE
+							tag = BHR
+							tag = KUW
+							tag = OMA
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = peace_talks }
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_gulf_path = yes }
+		}
+	}
+
+	# Take our seat and demand reconstruction pledges
+	option = {
+		name = SyriaHistory.12.b
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.12.b executed"
+		add_ideas = LoAS_member
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.004 } }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2 SYR_ai_axis_path = yes }
+		}
+	}
+
+	# Decline and stay the course
+	option = {
+		name = SyriaHistory.12.c
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.12.c executed"
+		add_war_support = 0.03
+		ai_chance = {
+			base = 3
+			modifier = { factor = 4 has_global_flag = SYR_SYRIAN_SAVAGE_FOCUS_PATH }
+		}
+	}
+}
+
+# 2025, Washington eases the Caesar sanctions
+country_event = {
+	id = SyriaHistory.13
+	title = SyriaHistory.13.t
+	desc = SyriaHistory.13.d
+	picture = GFX_raid_international_sanctions_b
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		SYR_assad_regime_in_power = yes
+		has_country_flag = SYR_caesar_act_sanctions
+		has_idea = international_sanctions
+	}
+
+	# Welcome the waivers
+	option = {
+		name = SyriaHistory.13.a
+		log = "[GetDateText]: [This.GetName]: SyriaHistory.13.a executed"
+		remove_ideas = international_sanctions
+		clr_country_flag = SYR_caesar_act_sanctions
+		add_stability = 0.03
+		add_political_power = 50
+		ai_chance = { base = 100 }
+	}
+}

@@ -715,6 +715,8 @@ on_actions = {
 				civil_war_cleanup_haiti = yes
 				civil_war_cleanup_car_bush_war = yes
 				civil_war_cleanup_mali = yes
+				# Catches a Damascus Spring rebel winner, which the tag-scoped hooks miss
+				civil_war_cleanup_syria = yes
 			}
 
 			if = {
@@ -802,6 +804,7 @@ on_actions = {
 					set_variable = { global.month = 1 }
 				}
 				ai_race_monthly_dispatch = yes
+				SYR_isis_resurgence_tick = yes
 				set_temp_variable = { every_other_month = global.month }
 				modulo_temp_variable = { every_other_month = 2 }
 
@@ -862,23 +865,16 @@ on_actions = {
 						EU_update_vars = yes
 					}
 
-					# Calculate Migrant Trigger
+					# Refugees from the Syrian or Libyan civil war reach Europe
 					if = {
 						limit = { NOT = { has_global_flag = EUU_migrant_crisis_triggered } }
-						set_temp_variable = {
-							total_population_refugees = {
-								value = 0
-								every_collection = {
-									named_collection = middle_eastern_refugee_source_nations_collection
-									add = {
-										value = population_total
-										multiply = 0.025
-									}
+						if = {
+							limit = {
+								OR = {
+									has_global_flag = { flag = syrian_refugee_wave_started days > 179 }
+									has_global_flag = { flag = first_libyan_civil_war days > 179 }
 								}
 							}
-						}
-
-						if = { limit = { check_variable = { total_population_refugees > 65 } }
 							set_global_flag = EUU_migrant_crisis_triggered
 							if = {
 								limit = {
@@ -1293,11 +1289,17 @@ on_actions = {
 							if = {
 								limit = { arab_spring_eligible = yes }
 								increment_arab_spring_strength = yes
-								# Nations still below the protest threshold by 2013 weather the Arab Spring
+								# Nations still below the protest threshold by 2013 weather the Arab Spring, as does a Brotherhood Syria the protests cannot start against
 								if = {
 									limit = {
 										date > 2013.1.1
-										check_variable = { arab_spring < 200 }
+										OR = {
+											check_variable = { arab_spring < 200 }
+											AND = {
+												original_tag = SYR
+												check_variable = { ruling_party = 12 }
+											}
+										}
 										arab_spring_protests_active = no
 									}
 									country_event = arab_spring.18

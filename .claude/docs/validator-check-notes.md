@@ -420,7 +420,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     modifier moved the costly way, which means cost or interest up, tax or income down,
     matching `color_type`; a value that is not a literal; and idea changes whose net in
     one block raises a money modifier or a spending law level (`spending_new_level` in
-    the idea's `on_add`). The `spending_law_scripted_change` flag alone commits nothing,
+    the idea's `on_add`). Adding an idea that gates a raise of `additional_expenses_rate`
+    in a scripted effect commits money too (`mark_running_expense_ideas`), and so does
+    one that gates a raise of a plain variable later added to the rate, such as a
+    subtotal. Removing one, a `NOT` gate, a nested `else`, and a subtotal fed from a
+    file that never names the rate do not count.
+    The `spending_law_scripted_change` flag alone commits nothing,
     and `tax_rate_change_multiplier_modifier` prices political power, not money.
   - Chains: fired events and called effects are followed to a fixed point. A fired
     event's FROM is its sender, and an explicit ROOT in a scripted effect is the
@@ -745,7 +750,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   modifier reads for a matching key. Computed values and stacked totals are not checked.
 - Document an intentional bonus as `owner::key` with a reason in the row's `exceptions`
   list. The owner is the idea, trait, or modifier name. Do not blanket-exempt existing
-  bonuses; review and explain each one.
+  bonuses; review and explain each one. For an intentional variable write, use
+  `repository/path::operation::variable::value`, with forward slashes and a
+  number such as `-0.75`.
 - `--modifier-cap PATTERN=CAP` adds a search row ahead of the config rows: either
   direction, variable-fed values and timed-only grants included, reported as
   `modifier-cap-search`. It takes over the keys it matches for that run.
