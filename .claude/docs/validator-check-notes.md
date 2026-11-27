@@ -88,21 +88,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   pre-selection.
 - Not guards: a `limit` on something else (an idea, a flag), and `trigger`, `available`,
   `visible`, `allowed`. `effect_tooltip` subtrees are skipped.
-- `random-building-slot-guard` (WARNING): a direct `add_building_construction` in
+- `random-building-slot-guard` (WARNING): a direct `add_building_construction`
+  of a shared-slot building (`level_cap = { shares_slots = yes }`) in
   `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
   or `random_core_state`, or in `every_owned_state` or `every_controlled_state` with
-  `random_select_amount`, has no proven free slot. Proof is `free_building_slots` for
-  that building with `size > 0` or `size >= 1` in the selector's own `limit` (also
-  inside `AND`), or a scripted trigger whose body has one, read from
-  `common/scripted_triggers/` (`infrastructure_random_build_loc`,
-  `free_shared_building_slots`). An earlier `add_extra_state_shared_building_slots` or
-  `remove_building` in the same block also counts, the removal only when the `limit`
-  proves that building is present. Effects run in order, so one placed after the
-  construction does not, and the warning says so. Shared-slot buildings
-  (`level_cap = { shares_slots = yes }`) share one proof. A same-building upper bound
-  is noted but does not suppress the warning. Province buildings are skipped, since
-  `free_building_slots` checks them only with a fixed `province`. Nested effects and
-  other selectors are not checked, and one free slot does not prove every level fits.
+  `random_select_amount`, has no proven free shared slot. Proof is
+  `free_building_slots` for any shared-slot building with `size > 0` or `size >= 1`
+  in the selector's own `limit` (also inside `AND`), or a scripted trigger such as
+  `free_shared_building_slots`. An earlier `add_extra_state_shared_building_slots`
+  also counts. A removal frees a shared slot when the `limit` proves the building
+  is present. The warning points out slot grants that run after construction and
+  reports a same-building upper bound as context. Province buildings, nested
+  effects, and other selectors are outside this check. One free slot does not
+  prove every level fits.
 - `building-missing-province` (ERROR): `add_building_construction` of a province
   building with no `province` key. The engine rejects the effect.
 - `province-id-in-selector-block` (ERROR): `province = { province = <id> }` inside
@@ -209,10 +207,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case` (WARNING, `--id-case`, on in CI): keep words after the uppercase
-  country or system directive lowercase, except one registered country tag. A
-  decision must match that tag to its sole explicit country target, or scope to it
-  directly if the decision is not targeted. Existing IDs are not renamed.
+- `decision-id-case` (WARNING, `--id-case`, on in CI): keep ordinary words after the
+  directive lowercase. The check accepts whole registered tags and tag aliases,
+  formable codes from the formable catalogue, abbreviations from English party and
+  organization names, and `validate_decisions.id_case_abbreviations`
+  from `validation_config.json`. Multiple abbreviations can appear in the same ID.
+  The separate cosmetic targeting check still verifies the decision's country target.
 - `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
   tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are
@@ -304,10 +304,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   re-check. Known gap: the category `allowed` runs once at game start, so it covers only
   lines that cannot change. A dynamic line there is its own bug.
 - `decision-category-gate-candidate` (WARNING, report-only): a category whose decisions,
-  two or more, all hold the same line under the rules above. One category check can
-  replace them. Missions need not share the line. Review before moving it: a line from
-  `available` hides the decision instead of greying it out, and a `visible_when_empty`
-  category disappears with it.
+  two or more, all share a line in `visible` or `target_root_trigger`. Checks that only
+  appear in `available` on a decision control selection and stay on that decision.
+  Categories with missions or `visible_when_empty = yes` are excluded because
+  moving a gate can hide the category UI even if its mission timers still tick.
+  A decision's `visible` checks are not move or removal candidates when
+  `cancel_if_not_visible = yes` uses them to cancel the active decision.
+  Review active decisions before moving a shared visibility check.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
@@ -555,6 +558,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   sprite names (`resource_item_background`) are not read. Sprites the engine resolves
   from MD declarations (equipment, tech, `GFX_EMI_`, focus-filter icons) do not count as
   uses. A window counts as kept when any MD `.gui` defines it. Skipped under `--staged`.
+  Script usage needs a render field or an equipment icon pool. A mention in a log
+  or a decision `key` outside an icon block is not a render reference.
   Deliberate drops go in `dropped_gui_elements`.
 
 ## validate_ideas.py

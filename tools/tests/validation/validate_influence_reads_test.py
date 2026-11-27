@@ -130,7 +130,7 @@ _CASES = {
         },
         [("CHI", "KOR", "resolved"), ("unknown", "KOR", "unresolved")],
     ),
-    "country-specific weekly action supplies ROOT": (
+    "weekly actions supply ROOT": (
         {
             "common/on_actions/test.txt": (
                 "on_actions = { on_weekly_UKR = { effect = { subjects = yes } } "
@@ -140,7 +140,7 @@ _CASES = {
         },
         [
             ("UKR", "country[any_subject_country]", "resolved"),
-            ("unknown", "USA", "unresolved"),
+            ("ROOT[on_weekly]", "USA", "resolved"),
         ],
     ),
     "event pool does not erase bound caller": (
@@ -206,10 +206,6 @@ _CASES = {
     ),
     "state scope stays unknown": (
         {_HISTORY: "capital_scope = { is_top3_influencer = yes }"},
-        [("CHI", "unknown", "unresolved")],
-    ),
-    "variable scope stays unknown": (
-        {_HISTORY: "var:target = { is_top3_influencer = yes }"},
         [("CHI", "unknown", "unresolved")],
     ),
     "random-list outcome is not a state": (
@@ -295,6 +291,73 @@ _CASES = {
             ("CHI", "country[for_each_scope_loop]", "resolved"),
             ("CHI", "unknown", "unresolved"),
         ],
+    ),
+    "array and collection selectors bind a country": (
+        {
+            _HISTORY: "any_of_scopes = { array = members is_top3_influencer = yes } every_collection_element = { input = { input = c operators = { limit = { influence_higher_5 = yes } } } }"
+        },
+        [
+            ("CHI", "country[any_of_scopes]", "resolved"),
+            ("CHI", "country[every_collection_element]", "resolved"),
+        ],
+    ),
+    "variable scope binds a country without guessing its tag": (
+        {_HISTORY: "var:target = { is_top3_influencer = yes }"},
+        [("CHI", "country[var:target]", "resolved")],
+    ),
+    "diplomatic action sender influences the target": (
+        {
+            "common/scripted_diplomatic_actions/test.txt": "scripted_diplomatic_actions = { act = { selectable = { influence_higher_10 = yes } ai_acceptance = { cond = { modifier = { add = 5 influence_higher_20 = yes } } } } }"
+        },
+        [("ROOT[act]", "country[THIS; act]", "resolved")] * 2,
+    ),
+    "raid target is FROM": (
+        {
+            "common/raids/test.txt": "types = { raid = { ai_will_do = { modifier = { FROM = { is_influencer = yes } } } } }"
+        },
+        [("ROOT[raid]", "country[FROM; raid]", "resolved")],
+    ),
+    "player GUI binds ROOT and selected country GUI binds THIS": (
+        {
+            "common/scripted_guis/test.txt": "scripted_gui = { own = { context_type = player_context visible = { KOR = { is_influencer = yes } } } other = { context_type = selected_country_context triggers = { button_click_enabled = { is_influencer = yes } } } }"
+        },
+        [
+            ("ROOT[own]", "KOR", "resolved"),
+            ("ROOT[other]", "country[THIS; other]", "resolved"),
+        ],
+    ),
+    "GUI list element triggers use the entry scope": (
+        {
+            "common/scripted_guis/test.txt": "scripted_gui = { list = { context_type = player_context dynamic_lists = { members = { array = a change_scope = yes } } visible = { is_influencer = yes } triggers = { row_click_enabled = { is_influencer = yes } } } }"
+        },
+        [
+            ("ROOT[list]", "ROOT[list]", "self"),
+            ("ROOT[list]", "country[THIS; list entry]", "resolved"),
+        ],
+    ),
+    "state GUI keeps THIS unknown": (
+        {
+            "common/scripted_guis/test.txt": "scripted_gui = { state = { context_type = selected_state_context visible = { is_influencer = yes } } }"
+        },
+        [("unknown", "unknown", "unresolved")],
+    ),
+    "country scorer target is THIS and scorer is FROM": (
+        {
+            "common/scorers/country/test.txt": "scorer = { targets = { score = { modifier = { sender_is_influencer = yes } } } }"
+        },
+        [("country[FROM; scorer]", "country[THIS; scorer]", "resolved")],
+    ),
+    "periodic country hooks bind ROOT": (
+        {
+            "common/on_actions/test.txt": "on_actions = { on_monthly_KOR = { effect = { USA = { is_influencer = yes } } } on_daily = { effect = { USA = { is_influencer = yes } } } }"
+        },
+        [("KOR", "USA", "resolved"), ("ROOT[on_daily]", "USA", "resolved")],
+    ),
+    "subject release hook binds FROM": (
+        {
+            "common/on_actions/test.txt": "on_actions = { on_subject_free = { effect = { FROM = { is_influencer = yes } } } }"
+        },
+        [("ROOT[on_subject_free]", "country[FROM; on_subject_free]", "resolved")],
     ),
     "unsupported root context stays unknown": (
         {
