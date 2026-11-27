@@ -113,8 +113,9 @@ problem the cost solves:
 - Country paths: weigh choices by the `TAG_ai_behavior` path triggers first. Use the sitting government only under No Path, or where the check mirrors a focus `available` gate.
 - Do not lower the weight on bankruptcy or a high deficit for an option that costs the
   choosing country no money. Bankruptcy also covers political power. A war, a spending
-  law raise, an idea or money modifier that raises a cost, and a bill a follow-up event
-  sends back count as money. A charge to FROM or another tag does not. Raising a free
+  law raise, an idea or money modifier that raises a cost, an idea the money system
+  bills through `additional_expenses_rate`, and a bill a follow-up event sends back
+  count as money. A charge to FROM or another tag does not. Raising a free
   option when the country is broke is fine.
 - Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`; see "Cost-aware AI weights" in `decision-reference.md`.
 - Skip the guard on an option the AI never picks (`base = 0`, no `add`), in an event whose trigger has `is_ai = no`, and on a cost every option pays the same way, since a guard on each scales them all alike. When the shared cost differs in size, guard only the dearer option.

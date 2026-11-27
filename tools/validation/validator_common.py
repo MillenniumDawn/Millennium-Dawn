@@ -18,6 +18,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    FrozenSet,
     Iterable,
     List,
     Mapping,
@@ -80,8 +81,11 @@ MONEY_MODIFIER_RE = re.compile(
 SPENDING_LEVEL = "spending_level"
 _UNKNOWN_MONEY_MODIFIER = "_unknown_money_modifier"
 _IDEA_CALLBACK = "_idea_callback"
+# Billed by the money system while held, so only adding the idea commits money.
+_RUNNING_EXPENSE = "_running_expense"
 _SPENDING_LEVEL_RE = re.compile(r"\bspending_new_level\s*=\s*([^\s}]+)")
 _LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
+_PLAIN_VARIABLE_RE = re.compile(r"[A-Za-z_]\w*")
 _IDEA_LIST_KEYS = frozenset({"add_ideas", "remove_ideas"})
 _TOOLTIP_VARIABLE_KEYS = frozenset({"add_to_variable", "subtract_from_variable"})
 _MONEY_HINT_RE = re.compile(
@@ -548,6 +552,94 @@ def idea_money_modifiers(texts: Iterable[str]) -> Dict[str, Dict[str, Decimal]]:
     return ideas
 
 
+def _limit_ideas(limit: str) -> Set[str]:
+    """Ideas a `limit` requires: has_idea at its top or under OR and AND, not NOT."""
+    found: Set[str] = set()
+    for key, value, block in iter_statements(limit):
+        if key == "has_idea" and value and value.strip():
+            found.add(value)
+        elif key in ("OR", "AND") and block is not None:
+            found |= _limit_ideas(block)
+    return found
+
+
+def _added_variable(block: str) -> Tuple[str, str]:
+    """The target variable and amount of an `add_to_variable` block."""
+    fields = {field: scalar for field, scalar, _nested in iter_statements(block)}
+    fields.pop("tooltip", None)
+    if "var" in fields:
+        return fields.get("var") or "", fields.get("value") or ""
+    variable = next(iter(fields), "")
+    return variable, fields.get(variable) or ""
+
+
+def mark_running_expense_ideas(
+    ideas: Dict[str, Dict[str, Decimal]], texts: Iterable[str]
+) -> None:
+    """Mark in *ideas* every idea that gates an `additional_expenses_rate` charge.
+
+    The money system bills those ideas each week from a scripted effect, so
+    adding one commits money although the idea has no money modifier. A plain
+    variable later added into the rate counts as the rate, so ideas that feed a
+    subtotal are marked too. *texts* are scripted effect files with comments
+    stripped.
+    """
+
+    def additions(block: str) -> Iterable[Tuple[str, str]]:
+        for key, _value, inner in iter_statements(block):
+            if inner is None:
+                continue
+            if key == "add_to_variable":
+                yield _added_variable(inner)
+            else:
+                yield from additions(inner)
+
+    rate_texts = [
+        blank_quoted_strings(text)
+        for text in texts
+        if "additional_expenses_rate" in text
+    ]
+    charged = {"additional_expenses_rate"}
+    for text in rate_texts:
+        charged.update(
+            amount
+            for variable, amount in additions(text)
+            if variable == "additional_expenses_rate"
+            and _PLAIN_VARIABLE_RE.fullmatch(amount)
+        )
+
+    def visit(key: str, block: str, gates: FrozenSet[str]) -> None:
+        if key == "add_to_variable":
+            variable, amount = _added_variable(block)
+            if variable in charged and not amount.startswith("-"):
+                for name in gates:
+                    ideas.setdefault(name, {})[_RUNNING_EXPENSE] = Decimal(0)
+            return
+        branch = key in ("if", "else_if")
+        inner_gates = gates
+        if branch:
+            limit = next(
+                (
+                    inner
+                    for field, _v, inner in iter_statements(block)
+                    if field == "limit"
+                ),
+                None,
+            )
+            inner_gates = gates | _limit_ideas(limit or "")
+        for child, _v, child_block in iter_statements(block):
+            if child_block is None or child == "limit":
+                continue
+            # A nested else runs when this limit fails, so it keeps the outer gates
+            nested_else = branch and child in ("else", "else_if")
+            visit(child, child_block, gates if nested_else else inner_gates)
+
+    for text in rate_texts:
+        for key, _value, block in iter_statements(text):
+            if block is not None:
+                visit(key, block, frozenset())
+
+
 def script_commits_money(text: str, ideas: Mapping[str, Mapping[str, Decimal]]) -> bool:
     """Whether script in *text* commits money beyond a direct charge.
 
@@ -634,8 +726,10 @@ def _block_commits_money(body: str, ideas: Mapping[str, Mapping[str, Decimal]]) 
         for idea in names:
             if idea not in ideas or _UNKNOWN_MONEY_MODIFIER in ideas[idea]:
                 return True
+            if sign == 1 and _RUNNING_EXPENSE in ideas[idea]:
+                return True
             for modifier, level in ideas[idea].items():
-                if modifier == _IDEA_CALLBACK:
+                if modifier in (_IDEA_CALLBACK, _RUNNING_EXPENSE):
                     continue
                 delta[modifier] = delta.get(modifier, Decimal(0)) + sign * level
     return any(money_modifier_raises_cost(name, net) for name, net in delta.items())

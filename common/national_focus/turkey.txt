@@ -5031,9 +5031,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_open_door_policy"
-			swap_ideas = {
-				remove_idea = large_refugee_population
-				add_idea = TUR_refugees_maintained
+			# The refugees may already have gone home by the time the focus ends
+			if = {
+				limit = { has_idea = syrian_refugees_hosted }
+				swap_ideas = {
+					remove_idea = syrian_refugees_hosted
+					add_idea = TUR_refugees_maintained
+				}
+			}
+			else_if = {
+				limit = { has_idea = TUR_transit_migrants }
+				swap_ideas = {
+					remove_idea = TUR_transit_migrants
+					add_idea = TUR_refugees_maintained
+				}
 			}
 		}
 
@@ -5041,7 +5052,10 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 30
-				has_idea = large_refugee_population
+				OR = {
+					has_idea = syrian_refugees_hosted
+					has_idea = TUR_transit_migrants
+				}
 			}
 			modifier = {
 				factor = 4
@@ -5070,14 +5084,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_closed_borders"
-			remove_ideas = large_refugee_population
+			if = {
+				limit = { has_idea = syrian_refugees_hosted }
+				remove_ideas = syrian_refugees_hosted
+			}
+			else_if = {
+				limit = { has_idea = TUR_transit_migrants }
+				remove_ideas = TUR_transit_migrants
+			}
 		}
 
 		ai_will_do = {
 			base = 1
 			modifier = {
 				factor = 30
-				has_idea = large_refugee_population
+				OR = {
+					has_idea = syrian_refugees_hosted
+					has_idea = TUR_transit_migrants
+				}
 			}
 			modifier = {
 				factor = 4
@@ -5424,6 +5448,7 @@ focus_tree = {
 					amount = 400
 					producer = TUR
 				}
+				add_opinion_modifier = { target = ROOT modifier = military_aid }
 			}
 			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { influence_target = SYR }
@@ -5506,10 +5531,12 @@ focus_tree = {
 					amount = 400
 					producer = TUR
 				}
+				add_opinion_modifier = { target = ROOT modifier = military_aid }
 			}
 			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { influence_target = FSA }
 			change_influence_percentage = yes
+			custom_effect_tooltip = TUR_back_fsa_border_route_tt
 		}
 
 		ai_will_do = {
