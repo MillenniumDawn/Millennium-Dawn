@@ -750,7 +750,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   modifier reads for a matching key. Computed values and stacked totals are not checked.
 - Document an intentional bonus as `owner::key` with a reason in the row's `exceptions`
   list. The owner is the idea, trait, or modifier name. Do not blanket-exempt existing
-  bonuses; review and explain each one.
+  bonuses; review and explain each one. For an intentional variable write, use
+  `repository/path::operation::variable::value`, with forward slashes and a
+  number such as `-0.75`.
 - `--modifier-cap PATTERN=CAP` adds a search row ahead of the config rows: either
   direction, variable-fed values and timed-only grants included, reported as
   `modifier-cap-search`. It takes over the keys it matches for that run.
