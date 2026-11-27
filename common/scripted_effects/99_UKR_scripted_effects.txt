@@ -5724,6 +5724,95 @@ UKR_count_sov_modernization = {
 	hidden_effect = { add_to_variable = { UKR_sov_modernization_count = 1 } }
 }
 
+UKR_mrap_tender_prepare_terms = {
+	if = {
+		limit = { UKR_mrap_tender_has_tech = yes }
+		set_variable = { UKR_mrap_tender_standard_price = 0.3 }
+		set_variable = { UKR_mrap_tender_standard_days = 90 }
+	}
+	else = {
+		set_variable = { UKR_mrap_tender_standard_price = 0.4 }
+		set_variable = { UKR_mrap_tender_standard_days = 150 }
+	}
+
+	set_variable = { UKR_mrap_tender_kraz_price = UKR_mrap_tender_standard_price }
+	set_variable = { UKR_mrap_tender_kraz_days = UKR_mrap_tender_standard_days }
+
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_mrap_emergency_order_placed_flag }
+		multiply_variable = { UKR_mrap_tender_standard_price = 0.9 }
+		set_variable = {
+			UKR_mrap_tender_standard_days = { value = UKR_mrap_tender_standard_days multiply = 0.085 round = yes multiply = 10 }
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_mrap_emergency_kraz_order_flag }
+			if = {
+				limit = { UKR_mrap_tender_has_tech = yes }
+				set_variable = { UKR_mrap_tender_kraz_price = 0.25 }
+			}
+			else = {
+				set_variable = { UKR_mrap_tender_kraz_price = 0.34 }
+			}
+			set_variable = {
+				UKR_mrap_tender_kraz_days = { value = UKR_mrap_tender_kraz_days multiply = 0.08 round = yes multiply = 10 }
+			}
+		}
+		else = {
+			set_variable = { UKR_mrap_tender_kraz_price = UKR_mrap_tender_standard_price }
+			set_variable = { UKR_mrap_tender_kraz_days = UKR_mrap_tender_standard_days }
+		}
+	}
+}
+
+UKR_mrap_tender_clear_terms = {
+	clear_variable = UKR_mrap_tender_standard_price
+	clear_variable = UKR_mrap_tender_standard_days
+	clear_variable = UKR_mrap_tender_kraz_price
+	clear_variable = UKR_mrap_tender_kraz_days
+}
+
+# UKR_mrap_tender_sign_contract
+# Purpose: Pays for the selected offer and schedules delivery.
+# Parameters:
+# - UKR_mrap_tender_order_price: price in billions
+# - UKR_mrap_tender_order_days: whole days from signing to delivery
+UKR_mrap_tender_sign_contract = {
+	custom_effect_tooltip = UKR_utility_vehicle_tender_mrap_tender_order_tt
+
+	hidden_effect = {
+		set_temp_variable = { treasury_change = UKR_mrap_tender_order_price }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+
+		if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 70 } }
+			country_event = { id = ukraine_utility_vehicle_tender_mrap_tender.7 days = 70 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 80 } }
+			country_event = { id = ukraine_utility_vehicle_tender_mrap_tender.7 days = 80 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 90 } }
+			country_event = { id = ukraine_utility_vehicle_tender_mrap_tender.7 days = 90 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 120 } }
+			country_event = { id = ukraine_utility_vehicle_tender_mrap_tender.7 days = 120 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 130 } }
+			country_event = { id = ukraine_utility_vehicle_tender_mrap_tender.7 days = 130 }
+		}
+		else = {
+			country_event = { id = ukraine_utility_vehicle_tender_mrap_tender.7 days = 150 }
+		}
+
+		UKR_mrap_tender_clear_terms = yes
+	}
+}
+
 # Called by every new Ukrainian equipment design decision; counts toward UKR_parliament_vote_bonus_military_up
 UKR_count_domestic_development = {
 	custom_effect_tooltip = UKR_count_domestic_development_tt
@@ -15336,6 +15425,2283 @@ UKR_varyag_run_training_trials = {
 	else = { custom_effect_tooltip = UKR_varyag_trials_unavailable_tt }
 }
 
+# Light utility vehicle tender 1 (production site and model come from the UKR_tender1_model_* country flags)
+UKR_tender1_clear_flags = {
+	hidden_effect = {
+		clr_country_flag = UKR_utility_vehicle_tender_1_model_luaz_1302_flag
+		clr_country_flag = UKR_utility_vehicle_tender_1_model_luaz_1901_flag
+		clr_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_avtoahrehat_flag
+		clr_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_luaz_flag
+		clr_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_krasz_flag
+		clr_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_flag
+		clr_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_armed_flag
+		clr_country_flag = UKR_utility_vehicle_tender_1_choice_krasz_flag
+		clr_country_flag = UKR_utility_vehicle_tender_1_model_tata_flag
+	}
+}
+
+# Tender 1 is over (production started, aborted, or no site): tender 2 can open (UKR_tender2_can_open)
+UKR_tender1_finish = {
+	hidden_effect = { set_country_flag = UKR_utility_vehicle_tender_1_finished_flag }
+	UKR_tender1_clear_flags = yes
+}
+
+UKR_tender1_launch_uaz_production = {
+	# Expects UKR_tender1_stage: 1 for an existing factory, 2 for a paid expansion.
+	if = {
+		limit = { UKR_tender1_peace_with_russia = yes }
+		UKR_tender1_launch_production = yes
+	}
+	else = {
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { UKR_tender1_stage = 2 } }
+				country_event = ukraine_utility_vehicle_tender.4
+			}
+			else = {
+				country_event = ukraine_utility_vehicle_tender.3
+			}
+		}
+	}
+}
+
+UKR_tender1_launch_production = {
+	# Expects the temporary variable UKR_tender1_stage: 1 = launch in a plant that already has a factory, 2 = launch after the expansion
+	# UAZ-3151 uses the starting Soviet licence.
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_flag }
+		SOV = {
+			create_production_license = {
+				target = UKR
+				equipment = {
+					type = util_vehicle_3
+					version_name = "UAZ-3153 Hussar"
+				}
+				cost_factor = 0
+			}
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_tata_flag }
+		RAJ = {
+			create_production_license = {
+				target = UKR
+				equipment = {
+					type = util_vehicle_2
+					version_name = "Tata Sumo 4x4"
+				}
+				cost_factor = 0
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_tender1_stage = 2 } }
+		if = {
+			limit = {
+				UKR_tender1_uses_luaz_plant = yes
+			}
+			1110 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_avtoahrehat_flag }
+			1075 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_krasz_flag
+					has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_flag
+				}
+			}
+			1089 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_tata_flag }
+			698 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_luaz_1302_flag }
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_2
+				version_name = "LuAZ-1302"
+			}
+			requested_factories = 1
+			efficiency = 30
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_luaz_1901_flag
+			check_variable = { UKR_tender1_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_3
+				version_name = "LuAZ-1901 Heoloh"
+			}
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_luaz_1901_flag
+			check_variable = { UKR_tender1_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_3
+				version_name = "LuAZ-1901 Heoloh"
+			}
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_avtoahrehat_flag
+			check_variable = { UKR_tender1_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_3
+				creator = SOV
+				version_name = "UAZ-3151"
+			}
+			requested_factories = 1
+			efficiency = 25
+		}
+		1075 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_avtoahrehat_flag
+			check_variable = { UKR_tender1_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_3
+				creator = SOV
+				version_name = "UAZ-3151"
+			}
+			requested_factories = 1
+			efficiency = 40
+		}
+		1075 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.03
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_luaz_flag
+			check_variable = { UKR_tender1_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_3
+				creator = SOV
+				version_name = "UAZ-3151"
+			}
+			requested_factories = 1
+			efficiency = 15
+		}
+		1110 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_luaz_flag
+			check_variable = { UKR_tender1_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_3
+				creator = SOV
+				version_name = "UAZ-3151"
+			}
+			requested_factories = 1
+			efficiency = 25
+		}
+		1110 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_krasz_flag
+			check_variable = { UKR_tender1_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_3
+				creator = SOV
+				version_name = "UAZ-3151"
+			}
+			requested_factories = 1
+			efficiency = 20
+		}
+		1089 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_krasz_flag
+			check_variable = { UKR_tender1_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_3
+				creator = SOV
+				version_name = "UAZ-3151"
+			}
+			requested_factories = 1
+			efficiency = 30
+		}
+		1089 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_flag
+			OR = {
+				check_variable = { UKR_tender1_stage = 1 }
+				check_variable = { UKR_tender1_stage = 2 }
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_armed_flag }
+			create_equipment_variant = {
+				name = "UAZ-3153 Hussar with PKM"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+				upgrades = {
+					util_mobility = 3
+					util_weapons = 1
+				}
+				icon = "GFX_SOV_LAND_U3"
+			}
+
+			if = {
+				limit = { check_variable = { UKR_tender1_stage = 1 } }
+				add_equipment_production = {
+					equipment = {
+						type = util_vehicle_3
+						version_name = "UAZ-3153 Hussar with PKM"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = util_vehicle_3
+						version_name = "UAZ-3153 Hussar with PKM"
+					}
+					requested_factories = 1
+					efficiency = 30
+				}
+			}
+		}
+		else = {
+			if = {
+				limit = { check_variable = { UKR_tender1_stage = 1 } }
+				add_equipment_production = {
+					equipment = {
+						type = util_vehicle_3
+						creator = SOV
+						version_name = "UAZ-3153 Hussar"
+					}
+					requested_factories = 1
+					efficiency = 20
+				}
+			}
+			else = {
+				add_equipment_production = {
+					equipment = {
+						type = util_vehicle_3
+						creator = SOV
+						version_name = "UAZ-3153 Hussar"
+					}
+					requested_factories = 1
+					efficiency = 30
+				}
+			}
+		}
+		1089 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_tata_flag
+			check_variable = { UKR_tender1_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_2
+				creator = RAJ
+				version_name = "Tata Sumo 4x4"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_1_model_tata_flag
+			check_variable = { UKR_tender1_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_2
+				creator = RAJ
+				version_name = "Tata Sumo 4x4"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_luaz_1901_flag }
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+	}
+	UKR_tender1_finish = yes
+}
+
+UKR_tender1_expand_plant = {
+	if = {
+		limit = { UKR_tender1_uaz_production_blocked = yes }
+		hidden_effect = { country_event = ukraine_utility_vehicle_tender.3 }
+	}
+	else = {
+		# Charges the cost of the expansion and schedules the event that finishes it (about a year)
+		if = {
+			limit = { UKR_tender1_has_domestic_luaz_model = yes }
+			set_temp_variable = { treasury_change = -0.2 }
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_avtoahrehat_flag }
+			set_temp_variable = { treasury_change = -0.1 }
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_luaz_flag }
+			set_temp_variable = { treasury_change = -0.3 }
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3151_krasz_flag }
+			set_temp_variable = { treasury_change = -0.4 }
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_1_model_uaz_3153_flag }
+			set_temp_variable = { treasury_change = -0.4 }
+		}
+		modify_treasury_effect = yes
+		custom_effect_tooltip = UKR_utility_vehicle_tender_1_expand_tt
+		hidden_effect = {
+			country_event = {
+				id = ukraine_utility_vehicle_tender.4
+				days = 365
+				random_days = 30
+			}
+		}
+	}
+}
+
+UKR_uaz_patriot_start_line = {
+	add_equipment_production = {
+		equipment = {
+			type = util_vehicle_5
+			creator = SOV
+			version_name = "UAZ-3163 Patriot"
+		}
+		requested_factories = 1
+		efficiency = 20
+	}
+	hidden_effect = { clr_country_flag = UKR_utility_vehicle_tender_uaz_patriot_production_pending_flag }
+}
+
+# Light utility vehicle tender 1, the TATA route: the research bonus of the bilateral meeting
+UKR_utility_vehicle_tender_tata_tech_bonus = {
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_5 } }
+		add_tech_bonus = {
+			name = UKR_utility_vehicle_tender_tata_tech_bonus
+			bonus = 0.2
+			uses = 1
+			technology = util_vehicle_5
+		}
+	}
+	else_if = {
+		limit = { NOT = { has_tech = IMV_5 } }
+		add_tech_bonus = {
+			name = UKR_utility_vehicle_tender_tata_tech_bonus
+			bonus = 0.2
+			uses = 1
+			technology = IMV_5
+		}
+	}
+}
+
+UKR_tata_add_influence = {
+	# Expects the temporary variable UKR_tata_influence (percent points of Ukrainian influence in India)
+	set_temp_variable = { percent_change = UKR_tata_influence }
+	set_temp_variable = { tag_index = UKR.id }
+	set_temp_variable = { influence_target = RAJ.id }
+	change_influence_percentage = yes
+}
+
+UKR_queue_kraz_6316_offer = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_offer_queued_flag } }
+		set_country_flag = UKR_utility_vehicle_tender_kraz_6316_offer_queued_flag
+		country_event = { id = ukraine_utility_vehicle_tender_kraz.3 days = 30 }
+	}
+}
+
+# Effect: UKR_kraz_6316_add_supplier_influence
+# Purpose: Gives a KrAZ supplier up to 0.25 percentage points of influence in Ukraine.
+# Parameters:
+# - UKR_kraz_6316_supplier: the foreign supplier's country ID
+UKR_kraz_6316_add_supplier_influence = {
+	set_temp_variable = { influencer_index = -1 }
+	for_each_loop = {
+		array = influence_array
+		value = UKR_kraz_6316_current_influencer
+		index = UKR_kraz_6316_current_index
+		if = {
+			limit = { check_variable = { UKR_kraz_6316_current_influencer = var:UKR_kraz_6316_supplier } }
+			set_temp_variable = { influencer_index = UKR_kraz_6316_current_index }
+		}
+	}
+
+	set_temp_variable = { percent_change = 0.25 }
+	if = {
+		limit = { check_variable = { influencer_index > -1 } }
+		set_temp_variable = {
+			percent_change = { value = 100 subtract = influence_array_val^influencer_index clamp = { min = 0 max = 0.25 } }
+		}
+	}
+	custom_effect_tooltip = UKR_utility_vehicle_tender_kraz_6316_supplier_influence_tt
+
+	hidden_effect = {
+		if = {
+			limit = { check_variable = { influencer_index = -1 } }
+			set_temp_variable = { influencer_index = influence_array^num }
+			add_to_array = { influence_array = var:UKR_kraz_6316_supplier }
+			add_to_array = { influence_array_val = 0 }
+		}
+		change_current_influencer_index_percentage = yes
+	}
+}
+
+UKR_kraz_6316_return_to_suppliers = {
+	clr_country_flag = UKR_utility_vehicle_tender_kraz_6316_tatra_talks_flag
+	clr_country_flag = UKR_utility_vehicle_tender_kraz_6316_china_talks_flag
+	set_country_flag = UKR_utility_vehicle_tender_kraz_6316_suppliers_on_hold_flag
+	custom_effect_tooltip = UKR_utility_vehicle_tender_kraz_6316_reopen_suppliers_tt
+}
+
+UKR_kraz_6316_open_plant_event = {
+	if = {
+		limit = {
+			UKR_kraz_trucks_waiting = yes
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_plant_event_open_flag }
+			OR = {
+				UKR_kraz_trucks_has_ready_lines = yes
+				NOT = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_expansion_pending_flag }
+			}
+		}
+		set_country_flag = UKR_utility_vehicle_tender_kraz_6316_plant_event_open_flag
+		save_event_target_as = ukr_kraz_6316_plant_request
+		country_event = ukraine_utility_vehicle_tender.13
+	}
+}
+
+UKR_kraz_6316_finish_expansion = {
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_expansion_pending_flag }
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_6316_expansion_pending_flag
+
+		if = {
+			limit = {
+				UKR_kraz_6316_controls_plant = yes
+				UKR_kraz_trucks_needs_factory = yes
+			}
+			1089 = {
+				if = {
+					limit = { free_building_slots = { building = arms_factory size < 1 } }
+					add_extra_state_shared_building_slots = 1
+				}
+				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+			}
+		}
+		else = {
+			set_temp_variable = { treasury_change = 0.3 }
+			modify_treasury_effect = yes
+		}
+
+		if = {
+			limit = { UKR_kraz_6316_controls_plant = yes }
+			UKR_kraz_trucks_start_ready_lines = yes
+			UKR_kraz_6316_open_plant_event = yes
+		}
+	}
+}
+
+UKR_kraz_6316_start_line = {
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_6316_pending_production_flag
+			UKR_kraz_6316_controls_plant = yes
+			UKR_kraz_6316_has_factory_capacity = yes
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_russian_supply_flag }
+			create_equipment_variant = {
+				name = "KrAZ-6316 Sibir"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 3
+					util_infantry_help_upgrade = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6316"
+				model = "SOV_ural_entity"
+			}
+
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_3
+					version_name = "KrAZ-6316 Sibir"
+				}
+				requested_factories = 1
+				efficiency = 20
+			}
+			if = {
+				limit = {
+					country_exists = SOV
+					UKR_at_war_with_russia_or_proxies = no
+				}
+				create_production_license = {
+					target = SOV
+					cost_factor = 0
+					equipment = {
+						type = util_vehicle_3
+						version_name = "KrAZ-6316 Sibir"
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_tatra_supply_flag }
+			create_equipment_variant = {
+				name = "KrAZ-6316T Tatra"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 3
+					util_infantry_help_upgrade = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6316"
+				model = "SOV_ural_entity"
+			}
+
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_3
+					version_name = "KrAZ-6316T Tatra"
+				}
+				requested_factories = 1
+				efficiency = 20
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_kraz_6316_domestic_supply_flag }
+			create_equipment_variant = {
+				name = "KrAZ-6316U Khortytsia"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 3
+					util_infantry_help_upgrade = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6316"
+				model = "SOV_ural_entity"
+			}
+
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_3
+					version_name = "KrAZ-6316U Khortytsia"
+				}
+				requested_factories = 1
+				efficiency = 20
+			}
+		}
+		else = {
+			create_equipment_variant = {
+				name = "KrAZ-6316K Gobi"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 3
+					util_infantry_help_upgrade = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6316"
+				model = "SOV_ural_entity"
+			}
+
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_3
+					version_name = "KrAZ-6316K Gobi"
+				}
+				requested_factories = 1
+				efficiency = 20
+			}
+		}
+
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_6316_pending_production_flag
+	}
+}
+
+UKR_kraz_trucks_start_ready_lines = {
+	if = {
+		limit = { UKR_kraz_6316_controls_plant = yes }
+		UKR_kraz_6316_start_line = yes
+		UKR_kraz_followup_trucks_start_lines = yes
+	}
+}
+
+UKR_kraz_followup_trucks_start_lines = {
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_6322_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_3 version_name = "KrAZ-6322" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_6322_pending_production_flag
+	}
+
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_5233_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_3 version_name = "KrAZ-5233" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_5233_pending_production_flag
+	}
+
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_6135v6_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_4 version_name = "KrAZ-6135V6" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_6135v6_pending_production_flag
+	}
+
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_5233ve_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_4 version_name = "KrAZ-5233VE" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_5233ve_pending_production_flag
+	}
+
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_7140_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_4 version_name = "KrAZ-7140" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_7140_pending_production_flag
+	}
+
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_7634_pending_production_flag
+			UKR_kraz_7634_has_factory_capacity = yes
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-7634NE"
+			type = util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+			icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_7634NE"
+			model = "SOV_ural_entity"
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_5 version_name = "KrAZ-7634NE" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_7634_pending_production_flag
+	}
+
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_5401_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-5401"
+			type = util_vehicle_4
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 1
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+			icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_5401"
+			model = "SOV_ural_entity"
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_4 version_name = "KrAZ-5401" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_5401_pending_production_flag
+	}
+
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-V12.2 Serzhant"
+			type = util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 3
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+			icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_V12_2"
+			model = "SOV_ural_entity"
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_5 version_name = "KrAZ-V12.2 Serzhant" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_pending_production_flag
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_kraz_cougar_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_6 version_name = "KrAZ-Cougar" }
+			requested_factories = 1
+			efficiency = 10
+		}
+		clr_country_flag = UKR_utility_vehicle_tender_kraz_cougar_pending_production_flag
+	}
+}
+
+# Light utility vehicle tender 2 (production site and model come from the UKR_tender2_model_* country flags)
+UKR_tender2_apply_discount = {
+	if = {
+		limit = {
+			UKR_tender2_has_luaz_discount = yes
+		}
+		multiply_temp_variable = { treasury_change = 0.85 }
+	}
+}
+
+UKR_tender2_calc_costs = {
+	# What .13 charges for the reserved model, with the LuAZ discount: the development (once) and the plant expansion
+	set_variable = { UKR_tender2_dev_cost = 0 }
+	if = {
+		limit = { NOT = { has_country_flag = UKR_utility_vehicle_tender_2_finished_flag } }
+		if = {
+			limit = {
+				NOT = { has_tech = util_vehicle_4 }
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag
+				}
+			}
+			add_to_variable = { UKR_tender2_dev_cost = 0.02 }
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+				}
+			}
+			add_to_variable = { UKR_tender2_dev_cost = 0.04 }
+		}
+	}
+	set_variable = { UKR_tender2_expand_need = 0.3 }
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+			}
+		}
+		set_variable = { UKR_tender2_expand_need = 0.2 }
+	}
+	add_to_variable = { UKR_tender2_expand_need = UKR_tender2_dev_cost }
+	if = {
+		limit = { UKR_tender2_has_luaz_discount = yes }
+		multiply_variable = { UKR_tender2_dev_cost = 0.85 }
+		multiply_variable = { UKR_tender2_expand_need = 0.85 }
+	}
+}
+
+# Utility vehicle and IMV technologies from the tenders: every missing tier up to the named one, so no tier is skipped
+# (Ukraine starts with util_vehicle_1 to 3 and no IMV tier; IMV_3 is the first one)
+UKR_grant_util_vehicle_tech_4 = {
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_4 } }
+		set_technology = { util_vehicle_4 = 1 }
+	}
+}
+
+UKR_grant_util_vehicle_tech_5 = {
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_4 } }
+		set_technology = { util_vehicle_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_5 } }
+		set_technology = { util_vehicle_5 = 1 }
+	}
+}
+
+UKR_grant_util_vehicle_tech_6 = {
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_4 } }
+		set_technology = { util_vehicle_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_5 } }
+		set_technology = { util_vehicle_5 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = util_vehicle_6 } }
+		set_technology = { util_vehicle_6 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_3 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_4 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_4 } }
+		set_technology = { IMV_4 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_5 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_4 } }
+		set_technology = { IMV_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_5 } }
+		set_technology = { IMV_5 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_6 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_4 } }
+		set_technology = { IMV_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_5 } }
+		set_technology = { IMV_5 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_6 } }
+		set_technology = { IMV_6 = 1 }
+	}
+}
+
+UKR_grant_imv_tech_7 = {
+	if = {
+		limit = { NOT = { has_tech = IMV_3 } }
+		set_technology = { IMV_3 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_4 } }
+		set_technology = { IMV_4 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_5 } }
+		set_technology = { IMV_5 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_6 } }
+		set_technology = { IMV_6 = 1 }
+	}
+	if = {
+		limit = { NOT = { has_tech = IMV_7 } }
+		set_technology = { IMV_7 = 1 }
+	}
+}
+
+UKR_tender2_clear_bars_site = {
+	# A dropped or aborted Bars model frees its plant, unless a Bars line already runs there (Bohdan avoids the Bars plant)
+	hidden_effect = {
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
+				}
+				NOT = { has_country_flag = UKR_utility_vehicle_tender_bars_cherkasy_line_flag }
+			}
+			clr_country_flag = UKR_utility_vehicle_tender_bars_cherkasy_site_flag
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+				}
+				NOT = { has_country_flag = UKR_utility_vehicle_tender_bars_lutsk_line_flag }
+			}
+			clr_country_flag = UKR_utility_vehicle_tender_bars_lutsk_site_flag
+		}
+	}
+}
+
+UKR_tender2_clear_flags = {
+	hidden_effect = {
+		clr_country_flag = UKR_utility_vehicle_tender_production_reserved_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_varta_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_shrek_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_novator2_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_varta2_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_inguar3_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_model_gyurza01_flag
+		clr_country_flag = UKR_utility_vehicle_tender_2_finished_flag
+	}
+}
+
+UKR_tender2_finish_development = {
+	# The development is finished: tech, the variant and the first 20 vehicles (once per tender)
+	if = {
+		limit = { NOT = { has_country_flag = UKR_utility_vehicle_tender_2_finished_flag } }
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = util_vehicle_4 }
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag
+				}
+			}
+
+			set_temp_variable = { treasury_change = -0.02 }
+			UKR_tender2_apply_discount = yes
+			modify_treasury_effect = yes
+
+			UKR_grant_util_vehicle_tech_4 = yes
+
+			custom_effect_tooltip = universal_blank_line_tooltip
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag }
+
+			create_equipment_variant = {
+				name = "D041 Step Pickup"
+				type = util_vehicle_4
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 1
+					util_cutting_corners_upgrade = 1
+				}
+
+				icon = "GFX_UKR_LAND_Utility_Light_D041_Step_Pickup"
+				model = "USA_hummer_vehicle_entity"
+			}
+
+			add_equipment_to_stockpile = {
+				type = util_vehicle_4
+				variant_name = "D041 Step Pickup"
+				amount = 20
+				producer = UKR
+			}
+
+			set_country_flag = UKR_utility_vehicle_tender_d041_step_flag
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag }
+
+			set_temp_variable = { treasury_change = -0.04 }
+			UKR_tender2_apply_discount = yes
+			modify_treasury_effect = yes
+			custom_effect_tooltip = universal_blank_line_tooltip
+
+			create_equipment_variant = {
+				name = "D041 Step Cab"
+				type = util_vehicle_4
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 1
+					util_infantry_help_upgrade = 1
+				}
+
+				icon = "GFX_UKR_LAND_Utility_Light_D041_Step_Base"
+				model = "USA_hummer_vehicle_entity"
+			}
+
+			add_equipment_to_stockpile = {
+				type = util_vehicle_4
+				variant_name = "D041 Step Cab"
+				amount = 20
+				producer = UKR
+			}
+
+			set_country_flag = UKR_utility_vehicle_tender_d041_step_flag
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag }
+
+			create_equipment_variant = {
+				name = "Dozor-A"
+				type = util_vehicle_4
+				design_team = mio:UKR_kmdb_tank_manufacturer
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 1
+					util_cutting_corners_upgrade = 1
+				}
+
+				icon = "GFX_UKR_LAND_Utility_Light_Dozor_A"
+				model = "USA_hummer_vehicle_entity"
+			}
+
+			add_equipment_to_stockpile = {
+				type = util_vehicle_4
+				variant_name = "Dozor-A"
+				amount = 20
+				producer = UKR
+			}
+
+			set_country_flag = UKR_utility_vehicle_tender_dozor_a_flag
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag }
+
+			set_temp_variable = { treasury_change = -0.04 }
+			UKR_tender2_apply_discount = yes
+			modify_treasury_effect = yes
+			custom_effect_tooltip = universal_blank_line_tooltip
+
+			create_equipment_variant = {
+				name = "Dozor-A with PKM"
+				type = util_vehicle_4
+				design_team = mio:UKR_kmdb_tank_manufacturer
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_weapons = 1
+				}
+
+				icon = "GFX_UKR_LAND_Utility_Light_Dozor_A"
+				model = "USA_hummer_vehicle_entity"
+			}
+
+			add_equipment_to_stockpile = {
+				type = util_vehicle_4
+				variant_name = "Dozor-A with PKM"
+				amount = 20
+				producer = UKR
+			}
+
+			set_country_flag = UKR_utility_vehicle_tender_dozor_a_flag
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag }
+
+			create_equipment_variant = {
+				name = "VEPR-K"
+				type = util_vehicle_4
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 2
+				}
+
+				icon = "GFX_UKR_LAND_Utility_Light_Vepr_K"
+			}
+
+
+			add_equipment_to_stockpile = {
+				type = util_vehicle_4
+				variant_name = "VEPR-K"
+				amount = 20
+				producer = UKR
+			}
+
+			set_country_flag = UKR_utility_vehicle_tender_vepr_k_flag
+		}
+
+		set_country_flag = UKR_utility_vehicle_tender_2_finished_flag
+	}
+}
+
+UKR_tender2_launch_production = {
+	# Expects the temporary variable UKR_tender2_stage: 1 = launch in a plant that already has a factory, 2 = launch after the expansion
+	# A Bars line keeps its plant marked as the Bars site (UKR_tender2_clear_bars_site)
+	hidden_effect = {
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
+				}
+			}
+			set_country_flag = UKR_utility_vehicle_tender_bars_cherkasy_line_flag
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+				}
+			}
+			set_country_flag = UKR_utility_vehicle_tender_bars_lutsk_line_flag
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_tender2_stage = 2 } }
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag
+				}
+			}
+			700 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+					has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+				}
+			}
+			696 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag
+			}
+			1089 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_varta_flag }
+			698 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_shrek_flag }
+			1089 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag }
+			1091 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag }
+			1110 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag }
+			1091 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag }
+			1110 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_novator2_flag }
+			698 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_varta2_flag }
+			698 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_inguar3_flag }
+			698 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_gyurza01_flag }
+			698 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "D041 Step Pickup"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "D041 Step Pickup"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag }
+		700 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.03
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "D041 Step Cab"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "D041 Step Cab"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag }
+		700 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.03
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "Dozor-A"
+			}
+
+			industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
+
+			requested_factories = 1
+			efficiency = 20
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "Dozor-A"
+			}
+
+			industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
+
+			requested_factories = 1
+			efficiency = 30
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag }
+		696 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "Dozor-A with PKM"
+			}
+
+			industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
+
+			requested_factories = 1
+			efficiency = 20
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "Dozor-A with PKM"
+			}
+
+			industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
+
+			requested_factories = 1
+			efficiency = 30
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag }
+		696 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "VEPR-K"
+			}
+
+			requested_factories = 1
+			efficiency = 10
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_4
+				version_name = "VEPR-K"
+			}
+
+			requested_factories = 1
+			efficiency = 20
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag }
+		1089 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.01
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Dozor-B"
+			}
+
+			industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Dozor-B"
+			}
+
+			industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag }
+		696 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+		country_event = { id = ukraine_utility_vehicle_tender.20 days = 540 random_days = 190 }
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Dozor-B"
+			}
+
+			industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Dozor-B"
+			}
+
+			industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag }
+		700 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+		country_event = { id = ukraine_utility_vehicle_tender.20 days = 540 random_days = 190 }
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_varta_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_6
+				version_name = "Varta"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_varta_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_6
+				version_name = "Varta"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_varta_flag }
+		698 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_shrek_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_5
+				version_name = "KrAZ Shrek One"
+			}
+
+			industrial_manufacturer = mio:UKR_kraz_utility_manufacturer
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_shrek_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_5
+				version_name = "KrAZ Shrek One"
+			}
+
+			industrial_manufacturer = mio:UKR_kraz_utility_manufacturer
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_shrek_flag }
+		1089 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Bars-8"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Bars-8"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag }
+		1091 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Bars-8"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Bars-8"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag }
+		1110 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Bars-6"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Bars-6"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag }
+		1091 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Bars-6"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = util_vehicle_5
+				version_name = "Bars-6"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag }
+		1110 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_novator2_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_7
+				version_name = "Novator-2"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_novator2_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_7
+				version_name = "Novator-2"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_novator2_flag }
+		698 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_varta2_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_7
+				version_name = "Varta-2"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_varta2_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_7
+				version_name = "Varta-2"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_varta2_flag }
+		698 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_inguar3_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_7
+				version_name = "Inguar-3"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_inguar3_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_7
+				version_name = "Inguar-3"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_inguar3_flag }
+		698 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_gyurza01_flag
+			check_variable = { UKR_tender2_stage = 1 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_6
+				version_name = "UAT-D GYURZA-01"
+			}
+
+			requested_factories = 1
+			efficiency = 15
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = UKR_utility_vehicle_tender_2_model_gyurza01_flag
+			check_variable = { UKR_tender2_stage = 2 }
+		}
+		add_equipment_production = {
+			equipment = {
+				type = heavy_util_vehicle_6
+				version_name = "UAT-D GYURZA-01"
+			}
+
+			requested_factories = 1
+			efficiency = 25
+		}
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_gyurza01_flag }
+		698 = {
+			add_state_modifier = {
+				modifier = {
+					state_productivity_growth_modifier = 0.02
+				}
+			}
+		}
+	}
+	UKR_tender2_clear_flags = yes
+}
+
+UKR_tender2_expand_plant = {
+	# Charges the cost of the expansion and schedules the event that finishes it (about a year)
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = UKR_utility_vehicle_tender_2_model_d041_pickup_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_d041_cab_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_lviv_flag
+			}
+		}
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_unarmed_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_a_pkm_flag
+				has_country_flag = UKR_utility_vehicle_tender_2_model_dozor_b_kharkiv_flag
+			}
+		}
+		set_temp_variable = { treasury_change = -0.2 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_vepr_k_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_varta_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_shrek_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_cherkasy_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars8_lutsk_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_cherkasy_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_bars6_lutsk_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_novator2_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_varta2_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_inguar3_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	if = {
+		limit = { has_country_flag = UKR_utility_vehicle_tender_2_model_gyurza01_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+	}
+	UKR_tender2_apply_discount = yes
+	modify_treasury_effect = yes
+	custom_effect_tooltip = UKR_utility_vehicle_tender_2_expand_tt
+	hidden_effect = {
+		country_event = {
+			id = ukraine_utility_vehicle_tender.14
+			days = 365
+			random_days = 30
+		}
+	}
+}
+
 UKR_varyag_run_combat_trials = {
 	if = {
 		limit = {
@@ -16327,7 +18693,7 @@ UKR_mrls_launch_kharkiv = {
 	# Opens a production line of every design that waits at this plant, then clears the waiting flags.
 	# The first design of a family starts at 15% (Grad) or 10% (Uragan and Smerch); every next design of the same plant adds 5%
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_bm21k_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_bm21k_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 0 } }
 			if = {
@@ -16401,10 +18767,10 @@ UKR_mrls_launch_kharkiv = {
 			}
 		}
 		add_to_variable = { UKR_mrls_kharkiv_grad_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_bm21k_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_bm21k_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_bm21u_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_bm21u_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 0 } }
 			if = {
@@ -16478,10 +18844,10 @@ UKR_mrls_launch_kharkiv = {
 			}
 		}
 		add_to_variable = { UKR_mrls_kharkiv_grad_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_bm21u_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_bm21u_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_verba_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_verba_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_kharkiv_grad_lines = 0 } }
 			if = {
@@ -16555,19 +18921,19 @@ UKR_mrls_launch_kharkiv = {
 			}
 		}
 		add_to_variable = { UKR_mrls_kharkiv_grad_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_verba_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_verba_flag
 	}
-	clr_country_flag = UKR_mrls_expanding_kharkiv_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_kharkiv_flag
 }
 
 UKR_mrls_expand_kharkiv = {
 	# Pays for the new military factory and schedules the event that finishes it
 	set_temp_variable = { treasury_change = -0.3 }
 	modify_treasury_effect = yes
-	set_country_flag = UKR_mrls_expanding_kharkiv_flag
-	custom_effect_tooltip = UKR_mrls_expand_tt
+	set_country_flag = UKR_modernize_or_develop_mrls_expanding_kharkiv_flag
+	custom_effect_tooltip = UKR_modernize_or_develop_mrls_expand_tt
 	hidden_effect = {
-		country_event = { id = ukraine_develop_or_modernize_mrl_system.9 days = 360 random_days = 30 }
+		country_event = { id = ukraine_modernize_or_develop_mrls.10 days = 360 random_days = 30 }
 	}
 }
 
@@ -16583,17 +18949,17 @@ UKR_mrls_build_kharkiv = {
 }
 
 UKR_mrls_clear_kharkiv = {
-	clr_country_flag = UKR_mrls_plant_bm21k_flag
-	clr_country_flag = UKR_mrls_plant_bm21u_flag
-	clr_country_flag = UKR_mrls_plant_verba_flag
-	clr_country_flag = UKR_mrls_expanding_kharkiv_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_bm21k_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_bm21u_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_verba_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_kharkiv_flag
 }
 
 UKR_mrls_launch_shepetivka = {
 	# Opens a production line of every design that waits at this plant, then clears the waiting flags.
 	# The first design of a family starts at 15% (Grad) or 10% (Uragan and Smerch); every next design of the same plant adds 5%
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_bastion01_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_bastion01_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 0 } }
 			if = {
@@ -16667,10 +19033,10 @@ UKR_mrls_launch_shepetivka = {
 			}
 		}
 		add_to_variable = { UKR_mrls_shepetivka_grad_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_bastion01_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_bastion01_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_bastion02_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_bastion02_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 0 } }
 			if = {
@@ -16744,10 +19110,10 @@ UKR_mrls_launch_shepetivka = {
 			}
 		}
 		add_to_variable = { UKR_mrls_shepetivka_grad_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_bastion02_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_bastion02_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_berest_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_berest_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_shepetivka_grad_lines = 0 } }
 			if = {
@@ -16821,10 +19187,10 @@ UKR_mrls_launch_shepetivka = {
 			}
 		}
 		add_to_variable = { UKR_mrls_shepetivka_grad_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_berest_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_berest_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_bastion03_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_bastion03_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 0 } }
 			if = {
@@ -16898,10 +19264,10 @@ UKR_mrls_launch_shepetivka = {
 			}
 		}
 		add_to_variable = { UKR_mrls_shepetivka_heavy_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_bastion03_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_bastion03_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_bureviy_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_bureviy_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 0 } }
 			if = {
@@ -16975,10 +19341,10 @@ UKR_mrls_launch_shepetivka = {
 			}
 		}
 		add_to_variable = { UKR_mrls_shepetivka_heavy_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_bureviy_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_bureviy_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_bastion04_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_bastion04_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_shepetivka_heavy_lines = 0 } }
 			if = {
@@ -17052,19 +19418,19 @@ UKR_mrls_launch_shepetivka = {
 			}
 		}
 		add_to_variable = { UKR_mrls_shepetivka_heavy_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_bastion04_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_bastion04_flag
 	}
-	clr_country_flag = UKR_mrls_expanding_shepetivka_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_shepetivka_flag
 }
 
 UKR_mrls_expand_shepetivka = {
 	# Pays for the new military factory and schedules the event that finishes it
 	set_temp_variable = { treasury_change = -0.3 }
 	modify_treasury_effect = yes
-	set_country_flag = UKR_mrls_expanding_shepetivka_flag
-	custom_effect_tooltip = UKR_mrls_expand_tt
+	set_country_flag = UKR_modernize_or_develop_mrls_expanding_shepetivka_flag
+	custom_effect_tooltip = UKR_modernize_or_develop_mrls_expand_tt
 	hidden_effect = {
-		country_event = { id = ukraine_develop_or_modernize_mrl_system.10 days = 360 random_days = 30 }
+		country_event = { id = ukraine_modernize_or_develop_mrls.11 days = 360 random_days = 30 }
 	}
 }
 
@@ -17080,20 +19446,20 @@ UKR_mrls_build_shepetivka = {
 }
 
 UKR_mrls_clear_shepetivka = {
-	clr_country_flag = UKR_mrls_plant_bastion01_flag
-	clr_country_flag = UKR_mrls_plant_bastion02_flag
-	clr_country_flag = UKR_mrls_plant_bastion03_flag
-	clr_country_flag = UKR_mrls_plant_berest_flag
-	clr_country_flag = UKR_mrls_plant_bureviy_flag
-	clr_country_flag = UKR_mrls_plant_bastion04_flag
-	clr_country_flag = UKR_mrls_expanding_shepetivka_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_bastion01_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_bastion02_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_bastion03_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_berest_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_bureviy_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_bastion04_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_shepetivka_flag
 }
 
 UKR_mrls_launch_dnipro = {
 	# Opens a production line of every design that waits at this plant, then clears the waiting flags.
 	# The first design of a family starts at 15% (Grad) or 10% (Uragan and Smerch); every next design of the same plant adds 5%
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_typhoon4_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_typhoon4_flag }
 		if = {
 			limit = { always = yes }
 			if = {
@@ -17118,19 +19484,19 @@ UKR_mrls_launch_dnipro = {
 				}
 			}
 		}
-		clr_country_flag = UKR_mrls_plant_typhoon4_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_typhoon4_flag
 	}
-	clr_country_flag = UKR_mrls_expanding_dnipro_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_dnipro_flag
 }
 
 UKR_mrls_expand_dnipro = {
 	# Pays for the new military factory and schedules the event that finishes it
 	set_temp_variable = { treasury_change = -0.3 }
 	modify_treasury_effect = yes
-	set_country_flag = UKR_mrls_expanding_dnipro_flag
-	custom_effect_tooltip = UKR_mrls_expand_tt
+	set_country_flag = UKR_modernize_or_develop_mrls_expanding_dnipro_flag
+	custom_effect_tooltip = UKR_modernize_or_develop_mrls_expand_tt
 	hidden_effect = {
-		country_event = { id = ukraine_develop_or_modernize_mrl_system.11 days = 360 random_days = 30 }
+		country_event = { id = ukraine_modernize_or_develop_mrls.12 days = 360 random_days = 30 }
 	}
 }
 
@@ -17146,15 +19512,15 @@ UKR_mrls_build_dnipro = {
 }
 
 UKR_mrls_clear_dnipro = {
-	clr_country_flag = UKR_mrls_plant_typhoon4_flag
-	clr_country_flag = UKR_mrls_expanding_dnipro_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_typhoon4_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_dnipro_flag
 }
 
 UKR_mrls_launch_kyiv = {
 	# Opens a production line of every design that waits at this plant, then clears the waiting flags.
 	# The first design of a family starts at 15% (Grad) or 10% (Uragan and Smerch); every next design of the same plant adds 5%
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_vilkha_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 0 } }
 			if = {
@@ -17252,10 +19618,10 @@ UKR_mrls_launch_kyiv = {
 			}
 		}
 		add_to_variable = { UKR_mrls_kyiv_heavy_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_vilkha_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_vilkha_m_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_m_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 0 } }
 			if = {
@@ -17353,10 +19719,10 @@ UKR_mrls_launch_kyiv = {
 			}
 		}
 		add_to_variable = { UKR_mrls_kyiv_heavy_lines = 1 }
-		clr_country_flag = UKR_mrls_plant_vilkha_m_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_m_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_vilkha_kraz_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_kraz_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 0 } }
 			if = {
@@ -17518,10 +19884,10 @@ UKR_mrls_launch_kyiv = {
 			}
 		}
 		add_to_variable = { UKR_mrls_kyiv_heavy_lines = 2 }
-		clr_country_flag = UKR_mrls_plant_vilkha_kraz_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_kraz_flag
 	}
 	if = {
-		limit = { has_country_flag = UKR_mrls_plant_vilkha_tatra_flag }
+		limit = { has_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_tatra_flag }
 		if = {
 			limit = { check_variable = { UKR_mrls_kyiv_heavy_lines = 0 } }
 			if = {
@@ -17683,19 +20049,19 @@ UKR_mrls_launch_kyiv = {
 			}
 		}
 		add_to_variable = { UKR_mrls_kyiv_heavy_lines = 2 }
-		clr_country_flag = UKR_mrls_plant_vilkha_tatra_flag
+		clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_tatra_flag
 	}
-	clr_country_flag = UKR_mrls_expanding_kyiv_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_kyiv_flag
 }
 
 UKR_mrls_expand_kyiv = {
 	# Pays for the new military factory and schedules the event that finishes it
 	set_temp_variable = { treasury_change = -0.3 }
 	modify_treasury_effect = yes
-	set_country_flag = UKR_mrls_expanding_kyiv_flag
-	custom_effect_tooltip = UKR_mrls_expand_tt
+	set_country_flag = UKR_modernize_or_develop_mrls_expanding_kyiv_flag
+	custom_effect_tooltip = UKR_modernize_or_develop_mrls_expand_tt
 	hidden_effect = {
-		country_event = { id = ukraine_develop_or_modernize_mrl_system.12 days = 360 random_days = 30 }
+		country_event = { id = ukraine_modernize_or_develop_mrls.13 days = 360 random_days = 30 }
 	}
 }
 
@@ -17711,11 +20077,11 @@ UKR_mrls_build_kyiv = {
 }
 
 UKR_mrls_clear_kyiv = {
-	clr_country_flag = UKR_mrls_plant_vilkha_flag
-	clr_country_flag = UKR_mrls_plant_vilkha_m_flag
-	clr_country_flag = UKR_mrls_plant_vilkha_kraz_flag
-	clr_country_flag = UKR_mrls_plant_vilkha_tatra_flag
-	clr_country_flag = UKR_mrls_expanding_kyiv_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_m_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_kraz_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_plant_vilkha_tatra_flag
+	clr_country_flag = UKR_modernize_or_develop_mrls_expanding_kyiv_flag
 }
 
 UKR_storage_update_naval_aviation_museum = {
