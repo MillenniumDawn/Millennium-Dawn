@@ -683,6 +683,45 @@ coup_is_available = {
 	}
 }
 
+# THIS is the target and ROOT the country running operation_coup_government
+coup_operation_target_available = {
+	OR = {
+		has_game_rule = { rule = allow_coups option = FREE }
+		AND = {
+			has_game_rule = { rule = allow_coups option = AI_ONLY }
+			is_ai = yes
+		}
+	}
+	NOT = { has_government = ROOT }
+	if = { limit = { ROOT = { has_government = fascism } }
+		fascism > 0.2
+	}
+	if = { limit = { ROOT = { has_government = nationalist } }
+		nationalist > 0.2
+	}
+	if = { limit = { ROOT = { has_government = communism } }
+		communism > 0.2
+	}
+	if = { limit = { ROOT = { has_government = democratic } }
+		democratic > 0.2
+	}
+	if = { limit = { ROOT = { has_government = neutrality } }
+		neutrality > 0.2
+	}
+	OR = {
+		AND = {
+			is_major = no
+			has_war = no
+			has_stability < 0.7 #majors are harder to coup
+		}
+		AND = {
+			has_war = no
+			has_stability < 0.5
+		}
+		has_stability < 0.35 #can always coup at low stability
+	}
+}
+
 economic_exploitation_available = {
 	is_top_fifty_influencer = yes
 	NOT = { is_subject_of = ROOT }
@@ -758,6 +797,16 @@ ai_influence_in_action_reach = {
 		is_in_array = { ROOT.influence_targets = this }
 		is_in_array = { ROOT.neighbors = this }
 	}
+}
+
+# THIS is the target and ROOT the AI. The influence coup and the coup operation share it, so the AI picks the same targets by either route.
+ai_coup_target_allowed = {
+	ai_influence_historical_mode = no
+	ai_influence_in_action_reach = yes
+	NOT = { is_ally_with = ROOT }
+	has_war = no
+	has_opinion = { target = ROOT value < 49 }
+	NOT = { is_in_array = { trade_agreement_partners = ROOT } }
 }
 
 has_trade_agreement_with_PREV_nation = {

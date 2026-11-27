@@ -1119,61 +1119,15 @@ operation_coup_government = { ### 7 1/70
 	}
 
 	available = {
+		FROM = { coup_operation_target_available = yes }
+	}
 
-		FROM = {
-			if = {
-				limit = {
-					PREV.ROOT = { has_government = fascism }
-				}
-				fascism > 0.2
-			}
-			if = {
-				limit = {
-					PREV.ROOT = { has_government = nationalist }
-				}
-				nationalist > 0.2
-			}
-			if = {
-				limit = {
-					PREV.ROOT = { has_government = communism }
-				}
-				communism > 0.2
-			}
-			if = {
-				limit = {
-					PREV.ROOT = { has_government = democratic }
-				}
-				democratic > 0.2
-			}
-			if = {
-				limit = {
-					PREV.ROOT = { has_government = neutrality }
-				}
-				neutrality > 0.2
-			}
-				#set_temp_variable = { coup_ideology@ROOT = PREV.ROOT.current_party_ideology_group }
-				#set_temp_variable = { coup_ideology_popularity@ROOT = party_popularity@ROOT.coup_ideology }
-				#check_variable = { ROOT.coup_ideology_popularity > 0.2 }
-
-			OR = {
-				AND = {
-					is_major = no
-					has_war = no
-					has_stability < 0.7 #majors are harder to coup
-				}
-				AND = {
-					has_war = no
-					has_stability < 0.5
-				}
-				has_stability < 0.35 #can always coup at low stability
-			}
-		}
-		OR = {
-			has_game_rule = { rule = allow_coups option = FREE }
-			AND = {
-				has_game_rule = { rule = allow_coups option = AI_ONLY }
-				FROM = { is_ai = yes }
-			}
+	# Only update_operation_ai starts coups, so the engine cannot pick targets outside the shared AI coup gates
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1
+			check_variable = { ROOT.generic_operation_type_to_run = token:operation_coup_government }
 		}
 	}
 
@@ -1263,6 +1217,31 @@ operation_coup_government = { ### 7 1/70
 				air_ratio = civil_war_airforce_fraction
 			}
 
+			# The revolter copies the old regime's ruling party, so seat the strongest party of its new ideology
+			random_enemy_country = {
+				limit = {
+					original_tag = FROM
+					has_government = var:ideology
+				}
+				clear_variable = ruling_party
+				seed_ruling_party_if_unset = yes
+				set_temp_variable = { rul_party_temp = ruling_party }
+				set_temp_variable = { disable_elections = 1 }
+				change_ruling_party_effect = yes
+
+				add_opinion_modifier = { target = ROOT modifier = supported_us_in_the_coup }
+				set_temp_variable = { percent_change = 10 }
+				change_influence_percentage = yes
+			}
+
+			# The old government reacts as it does to a discovered influence coup
+			add_opinion_modifier = { target = ROOT modifier = failed_coup }
+			if = {
+				limit = { is_in_array = { influence_array = ROOT } }
+				set_temp_variable = { percent_change = -15 }
+				change_influence_percentage = yes
+			}
+
 			# Clear State
 			clear_variable = coup_operation_party@ROOT
 			hidden_effect = {
@@ -1295,6 +1274,7 @@ operation_coup_government = { ### 7 1/70
 				ideology = var:civil_war_party
 			}
 		}
+		custom_effect_tooltip = operation_coup_government_influence_tt
 	}
 
 	phases = { #infiltration
