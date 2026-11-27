@@ -83,13 +83,23 @@ shipyard_recalc = {
 
 	set_variable = { shipyard_capital_yard = 0 }
 	if = {
-		limit = { any_owned_state = { non_damaged_building_level = { building = large_slipway level > 0 } } }
+		limit = {
+			any_owned_state = {
+				is_controlled_by = PREV
+				non_damaged_building_level = { building = large_slipway level > 0 }
+			}
+		}
 		set_variable = { shipyard_capital_yard = 1 }
 	}
 
 	set_variable = { shipyard_submarine_yard = 0 }
 	if = {
-		limit = { any_owned_state = { non_damaged_building_level = { building = submarine_hall level > 0 } } }
+		limit = {
+			any_owned_state = {
+				is_controlled_by = PREV
+				non_damaged_building_level = { building = submarine_hall level > 0 }
+			}
+		}
 		set_variable = { shipyard_submarine_yard = 1 }
 	}
 
@@ -111,19 +121,69 @@ shipyard_monthly = {
 	}
 }
 
-# Each completed stage also slows the monthly drift in shipyard_recalc.
+# Country scope. Takes the signed point change in the temp variable shipyard_crisis_change.
+shipyard_change_crisis = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = shipyard_crisis_modifier } }
+		custom_effect_tooltip = shipyard_crisis_change_tt
+		hidden_effect = {
+			add_to_variable = { shipyard_crisis_level = shipyard_crisis_change }
+			clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+			shipyard_recalc = yes
+		}
+	}
+}
+
 shipyard_drydock_complete = {
-	add_to_variable = { shipyard_drydock_stage = 1 }
-	add_to_variable = { shipyard_crisis_level = -15 }
-	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
-	shipyard_recalc = yes
+	if = {
+		limit = { check_variable = { shipyard_drydock_stage < 5 } }
+		add_to_variable = { shipyard_drydock_stage = 1 }
+		custom_effect_tooltip = shipyard_drydock_stage_complete_tt
+	}
+	set_temp_variable = { shipyard_crisis_change = -15 }
+	shipyard_change_crisis = yes
 }
 
 shipyard_workforce_complete = {
-	add_to_variable = { shipyard_workforce_stage = 1 }
-	add_to_variable = { shipyard_crisis_level = -6 }
-	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
-	shipyard_recalc = yes
+	if = {
+		limit = { check_variable = { shipyard_workforce_stage < 3 } }
+		add_to_variable = { shipyard_workforce_stage = 1 }
+		custom_effect_tooltip = shipyard_workforce_stage_complete_tt
+	}
+	set_temp_variable = { shipyard_crisis_change = -6 }
+	shipyard_change_crisis = yes
+}
+
+# State scope entered from the country that will own and control the facility (PREV).
+shipyard_build_large_slipway = {
+	if = {
+		limit = {
+			is_owned_and_controlled_by = PREV
+			is_coastal = yes
+			check_variable = { building_level@large_slipway = 0 }
+		}
+		if = {
+			limit = { NOT = { free_building_slots = { building = large_slipway size > 0 include_locked = no } } }
+			add_extra_state_shared_building_slots = 1
+		}
+		add_building_construction = { type = large_slipway level = 1 instant_build = yes }
+	}
+}
+
+# State scope entered from the country that will own and control the facility (PREV).
+shipyard_build_submarine_hall = {
+	if = {
+		limit = {
+			is_owned_and_controlled_by = PREV
+			is_coastal = yes
+			check_variable = { building_level@submarine_hall = 0 }
+		}
+		if = {
+			limit = { NOT = { free_building_slots = { building = submarine_hall size > 0 include_locked = no } } }
+			add_extra_state_shared_building_slots = 1
+		}
+		add_building_construction = { type = submarine_hall level = 1 instant_build = yes }
+	}
 }
 
 shipyard_pay_drydock = {

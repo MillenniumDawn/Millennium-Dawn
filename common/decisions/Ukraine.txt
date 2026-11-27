@@ -6995,6 +6995,7 @@ UKR_reorganize_navy_category = {
 			set_country_flag = varyag_hull_at_shipyard
 			unlock_decision_tooltip = varyag_prepare_refit
 			unlock_decision_tooltip = UKR_varyag_expand_mykolaiv_shipyard
+			custom_effect_tooltip = UKR_varyag_mykolaiv_projects_tt
 			hidden_effect = {
 				CHI = {
 					set_temp_variable = { treasury_change = 0.2 }
@@ -7031,7 +7032,7 @@ UKR_reorganize_navy_category = {
 
 		visible = {
 			has_country_flag = varyag_hull_at_shipyard
-			1086 = { dockyard < 2 }
+			1086 = { check_variable = { building_level@dockyard < 2 } }
 		}
 
 		available = {
@@ -7053,11 +7054,19 @@ UKR_reorganize_navy_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_varyag_expand_mykolaiv_shipyard"
 			if = {
-				limit = { controls_state = 1086 owns_state = 1086 }
+				limit = {
+					owns_state = 1086
+					controls_state = 1086
+					1086 = { check_variable = { building_level@dockyard < 2 } }
+				}
 				1086 = {
-					add_extra_state_shared_building_slots = 1
+					if = {
+						limit = { NOT = { free_building_slots = { building = dockyard size > 0 include_locked = no } } }
+						add_extra_state_shared_building_slots = 1
+					}
 					add_building_construction = { type = dockyard level = 1 instant_build = yes }
 				}
+				shipyard_recalc = yes
 			}
 		}
 
