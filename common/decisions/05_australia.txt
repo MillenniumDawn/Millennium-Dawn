@@ -613,7 +613,7 @@ ast_international_missions = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AST_seasonal_workers_PAP"
 			add_tech_bonus = {
-				name = seasonal_workers_pap
+				name = AST_seasonal_workers_PAP
 				bonus = 0.25
 				uses = 1
 				category = CAT_agriculture
@@ -645,7 +645,7 @@ ast_international_missions = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AST_seasonal_workers_VAN"
 			add_tech_bonus = {
-				name = seasonal_workers_van
+				name = AST_seasonal_workers_VAN
 				bonus = 0.25
 				uses = 1
 				category = CAT_agriculture
@@ -676,7 +676,7 @@ ast_international_missions = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AST_seasonal_workers_TON"
 			add_tech_bonus = {
-				name = seasonal_workers_ton
+				name = AST_seasonal_workers_TON
 				bonus = 0.25
 				uses = 1
 				category = CAT_excavation
@@ -707,7 +707,7 @@ ast_international_missions = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision AST_seasonal_workers_KIR"
 			add_tech_bonus = {
-				name = seasonal_workers_kir
+				name = AST_seasonal_workers_KIR
 				bonus = 0.25
 				uses = 1
 				category = CAT_excavation
@@ -1826,6 +1826,117 @@ ast_industry_decisions = {
 		}
 	}
 
+	AST_melbourne_airport_squeeze_mission = {
+		icon = GFX_decision_jet_bomber
+		days_mission_timeout = 365
+		days_re_enable = 1
+		selectable_mission = no
+		is_good = no
+		priority = 9
+
+		activation = {
+			NOT = { has_country_flag = AST_melbourne_runway_opened }
+			check_variable = { AST_melbourne_offices_productivity > -0.35 }
+			has_country_flag = AST_activate_melbourne_airport_squeeze
+		}
+
+		cancel_trigger = { has_country_flag = AST_melbourne_runway_opened }
+
+		available = { hidden_trigger = { always = no } }
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_melbourne_airport_squeeze_mission"
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = AST_melbourne_airport_squeeze
+			}
+			add_to_variable = { AST_melbourne_offices_productivity = -0.01 tooltip = offices_productivity_tt }
+			add_to_variable = { AST_melbourne_investment_cost = 0.02 tooltip = receiving_investment_cost_modifier_tt }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	AST_melbourne_runway_construction = {
+		icon = GFX_decision_generic_construction
+		fire_only_once = yes
+		days_remove = 540
+
+		visible = { has_country_flag = AST_activate_melbourne_airport_squeeze }
+
+		available = {
+			743 = { is_owned_and_controlled_by = ROOT }
+			num_of_civilian_factories_available_for_projects > 2
+			has_completed_focus = AST_fix_the_potholes
+		}
+
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_melbourne_runway_construction"
+			custom_effect_tooltip = AST_melbourne_runway_opening_postponed_tt
+		}
+
+		modifier = { civilian_factory_use = 3 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_melbourne_runway_construction"
+			set_temp_variable = { treasury_change = -12.5 }
+			modify_treasury_effect = yes
+			hidden_effect = { country_event = { id = ast_melbourne_runway.1 days = 230 } }
+			
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_melbourne_runway_construction"
+			if = {
+				limit = { has_dynamic_modifier = { modifier = AST_melbourne_airport_squeeze } }
+				remove_dynamic_modifier = { modifier = AST_melbourne_airport_squeeze }
+			}
+			news_event = ast_melbourne_runway.2
+			set_country_flag = AST_melbourne_runway_opened
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	AST_melbourne_runway_planning = {
+		icon = GFX_decision_milocevic_const_button
+		cost = AST_melbourne_runway_delay_cost
+		days_re_enable = 50
+
+		visible = {
+			check_variable = { AST_melbourne_runway_delay_cost < 125 } # 50, 75, 100, then no more delays
+			has_country_flag = AST_activate_melbourne_airport_squeeze
+			NOT = {
+				OR = {
+					has_country_flag = AST_melbourne_runway_opened
+					has_decision = AST_melbourne_runway_construction
+				}
+			}
+		}
+
+		available = {
+			743 = { is_owned_and_controlled_by = ROOT }
+			has_active_mission = AST_melbourne_airport_squeeze_mission
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AST_melbourne_runway_planning"
+			add_days_mission_timeout = {
+				mission = AST_melbourne_airport_squeeze_mission
+				days = 100
+			}
+			add_to_variable = { AST_melbourne_runway_delay_cost = 25 }
+		}
+
+		ai_will_do = {
+			base = 0
+		}
+	}
+
 	AST_square_kilometre_array_ast = {
 		icon = GFX_decision_antenna_ast
 		fire_only_once = yes
@@ -1844,7 +1955,7 @@ ast_industry_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision AST_square_kilometre_array_ast"
 			add_ideas = square_kilometre_array_ast
 			add_tech_bonus = {
-				name = square_kilometre_array_ast
+				name = AST_square_kilometre_array_ast
 				bonus = 0.5
 				uses = 2
 				category = CAT_civilian
