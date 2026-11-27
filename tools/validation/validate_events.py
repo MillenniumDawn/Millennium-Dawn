@@ -58,6 +58,7 @@ from validator_common import (
     idea_money_modifiers,
     iter_idea_bodies,
     lowering_treasury_checks,
+    mark_running_expense_ideas,
     run_validator_main,
     script_commits_money,
     should_skip_file,
@@ -428,6 +429,9 @@ def load_cost_lookups(validator: BaseValidator) -> CostLookups:
         bodies = _effect_bodies(validator)
         idea_texts = list(_mod_texts(validator, "common/ideas/**/*.txt"))
         ideas = idea_money_modifiers(idea_texts)
+        mark_running_expense_ideas(
+            ideas, _mod_texts(validator, "common/scripted_effects/**/*.txt")
+        )
         callbacks = idea_callbacks(idea_texts)
         effects = _costly_effects(bodies)
         commitments = money_commitment_effects(bodies, ideas)

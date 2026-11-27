@@ -51,14 +51,15 @@ SYR_add_religious_freedom_terms = {
 		}
 	}
 	if = { limit = { has_completed_focus = SYR_islamist_renaissance }
-		subtract_from_temp_variable = { minority_status = 10 }
+		subtract_from_temp_variable = { minority_status = 5 }
 	}
 	if = { limit = { has_completed_focus = SYR_religious_values }
-		subtract_from_temp_variable = { minority_status = 20 }
+		subtract_from_temp_variable = { minority_status = 5 }
 	}
 	if = { limit = { has_completed_focus = SYR_empower_sharia_courts }
-		subtract_from_temp_variable = { minority_status = 20 }
+		subtract_from_temp_variable = { minority_status = 5 }
 	}
+	subtract_from_temp_variable = { minority_status = SYR_islamist_grievance }
 }
 
 SYR_add_federalization_bonus = {
@@ -94,6 +95,13 @@ SYR_alawite_political_activity_modifier = {
 	189 = { SYR_add_minority_state_development = yes }
 	158 = { SYR_add_minority_state_development = yes }
 	SYR_add_federalization_bonus = yes
+	add_to_temp_variable = { minority_status = SYR_alawite_trust }
+	if = { limit = { has_decision = SYR_reassure_the_alawite_coast }
+		add_to_temp_variable = { minority_status = 10 }
+	}
+	if = { limit = { has_country_flag = SYR_alawite_reserved_seats }
+		add_to_temp_variable = { minority_status = 30 }
+	}
 
 	#assads in power effect
 	if = {
@@ -151,6 +159,13 @@ SYR_kurdish_political_activity_modifier = {
 	}
 	193 = { SYR_add_minority_state_development = yes }
 	SYR_add_federalization_bonus = yes
+	add_to_temp_variable = { minority_status = SYR_kurdish_trust }
+	if = { limit = { has_decision = SYR_open_dialogue_with_kurdish_parties }
+		add_to_temp_variable = { minority_status = 10 }
+	}
+	if = { limit = { has_country_flag = SYR_kurdish_reserved_seats }
+		add_to_temp_variable = { minority_status = 30 }
+	}
 
 	#kurds citizenship denied effect
 	if = {
@@ -210,6 +225,13 @@ SYR_druze_political_activity_modifier = {
 	184 = { SYR_add_minority_state_development = yes }
 	587 = { SYR_add_minority_state_development = yes }
 	SYR_add_federalization_bonus = yes
+	add_to_temp_variable = { minority_status = SYR_druze_trust }
+	if = { limit = { has_decision = SYR_engage_the_druze_sheikhs }
+		add_to_temp_variable = { minority_status = 10 }
+	}
+	if = { limit = { has_country_flag = SYR_druze_reserved_seats }
+		add_to_temp_variable = { minority_status = 30 }
+	}
 
 	set_variable = {
 		druze_status = {
@@ -250,97 +272,175 @@ SYR_druze_political_activity_modifier = {
 	}
 }
 
-syrian_industry_effect1 = {
+SYR_queue_christian_seats_demand = {
 	if = {
-		limit = { check_variable = { corruption_level > 1 } }
-		set_temp_variable = {
-			treasury_change = {
-				value = corruption_level
-				multiply = 5.5
-				add = 1
-				multiply = -1
+		limit = { NOT = { has_country_flag = SYR_christian_seats_demanded } }
+		set_country_flag = SYR_christian_seats_demanded
+		country_event = { id = SyriaFocus.107 days = 30 }
+	}
+}
+
+SYR_denied_seats_riots = {
+	if = {
+		limit = {
+			has_country_flag = SYR_alawite_seats_denied
+			check_variable = { alawite_status < 50 }
+		}
+		random = {
+			chance = 10
+			random_owned_state = {
+				limit = {
+					OR = { state = 189 state = 158 }
+					infrastructure > 0
+				}
+				damage_building = { type = infrastructure damage = 1 }
 			}
 		}
-		modify_treasury_effect = yes
 	}
-}
-
-syrian_industry_effect2 = {
 	if = {
-		limit = { check_variable = { corruption_level > 1 } }
-		set_temp_variable = {
-			treasury_change = {
-				value = corruption_level
-				multiply = 8
-				add = 1
-				multiply = -1
+		limit = {
+			has_country_flag = SYR_druze_seats_denied
+			check_variable = { druze_status < 50 }
+		}
+		random = {
+			chance = 10
+			random_owned_state = {
+				limit = {
+					OR = { state = 185 state = 184 state = 587 }
+					infrastructure > 0
+				}
+				damage_building = { type = infrastructure damage = 1 }
 			}
 		}
-		modify_treasury_effect = yes
 	}
-}
-
-syrian_energy_effect = {
 	if = {
-		limit = { check_variable = { corruption_level > 1 } }
-		set_temp_variable = {
-			treasury_change = {
-				value = corruption_level
-				multiply = -3
+		limit = {
+			has_country_flag = SYR_kurdish_seats_denied
+			check_variable = { kurdish_status < 50 }
+		}
+		random = {
+			chance = 10
+			random_owned_state = {
+				limit = {
+					state = 193
+					infrastructure > 0
+				}
+				damage_building = { type = infrastructure damage = 1 }
 			}
 		}
-		modify_treasury_effect = yes
 	}
 }
 
-syrian_corrcost_agri = {
-	set_temp_variable = {
-		treasury_change = {
-			value = corruption_level
-			multiply = 6
-			subtract = 11.25
-			max = 3.75
-			multiply = -1
-		}
+# Hands the Kurdish north to Rojava with its cores and army
+SYR_release_rojava = {
+	ROJ = {
+		add_state_core = 193
+		add_state_core = 575
+		add_state_core = 191
+		add_state_core = 995
 	}
-	modify_treasury_effect = yes
+	release = ROJ
+	hidden_effect = {
+		add_state_core = 193
+		add_state_core = 575
+		add_state_core = 191
+		add_state_core = 995
+		ROJ = { load_oob = ROJ_2017 }
+	}
 }
 
-syrian_corrcost_civ = {
-	set_temp_variable = {
-		treasury_change = {
-			value = corruption_level
-			multiply = 3
-			add = 1.5
-			max = 7.5
-			multiply = -1
-		}
-	}
-	modify_treasury_effect = yes
+# Restarts the war clock, so a second Syrian war gets its own cleanup, refugee wave, and timed events
+SYR_start_civil_war_clock = {
+	clr_global_flag = GLOBAL_syrian_civil_war_over
+	clr_global_flag = GLOBAL_syrian_civil_war_started
+	set_global_flag = GLOBAL_syrian_civil_war_started
+	clr_global_flag = syrian_refugee_wave_started
 }
 
-syrian_corrcost_civtwo = {
-	set_temp_variable = {
-		treasury_change = {
-			value = corruption_level
-			multiply = 6
-			add = 3
-			max = 15
-			multiply = -1
+# A fallen Islamic State returns six months to a year later, at most twice, against whoever holds the desert by then
+SYR_isis_resurgence_tick = {
+	if = {
+		limit = {
+			has_global_flag = ISIL_declared
+			NOT = { country_exists = ISI }
+			NOT = { check_variable = { global.isis_resurgences > 1 } }
+		}
+		if = {
+			limit = { NOT = { has_global_flag = ISIS_resurgence_queued } }
+			set_global_flag = ISIS_resurgence_queued
+		}
+		else_if = {
+			limit = { has_global_flag = { flag = ISIS_resurgence_queued days > 179 } }
+			random = {
+				chance = 25
+				192 = { OWNER = { country_event = { id = SyriaCivilWar.40 days = 1 random_days = 10 } } }
+			}
 		}
 	}
-	modify_treasury_effect = yes
+	# The six months count from the fall, not from a flag set while the Islamic State still stood
+	else_if = {
+		limit = {
+			country_exists = ISI
+			has_global_flag = ISIS_resurgence_queued
+		}
+		clr_global_flag = ISIS_resurgence_queued
+	}
 }
 
-syrian_corrcost_off = {
-	set_temp_variable = {
-		treasury_change = {
-			value = corruption_level
-			multiply = 3
-			add = 6
-			max = 12
-			multiply = -1
+# Gives up the cores on the Kurdish north and hands Rojava the parts still owned there
+SYR_cede_rojava_states = {
+	remove_state_core = 193
+	remove_state_core = 575
+	remove_state_core = 191
+	remove_state_core = 995
+	if = { limit = { owns_state = 193 } ROJ = { transfer_state = 193 } }
+	if = { limit = { owns_state = 575 } ROJ = { transfer_state = 575 } }
+	if = { limit = { owns_state = 191 } ROJ = { transfer_state = 191 } }
+	if = { limit = { owns_state = 995 } ROJ = { transfer_state = 995 } }
+}
+
+# Effect: SYR_defectors_join_fsa
+# Purpose: Turns a wave of regime defectors into new FSA brigades at the FSA capital, carrying their rifles and anti-tank weapons
+# Parameters:
+# - SYR_defector_count: brigades that reach the FSA
+SYR_defectors_join_fsa = {
+	set_temp_variable = { defector_manpower = { value = SYR_defector_count multiply = -1500 } }
+	set_temp_variable = { defector_rifles = { value = SYR_defector_count multiply = 600 } }
+	set_temp_variable = { defector_at = { value = SYR_defector_count multiply = 60 } }
+	set_temp_variable = { defector_rifles_lost = { value = defector_rifles multiply = -1 } }
+	set_temp_variable = { defector_at_lost = { value = defector_at multiply = -1 } }
+	add_manpower = defector_manpower
+	add_equipment_to_stockpile = { type = infantry_weapons_type amount = defector_rifles_lost }
+	add_equipment_to_stockpile = { type = L_AT_Equipment amount = defector_at_lost }
+	FSA = {
+		if = {
+			limit = { NOT = { has_template = "Defected Army Brigade" } }
+			division_template = {
+				name = "Defected Army Brigade"
+				is_locked = yes
+				division_names_group = SYR_FSA_UNITS
+				regiments = {
+					Mot_Inf_Bat = { x = 0 y = 0 }
+					Mot_Inf_Bat = { x = 0 y = 1 }
+					Mot_Inf_Bat = { x = 0 y = 2 }
+				}
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
+				}
+			}
+		}
+		add_equipment_to_stockpile = { type = infantry_weapons_type amount = defector_rifles producer = SYR }
+		add_equipment_to_stockpile = { type = L_AT_Equipment amount = defector_at producer = SYR }
+		set_temp_variable = { defectors_left = SYR_defector_count }
+		while_loop_effect = {
+			limit = { check_variable = { defectors_left > 0 } }
+			capital_scope = {
+				create_unit = {
+					division = "name = \"Defected Army Brigade\" division_template = \"Defected Army Brigade\" start_experience_factor = 0.5 start_equipment_factor = 0.7"
+					owner = FSA
+				}
+			}
+			subtract_from_temp_variable = { defectors_left = 1 }
 		}
 	}
-	modify_treasury_effect = yes
 }

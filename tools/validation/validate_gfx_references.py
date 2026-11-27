@@ -1230,6 +1230,26 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
+# Sprite name prefix -> texture folders its art must live in. An idea sprite on
+# focus or decision art renders at the wrong size and style.
+_SPRITE_TEXTURE_FOLDERS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
+    ("gfx_idea_", ("gfx/interface/ideas/", "gfx/interface/officer_corp/")),
+    ("gfx_decision_", ("gfx/interface/decisions/", "gfx/texticons/")),
+)
+
+
+def sprite_texture_folder_mismatch(name: str, texture: str) -> Optional[str]:
+    """Return the expected folders when `texture` is outside them, else None."""
+    lower = name.lower()
+    path = texture.replace("\\", "/").lower()
+    for prefix, folders in _SPRITE_TEXTURE_FOLDERS:
+        if lower.startswith(prefix):
+            if path.startswith(folders):
+                return None
+            return " or ".join(folders)
+    return None
+
+
 class Validator(BaseValidator):
     TITLE = "GFX SPRITE REFERENCE VALIDATION"
     STAGED_EXTENSIONS = [".gui", ".gfx", ".txt"]
@@ -1665,6 +1685,31 @@ class Validator(BaseValidator):
             category="case-variant-sprite",
         )
 
+    def _check_sprite_texture_folders(self) -> None:
+        """Report idea and decision sprites whose texture sits in another art folder.
+
+        Under --staged, only definitions in staged files report.
+        """
+        self._log_section("Checking idea and decision sprite texture folders")
+        staged_rel = self._staged_rel()
+        findings = []
+        for name, filepath, texture, line in self._mod_defs:
+            rel = os.path.relpath(filepath, self.mod_path)
+            if staged_rel is not None and rel not in staged_rel:
+                continue
+            expected = sprite_texture_folder_mismatch(name, texture)
+            if expected:
+                findings.append(
+                    (f"{name} -> {texture} (expected {expected})", rel, line)
+                )
+        self._report(
+            findings,
+            ok_msg="Idea and decision sprites use matching art folders.",
+            fail_msg=f"Sprites on art from the wrong folder ({len(findings)} total):",
+            severity=Severity.WARNING,
+            category="sprite-texture-folder",
+        )
+
     def _check_undefined_fonts(self) -> None:
         """Report .gui `font = "x"` naming a bitmapfont nothing declares.
 
@@ -2086,6 +2131,7 @@ class Validator(BaseValidator):
         mod_defined_ci = casefold_index(mod_defined)
 
         self._check_duplicate_definitions()
+        self._check_sprite_texture_folders()
         self._check_undefined_fonts()
 
         gui_refs = self._collect_gui_refs(defined)
