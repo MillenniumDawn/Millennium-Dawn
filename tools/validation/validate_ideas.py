@@ -111,6 +111,9 @@ _VANILLA_IDEA_PREFIXES: Tuple[str, ...] = tuple(
 _INSTANT_EXEMPT_PREFIXES: Tuple[str, ...] = tuple(
     validation_config("validate_ideas", "equipment_bonus_instant_exempt")
 )
+_MISSING_AUTO_ICON_EXEMPT_CATEGORIES = frozenset(
+    validation_config("validate_ideas", "missing_auto_icon_exempt_categories")
+)
 
 
 def _extract_swap_idea_refs(text: str) -> List[str]:
@@ -354,6 +357,10 @@ def _missing_icon_message(
         accepted.append(f"GFX_idea_{name_override}")
     verdicts = [_sprite_verdict(s, sprites) for s in accepted]
     if any(v is None for v in verdicts):
+        return None
+    if cat in _MISSING_AUTO_ICON_EXEMPT_CATEGORIES and all(
+        v == "undefined" for v in verdicts
+    ):
         return None
     return f"{idea_name}: auto-icon {accepted[0]} ({verdicts[0]})"
 
