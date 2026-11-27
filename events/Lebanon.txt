@@ -1,0 +1,146 @@
+add_namespace = lebanon
+
+# Refugees from the Syrian civil war reach Lebanon
+country_event = {
+	id = lebanon.1
+	title = lebanon.1.t
+	desc = lebanon.1.d
+	picture = GFX_Syrian_Occupation_Lebanon
+	is_triggered_only = yes
+
+	# Keep the border open
+	option = {
+		name = lebanon.1.a
+		log = "[GetDateText]: [This.GetName]: lebanon.1.a executed"
+		add_ideas = syrian_refugees_hosted
+		ai_chance = { base = 10 }
+	}
+
+	# Close the border
+	option = {
+		name = lebanon.1.b
+		log = "[GetDateText]: [This.GetName]: lebanon.1.b executed"
+		add_stability = -0.03
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+}
+
+# Syrian army convoys cross the Qalamoun with Hezbollah's help
+country_event = {
+	id = lebanon.2
+	title = lebanon.2.t
+	desc = lebanon.2.d
+	picture = GFX_Hezbollah_Spies
+	is_triggered_only = yes
+
+	trigger = { NOT = { is_subject_of = SYR } }
+
+	# Look the other way
+	option = {
+		name = lebanon.2.a
+		log = "[GetDateText]: [This.GetName]: lebanon.2.a executed"
+		add_stability = -0.01
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	# Send the army to the crossings
+	option = {
+		name = lebanon.2.b
+		log = "[GetDateText]: [This.GetName]: lebanon.2.b executed"
+		add_political_power = -25
+		custom_effect_tooltip = LEB_closed_syrian_crossings_tt
+		set_country_flag = { flag = LEB_closed_syrian_crossings days = 180 value = 1 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# 17 October 2019: a tax on WhatsApp calls brings Lebanon onto the streets
+country_event = {
+	id = lebanon.10
+	title = lebanon.10.t
+	desc = lebanon.10.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	trigger = { has_war = no }
+
+	# The government resigns
+	option = {
+		name = lebanon.10.a
+		log = "[GetDateText]: [This.GetName]: lebanon.10.a executed"
+		add_political_power = -50
+		add_stability = -0.02
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Wait for the protests to fade
+	option = {
+		name = lebanon.10.b
+		log = "[GetDateText]: [This.GetName]: lebanon.10.b executed"
+		add_stability = -0.06
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+}
+
+# 4 August 2020: ammonium nitrate stored for years at the port of Beirut explodes
+country_event = {
+	id = lebanon.11
+	title = lebanon.11.t
+	desc = lebanon.11.d
+	picture = GFX_bam_earthquake
+	is_triggered_only = yes
+
+	trigger = { owns_state = 202 }
+
+	immediate = {
+		202 = {
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = { type = infrastructure damage = 1 }
+			}
+		}
+	}
+
+	# Accept international aid
+	option = {
+		name = lebanon.11.a
+		log = "[GetDateText]: [This.GetName]: lebanon.11.a executed"
+		trigger = { country_exists = FRA }
+		add_stability = -0.03
+		set_temp_variable = { treasury_change = 1 }
+		modify_treasury_effect = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = FRA.id }
+		change_influence_percentage = yes
+		ai_chance = { base = 10 }
+	}
+
+	# Rebuild on our own
+	option = {
+		name = lebanon.11.b
+		log = "[GetDateText]: [This.GetName]: lebanon.11.b executed"
+		add_stability = -0.05
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}

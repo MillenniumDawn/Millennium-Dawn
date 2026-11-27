@@ -358,3 +358,155 @@ FSA_internal_revolt_category = {
 		}
 	}
 }
+
+FSA_war_effort_category = {
+
+	FSA_raise_local_militia = {
+		icon = generic_prepare_civil_war_new
+
+		days_remove = 7
+		days_re_enable = 21
+
+		available = { has_manpower > 999 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_raise_local_militia"
+			add_manpower = -1000
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_raise_local_militia"
+			if = {
+				limit = { NOT = { has_template = "Militia Brigade" } }
+				division_template = {
+					name = "Militia Brigade"
+					is_locked = yes
+					division_names_group = SYR_FSA_UNITS
+					regiments = {
+						Mot_Militia_Bat = { x = 0 y = 0 }
+						Mot_Militia_Bat = { x = 0 y = 1 }
+						Mot_Militia_Bat = { x = 0 y = 2 }
+					}
+					support = {
+						L_Engi_Comp = { x = 0 y = 0 }
+					}
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name = \"Militia Brigade\" division_template = \"Militia Brigade\" start_experience_factor = 0.3 start_equipment_factor = 0.5"
+					owner = FSA
+					count = 2
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = { add = 25 surrender_progress > 0.2 }
+		}
+	}
+
+	FSA_appeal_to_defectors = {
+		icon = generic_political_rally
+
+		days_remove = 10
+		days_re_enable = 60
+
+		visible = { country_exists = SYR }
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_appeal_to_defectors"
+			if = {
+				limit = { country_exists = SYR }
+				SYR = {
+					set_temp_variable = { party_popularity_increase = -0.02 }
+					change_relative_party_popularity = yes
+				}
+			}
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	# Bab al-Hawa and the Azaz crossings stay open while Ankara looks away
+	FSA_turkish_border_route = {
+		icon = generic_operation
+
+		visible = { country_exists = TUR }
+
+		available = {
+			OR = {
+				controls_state = 190
+				controls_state = 575
+			}
+			TUR = {
+				NOT = { has_war_with = ROOT }
+				NOT = { has_completed_focus = TUR_back_assad }
+			}
+		}
+
+		days_remove = 15
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_turkish_border_route"
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = FSA_turkish_border_route_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_turkish_border_route"
+			add_equipment_to_stockpile = { type = infantry_weapons_type amount = 600 }
+			add_equipment_to_stockpile = { type = L_AT_Equipment amount = 40 }
+			if = {
+				limit = { TUR = { has_completed_focus = TUR_back_fsa } }
+				add_equipment_to_stockpile = { type = infantry_weapons_type amount = 600 producer = TUR }
+				add_equipment_to_stockpile = { type = L_AT_Equipment amount = 40 producer = TUR }
+			}
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = { add = 10 has_equipment = { infantry_weapons_type < 2000 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# The southern front is armed from Jordan
+	FSA_jordanian_southern_front = {
+		icon = generic_army_support
+
+		visible = { country_exists = JOR }
+
+		available = {
+			controls_state = 184
+			JOR = { NOT = { has_war_with = ROOT } }
+		}
+
+		days_remove = 15
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_jordanian_southern_front"
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision FSA_jordanian_southern_front"
+			add_equipment_to_stockpile = { type = infantry_weapons_type amount = 400 }
+			add_equipment_to_stockpile = { type = L_AT_Equipment amount = 30 }
+			add_equipment_to_stockpile = { type = AA_Equipment amount = 10 }
+		}
+
+		ai_will_do = {
+			base = 20
+			modifier = { add = 10 has_equipment = { infantry_weapons_type < 2000 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
