@@ -908,6 +908,42 @@ def test_missing_icons_skip_hidden_and_character_categories(tmp_path, no_vanilla
     ]
 
 
+def test_scripted_panel_exempts_only_absent_implicit_icons(
+    tmp_path, no_vanilla_gfx, monkeypatch
+):
+    monkeypatch.setattr(
+        validate_ideas, "_MISSING_AUTO_ICON_EXEMPT_CATEGORIES", {"panel"}
+    )
+    _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
+    _write(
+        tmp_path,
+        "interface/ideas.gfx",
+        'spriteType = { name = "GFX_idea_PLACEHOLDER" texturefile = "gfx/WIP_idea.dds" }\n'
+        'spriteType = { name = "GFX_idea_WrongCase" texturefile = "gfx/real.dds" }\n',
+    )
+    validator = _validator(tmp_path)
+
+    validator.validate_missing_icons(
+        {
+            "NO_icon": ("panel", None, None),
+            "WITH_alias": ("panel", "MISSING_alias", None),
+            "EXPLICIT": ("panel", None, "missing"),
+            "PLACEHOLDER": ("panel", None, None),
+            "wrongcase": ("panel", None, None),
+            "ORDINARY": ("country", None, None),
+        },
+        {},
+    )
+
+    assert [i.message for i in validator._issues] == [
+        "panel: EXPLICIT: picture = missing -> GFX_idea_missing (undefined)",
+        "country: ORDINARY: auto-icon GFX_idea_ORDINARY (undefined)",
+        "panel: PLACEHOLDER: auto-icon GFX_idea_PLACEHOLDER (placeholder art)",
+        "panel: wrongcase: auto-icon GFX_idea_wrongcase "
+        "(case mismatch, defined as GFX_idea_WrongCase)",
+    ]
+
+
 def test_empty_idea_scope_skips_the_sprite_index(tmp_path, monkeypatch):
     validator = _validator(tmp_path)
     monkeypatch.setattr(
