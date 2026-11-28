@@ -52,6 +52,21 @@ def test_variant_reference_inputs_select_the_oob_validator(path):
     assert groups["content"] is True
 
 
+@pytest.mark.parametrize(
+    "path, selected",
+    [
+        ("gfx/entities/test.asset", True),
+        ("gfx/entities/test.gfx", True),
+        ("gfx/models/ships/test.asset", True),
+        ("gfx/models/ships/test.gfx", True),
+        ("gfx/models/ships/test.mesh", False),
+        ("interface/test.gfx", False),
+    ],
+)
+def test_entity_definition_group(path, selected):
+    assert change_groups.classify([path])["entity-definitions"] is selected
+
+
 def test_localisation_only_change():
     groups = change_groups.classify(["localisation/english/example.yml"])
 

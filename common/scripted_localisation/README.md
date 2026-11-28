@@ -10,8 +10,9 @@ Scripted localisation files are located in `/common/scripted_localisation/*.txt`
 
 ## Millennium Dawn File Naming Standards
 
-- **Mechanical files**: Use `00_` or `01_` prefix (e.g., `00_generic_scripted_localisation.txt`)
-- **Country-specific files**: Use `99_<TAG>_` prefix (e.g., `99_USA_scripted_localisation.txt`)
+- **Mechanical and shared files**: Use a two-digit prefix from `00_` to `98_` and the `_scripted_localisation.txt` suffix, e.g., `00_generic_scripted_localisation.txt`. Keep the numeric prefix when renaming a file unless its load order needs to change.
+- **Country-specific files**: Use `99_<TAG>_scripted_localisation.txt` or `99_<TAG>_<topic>_scripted_localisation.txt`. Use an exact tag from `common/country_tags/`.
+- CI reports naming problems in this directory. Language-specific `_FR_loc.txt` files are outside this check.
 
 ## Basic Structure
 

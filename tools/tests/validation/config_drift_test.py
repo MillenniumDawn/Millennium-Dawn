@@ -1343,6 +1343,7 @@ def test_ci_strict_gate_lives_in_batch_specs():
         "simplifications",
         "influence-reads",
         "graphical-cultures",
+        "entity-references",
     ]
 
 

@@ -68,6 +68,10 @@ These guidelines help keep the mod running smoothly:
 
 ---
 
+## Scripted Localisation File Names
+
+In `common/scripted_localisation/`, use `NN_<system>_scripted_localisation.txt` for shared systems and `99_<TAG>_scripted_localisation.txt` for country files. `NN` is `00` through `98`. Country files can add a topic after the tag, which must match a tag in `common/country_tags/`. CI checks these names.
+
 # Focus Trees
 
 > **Reference**: [HOI4 Wiki - National Focus Modding](https://hoi4.paradoxwikis.com/National_focus_modding)

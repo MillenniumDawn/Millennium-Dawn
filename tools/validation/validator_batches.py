@@ -118,7 +118,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "focus-tree",
             "validate_focus_tree.py",
-            ("national-focus", "localisation"),
+            ("national-focus", "localisation", "interface"),
             args=("--missing-icons",),
         ),
         ValidatorSpec("on-actions", "validate_on_actions.py", ("on-actions", "events")),
@@ -194,6 +194,13 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "validate_ai_path_rules.py",
             ("national-focus", "common", "history"),
         ),
+        ValidatorSpec(
+            "entity-references",
+            "validate_entity_references.py",
+            ("entity-definitions",),
+            strict=False,
+        ),
+        ValidatorSpec("file-naming", "validate_file_naming.py", ("common",)),
         ValidatorSpec(
             "party-loc",
             "validate_party_loc.py",

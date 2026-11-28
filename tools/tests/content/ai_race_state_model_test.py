@@ -17,7 +17,7 @@ GAME_RULES_LOC_PATH = ROOT / "localisation" / "english" / "MD_game_rules_l_engli
 RACE_LOC_PATH = ROOT / "localisation" / "english" / "MD_ai_race_l_english.yml"
 RACE_GUI_PATH = ROOT / "interface" / "MD_ai_race.gui"
 SCRIPTED_LOC_PATH = (
-    ROOT / "common" / "scripted_localisation" / "01_ai_race_localisation.txt"
+    ROOT / "common" / "scripted_localisation" / "01_ai_race_scripted_localisation.txt"
 )
 
 
@@ -618,6 +618,7 @@ class RaceScript:
                 data = {key: value for key, _op, value in operand}
                 result = self.mode == data["option"]
             elif key == "date":
+                assert isinstance(operand, str)
                 result = self.comparisons[comparison](
                     self.today, date(*map(int, operand.split(".")))
                 )
@@ -633,7 +634,9 @@ class RaceScript:
                 member = (
                     identifier if value == "THIS" else self.value(value, identifier)
                 )
-                result = member in self.value(name, identifier)
+                members = self.value(name, identifier)
+                assert isinstance(members, list)
+                result = member in members
             elif key == "has_tech":
                 result = operand in country["techs"]
             elif key == "can_research":
@@ -804,7 +807,9 @@ class RaceScript:
                     self.scope_stack.pop()
             elif key == "for_each_scope_loop":
                 data = {key: value for key, _op, value in operand}
-                for member in list(self.value(data["array"], identifier)):
+                members = self.value(data["array"], identifier)
+                assert isinstance(members, list)
+                for member in list(members):
                     self.scope_stack.append(identifier)
                     try:
                         self.execute(
@@ -814,7 +819,9 @@ class RaceScript:
                         self.scope_stack.pop()
             elif key == "for_each_loop":
                 data = {key: value for key, _op, value in operand}
-                for member in list(self.value(data["array"], identifier)):
+                members = self.value(data["array"], identifier)
+                assert isinstance(members, list)
+                for member in list(members):
                     self.temps[data["value"]] = member
                     self.execute(
                         [

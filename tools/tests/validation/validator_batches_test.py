@@ -25,7 +25,7 @@ def reuse_repository_import_graph(monkeypatch, repository_import_graph):
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 47
+    assert len(vb.ALL_SPECS) == 49
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }
@@ -88,6 +88,13 @@ def test_graphic_db_group_selects_gfx_references():
     assert selected == {"gfx-references"}
 
 
+def test_entity_definitions_group_selects_entity_references():
+    specs = rvb.selected_specs("targeted-b", {"entity-definitions"})
+    assert [(spec.name, spec.strict) for spec in specs] == [
+        ("entity-references", False)
+    ]
+
+
 def test_common_group_selects_graphical_culture_registration():
     selected = {spec.name for spec in rvb.selected_specs("targeted-b", {"common"})}
     assert "graphical-cultures" in selected
@@ -145,6 +152,7 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         "ai-equipment",
         "common-mistakes",
         "decisions",
+        "entity-references",
         "equipment-variants",
         "events",
         "focus-tree",
