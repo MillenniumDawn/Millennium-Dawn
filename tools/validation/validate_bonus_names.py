@@ -14,7 +14,7 @@ from typing import List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import FileOpener
+from shared_utils import FileOpener, validation_config
 from validate_tech_categories import _TAGS_GLOB, load_known_categories
 from validator_common import (
     BaseValidator,
@@ -63,6 +63,9 @@ _VALIDATE_PATTERNS = [
 
 _DECISIONS_DIR = "common/decisions/"
 _MIO_DIR = "common/military_industrial_organization/"
+_NAME_NOT_OWNER_ID_EXCEPTIONS = frozenset(
+    validation_config("validate_bonus_names", "name_not_owner_id_exceptions")
+)
 
 
 def _direct_field(
@@ -268,7 +271,13 @@ class Validator(BaseValidator):
                             line,
                         )
                     )
-                elif self.name_not_owner_id and accepted and name not in accepted:
+                elif (
+                    self.name_not_owner_id
+                    and accepted
+                    and name not in accepted
+                    and f"{kind}::{token}::{effect}::{name}"
+                    not in _NAME_NOT_OWNER_ID_EXCEPTIONS
+                ):
                     results.append(
                         self._issue(
                             "bonus-name-not-owner-id",
