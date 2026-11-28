@@ -8973,7 +8973,7 @@ UKR_t55_count_developed_models = {
 }
 
 # Storage list in the UKR_reactivate_sov_category GUI (UKR_reactivate_sov_storage_gui).
-# Row ids: 1-8 are section headers, 11 and up are vehicles, the tens digit is their section.
+# Row IDs 1-10 and 100 are section headers. Other IDs identify equipment rows.
 # Sections and vehicles with nothing in storage are hidden. Only the section in UKR_storage_open_section
 # shows its vehicles (0 = all closed). UKR_storage_refresh rebuilds the rows.
 UKR_storage_rebuild_rows = {
@@ -9030,6 +9030,15 @@ UKR_storage_rebuild_rows = {
 			if = { limit = { check_variable = { ukraine_has_s125_stockpile > 0 } } add_to_array = { UKR_storage_rows = 33 } }
 			if = { limit = { check_variable = { ukraine_has_2k11_stockpile > 0 } } add_to_array = { UKR_storage_rows = 31 } }
 			if = { limit = { check_variable = { ukraine_has_zsu57_stockpile > 0 } } add_to_array = { UKR_storage_rows = 36 } }
+		}
+	}
+	# Stored Helicopters header and model rows.
+	if = {
+		limit = { check_variable = { UKR_storage_total_100 > 0 } }
+		add_to_array = { UKR_storage_rows = 100 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 100 } }
+			if = { limit = { check_variable = { UKR_storage_ka25_total > 0 } } add_to_array = { UKR_storage_rows = 75 } }
 		}
 	}
 	if = {
@@ -9138,9 +9147,13 @@ UKR_storage_count_decisions = {
 	set_variable = { UKR_storage_dec_total_6 = 0 }
 	set_variable = { UKR_storage_dec_new_6 = 0 }
 	set_variable = { UKR_storage_dec_missions_10 = 0 }
+	set_variable = { UKR_storage_dec_missions_100 = 0 }
 	set_variable = { UKR_storage_dec_ready_10 = 0 }
+	set_variable = { UKR_storage_dec_ready_100 = 0 }
 	set_variable = { UKR_storage_dec_total_10 = 0 }
+	set_variable = { UKR_storage_dec_total_100 = 0 }
 	set_variable = { UKR_storage_dec_new_10 = 0 }
+	set_variable = { UKR_storage_dec_new_100 = 0 }
 	set_variable = { UKR_storage_dec_missions_7 = 0 }
 	set_variable = { UKR_storage_dec_ready_7 = 0 }
 	set_variable = { UKR_storage_dec_total_7 = 0 }
@@ -9254,9 +9267,13 @@ UKR_storage_count_decisions = {
 	set_variable = { UKR_storage_dec_total_68 = 0 }
 	set_variable = { UKR_storage_dec_new_68 = 0 }
 	set_variable = { UKR_storage_dec_missions_69 = 0 }
+	set_variable = { UKR_storage_dec_missions_75 = 0 }
 	set_variable = { UKR_storage_dec_ready_69 = 0 }
+	set_variable = { UKR_storage_dec_ready_75 = 0 }
 	set_variable = { UKR_storage_dec_total_69 = 0 }
+	set_variable = { UKR_storage_dec_total_75 = 0 }
 	set_variable = { UKR_storage_dec_new_69 = 0 }
+	set_variable = { UKR_storage_dec_new_75 = 0 }
 	set_variable = { UKR_storage_dec_missions_71 = 0 }
 	set_variable = { UKR_storage_dec_ready_71 = 0 }
 	set_variable = { UKR_storage_dec_total_71 = 0 }
@@ -11018,6 +11035,75 @@ UKR_storage_count_decisions = {
 		else = { clr_country_flag = UKR_varyag_restore_yak38_seen }
 	}
 	else = { clr_country_flag = UKR_varyag_restore_yak38_seen }
+	if = {
+		limit = { check_variable = { UKR_storage_ka25_total > 0 } country_exists = BUL }
+		add_to_variable = { UKR_storage_dec_total_100 = 1 }
+		add_to_variable = { UKR_storage_dec_total_75 = 1 }
+		if = {
+			limit = { UKR_storage_ka25_ready = yes UKR_storage_ka25_bulgaria_can_buy = yes NOT = { has_country_flag = UKR_storage_ka25_offer_cooldown_flag } NOT = { has_decision = UKR_storage_ka25_sell_to_bulgaria } }
+			add_to_variable = { UKR_storage_dec_ready_100 = 1 }
+			add_to_variable = { UKR_storage_dec_ready_75 = 1 }
+			if = {
+				limit = { NOT = { has_country_flag = UKR_storage_ka25_sell_to_bulgaria_seen } }
+				if = {
+					limit = { check_variable = { UKR_storage_selected_row = 75 } }
+					set_country_flag = UKR_storage_ka25_sell_to_bulgaria_seen
+				}
+				else = {
+					set_variable = { UKR_storage_dec_new_100 = 1 }
+					set_variable = { UKR_storage_dec_new_75 = 1 }
+				}
+			}
+		}
+		else = { clr_country_flag = UKR_storage_ka25_sell_to_bulgaria_seen }
+	}
+	else = { clr_country_flag = UKR_storage_ka25_sell_to_bulgaria_seen }
+	if = {
+		limit = { check_variable = { UKR_storage_ka25_total > 0 } }
+		add_to_variable = { UKR_storage_dec_total_100 = 1 }
+		add_to_variable = { UKR_storage_dec_total_75 = 1 }
+		if = {
+			limit = { UKR_storage_ka25_ready = yes NOT = { check_variable = { treasury < 0.02 } } NOT = { has_political_power < 10 } NOT = { has_decision = UKR_storage_ka25_museum } }
+			add_to_variable = { UKR_storage_dec_ready_100 = 1 }
+			add_to_variable = { UKR_storage_dec_ready_75 = 1 }
+			if = {
+				limit = { NOT = { has_country_flag = UKR_storage_ka25_museum_seen } }
+				if = {
+					limit = { check_variable = { UKR_storage_selected_row = 75 } }
+					set_country_flag = UKR_storage_ka25_museum_seen
+				}
+				else = {
+					set_variable = { UKR_storage_dec_new_100 = 1 }
+					set_variable = { UKR_storage_dec_new_75 = 1 }
+				}
+			}
+		}
+		else = { clr_country_flag = UKR_storage_ka25_museum_seen }
+	}
+	else = { clr_country_flag = UKR_storage_ka25_museum_seen }
+	if = {
+		limit = { check_variable = { UKR_storage_ka25_total > 0 } }
+		add_to_variable = { UKR_storage_dec_total_100 = 1 }
+		add_to_variable = { UKR_storage_dec_total_75 = 1 }
+		if = {
+			limit = { UKR_storage_ka25_ready = yes controls_state = 669 NOT = { has_decision = UKR_storage_ka25_scrap } }
+			add_to_variable = { UKR_storage_dec_ready_100 = 1 }
+			add_to_variable = { UKR_storage_dec_ready_75 = 1 }
+			if = {
+				limit = { NOT = { has_country_flag = UKR_storage_ka25_scrap_seen } }
+				if = {
+					limit = { check_variable = { UKR_storage_selected_row = 75 } }
+					set_country_flag = UKR_storage_ka25_scrap_seen
+				}
+				else = {
+					set_variable = { UKR_storage_dec_new_100 = 1 }
+					set_variable = { UKR_storage_dec_new_75 = 1 }
+				}
+			}
+		}
+		else = { clr_country_flag = UKR_storage_ka25_scrap_seen }
+	}
+	else = { clr_country_flag = UKR_storage_ka25_scrap_seen }
 	if = {
 		limit = { UKR_storage_yak38_monuments_shown = yes }
 		add_to_variable = { UKR_storage_dec_total_10 = 1 }
@@ -13411,7 +13497,9 @@ UKR_storage_refresh = {
 		set_variable = { UKR_storage_yak38_program_price = 0.1 }
 		set_variable = { UKR_storage_yak38_program_days = 30 }
 	}
+	set_variable = { UKR_storage_ka25_total = { value = ukraine_has_ka25pl_stockpile add = ukraine_has_ka25bshz_stockpile add = ukraine_has_ka25ts_stockpile add = ukraine_has_ka25pn_stockpile add = ukraine_has_ka25u_stockpile } }
 	set_variable = { UKR_storage_total_10 = { value = ukraine_has_su25utg_stockpile add = ukraine_has_su33_stockpile add = UKR_storage_yak38_total } }
+	set_variable = { UKR_storage_total_100 = UKR_storage_ka25_total }
 	set_variable = { UKR_storage_total_7 = ukraine_has_m46_stockpile }
 	add_to_variable = { UKR_storage_total_7 = ukraine_has_d1_stockpile }
 	add_to_variable = { UKR_storage_total_7 = ukraine_has_m30_stockpile }
@@ -20065,6 +20153,38 @@ UKR_mrls_expand_kyiv = {
 	}
 }
 
+
+UKR_storage_update_ka25_museum_share = {
+	# The Ka-25s add half of the Yak-38 bonuses to the Naval Aviation Museum Program and fade by their own age:
+	# 50% of the Yak-38 values in the first year, 37.5% in the second, 25% in the third and 12.5% in the fourth and fifth
+	set_variable = { UKR_storage_museum_extra_share = 0 }
+	if = {
+		limit = { has_country_flag = UKR_storage_ka25_museum_active_flag }
+		set_temp_variable = { ka25_share = 0.5 }
+		if = {
+			limit = { has_country_flag = { flag = UKR_storage_ka25_museum_active_flag days > 1095 } }
+			set_temp_variable = { ka25_share = 0.125 }
+		}
+		else_if = {
+			limit = { has_country_flag = { flag = UKR_storage_ka25_museum_active_flag days > 730 } }
+			set_temp_variable = { ka25_share = 0.25 }
+		}
+		else_if = {
+			limit = { has_country_flag = { flag = UKR_storage_ka25_museum_active_flag days > 365 } }
+			set_temp_variable = { ka25_share = 0.375 }
+		}
+		set_variable = { UKR_storage_museum_extra_share = ka25_share }
+	}
+}
+
+UKR_storage_consume_ka25_airframes = {
+	set_variable = { ukraine_has_ka25pl_stockpile = 0 }
+	set_variable = { ukraine_has_ka25bshz_stockpile = 0 }
+	set_variable = { ukraine_has_ka25ts_stockpile = 0 }
+	set_variable = { ukraine_has_ka25pn_stockpile = 0 }
+	set_variable = { ukraine_has_ka25u_stockpile = 0 }
+	UKR_storage_refresh = yes
+}
 UKR_mrls_build_kyiv = {
 	698 = {
 		add_extra_state_shared_building_slots = 1

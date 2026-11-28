@@ -16228,15 +16228,28 @@ UKR_modernize_sov_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
+		visible = {
+			date > 2008.01.01
+			date < 2016.01.01
+			has_completed_focus = UKR_army_aviation
+			if = {
+				limit = { NOT = { has_dlc = "No Step Back" } }
+				has_tech = attack_helicopter_2
+			}
+			NOT = { has_country_flag = UKR_modernize_mi24pu1_started_flag }
+		}
+
 		available = {
-			date > 2010.01.01
-			date < 2014.01.01
+			date > 2008.01.01
+			date < 2016.01.01
+			has_completed_focus = UKR_army_aviation
 		}
 
 		days_remove = 180
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mi24pu1"
+			set_country_flag = UKR_modernize_mi24pu1_started_flag
 			hidden_effect = {
 				set_temp_variable = { treasury_change = -0.1 }
 				modify_treasury_effect = yes
@@ -16246,31 +16259,138 @@ UKR_modernize_sov_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mi24pu1"
 			UKR_count_sov_modernization = yes
-			create_equipment_variant = {
-				name = "Mi-24PU-1"
-				type = heavy_tank_chassis_0
-				allow_without_tech = yes
-				parent_version = 0
-				modules = {
-					armor_type_slot = helicopter_armor_gen1
-					chassis_type_slot = helicopter_medium_chassis
-					defence_type_slot = flare_launchers
-					defence_type_slot_2 = em_lock_detection_system_gen2
-					engine_type_slot = helicopter_turbine_engine_gen4
-					helicopter_body_layout = gunship_layout
-					helicopter_body_mount_1 = helicopter_rocket_pod_gen2
-					helicopter_body_mount_2 = helicopter_atgm_gen2
-					helicopter_wing_mount_1 = helicopter_atgm_gen2
-					helicopter_wing_mount_2 = helicopter_aa_missile_gen1
-					nose_gun_type_slot = helicopter_heavy_nose_gun_gen1
-					sensor_and_avionics_slot = sensors_and_avionics_gen_2
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Mi-24PU-1"
+					type = heavy_tank_chassis_0
+					allow_without_tech = yes
+					parent_version = 0
+					modules = {
+						armor_type_slot = helicopter_armor_gen1
+						chassis_type_slot = helicopter_medium_chassis
+						defence_type_slot = flare_launchers
+						defence_type_slot_2 = em_lock_detection_system_gen2
+						engine_type_slot = helicopter_turbine_engine_gen4
+						helicopter_body_layout = gunship_layout
+						helicopter_body_mount_1 = helicopter_rocket_pod_gen2
+						helicopter_body_mount_2 = helicopter_atgm_gen2
+						helicopter_wing_mount_1 = helicopter_atgm_gen2
+						helicopter_wing_mount_2 = helicopter_aa_missile_gen1
+						nose_gun_type_slot = helicopter_heavy_nose_gun_gen1
+						sensor_and_avionics_slot = sensors_and_avionics_gen_2
+					}
+					upgrades = { helicopter_nsb_upgrade = 4 }
+					icon = "GFX_UKR_HELI_Mi_24PU1"
+					model = "attack_helicopter_1_entity"
+					design_team = mio:UKR_aviakon_helicopter_manufacturer
 				}
-				upgrades = { helicopter_nsb_upgrade = 4 }
-				icon = "GFX_UKR_HELI_Mi_24PU1"
-				model = "attack_helicopter_1_entity"
-				design_team = mio:UKR_aviakon_helicopter_manufacturer
 			}
+			else = {
+				create_equipment_variant = {
+					name = "Mi-24PU-1"
+					type = attack_helicopter_2
+					design_team = mio:UKR_aviakon_helicopter_manufacturer
+					allow_without_tech = yes
+					icon = "GFX_UKR_HELI_Mi_24PU1"
+					model = "attack_helicopter_2_entity"
+				}
+			}
+			set_country_flag = UKR_modernize_mi24pu1_flag
+		}
+	}
 
+	UKR_modernize_mi24pu1_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.15 }
+			has_political_power > 10
+			has_army_experience > 4
+		}
+
+		custom_cost_text = development_cost_0_15_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			date > 2008.01.01
+			date < 2016.01.01
+			has_completed_focus = UKR_army_aviation
+			NOT = { has_dlc = "No Step Back" }
+			NOT = { has_tech = attack_helicopter_2 }
+			NOT = { has_country_flag = UKR_modernize_mi24pu1_started_flag }
+		}
+
+		available = {
+			date > 2008.01.01
+			date < 2016.01.01
+			has_completed_focus = UKR_army_aviation
+		}
+
+		days_remove = 270
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mi24pu1_no_tech"
+			set_country_flag = UKR_modernize_mi24pu1_started_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -4
+				set_temp_variable = { treasury_change = -0.15 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mi24pu1_no_tech"
+			if = {
+				limit = { NOT = { has_dlc = "No Step Back" } }
+				set_technology = { attack_helicopter_2 = 1 popup = no }
+			}
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Mi-24PU-1"
+					type = heavy_tank_chassis_0
+					allow_without_tech = yes
+					parent_version = 0
+					modules = {
+						armor_type_slot = helicopter_armor_gen1
+						chassis_type_slot = helicopter_medium_chassis
+						defence_type_slot = flare_launchers
+						defence_type_slot_2 = em_lock_detection_system_gen2
+						engine_type_slot = helicopter_turbine_engine_gen4
+						helicopter_body_layout = gunship_layout
+						helicopter_body_mount_1 = helicopter_rocket_pod_gen2
+						helicopter_body_mount_2 = helicopter_atgm_gen2
+						helicopter_wing_mount_1 = helicopter_atgm_gen2
+						helicopter_wing_mount_2 = helicopter_aa_missile_gen1
+						nose_gun_type_slot = helicopter_heavy_nose_gun_gen1
+						sensor_and_avionics_slot = sensors_and_avionics_gen_2
+					}
+					upgrades = { helicopter_nsb_upgrade = 4 }
+					icon = "GFX_UKR_HELI_Mi_24PU1"
+					model = "attack_helicopter_1_entity"
+					design_team = mio:UKR_aviakon_helicopter_manufacturer
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Mi-24PU-1"
+					type = attack_helicopter_2
+					design_team = mio:UKR_aviakon_helicopter_manufacturer
+					allow_without_tech = yes
+					icon = "GFX_UKR_HELI_Mi_24PU1"
+					model = "attack_helicopter_2_entity"
+				}
+			}
 			set_country_flag = UKR_modernize_mi24pu1_flag
 		}
 	}
@@ -16288,11 +16408,19 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			date > 2016.01.01
+			date < 2026.01.01
 			has_country_flag = UKR_modernize_mi24pu1_flag
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+			if = {
+				limit = { NOT = { has_dlc = "No Step Back" } }
+				has_tech = attack_helicopter_3
+			}
+			NOT = { has_country_flag = UKR_modernize_mi24pu2_started_flag }
 		}
 
 		available = {
-			date > 2020.01.01
+			date > 2016.01.01
 			date < 2026.01.01
 			has_country_flag = UKR_modernize_mi24pu1_flag
 			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
@@ -16304,6 +16432,7 @@ UKR_modernize_sov_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mi24pu2"
+			set_country_flag = UKR_modernize_mi24pu2_started_flag
 			hidden_effect = {
 				set_temp_variable = { treasury_change = -0.25 }
 				modify_treasury_effect = yes
@@ -16313,29 +16442,140 @@ UKR_modernize_sov_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mi24pu2"
 			UKR_count_sov_modernization = yes
-			create_equipment_variant = {
-				name = "Mi-24PU-2"
-				type = heavy_tank_chassis_0
-				allow_without_tech = yes
-				parent_version = 0
-				modules = {
-					armor_type_slot = helicopter_armor_gen1
-					chassis_type_slot = helicopter_medium_chassis
-					defence_type_slot = flare_launchers
-					defence_type_slot_2 = em_lock_detection_system_gen3
-					engine_type_slot = helicopter_turbine_engine_gen4
-					helicopter_body_layout = gunship_layout
-					helicopter_body_mount_1 = helicopter_rocket_pod_gen2
-					helicopter_body_mount_2 = helicopter_atgm_gen3
-					helicopter_wing_mount_1 = helicopter_atgm_gen3
-					helicopter_wing_mount_2 = helicopter_aa_missile_gen1
-					nose_gun_type_slot = helicopter_heavy_nose_gun_gen1
-					sensor_and_avionics_slot = sensors_and_avionics_gen_3
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Mi-24PU-2"
+					type = heavy_tank_chassis_0
+					allow_without_tech = yes
+					parent_version = 0
+					modules = {
+						armor_type_slot = helicopter_armor_gen1
+						chassis_type_slot = helicopter_medium_chassis
+						defence_type_slot = flare_launchers
+						defence_type_slot_2 = em_lock_detection_system_gen3
+						engine_type_slot = helicopter_turbine_engine_gen4
+						helicopter_body_layout = gunship_layout
+						helicopter_body_mount_1 = helicopter_rocket_pod_gen2
+						helicopter_body_mount_2 = helicopter_atgm_gen3
+						helicopter_wing_mount_1 = helicopter_atgm_gen3
+						helicopter_wing_mount_2 = helicopter_aa_missile_gen1
+						nose_gun_type_slot = helicopter_heavy_nose_gun_gen1
+						sensor_and_avionics_slot = sensors_and_avionics_gen_3
+					}
+					upgrades = { helicopter_nsb_upgrade = 5 }
+					icon = "GFX_UKR_HELI_Mi_24PU1"
+					model = "attack_helicopter_1_entity"
+					design_team = mio:UKR_aviakon_helicopter_manufacturer
 				}
-				upgrades = { helicopter_nsb_upgrade = 5 }
-				icon = "GFX_UKR_HELI_Mi_24PU1"
-				model = "attack_helicopter_1_entity"
-				design_team = mio:UKR_aviakon_helicopter_manufacturer
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Mi-24PU-2"
+					type = attack_helicopter_3
+					design_team = mio:UKR_aviakon_helicopter_manufacturer
+					allow_without_tech = yes
+					icon = "GFX_UKR_HELI_Mi_24PU1"
+					model = "attack_helicopter_3_entity"
+				}
+			}
+		}
+	}
+
+	UKR_modernize_mi24pu2_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.4 }
+			has_political_power > 10
+			has_army_experience > 4
+		}
+
+		custom_cost_text = development_cost_0_40_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			date > 2016.01.01
+			date < 2026.01.01
+			has_country_flag = UKR_modernize_mi24pu1_flag
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+			NOT = { has_dlc = "No Step Back" }
+			NOT = { has_tech = attack_helicopter_3 }
+			NOT = { has_country_flag = UKR_modernize_mi24pu2_started_flag }
+		}
+
+		available = {
+			date > 2016.01.01
+			date < 2026.01.01
+			has_country_flag = UKR_modernize_mi24pu1_flag
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+			country_exists = FRA
+			FRA = { has_opinion = { target = ROOT value > 29 } }
+		}
+
+		days_remove = 270
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mi24pu2_no_tech"
+			set_country_flag = UKR_modernize_mi24pu2_started_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -4
+				set_temp_variable = { treasury_change = -0.4 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mi24pu2_no_tech"
+			if = {
+				limit = { NOT = { has_dlc = "No Step Back" } }
+				set_technology = { attack_helicopter_3 = 1 popup = no }
+			}
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Mi-24PU-2"
+					type = heavy_tank_chassis_0
+					allow_without_tech = yes
+					parent_version = 0
+					modules = {
+						armor_type_slot = helicopter_armor_gen1
+						chassis_type_slot = helicopter_medium_chassis
+						defence_type_slot = flare_launchers
+						defence_type_slot_2 = em_lock_detection_system_gen3
+						engine_type_slot = helicopter_turbine_engine_gen4
+						helicopter_body_layout = gunship_layout
+						helicopter_body_mount_1 = helicopter_rocket_pod_gen2
+						helicopter_body_mount_2 = helicopter_atgm_gen3
+						helicopter_wing_mount_1 = helicopter_atgm_gen3
+						helicopter_wing_mount_2 = helicopter_aa_missile_gen1
+						nose_gun_type_slot = helicopter_heavy_nose_gun_gen1
+						sensor_and_avionics_slot = sensors_and_avionics_gen_3
+					}
+					upgrades = { helicopter_nsb_upgrade = 5 }
+					icon = "GFX_UKR_HELI_Mi_24PU1"
+					model = "attack_helicopter_1_entity"
+					design_team = mio:UKR_aviakon_helicopter_manufacturer
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Mi-24PU-2"
+					type = attack_helicopter_3
+					design_team = mio:UKR_aviakon_helicopter_manufacturer
+					allow_without_tech = yes
+					icon = "GFX_UKR_HELI_Mi_24PU1"
+					model = "attack_helicopter_3_entity"
+				}
 			}
 		}
 	}
@@ -20901,6 +21141,168 @@ UKR_reactivate_sov_category = {
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
+	}
+
+
+	UKR_storage_ka25_sell_to_bulgaria = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 75 }
+				AND = {
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
+					has_decision = UKR_storage_ka25_sell_to_bulgaria
+				}
+			}
+			check_variable = { UKR_storage_ka25_total > 0 }
+			country_exists = BUL
+		}
+
+		available = {
+			UKR_storage_ka25_ready = yes
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_ka25_bulgarian_buyer_tt
+				UKR_storage_ka25_bulgaria_can_buy = yes
+				NOT = { has_country_flag = UKR_storage_ka25_offer_cooldown_flag }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_ka25_sell_to_bulgaria"
+			custom_effect_tooltip = UKR_storage_ka25_sell_to_bulgaria_tt
+			hidden_effect = {
+				set_country_flag = { flag = UKR_storage_ka25_offer_pending_flag days = 60 value = 1 }
+				set_country_flag = { flag = UKR_storage_ka25_offer_cooldown_flag days = 180 value = 1 }
+				BUL = { country_event = ukraine_develop_light_helicopters.9 }
+				UKR_storage_refresh = yes
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	UKR_storage_ka25_museum = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+		days_remove = 60
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 75 }
+				AND = {
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
+					has_decision = UKR_storage_ka25_museum
+				}
+			}
+			check_variable = { UKR_storage_ka25_total > 0 }
+		}
+
+		available = {
+			UKR_storage_ka25_ready = yes
+		}
+
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.02 } } NOT = { has_political_power < 10 } }
+		custom_cost_text = cost_0_02_pp_10
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_ka25_museum"
+			custom_effect_tooltip = UKR_storage_ka25_museum_tt
+			hidden_effect = {
+				add_political_power = -10
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+				UKR_storage_consume_ka25_airframes = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_ka25_museum"
+			hidden_effect = {
+				set_country_flag = { flag = UKR_storage_ka25_museum_active_flag days = 1825 value = 1 }
+				set_variable = { UKR_storage_museum_extra_share = 0.5 }
+			}
+			if = {
+				limit = { has_dynamic_modifier = { modifier = UKR_storage_naval_aviation_museum } }
+				custom_effect_tooltip = {
+					localization_key = modifies_dynamic_modifier_tt
+					MODIFIER = UKR_storage_naval_aviation_museum
+				}
+			}
+			else = {
+				hidden_effect = {
+					set_variable = { UKR_storage_museum_recruitment = 0 }
+					set_variable = { UKR_storage_museum_ace_chance = 0 }
+					set_variable = { UKR_storage_museum_navy_xp = 0 }
+					add_dynamic_modifier = { modifier = UKR_storage_naval_aviation_museum }
+				}
+				custom_effect_tooltip = {
+					localization_key = adds_dynamic_modifier_tt
+					MODIFIER = UKR_storage_naval_aviation_museum
+				}
+			}
+			add_to_variable = { UKR_storage_museum_recruitment = 0.0025 tooltip = UKR_storage_museum_recruitment_tt }
+			add_to_variable = { UKR_storage_museum_ace_chance = 0.01 tooltip = air_ace_generation_chance_factor_tt }
+			add_to_variable = { UKR_storage_museum_navy_xp = 0.005 tooltip = UKR_storage_museum_navy_xp_tt }
+			custom_effect_tooltip = UKR_storage_naval_aviation_museum_fading_tt
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	UKR_storage_ka25_scrap = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+		days_remove = 30
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 100 }
+				check_variable = { UKR_storage_selected_row = 75 }
+				AND = {
+					check_variable = { UKR_storage_selected_row = UKR_storage_open_section }
+					has_decision = UKR_storage_ka25_scrap
+				}
+			}
+			check_variable = { UKR_storage_ka25_total > 0 }
+		}
+
+		available = {
+			UKR_storage_ka25_ready = yes
+			controls_state = 669
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_ka25_scrap"
+			custom_effect_tooltip = UKR_storage_ka25_scrap_tt
+			hidden_effect = {
+				UKR_storage_consume_ka25_airframes = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_ka25_scrap"
+			669 = {
+				if = {
+					limit = { is_controlled_by = ROOT }
+					add_dynamic_modifier = { modifier = UKR_ka25_scrap_aluminium days = 180 }
+				}
+			}
+		}
+
+		ai_will_do = { base = 1 }
 	}
 
 	UKR_storage_yak38_monuments = {
