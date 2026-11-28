@@ -1411,8 +1411,10 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_RUSSIA_SUBJECT }
 
 		available = {
-			NOT = { country_exists = CRM }
-			owns_state = 669
+			OR = {
+				AND = { NOT = { country_exists = CRM } owns_state = 669 }
+				AND = { SOV_can_review_crimean_subject_status = yes }
+			}
 			NOT = { UKR = { has_country_flag = UKR_crimea_2004_departed } }
 		}
 
@@ -1420,8 +1422,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_referendum_in_crimea"
-			country_event = { id = subject_rus.93 days = 1 }
-			custom_effect_tooltip = SOV_subject_referendum_tt
+			if = { limit = { SOV_can_review_crimean_subject_status = yes }
+				SOV_hold_crimea_subject_status_review = yes
+			}
+			else = {
+				country_event = { id = subject_rus.93 days = 1 }
+				custom_effect_tooltip = SOV_subject_referendum_tt
+			}
 		}
 
 		ai_will_do = {
@@ -2910,18 +2917,28 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = SOV_counter_euromaidan }
+
 		will_lead_to_war_with = UKR
 
 		search_filters = { FOCUS_FILTER_RUSSIA_UNITED }
 
 		available = {
+			UKR = {
+				custom_trigger_tooltip = { tooltip = UKR_crimean_bop_allows_sov_annexation_focus UKR_crimean_bop_allows_sov_annexation_focus = yes }
+			}
 			OR = {
 				emerging_anarchist_communism_are_in_power = yes
 				emerging_autocracy_are_in_power = yes
 				emerging_reactionaries_are_in_power = yes
 			}
 			NOT = { owns_state = 669 }
-			owns_state = 1112
+			OR = {
+				owns_state = 1112
+				AND = {
+					UKR = { has_country_flag = UKR_crimean_bop_russian_preparation_complete_flag }
+					CRM = { is_subject_of = UKR owns_state = 669 }
+				}
+			}
 			NOT = { UKR = { has_country_flag = UKR_crimea_2004_departed } }
 
 			custom_trigger_tooltip = {
@@ -2944,36 +2961,42 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SOV_annexation_of_crimea"
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				transfer_state = 669
-				669 = { add_core_of = SOV }
-				if = {
-					limit = { UKR = { owns_state = 1112 } }
-					transfer_state = 1112
-				}
-			}
 			if = {
-				limit = { UKR = { owns_state = 669 } }
-				UKR = {
-					if = {
-						limit = {
-							NOT = { has_country_flag = ukr_revoult_bilo }
-						}
-						set_temp_variable = { tension_change = 16 }
-						UKR_add_political_tension = yes
-					}
-					country_event = { id = russia.7 days = 1 }
-				}
-				custom_effect_tooltip = TT_IF_THEY_REJECT
-				effect_tooltip = {
-					declare_war_on = { target = UKR type = take_state_focus generator = { 669 } }
-				}
+				limit = { UKR = { UKR_crimean_bop_requires_sov_annexation_negotiations = yes } }
+				SOV_open_crimea_status_negotiations = yes
 			}
 			else = {
-				random_country = {
-					limit = { owns_state = 669 }
-					country_event = { id = russia.7 days = 1 }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				effect_tooltip = {
+					transfer_state = 669
+					669 = { add_core_of = SOV }
+					if = {
+						limit = { UKR = { owns_state = 1112 } }
+						transfer_state = 1112
+					}
+				}
+				if = {
+					limit = { UKR = { owns_state = 669 } }
+					UKR = {
+						if = {
+							limit = {
+								NOT = { has_country_flag = ukr_revoult_bilo }
+							}
+							set_temp_variable = { tension_change = 16 }
+							UKR_add_political_tension = yes
+						}
+						country_event = { id = russia.7 days = 1 }
+					}
+					custom_effect_tooltip = TT_IF_THEY_REJECT
+					effect_tooltip = {
+						declare_war_on = { target = UKR type = take_state_focus generator = { 669 } }
+					}
+				}
+				else = {
+					random_country = {
+						limit = { owns_state = 669 }
+						country_event = { id = russia.7 days = 1 }
+					}
 				}
 			}
 		}
@@ -11437,6 +11460,7 @@ focus_tree = {
 					OR = {
 						UKR = {
 							owns_state = 669
+							custom_trigger_tooltip = { tooltip = UKR_crimean_bop_allows_sov_nazbol_claim UKR_crimean_bop_allows_sov_nazbol_claim = yes }
 						}
 						UKR = {
 							owns_state = 696
@@ -11465,15 +11489,29 @@ focus_tree = {
 		}
 
 		bypass = {
-			OR = {
-				NOT = {
-					country_exists = KAZ
-				}
-				NOT = {
-					country_exists = LAT
-				}
-				NOT = {
-					country_exists = UKR
+			NOT = {
+				OR = {
+					AND = {
+						country_exists = UKR
+						OR = {
+							UKR = { owns_state = 696 }
+							UKR = {
+								owns_state = 669
+								custom_trigger_tooltip = { tooltip = UKR_crimean_bop_allows_sov_nazbol_claim UKR_crimean_bop_allows_sov_nazbol_claim = yes }
+							}
+						}
+					}
+					AND = {
+						country_exists = KAZ
+						OR = {
+							KAZ = { owns_state = 714 }
+							KAZ = { owns_state = 715 }
+						}
+					}
+					AND = {
+						country_exists = LAT
+						LAT = { owns_state = 1013 }
+					}
 				}
 			}
 		}
@@ -11483,9 +11521,7 @@ focus_tree = {
 			if = {
 				limit = {
 					OR = {
-						UKR = {
-							owns_state = 669
-						}
+						UKR = { owns_state = 669 UKR_crimean_bop_allows_sov_nazbol_claim = yes }
 						UKR = {
 							owns_state = 696
 						}
@@ -11525,7 +11561,7 @@ focus_tree = {
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
-				669 = { add_core_of = SOV }
+				if = { limit = { UKR = { owns_state = 669 UKR_crimean_bop_allows_sov_nazbol_claim = yes } } 669 = { add_core_of = SOV } }
 				696 = { add_core_of = SOV }
 				1013 = { add_core_of = SOV }
 				714 = { add_core_of = SOV }
@@ -31764,7 +31800,7 @@ focus_tree = {
 				}
 				if = {
 					limit = {
-						UKR = { owns_state = 669 }
+						UKR = { owns_state = 669 UKR_crimean_bop_allows_sov_revolution_transfer = yes }
 					}
 					transfer_state = 669
 					random_owned_controlled_state = {
