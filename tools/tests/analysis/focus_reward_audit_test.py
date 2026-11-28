@@ -748,6 +748,31 @@ _EVENT_PATHS = {
         (),
         (3, 5),
     ),
+    "distinct options with the same name": (
+        _event("tst.1", _SET_A, _SET_B).replace("name = tst.1.b", "name = tst.1.a"),
+        {"A": 5, "B": 3},
+        (),
+        (3, 5),
+    ),
+    "a conditional setter is not guaranteed": (
+        _event("tst.1", f"if = {{ limit = {{ has_war = yes }} {_SET_A} }}", _SET_B),
+        {"A": 5, "B": 3},
+        (),
+        (8, 8),
+    ),
+    "a tooltip cannot set a path flag": (
+        _event("tst.1", f"effect_tooltip = {{ {_SET_A} }}", _SET_B),
+        {"A": 5, "B": 3},
+        (),
+        (8, 8),
+    ),
+    "a preview elsewhere does not invalidate the real option": (
+        _event("tst.1", _SET_A, _SET_B)
+        + _event("tst.2", f"effect_tooltip = {{ {_SET_A} }}"),
+        {"A": 5, "B": 3},
+        (),
+        (3, 5),
+    ),
     "a flag that two options of the event set": (
         _event("tst.1", _SET_A, _SET_B, _SET_A),
         {"A": 5, "B": 3},

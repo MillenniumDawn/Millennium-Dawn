@@ -72,7 +72,8 @@ What this misses or approximates:
       gate its focuses.
     - Event options are read from `events/` alone. A decision, on_action or scripted
       effect that also sets the flag goes unseen, and its focuses are wrongly gated.
-      An option that sets no gate flag is not an alternative, and event chains are
+      A conditional setter cannot prove a choice. An option that sets no gate
+      flag is not an alternative, and event chains are
       not followed.
     - A gate counts only when every test in the `OR` is a flag or leader test, and a
       `NOT` only around a single test. An `OR` that mixes kinds (leaders, path flags,
@@ -103,7 +104,7 @@ import json
 import math
 import re
 import sys
-from collections import Counter, defaultdict
+from collections import defaultdict
 from collections.abc import Callable, Collection, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from itertools import product
@@ -268,9 +269,9 @@ def group_chains(nodes: Sequence[Node]) -> Iterator[Node | list[list[Node]]]:
             while (
                 i < len(nodes)
                 and nodes[i].key in ("else_if", "else")
-                and isinstance(nodes[i].value, list)
+                and isinstance(block := nodes[i].value, list)
             ):
-                blocks.append(nodes[i].value)
+                blocks.append(block)
                 i += 1
             yield blocks
         else:
@@ -300,20 +301,26 @@ class StandardEffect(NamedTuple):
     price: float
 
 
-def count_buildings(nodes: Sequence[Node], multiplier: float = 1.0) -> Counter[str]:
+def add_totals(target: defaultdict[str, float], amounts: Mapping[str, float]) -> None:
+    for key, amount in amounts.items():
+        target[key] += amount
+
+
+def count_buildings(nodes: Sequence[Node], multiplier: float = 1.0) -> dict[str, float]:
     """Levels one call of an effect body builds.
 
     An if/else chain counts its richest branch, and a loop that selects N states
     counts N times.
     """
-    total: Counter[str] = Counter()
+    total: defaultdict[str, float] = defaultdict(float)
     for item in group_chains(nodes):
         if isinstance(item, list):
-            total.update(
+            add_totals(
+                total,
                 max(
                     (count_buildings(block, multiplier) for block in item),
                     key=lambda counts: sum(counts.values()),
-                )
+                ),
             )
         elif item.key != "limit" and isinstance(item.value, list):
             if item.key == "add_building_construction":
@@ -323,7 +330,9 @@ def count_buildings(nodes: Sequence[Node], multiplier: float = 1.0) -> Counter[s
                     total[kind] += multiplier * (1.0 if level is None else level)
             else:
                 selected = number(child(item.value, "random_select_amount"))
-                total.update(count_buildings(item.value, multiplier * (selected or 1)))
+                add_totals(
+                    total, count_buildings(item.value, multiplier * (selected or 1))
+                )
     return total
 
 
@@ -404,7 +413,7 @@ def dynamic_variables(root: Path) -> dict[str, list[str]]:
 
 class Idea(NamedTuple):
     modifiers: dict[str, float]  # numeric `modifier` entries
-    count: int  # every entry of the `modifier` block
+    modifier_count: int  # every entry of the `modifier` block
 
 
 def load_ideas(root: Path, names: set[str]) -> dict[str, Idea]:
@@ -443,7 +452,9 @@ def idea_definitions(nodes: Sequence[Node]) -> Iterator[Node]:
 
 @dataclass
 class Reward:
-    buildings: Counter[str] = field(default_factory=Counter)
+    buildings: defaultdict[str, float] = field(
+        default_factory=lambda: defaultdict(float)
+    )
     money: float = 0.0
     pp: float = 0.0
     stability: float = 0.0
@@ -452,7 +463,9 @@ class Reward:
     timed: list[tuple[str, float | None]] = field(default_factory=list)
     removed: list[str] = field(default_factory=list)
     swaps: list[tuple[str, str]] = field(default_factory=list)
-    variables: Counter[str] = field(default_factory=Counter)
+    variables: defaultdict[str, float] = field(
+        default_factory=lambda: defaultdict(float)
+    )
     unquantified: list[str] = field(default_factory=list)
     flags: set[str] = field(default_factory=set)  # "global flag X", "country flag X"
 
@@ -468,8 +481,8 @@ class Reward:
         )
 
     def merge(self, other: Reward) -> None:
-        self.buildings.update(other.buildings)
-        self.variables.update(other.variables)
+        add_totals(self.buildings, other.buildings)
+        add_totals(self.variables, other.variables)
         self.money += other.money
         self.pp += other.pp
         self.stability += other.stability
@@ -534,7 +547,7 @@ class Walk:
                 add_building(target, value, prefix)
         elif key in self.ctx.standard:
             effect = self.ctx.standard[key]
-            target.buildings.update(effect.buildings)
+            add_totals(target.buildings, effect.buildings)
             if not self.skip_payment:
                 target.money += effect.price
         elif key in SIMPLE_AMOUNTS:
@@ -565,8 +578,8 @@ class Walk:
         elif key in ("remove_ideas", "remove_idea"):
             target.removed += idea_names(value)
         elif key in FLAG_SETS:
-            if name := flag_name(value):
-                target.flags.add(f"{FLAG_SETS[key]} {name}")
+            if flag := flag_name(value):
+                target.flags.add(f"{FLAG_SETS[key]} {flag}")
         elif key in ("add_to_variable", "subtract_from_variable"):
             if isinstance(value, list):
                 self.add_variables(target, key, value)
@@ -659,8 +672,8 @@ def flag_name(value: str | list[Node] | None) -> str | None:
 
 def gate_token(node: Node) -> str | None:
     """`global flag X`, `country flag X` or `leader NAME` for such a test, else None."""
-    if node.key in FLAG_TESTS and (name := flag_name(node.value)):
-        return f"{FLAG_TESTS[node.key]} {name}"
+    if node.key in FLAG_TESTS and (flag := flag_name(node.value)):
+        return f"{FLAG_TESTS[node.key]} {flag}"
     if node.key == "has_country_leader" and isinstance(node.value, list):
         name = child(node.value, "name")
         return LEADER + name.strip('"') if isinstance(name, str) else None
@@ -684,8 +697,8 @@ def read_gates(nodes: Sequence[Node]) -> tuple[list[frozenset[str]], frozenset[s
             needs += inner_needs
             forbids |= inner_forbids
         elif node.key == "OR":
-            tokens = [gate_token(entry) for entry in value]
-            if tokens and all(tokens):
+            tokens = [token for entry in value if (token := gate_token(entry))]
+            if tokens and len(tokens) == len(value):
                 needs.append(frozenset(tokens))
         elif node.key == "NOT" and len(value) == 1 and (token := gate_token(value[0])):
             forbids.add(token)
@@ -799,11 +812,22 @@ def open_flags(focuses: Sequence[Focus]) -> set[str]:
     return {t for t in tested if not is_leader(t) and t not in set_by_focus}
 
 
+def event_setters(
+    nodes: Sequence[Node], guaranteed: bool
+) -> Iterator[tuple[str, bool]]:
+    for node in nodes:
+        if node.key in FLAG_SETS and (flag := flag_name(node.value)):
+            yield f"{FLAG_SETS[node.key]} {flag}", guaranteed
+        elif isinstance(node.value, list) and node.key not in SILENT:
+            yield from event_setters(
+                node.value, guaranteed and node.key == "hidden_effect"
+            )
+
+
 def event_flag_sites(
     nodes: Sequence[Node], wanted: Collection[str]
-) -> Iterator[tuple[str, str, str]]:
-    """(flag, event id, option label) for each wanted flag an event sets. The label
-    is empty outside an option, such as in `immediate`."""
+) -> Iterator[tuple[str, str, int, str]]:
+    """Yield flag, event id, option position and label. Position 0 proves no choice."""
     for event in nodes:
         if not isinstance(event.value, list):
             continue
@@ -812,7 +836,9 @@ def event_flag_sites(
             continue
         options = 0
         for part in event.value:
-            if not isinstance(part.value, list):
+            if part.key not in {"option", "immediate", "after"} or not isinstance(
+                part.value, list
+            ):
                 continue
             label = ""
             if part.key == "option":
@@ -821,10 +847,9 @@ def event_flag_sites(
                 label = (
                     name if isinstance(name, str) else f"{event_id} option {options}"
                 )
-            for node in walk_nodes(part.value):
-                if node.key in FLAG_SETS and (flag := flag_name(node.value)):
-                    if (token := f"{FLAG_SETS[node.key]} {flag}") in wanted:
-                        yield token, event_id, label
+            for token, guaranteed in event_setters(part.value, part.key == "option"):
+                if token in wanted:
+                    yield token, event_id, options if guaranteed else 0, label
 
 
 def read_event_choices(root: Path, focuses: Sequence[Focus]) -> list[list[EventOption]]:
@@ -837,21 +862,26 @@ def read_event_choices(root: Path, focuses: Sequence[Focus]) -> list[list[EventO
     """
     wanted = open_flags(focuses)
     names = {token.rpartition(" ")[2] for token in wanted}
-    sites: dict[str, set[tuple[str, str]]] = defaultdict(set)
+    sites: dict[str, set[tuple[str, int, str]]] = defaultdict(set)
     for path in sorted((root / "events").glob("*.txt")) if wanted else ():
         text = read(path)
         if names & set(_WORD_RE.findall(text)):
-            for token, event_id, label in event_flag_sites(parse(text), wanted):
-                sites[token].add((event_id, label))
-    events: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
+            for token, event_id, index, label in event_flag_sites(parse(text), wanted):
+                sites[token].add((event_id, index, label))
+    events: dict[str, dict[tuple[int, str], set[str]]] = defaultdict(
+        lambda: defaultdict(set)
+    )
     for token, places in sites.items():
-        if len({event_id for event_id, _ in places}) == 1 and all(
-            label for _, label in places
+        if len({event_id for event_id, _, _ in places}) == 1 and all(
+            index for _, index, _ in places
         ):
-            for event_id, label in places:
-                events[event_id][label].add(token)
+            for event_id, index, label in places:
+                events[event_id][index, label].add(token)
     return [
-        [EventOption(name, frozenset(flags)) for name, flags in sorted(options.items())]
+        [
+            EventOption(name, frozenset(flags))
+            for (_, name), flags in sorted(options.items())
+        ]
         for _, options in sorted(events.items())
         if len(options) > 1
     ]
@@ -1351,9 +1381,14 @@ def outliers(
         for reward in (focus.always, focus.maybe):
             for idea in reward.permanent + [name for name, _ in reward.timed]:
                 info = ideas.get(idea)
-                if info and info.count > SPIRIT_MODIFIER_LIMIT:
+                if info and info.modifier_count > SPIRIT_MODIFIER_LIMIT:
                     spirits.setdefault(
-                        idea, {"idea": idea, "modifiers": info.count, "focus": focus.id}
+                        idea,
+                        {
+                            "idea": idea,
+                            "modifiers": info.modifier_count,
+                            "focus": focus.id,
+                        },
                     )
     result["spirits"] = sorted(
         spirits.values(), key=lambda s: (-s["modifiers"], s["idea"])

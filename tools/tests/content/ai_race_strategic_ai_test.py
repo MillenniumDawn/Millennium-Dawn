@@ -194,6 +194,7 @@ class InvestmentOfferScript(StrategicRaceScript):
         self.effects["change_influence_percentage"] = None
         self.event_root = None
         self.event_from = None
+        self.event_targets = {}
         self.offer_can_start = True
         self.allocator_succeeds = True
         self.started_projects = []
@@ -209,6 +210,9 @@ class InvestmentOfferScript(StrategicRaceScript):
             if key == "ROOT":
                 assert operand == [("pending_investment_can_start", "=", "yes")]
                 if not self.offer_can_start:
+                    return False
+            elif key == "has_event_target":
+                if operand not in self.event_targets:
                     return False
             elif not super().condition([(key, comparison, operand)], identifier):
                 return False
