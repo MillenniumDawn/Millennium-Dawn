@@ -8233,6 +8233,61 @@ UKR_an_71_order_kvant = {
 }
 
 # ---------------------------------------------------------------------------------------------
+# Effect: UKR_get_tank_reactivation_rate
+# Purpose: Calculates the rebuild surcharge for the share of the original reserve still in storage.
+# Parameters:
+# - ukr_tank_hulls_left: Unreserved hulls in storage.
+# - ukr_tank_initial_hulls: Original number of hulls in that reserve.
+# Output: ukr_tank_reserve_percent and ukr_tank_reactivation_multiplier.
+UKR_get_tank_reactivation_rate = {
+	set_temp_variable = { ukr_tank_reserve_percent = { value = ukr_tank_hulls_left multiply = 100 divide = ukr_tank_initial_hulls } }
+	set_temp_variable = { ukr_tank_reactivation_multiplier = 1 }
+	if = {
+		limit = { check_variable = { ukr_tank_reserve_percent < 20 } }
+		set_temp_variable = { ukr_tank_reactivation_multiplier = 2 }
+	}
+	else_if = {
+		limit = { check_variable = { ukr_tank_reserve_percent < 40 } }
+		set_temp_variable = { ukr_tank_reactivation_multiplier = 1.85 }
+	}
+	else_if = {
+		limit = { check_variable = { ukr_tank_reserve_percent < 60 } }
+		set_temp_variable = { ukr_tank_reactivation_multiplier = 1.45 }
+	}
+	else_if = {
+		limit = { check_variable = { ukr_tank_reserve_percent < 80 } }
+		set_temp_variable = { ukr_tank_reactivation_multiplier = 1.2 }
+	}
+}
+
+UKR_quote_t55_reactivation = {
+	set_temp_variable = { ukr_tank_hulls_left = ukraine_has_t55_stockpile }
+	set_temp_variable = { ukr_tank_initial_hulls = UKR_t55_initial_hulls }
+	UKR_get_tank_reactivation_rate = yes
+	set_variable = { UKR_t55_reactivation_reserve_percent = ukr_tank_reserve_percent }
+
+	set_variable = { UKR_t55_reactivation_company_cost = { value = 0.02 multiply = ukr_tank_reactivation_multiplier } }
+	set_variable = { UKR_t55_reactivation_company_days = { value = ukraine_t55_company_days multiply = ukr_tank_reactivation_multiplier } }
+	round_variable = UKR_t55_reactivation_company_days
+	set_variable = { UKR_t55_reactivation_battalion_cost = { value = 0.06 multiply = ukr_tank_reactivation_multiplier } }
+	set_variable = { UKR_t55_reactivation_battalion_days = { value = ukraine_t55_battalion_days multiply = ukr_tank_reactivation_multiplier } }
+	round_variable = UKR_t55_reactivation_battalion_days
+}
+
+UKR_quote_t62_reactivation = {
+	set_temp_variable = { ukr_tank_hulls_left = ukraine_has_t62_stockpile }
+	set_temp_variable = { ukr_tank_initial_hulls = UKR_t62_initial_hulls }
+	UKR_get_tank_reactivation_rate = yes
+	set_variable = { UKR_t62_reactivation_reserve_percent = ukr_tank_reserve_percent }
+
+	set_variable = { UKR_t62_reactivation_company_cost = { value = 0.02 multiply = ukr_tank_reactivation_multiplier } }
+	set_variable = { UKR_t62_reactivation_company_days = { value = ukraine_t62_company_days multiply = ukr_tank_reactivation_multiplier } }
+	round_variable = UKR_t62_reactivation_company_days
+	set_variable = { UKR_t62_reactivation_battalion_cost = { value = 0.06 multiply = ukr_tank_reactivation_multiplier } }
+	set_variable = { UKR_t62_reactivation_battalion_days = { value = ukraine_t62_battalion_days multiply = ukr_tank_reactivation_multiplier } }
+	round_variable = UKR_t62_reactivation_battalion_days
+}
+
 # T-54/T-55 and T-62 reactivation (UKR_reactivate_sov_category, UKR_war_trophies_category):
 # equipment variants and deliveries with and without No Step Back. Without NSB every tank design
 # is an MBT_1 variant and the heavy IFVs are IFV_1 variants under the same name.
@@ -8274,6 +8329,7 @@ UKR_sov_variant_t55m8_a2_tifon_ii_full = {
 		create_equipment_variant = {
 			name = "T-55M8-A2 Tifon II"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 4
 				tank_armor_upgrade = 4
@@ -8319,6 +8375,7 @@ UKR_sov_variant_t55m8_a2_tifon_ii_basic = {
 		create_equipment_variant = {
 			name = "T-55M8-A2 Tifon II"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 3
 				tank_armor_upgrade = 2
@@ -8365,6 +8422,7 @@ UKR_sov_variant_t62_6td2 = {
 		create_equipment_variant = {
 			name = "T-62-6TD-2"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 4
 				tank_armor_upgrade = 4
@@ -8413,6 +8471,7 @@ UKR_sov_variant_t55_5tdf = {
 		create_equipment_variant = {
 			name = "T-55-5TDF"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 2
 				tank_armor_upgrade = 2
@@ -8461,6 +8520,7 @@ UKR_sov_variant_t55_64 = {
 		create_equipment_variant = {
 			name = "T-55-64"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 2
 				tank_armor_upgrade = 3
@@ -8510,6 +8570,7 @@ UKR_sov_variant_t55agm = {
 		create_equipment_variant = {
 			name = "T-55AGM"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 3
 				tank_armor_upgrade = 4
@@ -8556,6 +8617,7 @@ UKR_sov_variant_bmp55 = {
 		create_equipment_variant = {
 			name = "BMP-55"
 			type = IFV_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 		}
 	}
 }
@@ -8594,6 +8656,7 @@ UKR_sov_variant_t62_5tdf = {
 		create_equipment_variant = {
 			name = "T-62-5TDF"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 2
 				tank_armor_upgrade = 2
@@ -8639,6 +8702,7 @@ UKR_sov_variant_t62ag = {
 		create_equipment_variant = {
 			name = "T-62AG"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 3
 				tank_armor_upgrade = 2
@@ -8685,6 +8749,7 @@ UKR_sov_variant_t62agm = {
 		create_equipment_variant = {
 			name = "T-62AGM"
 			type = MBT_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_engine_upgrade = 3
 				tank_armor_upgrade = 4
@@ -14162,6 +14227,7 @@ UKR_sov_variant_btr50m = {
 		create_equipment_variant = {
 			name = "BTR-50M"
 			type = APC_1
+			design_team = mio:UKR_kmdb_tank_manufacturer
 			upgrades = {
 				tank_nsb_armor_upgrade = 1
 				tank_nsb_engine_upgrade = 1
@@ -14558,6 +14624,7 @@ UKR_sov_variant_mig27m = {
 			create_equipment_variant = {
 				name = "MiG-27M (LDARZ)"
 				type = Strike_fighter1
+				design_team = mio:UKR_ldarz_aircraft_manufacturer
 				allow_without_tech = yes
 			}
 		}

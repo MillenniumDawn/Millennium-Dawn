@@ -851,7 +851,7 @@ UKR_storage_has_old_small_arms = {
 }
 # Old gear orders, checked in the buyer's scope from the Ukrainian sale mission (ROOT = Ukraine). Earlier buyers need 10 less opinion.
 # The USA pays for the Iraqi and Afghan packages; we have no real sway over it, so it needs no influence, but the country
-# that gets the package must still exist and be at peace with the USA when the mission completes.
+# that gets the package must still qualify for the postwar order when the mission completes.
 UKR_storage_buyer_old_gear = {
 	OR = {
 		has_opinion = { target = ROOT value > -1 }
@@ -871,13 +871,56 @@ UKR_storage_buyer_old_gear = {
 		}
 	}
 }
-# The country Ukraine picked for the USA-funded old gear package still exists and is at peace with the USA (Ukraine scope).
-# The same conditions as the Iraqi and Afghan options of the offer event .26.
+UKR_storage_usa_iraq_route = {
+	country_exists = USA
+	country_exists = IRQ
+	has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded
+	IRQ = { NOT = { has_war_with = USA } }
+}
+
+UKR_storage_usa_afghan_route = {
+	country_exists = USA
+	country_exists = AFG
+	USA = { has_country_flag = USA_wot_enduring_freedom }
+	has_global_flag = GLOBAL_afghan_civil_war_over
+	AFG = {
+		NOT = {
+			OR = {
+				has_war_with = USA
+				has_war_with = TAL
+			}
+		}
+	}
+	OR = {
+		NOT = { country_exists = TAL }
+		USA = { NOT = { has_war_with = TAL } }
+	}
+}
+
+UKR_storage_usa_old_gear_recipient_postwar = {
+	OR = {
+		AND = {
+			tag = IRQ
+			UKR_storage_usa_iraq_route = yes
+		}
+		AND = {
+			tag = AFG
+			UKR_storage_usa_afghan_route = yes
+		}
+	}
+}
+
+# Negotiations use the recipient selected for the active mission.
 UKR_storage_old_gear_recipient_ok = {
 	has_variable = UKR_storage_old_gear_recipient
-	var:UKR_storage_old_gear_recipient = {
-		exists = yes
-		NOT = { has_war_with = USA }
+	var:UKR_storage_old_gear_recipient = { UKR_storage_usa_old_gear_recipient_postwar = yes }
+}
+
+# Check the recipient saved for this offer, even if a new mission has since started.
+UKR_storage_old_gear_delivery_allowed = {
+	OR = {
+		ROOT = { NOT = { tag = USA } }
+		event_target:ukr_storage_recipient = { UKR_storage_usa_old_gear_recipient_postwar = yes }
 	}
 }
 # A running sale mission to this buyer still lacks its influence gate (buyer scope, ROOT = Ukraine). Each gate is the
@@ -2096,6 +2139,30 @@ ukr_modernize_sov_equipment_t55_development_cancel_shown = {
 	has_country_flag = ukr_modernize_sov_equipment_t55_development_ongoing_flag
 }
 
+UKR_t55_reactivation_line_open = {
+	has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag
+	NOT = {
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_company_ongoing_flag
+			has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_battalion_ongoing_flag
+		}
+	}
+}
+
+UKR_t55_reactivation_company_available = {
+	UKR_t55_reactivation_line_open = yes
+	controls_state = 696
+	check_variable = { ukraine_has_t55_stockpile > 12 }
+	check_variable = { var = treasury value = UKR_t55_reactivation_company_cost compare = greater_than_or_equals }
+}
+
+UKR_t55_reactivation_battalion_available = {
+	UKR_t55_reactivation_line_open = yes
+	controls_state = 696
+	check_variable = { ukraine_has_t55_stockpile > 39 }
+	check_variable = { var = treasury value = UKR_t55_reactivation_battalion_cost compare = greater_than_or_equals }
+}
+
 ukr_modernize_sov_equipment_t55_procurement_program_shown = {
 	controls_state = 696 # Kharkiv
 	OR = {
@@ -2322,6 +2389,30 @@ ukr_modernize_sov_equipment_t62_modernization_cost = {
 	check_variable = { var = treasury value = UKR_storage_survey_cost compare = greater_than_or_equals }
 	has_political_power > 5
 	has_army_experience > 2
+}
+
+UKR_t62_reactivation_line_open = {
+	has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag
+	NOT = {
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_company_ongoing_flag
+			has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_battalion_ongoing_flag
+		}
+	}
+}
+
+UKR_t62_reactivation_company_available = {
+	UKR_t62_reactivation_line_open = yes
+	controls_state = 696
+	check_variable = { ukraine_has_t62_stockpile > 12 }
+	check_variable = { var = treasury value = UKR_t62_reactivation_company_cost compare = greater_than_or_equals }
+}
+
+UKR_t62_reactivation_battalion_available = {
+	UKR_t62_reactivation_line_open = yes
+	controls_state = 696
+	check_variable = { ukraine_has_t62_stockpile > 39 }
+	check_variable = { var = treasury value = UKR_t62_reactivation_battalion_cost compare = greater_than_or_equals }
 }
 
 ukr_modernize_sov_equipment_t62_procurement_program_shown = {
@@ -4374,10 +4465,8 @@ ukr_modernize_sov_equipment_old_gear_offer_shown = {
 	OR = {
 		country_exists = SUD
 		country_exists = ETH
-		AND = {
-			date > 2003.01.01
-			country_exists = USA
-		}
+		UKR_storage_usa_iraq_route = yes
+		UKR_storage_usa_afghan_route = yes
 	}
 }
 
@@ -4386,20 +4475,11 @@ ukr_modernize_sov_equipment_old_gear_offer_ready = {
 		tooltip = UKR_storage_sale_buyer_free_tt
 		OR = {
 			AND = {
-				country_exists = USA
 				NOT = { has_active_mission = UKR_storage_sale_usa_old_gear }
 				NOT = { has_country_flag = UKR_storage_sale_cooldown_USA_old_gear_flag }
 				OR = {
-					AND = {
-						date > 2004.01.01
-						country_exists = IRQ
-						IRQ = { NOT = { has_war_with = USA } }
-					}
-					AND = {
-						date > 2003.01.01
-						country_exists = AFG
-						AFG = { NOT = { has_war_with = USA } }
-					}
+					UKR_storage_usa_iraq_route = yes
+					UKR_storage_usa_afghan_route = yes
 				}
 			}
 			AND = {
