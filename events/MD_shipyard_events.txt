@@ -1,0 +1,49 @@
+add_namespace = md_shipyard
+
+# Fired once at the start of an overload spell. While it lasts, the monthly tick keeps
+# raising the crisis level, costs stability and loads the yard states.
+country_event = {
+	id = md_shipyard.1
+	title = md_shipyard.1.t
+	desc = md_shipyard.1.d
+	picture = GFX_naval_base
+
+	is_triggered_only = yes
+
+	immediate = {
+		set_variable = { shipyard_overtime_cost = shipyard_cost_drydock }
+		multiply_variable = { shipyard_overtime_cost = 0.1 }
+	}
+
+	option = {
+		name = md_shipyard.1.a
+		log = "[GetDateText]: [Root.GetName]: Event md_shipyard.1.a"
+		ai_chance = { base = 60 }
+		custom_effect_tooltip = md_shipyard_overload_free_tt
+	}
+
+	option = {
+		name = md_shipyard.1.b
+		log = "[GetDateText]: [Root.GetName]: Event md_shipyard.1.b"
+		trigger = { check_variable = { treasury > shipyard_overtime_cost } }
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+		set_temp_variable = { treasury_change = shipyard_overtime_cost }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		set_country_flag = { flag = shipyard_overload_grace_flag days = 90 value = 1 }
+		custom_effect_tooltip = md_shipyard_overload_overtime_tt
+	}
+
+	option = {
+		name = md_shipyard.1.c
+		log = "[GetDateText]: [Root.GetName]: Event md_shipyard.1.c"
+		ai_chance = { base = 20 }
+		add_dynamic_modifier = { modifier = shipyard_repair_crews_modifier days = 90 }
+		set_country_flag = { flag = shipyard_overload_grace_flag days = 90 value = 1 }
+		custom_effect_tooltip = md_shipyard_overload_repair_crews_tt
+	}
+}

@@ -1906,6 +1906,28 @@ country_event = {
 	option = {
 		name = JAP_historical.20110311.a
 		log = "[GetDateText]: [This.GetName]: JAP_historical.20110311.a executed"
+		set_temp_variable = { shipyard_crisis_change = 0 }
+		if = {
+			limit = {
+				OR = {
+					615 = {
+						is_owned_and_controlled_by = ROOT
+						dockyard > 0
+						NOT = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
+					}
+					616 = {
+						is_owned_and_controlled_by = ROOT
+						dockyard > 0
+						NOT = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
+					}
+				}
+			}
+			set_temp_variable = { shipyard_crisis_change = 4 }
+		}
+		else_if = {
+			limit = { 615 = { is_owned_and_controlled_by = ROOT dockyard > 0 } }
+			set_temp_variable = { shipyard_crisis_change = 2 }
+		}
 		616 = {
 			if = {
 				limit = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
@@ -2024,6 +2046,10 @@ country_event = {
 			add_dynamic_modifier = { modifier = JAP_scars_earthquake }
 		}
 		newline = yes
+		if = {
+			limit = { check_variable = { shipyard_crisis_change > 0 } }
+			shipyard_change_crisis = yes
+		}
 		decrease_economic_growth = yes
 		newline = yes
 		add_dynamic_modifier = { modifier = JAP_once_millennium_disaster }
