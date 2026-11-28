@@ -65,6 +65,7 @@ _VALIDATOR_NAMESPACES = {
     "decisions": "validate_decisions.py",
     "dlc_guards_scan": "validate_dlc_guards.py",
     "dynamic_modifier_guards_scan_v1": "validate_dynamic_modifier_guards.py",
+    "entity_references": "validate_entity_references.py",
     "events": "validate_events.py",
     "focus_tree": "validate_focus_tree.py",
     "gfx_ref": "validate_gfx_references.py",
@@ -115,6 +116,7 @@ _HELPER_DEPENDENCIES = {
     ),
     "dlc_guards_scan": (*_CHECK_COMMON_MISTAKES, *_EQUIPMENT, "validate_history.py"),
     "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),
+    "entity_references": (*_CHECK_COMMON_MISTAKES, *_EQUIPMENT),
     "events": (*_CHECK_COMMON_MISTAKES, *_SPRITES),
     "focus_tree": (
         *_CHECK_COMMON_MISTAKES,

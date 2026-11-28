@@ -5,8 +5,10 @@ import os
 import random
 import re
 
+import change_groups
 import pytest
 import validate_focus_tree as V
+from run_validator_batch import selected_specs
 from shared.suite import checks_called_by_run, event_block
 from shared.suite import write_under_str as _write
 from shared_utils import extract_block_from_text
@@ -407,6 +409,36 @@ def test_focus_icons(tmp_path, monkeypatch, sprites, expected):
 
     assert _messages(v) == expected
     assert {i.category for i in v._issues} <= {"missing-focus-icon"}
+
+
+def test_sprite_only_rename_checks_unchanged_focus(tmp_path):
+    path = "interface/goals.gfx"
+    _focus_file(tmp_path, ICON_TREE.replace("GFX_ghost", "GFX_known"))
+    sprites = "\n".join(
+        f'spriteType = {{ name = "{name}" }}'
+        for name in sorted(_sprite_index("GFX_known"))
+    )
+    for name, missing in (("GFX_known", False), ("GFX_renamed", True)):
+        _write(
+            tmp_path,
+            path,
+            "spriteTypes = {\n" + sprites.replace("GFX_known", name) + "\n}",
+        )
+        changed = change_groups.classify([path])
+        spec = next(
+            spec
+            for spec in selected_specs(
+                "targeted-b",
+                {group for group in change_groups.GROUP_PATTERNS if changed[group]},
+            )
+            if spec.name == "focus-tree"
+        )
+        validator = _validator(tmp_path, missing_icons="--missing-icons" in spec.args)
+        validator.run_validations()
+        assert (
+            any(i.category == "missing-focus-icon" for i in validator._issues)
+            is missing
+        )
 
 
 # --- staged reporting scope -------------------------------------------------

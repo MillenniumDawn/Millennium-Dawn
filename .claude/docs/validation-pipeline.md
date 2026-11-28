@@ -85,13 +85,15 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   available to verify base-game-only fallback behavior, so the check does not add a
   guessed vanilla allowlist. Resolve this source/policy question before making the
   check strict.
-- Remaining phases of [#5383](https://github.com/MillenniumDawn/Millennium-Dawn/issues/5383):
-  confirm the vanilla culture source/policy; validate entity
-  clone parents and `attach` targets (including vanilla entities); check that cultural
-  sprite sets cover `_1` through `_7`, including the known tierless-only
-  `northamerican_gfx` entries; validate cross-file clone load order; and report
-  cosmetic-tag users of tag-prefixed entity sets. Those checks depend on entity parsing
-  and/or game lookup behavior and are not covered by the country registration milestone.
+- `validate_entity_references.py` warns on missing `clone` and `attach` targets when
+  entity definition files change. It looks in `gfx/entities/`, `gfx/models/`, and
+  the lowercased base-game and DLC manifest. It does not check clone load order,
+  cultural sprite tier coverage, cosmetic-tag fallback, or whether a mod override
+  hides a definition listed in the vanilla manifest.
+- `validate_file_naming.py` warns on scripted localisation filename prefixes, suffixes,
+  and country tags. Other directories have different conventions and are not checked.
+- Interface changes select the focus-tree validator so removing or renaming a sprite
+  can report a missing focus icon even when the focus is unchanged.
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 
@@ -106,10 +108,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   flag joins the contract.
 - `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
   `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
-  across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
-  and only `gfx/flags`, `gfx/interface/decisions`, and `gfx/texticons` from the art
-  trees, plus the entity definitions in `gfx/entities` and `gfx/models`. Size checks
-  report art outside them as `decision-icon-unmeasured`.
+  across the core, targeted-a, and targeted-b batches. It has no `.git`, includes
+  only `map/definition.csv` and `map/adjacency_rules.txt` from `map/`, and ships
+  entity definitions from `gfx/entities/` and `gfx/models/` without the model binaries.
+  Decision-icon sizes are checked only where the texture is available.
 - `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
   integration, and `validate_tools.py`. Coverage runs on Linux only.
 - `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
@@ -200,7 +202,7 @@ Files live under `tools/validation/` except the `docs` target.
 | ---------- | ------------------------------ | ---------------------------- |
 | `defines`  | `vanilla_defines.txt`          | `validate_defines.py`        |
 | `docs`     | `resources/documentation/*.md` | `validate_modifiers.py`      |
-| `entities` | `vanilla_entities.txt`         | `validate_oob_units.py`      |
+| `entities` | `vanilla_entities.txt`         | OOB and entity checks        |
 | `fonts`    | `vanilla_fonts.txt`            | `validate_gfx_references.py` |
 | `gui`      | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
 | `paths`    | `vanilla_paths.txt`            | `validate_file_paths.py`     |

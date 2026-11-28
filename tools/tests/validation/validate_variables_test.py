@@ -22,6 +22,7 @@ _SHARED_CHECKS = (
     "validate_treasury_state_scope",
     "validate_unlocalised_available_flags",
     "validate_unregistered_dynamic_tokens",
+    "validate_unsafe_event_target_exists",
     "validate_untooltipped_available_checks",
     "validate_untooltipped_available_scripted_trigger",
     "validate_variable_tooltip_keys",
@@ -96,6 +97,38 @@ def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch):
         runpy.run_path(V.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+# case: (script, warning line or None)
+_EVENT_TARGET_EXISTS_CASES = {
+    "inline negative check": ("event_target:Example = { exists = no }", 1),
+    "multiline with comment": (
+        "# header\nlimit = {\n\tevent_target:Example = { # read\n\t\texists = no\n\t}\n}",
+        3,
+    ),
+    "positive check": ("event_target:Example = { exists = yes }", None),
+    "static country": ("TST = { exists = no }", None),
+    "variable scope": ("var:example = { exists = no }", None),
+    "commented check": ("# event_target:Example = { exists = no }", None),
+    "quoted log": ('log = "event_target:Example = { exists = no }"', None),
+    "nested trigger": ("event_target:Example = { ROOT = { exists = no } }", None),
+}
+
+
+@pytest.mark.parametrize(
+    "script, line", _EVENT_TARGET_EXISTS_CASES.values(), ids=_EVENT_TARGET_EXISTS_CASES
+)
+def test_unsafe_event_target_exists(tmp_path, script, line):
+    path = "common/on_actions/test.txt"
+    _write(tmp_path, path, script)
+    validator = _validator(tmp_path)
+    validator.validate_unsafe_event_target_exists()
+
+    assert [(i.category, i.severity, i.file, i.line) for i in validator._issues] == (
+        [("unsafe-event-target-exists", "warning", path, line)] if line else []
+    )
+    if line:
+        assert "NOT = { has_event_target = Example }" in validator._issues[0].message
 
 
 # --- flag scanning and reporting --------------------------------------------

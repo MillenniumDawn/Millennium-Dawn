@@ -62,6 +62,12 @@ GROUP_PATTERNS = {
         "common/defines/**",
         "common/doctrines/**",
     ],
+    "entity-definitions": [
+        "gfx/entities/**/*.asset",
+        "gfx/entities/**/*.gfx",
+        "gfx/models/**/*.asset",
+        "gfx/models/**/*.gfx",
+    ],
     "decisions": [
         "common/**/*.txt",
         "events/**/*.txt",

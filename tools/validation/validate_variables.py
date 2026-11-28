@@ -1367,6 +1367,10 @@ _F_MISSING = 128
 _F_FLAG_SYNTAX = 256
 _F_TOKEN = 512
 
+_NEGATIVE_EVENT_TARGET_EXISTS = re.compile(
+    r"(?<![^\s{}])event_target:([A-Za-z0-9_]+)\s*=\s*\{\s*exists\s*=\s*no\s*\}"
+)
+
 _EMPTY_SHARED_RESULT: Tuple = (
     [],
     [],
@@ -1382,6 +1386,7 @@ _EMPTY_SHARED_RESULT: Tuple = (
     ([], []),
     [],
     [],
+    [],
 )
 
 
@@ -1395,7 +1400,7 @@ def _scan_shared_file(args) -> Tuple:
     per section is unchanged. Flag syntax keeps its naive strip.
     Returns (math, treasury, clamp_found, clamp_temp, clamp_persist,
     clamp_checks, avail_unt, avail_flags, scripted, var_tooltips, missing,
-    (flag_days, flag_long), avail_negated_tooltips, tokens).
+    (flag_days, flag_long), avail_negated_tooltips, tokens, target_exists).
     """
     (
         filename,
@@ -1483,6 +1488,14 @@ def _scan_shared_file(args) -> Tuple:
         missing_issues = _scan_missing_tooltips_text(src, backing)
     if mask & _F_FLAG_SYNTAX:
         flag_pair = _scan_flag_syntax_text(naive, rel)
+    target_exists = (
+        [
+            (match[1], rel, src.line(match.start()))
+            for match in _NEGATIVE_EVENT_TARGET_EXISTS.finditer(blanked)
+        ]
+        if mask & _F_MATH and "event_target:" in blanked
+        else []
+    )
 
     return (
         math_issues,
@@ -1499,6 +1512,7 @@ def _scan_shared_file(args) -> Tuple:
         flag_pair,
         avail_negated,
         token_issues,
+        target_exists,
     )
 
 
@@ -1778,6 +1792,17 @@ class Validator(BaseValidator):
             category=DYNAMIC_TOKEN_CATEGORY,
         )
 
+    def validate_unsafe_event_target_exists(self):
+        """An unset target cannot be scoped into to check that it is absent."""
+        for target, path, line in self._get_shared_scan()["target_exists"]:
+            self.add_warning(
+                "unsafe-event-target-exists",
+                f"event_target:{target} can fail to resolve before exists is tested; "
+                f"use NOT = {{ has_event_target = {target} }} to check for an unset target",
+                path,
+                line,
+            )
+
     def validate_treasury_state_scope(self):
         """Flag treasury/debt/investment effect calls in state scope (WARNING).
 
@@ -1886,6 +1911,7 @@ class Validator(BaseValidator):
             "flag_days": [],
             "flag_long": [],
             "tokens": [],
+            "target_exists": [],
         }
         if not union:
             self._shared_scan_memo = empty
@@ -1974,8 +2000,10 @@ class Validator(BaseValidator):
                 flag_pair,
                 negated_i,
                 token_i,
+                target_exists_i,
             ) = res
             empty["tokens"].extend(token_i)
+            empty["target_exists"].extend(target_exists_i)
             empty["math"].extend(math_i)
             empty["treasury"].extend(treasury_i)
             empty["avail_unt"].extend(unt)
@@ -2461,6 +2489,7 @@ class Validator(BaseValidator):
     def run_validations(self):
         self.validate_math_precision()
         self.validate_unregistered_dynamic_tokens()
+        self.validate_unsafe_event_target_exists()
         self.validate_treasury_state_scope()
         self.validate_clamp_range_conflicts()
         self.validate_untooltipped_available_checks()
