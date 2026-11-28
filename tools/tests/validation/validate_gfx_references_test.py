@@ -1236,6 +1236,61 @@ def test_staged_duplicates_need_a_staged_definition(tmp_path, gfx, category, rep
     assert len(issues) == len(reported)
 
 
+# --- sprite texture folders -------------------------------------------------
+
+# case: (sprite name, texture, expected folders in the finding or None)
+_TEXTURE_FOLDER_CASES = {
+    "idea on focus art": (
+        "GFX_idea_x",
+        "gfx/interface/goals/x.dds",
+        "gfx/interface/ideas/ or gfx/interface/officer_corp/",
+    ),
+    "idea on idea art": ("GFX_idea_x", "gfx/interface/ideas/x.dds", None),
+    "idea on officer corps art": (
+        "GFX_idea_x",
+        "gfx/interface/officer_corp/x.dds",
+        None,
+    ),
+    "mixed-case idea prefix and path": (
+        "GFX_Idea_x",
+        r"GFX\Interface\Ideas\x.dds",
+        None,
+    ),
+    "decision on idea art": (
+        "GFX_decision_x",
+        "gfx/interface/ideas/x.dds",
+        "gfx/interface/decisions/ or gfx/texticons/",
+    ),
+    "decision on texticon art": ("GFX_decision_x", "gfx/texticons/x.dds", None),
+    "other prefix is not checked": ("GFX_focus_x", "gfx/interface/ideas/x.dds", None),
+}
+
+
+@pytest.mark.parametrize(
+    "name, texture, expected", _TEXTURE_FOLDER_CASES.values(), ids=_TEXTURE_FOLDER_CASES
+)
+def test_sprite_texture_folder_mismatch(name, texture, expected):
+    assert vg.sprite_texture_folder_mismatch(name, texture) == expected
+
+
+def test_sprite_texture_folder_check_reports_only_staged_files(tmp_path):
+    _write_gfx(
+        tmp_path, "a.gfx", _sprite("GFX_idea_staged", "gfx/interface/goals/a.dds")
+    )
+    _write_gfx(
+        tmp_path, "b.gfx", _sprite("GFX_idea_other", "gfx/interface/goals/b.dds")
+    )
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [_iface(tmp_path, "a.gfx")]
+    validator._build_gfx_definitions()
+    validator._check_sprite_texture_folders()
+
+    issues = _categories(validator, "sprite-texture-folder")
+    assert [i.message.split(" ->")[0] for i in issues] == ["GFX_idea_staged"]
+    assert issues[0].severity == Severity.WARNING
+
+
 # --- unused sprites ---------------------------------------------------------
 
 # case: (defined sprites, references, vanilla names, (category, sprite) per finding)
@@ -1445,7 +1500,14 @@ def test_staged_report_unused_run_skips_the_full_repo_passes(tmp_path, monkeypat
 
 # Every case exempts `view legacy`, which no fixture defines.
 _UI_PATHS = {
-    "interface/topbar.gfx": [["GFX_kept"], ["GFX_lost"], ["GFX_still_loaded"]],
+    "interface/topbar.gfx": [
+        ["GFX_kept"],
+        ["GFX_lost"],
+        ["GFX_still_loaded"],
+        ["GFX_decision_lost"],
+        ["GFX_decision_category_lost"],
+        ["GFX_idea_lost"],
+    ],
     "interface/other.gfx": [["GFX_still_loaded"]],
     "interface/factions/topbar.gfx": [["GFX_other_path"]],
     "interface/engine.gfx": [["GFX_engine", "engine"]],
@@ -1480,6 +1542,42 @@ _DROPPED_CASES = {
     "script ref": (
         {"events/x.txt": "x = { picture = GFX_lost }\n"},
         [("dropped-vanilla-sprite", "interface/topbar.gfx", "events/x.txt uses")],
+    ),
+    "sprite mentioned only in a log": (
+        {"events/x.txt": 'x = { log = "picture = GFX_lost" }\n'},
+        [],
+    ),
+    "decision key outside icon block": (
+        {"common/decisions/x.txt": "x = { unrelated = {\n key = lost\n } }\n"},
+        [],
+    ),
+    "conditional decision icon": (
+        {"common/decisions/x.txt": 'x = { pick = { icon = { key = "lost" } } }\n'},
+        [
+            (
+                "dropped-vanilla-sprite",
+                "interface/topbar.gfx",
+                "Sprite 'GFX_decision_lost'",
+            )
+        ],
+    ),
+    "bare category icon": (
+        {"common/decisions/categories/x.txt": "x = { icon = lost }\n"},
+        [
+            (
+                "dropped-vanilla-sprite",
+                "interface/topbar.gfx",
+                "Sprite 'GFX_decision_category_lost'",
+            )
+        ],
+    ),
+    "bare idea picture": (
+        {"common/ideas/x.txt": "ideas = { x = { picture = lost } }\n"},
+        [("dropped-vanilla-sprite", "interface/topbar.gfx", "Sprite 'GFX_idea_lost'")],
+    ),
+    "equipment icon pool": (
+        {"gfx/interface/equipmentdesigner/graphic_db/x.txt": "icons = { GFX_lost }\n"},
+        [("dropped-vanilla-sprite", "interface/topbar.gfx", "graphic_db/x.txt uses")],
     ),
     "english loc ref": (
         {"localisation/english/x_l_english.yml": 'l_english:\n x: "£lost"\n'},

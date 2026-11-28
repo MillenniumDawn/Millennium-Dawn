@@ -216,6 +216,24 @@ _IDEA_PICTURE_REF = re.compile(r"^\s*picture\s*=\s*([A-Za-z0-9_.\-]+)", re.MULTI
 _DECISION_ICON_REF = re.compile(
     r"^\s*(?:icon|key)\s*=\s*(?!GFX_)([A-Za-z0-9_.\-]+)", re.MULTILINE
 )
+_SCRIPT_ASSIGNMENT = re.compile(
+    r'#[^\n]*|"(?:\\.|[^"\\])*"|[{}]|'
+    r"(?<![\w@.\-])(?P<key>[\w.\-]+)\s*=(?!=)\s*"
+    r'(?P<value>\{|"(?:\\.|[^"\\])*"|[^\s{}"#=<>]+)'
+)
+_RENDER_FIELDS = frozenset(
+    {
+        "picture",
+        "icon",
+        "image",
+        "sprite",
+        "spriteType",
+        "quadTextureSprite",
+        "background",
+        "localization_key",
+        "portrait",
+    }
+)
 
 # Auto-generated flag sprites — never defined in .gfx, built by the engine.
 # Matches GFX_flag_TAG, GFX_TAG_flag, GFX_shield_TAG etc.
@@ -1055,7 +1073,56 @@ def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     )
 
 
-def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
+def _rendered_script_refs(raw: str, filepath: str) -> Set[str]:
+    """Return sprite values in render fields, not arbitrary script mentions."""
+    parts = filepath.split(os.sep)
+    decision_file = parts[:2] == ["common", "decisions"]
+    idea_file = parts[:2] == ["common", "ideas"]
+    category_file = parts[2:3] == ["categories"]
+    prefix = "GFX_decision_category_" if category_file else "GFX_decision_"
+    if "GFX_" not in raw and not (decision_file or idea_file):
+        return set()
+
+    refs: Set[str] = set()
+    if parts[:4] == ["gfx", "interface", "equipmentdesigner", "graphic_db"]:
+        refs.update(
+            value
+            for value, _line in _values_in_blocks(
+                raw,
+                _ICONS_BLOCK,
+                _BLOCK_TOKEN,
+                lambda value: bool(_GFX_TOKEN_REF.fullmatch(value)),
+            )
+        )
+    blocks: List[str] = []
+    for token in _SCRIPT_ASSIGNMENT.finditer(raw):
+        key, value = token.group("key", "value")
+        if value == "{" or token.group() == "{":
+            blocks.append(key or "")
+            continue
+        if token.group() == "}":
+            if blocks:
+                blocks.pop()
+            continue
+        if not key or not value:
+            continue
+        icon_key = decision_file and key == "key" and blocks[-1:] == ["icon"]
+        if key not in _RENDER_FIELDS and not icon_key:
+            continue
+        name = value.strip('"')
+        if _GFX_TOKEN_REF.fullmatch(name):
+            refs.add(name)
+        elif re.fullmatch(r"[A-Za-z0-9_.\-]+", name):
+            if key == "picture" and idea_file:
+                refs.add("GFX_idea_" + name)
+            elif (decision_file and key == "icon") or icon_key:
+                refs.add(prefix + name)
+    return refs
+
+
+def _parse_script_refs(
+    args: Tuple[str, str], *, rendered_only: bool = False
+) -> List[str]:
     """Return every GFX sprite a game-script .txt file references.
 
     Picks up literal `GFX_xxx` tokens (event pictures, focus/decision icons,
@@ -1068,6 +1135,16 @@ def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
     raw = _read_raw(filepath)
     if raw is None:
         return []
+
+    if rendered_only:
+        relative = os.path.relpath(filepath, mod_path)
+        return disk_cache.per_file_cached_by_content(
+            mod_path,
+            "gfx_ref.rendered_script",
+            filepath,
+            raw,
+            lambda: sorted(_rendered_script_refs(raw, relative)),
+        )
 
     def _compute() -> List[str]:
         text = _HASH_COMMENT.sub("", raw)
@@ -1084,6 +1161,10 @@ def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
     return disk_cache.per_file_cached_by_content(
         mod_path, "gfx_ref.script", filepath, raw, _compute
     )
+
+
+def _parse_rendered_script_refs(args: Tuple[str, str]) -> List[str]:
+    return _parse_script_refs(args, rendered_only=True)
 
 
 def _parse_loc_refs(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
@@ -1147,6 +1228,26 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
         raw,
         lambda: _sprite_refs(strip_comments(raw), filepath, _SLOC_KEY_REF),
     )
+
+
+# Sprite name prefix -> texture folders its art must live in. An idea sprite on
+# focus or decision art renders at the wrong size and style.
+_SPRITE_TEXTURE_FOLDERS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
+    ("gfx_idea_", ("gfx/interface/ideas/", "gfx/interface/officer_corp/")),
+    ("gfx_decision_", ("gfx/interface/decisions/", "gfx/texticons/")),
+)
+
+
+def sprite_texture_folder_mismatch(name: str, texture: str) -> Optional[str]:
+    """Return the expected folders when `texture` is outside them, else None."""
+    lower = name.lower()
+    path = texture.replace("\\", "/").lower()
+    for prefix, folders in _SPRITE_TEXTURE_FOLDERS:
+        if lower.startswith(prefix):
+            if path.startswith(folders):
+                return None
+            return " or ".join(folders)
+    return None
 
 
 class Validator(BaseValidator):
@@ -1246,7 +1347,7 @@ class Validator(BaseValidator):
         )
         return all_refs
 
-    def _collect_script_refs(self) -> Dict[str, str]:
+    def _collect_script_refs(self, *, rendered_only: bool = False) -> Dict[str, str]:
         """Return every GFX sprite referenced from game script -> the first file naming it.
 
         Feeds the unused-sprite check so sprites used as event pictures, focus or
@@ -1266,7 +1367,10 @@ class Validator(BaseValidator):
         refs: Dict[str, str] = {}
         for filepath, names in zip(
             files,
-            self._pool_map(_parse_script_refs, [(f, self.mod_path) for f in files]),
+            self._pool_map(
+                _parse_rendered_script_refs if rendered_only else _parse_script_refs,
+                [(f, self.mod_path) for f in files],
+            ),
         ):
             rel = os.path.relpath(filepath, self.mod_path)
             for name in names:
@@ -1579,6 +1683,31 @@ class Validator(BaseValidator):
             fail_msg="Case-variant GFX sprite definitions:",
             severity=Severity.ERROR,
             category="case-variant-sprite",
+        )
+
+    def _check_sprite_texture_folders(self) -> None:
+        """Report idea and decision sprites whose texture sits in another art folder.
+
+        Under --staged, only definitions in staged files report.
+        """
+        self._log_section("Checking idea and decision sprite texture folders")
+        staged_rel = self._staged_rel()
+        findings = []
+        for name, filepath, texture, line in self._mod_defs:
+            rel = os.path.relpath(filepath, self.mod_path)
+            if staged_rel is not None and rel not in staged_rel:
+                continue
+            expected = sprite_texture_folder_mismatch(name, texture)
+            if expected:
+                findings.append(
+                    (f"{name} -> {texture} (expected {expected})", rel, line)
+                )
+        self._report(
+            findings,
+            ok_msg="Idea and decision sprites use matching art folders.",
+            fail_msg=f"Sprites on art from the wrong folder ({len(findings)} total):",
+            severity=Severity.WARNING,
+            category="sprite-texture-folder",
         )
 
     def _check_undefined_fonts(self) -> None:
@@ -2002,6 +2131,7 @@ class Validator(BaseValidator):
         mod_defined_ci = casefold_index(mod_defined)
 
         self._check_duplicate_definitions()
+        self._check_sprite_texture_folders()
         self._check_undefined_fonts()
 
         gui_refs = self._collect_gui_refs(defined)
@@ -2060,7 +2190,6 @@ class Validator(BaseValidator):
             mod_defined_ci=mod_defined_ci,
         )
 
-        script_refs = {} if self.staged_only else self._collect_script_refs()
         english_loc_refs = [r for r in loc_refs if os.sep + "english" + os.sep in r[1]]
         ref_sites: Dict[str, str] = {}
         for sprite, filepath, line in sorted(
@@ -2068,8 +2197,9 @@ class Validator(BaseValidator):
         ):
             rel = os.path.relpath(filepath, self.mod_path)
             ref_sites.setdefault(sprite, f"{rel}:{line}".replace(os.sep, "/"))
-        for sprite, rel in script_refs.items():
-            ref_sites.setdefault(sprite, rel.replace(os.sep, "/"))
+        if not self.staged_only:
+            for sprite, rel in self._collect_script_refs(rendered_only=True).items():
+                ref_sites.setdefault(sprite, rel.replace(os.sep, "/"))
         self._check_dropped_vanilla_ui(mod_defined, ref_sites)
 
         if not self.report_unused:
@@ -2082,7 +2212,7 @@ class Validator(BaseValidator):
         # A sprite is "used" if referenced anywhere — interface/ or game script.
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
         if not self.staged_only:
-            all_referenced.update(script_refs)
+            all_referenced.update(self._collect_script_refs())
             all_referenced |= {r[0] for r in loc_refs}
             all_referenced |= self._resolve_engine_refs(mod_defined)
         self._check_unused_sprites(mod_defined, all_referenced)

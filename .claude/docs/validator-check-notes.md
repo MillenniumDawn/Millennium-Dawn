@@ -207,10 +207,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case` (WARNING, `--id-case`, on in CI): keep words after the uppercase
-  country or system directive lowercase, except one registered country tag. A
-  decision must match that tag to its sole explicit country target, or scope to it
-  directly if the decision is not targeted. Existing IDs are not renamed.
+- `decision-id-case` (WARNING, `--id-case`, on in CI): keep ordinary words after the
+  directive lowercase. The check accepts whole registered tags and tag aliases,
+  formable codes from the formable catalogue, abbreviations from English party and
+  organization names, and `validate_decisions.id_case_abbreviations`
+  from `validation_config.json`. Multiple abbreviations can appear in the same ID.
+  The separate cosmetic targeting check still verifies the decision's country target.
 - `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
   tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are
@@ -302,10 +304,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   re-check. Known gap: the category `allowed` runs once at game start, so it covers only
   lines that cannot change. A dynamic line there is its own bug.
 - `decision-category-gate-candidate` (WARNING, report-only): a category whose decisions,
-  two or more, all hold the same line under the rules above. One category check can
-  replace them. Missions need not share the line. Review before moving it: a line from
-  `available` hides the decision instead of greying it out, and a `visible_when_empty`
-  category disappears with it.
+  two or more, all share a line in `visible` or `target_root_trigger`. Checks that only
+  appear in `available` on a decision control selection and stay on that decision.
+  Categories with missions or `visible_when_empty = yes` are excluded because
+  moving a gate can hide the category UI even if its mission timers still tick.
+  A decision's `visible` checks are not move or removal candidates when
+  `cancel_if_not_visible = yes` uses them to cancel the active decision.
+  Review active decisions before moving a shared visibility check.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
@@ -415,7 +420,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     modifier moved the costly way, which means cost or interest up, tax or income down,
     matching `color_type`; a value that is not a literal; and idea changes whose net in
     one block raises a money modifier or a spending law level (`spending_new_level` in
-    the idea's `on_add`). The `spending_law_scripted_change` flag alone commits nothing,
+    the idea's `on_add`). Adding an idea that gates a raise of `additional_expenses_rate`
+    in a scripted effect commits money too (`mark_running_expense_ideas`), and so does
+    one that gates a raise of a plain variable later added to the rate, such as a
+    subtotal. Removing one, a `NOT` gate, a nested `else`, and a subtotal fed from a
+    file that never names the rate do not count.
+    The `spending_law_scripted_change` flag alone commits nothing,
     and `tax_rate_change_multiplier_modifier` prices political power, not money.
   - Chains: fired events and called effects are followed to a fixed point. A fired
     event's FROM is its sender, and an explicit ROOT in a scripted effect is the
@@ -553,6 +563,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   sprite names (`resource_item_background`) are not read. Sprites the engine resolves
   from MD declarations (equipment, tech, `GFX_EMI_`, focus-filter icons) do not count as
   uses. A window counts as kept when any MD `.gui` defines it. Skipped under `--staged`.
+  Script usage needs a render field or an equipment icon pool. A mention in a log
+  or a decision `key` outside an icon block is not a render reference.
   Deliberate drops go in `dropped_gui_elements`.
 
 ## validate_ideas.py
@@ -738,7 +750,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   modifier reads for a matching key. Computed values and stacked totals are not checked.
 - Document an intentional bonus as `owner::key` with a reason in the row's `exceptions`
   list. The owner is the idea, trait, or modifier name. Do not blanket-exempt existing
-  bonuses; review and explain each one.
+  bonuses; review and explain each one. For an intentional variable write, use
+  `repository/path::operation::variable::value`, with forward slashes and a
+  number such as `-0.75`.
 - `--modifier-cap PATTERN=CAP` adds a search row ahead of the config rows: either
   direction, variable-fed values and timed-only grants included, reported as
   `modifier-cap-search`. It takes over the keys it matches for that run.

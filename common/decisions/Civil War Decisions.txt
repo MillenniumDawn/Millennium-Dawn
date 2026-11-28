@@ -1,4 +1,4 @@
-Civil_war_decisions = {
+civil_war_decisions = {
 
 	confiscate_civilian_vehicles = {
 		cost = 50
@@ -132,6 +132,44 @@ Civil_war_decisions = {
 				has_fuel < 5000
 			}
 			modifier = { factor = 0.5 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Any side in a civil war can ask one of its five largest foreign influencers for help, once a month
+	civil_war_request_foreign_support = {
+		icon = generic_civil_support
+
+		target_root_trigger = { NOT = { has_country_flag = civil_war_support_requested } }
+		target_array = influence_array
+		target_trigger = {
+			sender_is_top5_influencer = yes
+			FROM = {
+				NOT = { has_war_with = ROOT }
+				NOT = { has_country_flag = civil_war_support_requests_refused }
+			}
+		}
+
+		days_remove = 10
+		days_re_enable = 90
+
+		available = { hidden_trigger = { NOT = { has_country_flag = civil_war_support_requested } } }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision civil_war_request_foreign_support"
+			set_country_flag = { flag = civil_war_support_requested days = 30 value = 1 }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = civil_war_support_offer_tt }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision civil_war_request_foreign_support"
+			FROM = { country_event = civil_war_support.1 }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { add = 10 FROM = { has_opinion = { target = ROOT value > 24 } } }
+			modifier = { add = 10 surrender_progress > 0.2 }
 		}
 	}
 

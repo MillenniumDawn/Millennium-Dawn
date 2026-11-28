@@ -1608,6 +1608,88 @@ def test_idea_on_add_can_justify_decision_guard(tmp_path):
     assert issue_rows(validator) == []
 
 
+_CHARGE = "add_to_variable = { additional_expenses_rate = 1 }"
+
+
+@pytest.mark.parametrize(
+    "money, effect, flagged",
+    [
+        (
+            f"if = {{ limit = {{ OR = {{ has_idea = TAG_subsidy has_war = no }} }} {_CHARGE} }}",
+            "add_ideas = TAG_subsidy",
+            False,
+        ),
+        (
+            f"if = {{ limit = {{ AND = {{ has_idea = TAG_subsidy has_war = no }} }} {_CHARGE} }}",
+            "add_ideas = TAG_subsidy",
+            False,
+        ),
+        (
+            "if = { limit = { has_war = yes } }"
+            f" else_if = {{ limit = {{ has_idea = TAG_subsidy }} {_CHARGE} }}",
+            "add_ideas = TAG_subsidy",
+            False,
+        ),
+        (
+            "if = { limit = { has_idea = TAG_subsidy }"
+            " add_to_variable = { TAG_subtotal = 1 } }"
+            " add_to_variable = { additional_expenses_rate = TAG_subtotal }",
+            "add_ideas = TAG_subsidy",
+            False,
+        ),
+        (
+            f"if = {{ limit = {{ NOT = {{ has_idea = TAG_subsidy }} }} {_CHARGE} }}",
+            "add_ideas = TAG_subsidy",
+            True,
+        ),
+        (
+            f"if = {{ limit = {{ has_idea = TAG_subsidy }} else = {{ {_CHARGE} }} }}",
+            "add_ideas = TAG_subsidy",
+            True,
+        ),
+        (
+            "if = { limit = { has_idea = TAG_subsidy }"
+            " add_to_variable = { additional_expenses_rate_shown = 1 } }",
+            "add_ideas = TAG_subsidy",
+            True,
+        ),
+        (
+            "if = { limit = { has_idea = TAG_subsidy }"
+            " add_to_variable = { additional_expenses_rate = -1 } }",
+            "add_ideas = TAG_subsidy",
+            True,
+        ),
+        (
+            f"if = {{ limit = {{ has_idea = TAG_subsidy }} {_CHARGE} }}",
+            "remove_ideas = TAG_subsidy",
+            True,
+        ),
+    ],
+)
+def test_running_expense_idea_justifies_decision_guard(
+    tmp_path, money, effect, flagged
+):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/ideas/ideas.txt": "ideas = { country = { TAG_subsidy = { } } }",
+            "common/scripted_effects/00_money.txt": f"calc_expenses = {{\n\t{money}\n}}\n",
+            "common/decisions/Subsidy.txt": "subsidy_category = {\n"
+            + _nested(
+                "dec_subsidy",
+                _block("complete_effect", effect)
+                + _block(
+                    "ai_will_do",
+                    "base = 1\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
+                ),
+            )
+            + "}\n",
+        },
+    )
+    validator.validate_unneeded_treasury_guard()
+    assert bool(issue_rows(validator)) is flagged
+
+
 def test_unneeded_guard_on_immediately_readded_idea(tmp_path):
     validator = _mod(
         tmp_path,
@@ -2091,16 +2173,76 @@ _CATEGORY_GATE_CASES = {
         [("dec1: target_root_trigger",)],
         [],
     ),
-    # A mission in a hidden category still ticks, so it need not share the line.
+    # Hiding the category changes mission visibility even when its timer still ticks.
+    "mission alongside shared checks": (
+        "",
+        {
+            "dec1": _block("visible", _WAR),
+            "dec2": _block("target_root_trigger", _WAR),
+            "mission": _MISSION,
+        },
+        [],
+        [],
+    ),
     "line every decision checks": (
         "",
         {
             "dec1": _block("visible", _WAR),
-            "dec2": _block("available", _WAR),
-            "mission": _MISSION,
+            "dec2": _block("target_root_trigger", _WAR),
         },
         [],
         [("cat: all 2 decisions", _WAR)],
+    ),
+    "shared decision visibility still drives cancellation": (
+        "",
+        {
+            "dec1": "\t\tdays_remove = 100\n\t\tcancel_if_not_visible = yes\n"
+            + _block("visible", _WAR),
+            "dec2": _block("visible", _WAR),
+        },
+        [],
+        [],
+    ),
+    "covered decision visibility still drives cancellation": (
+        _CAT_WAR,
+        {
+            "dec1": "\t\tdays_remove = 100\n\t\tcancel_if_not_visible = yes\n"
+            + _block("visible", _WAR)
+            + _block("available", _WAR),
+            "dec2": _block("visible", _WAR),
+        },
+        [("dec1: available repeats",), ("dec2: visible repeats",)],
+        [],
+    ),
+    "visible when empty is intentional": (
+        "\tvisible_when_empty = yes\n",
+        {"dec1": _block("visible", _WAR), "dec2": _block("visible", _WAR)},
+        [],
+        [],
+    ),
+    "visible when empty disabled": (
+        "\tvisible_when_empty = no\n",
+        {"dec1": _block("visible", _WAR), "dec2": _block("visible", _WAR)},
+        [],
+        [("cat: all 2 decisions", _WAR)],
+    ),
+    "mission does not suppress covered checks for other decisions": (
+        _CAT_WAR,
+        {"dec1": _block("visible", _WAR), "mission": _MISSION},
+        [("dec1: visible repeats", "category visible")],
+        [],
+    ),
+    "shared availability does not hide decisions": (
+        "",
+        {"dec1": _block("available", _WAR), "dec2": _block("available", _WAR)},
+        [],
+        [],
+    ),
+    "visibility shared with an availability-only check": (
+        "",
+        {"dec1": _block("visible", _WAR), "dec2": _block("available", _WAR)},
+        [],
+        [],
     ),
     "line only some decisions check": (
         "",
@@ -2109,6 +2251,41 @@ _CATEGORY_GATE_CASES = {
         [],
     ),
     "one decision": ("", {"dec1": _block("visible", _WAR)}, [], []),
+    "constant true is not a category gate": (
+        "",
+        {
+            "dec1": _block("visible", "always = yes"),
+            "dec2": _block("visible", "always = yes"),
+        },
+        [],
+        [],
+    ),
+    "individual scripted activation keeps decisions hidden": (
+        "",
+        {
+            "dec1": _block("visible", "always = no"),
+            "dec2": _block("visible", "always = no"),
+        },
+        [],
+        [],
+    ),
+    "temporary variables stay in the decision trigger": (
+        "",
+        {
+            "dec1": _block(
+                "visible",
+                "set_temp_variable = { temp_value = 5 }\n"
+                "hidden_trigger = { set_temp_variable = { temp_other = 6 } }",
+            ),
+            "dec2": _block(
+                "visible",
+                "set_temp_variable = { temp_value = 5 }\n"
+                "hidden_trigger = { set_temp_variable = { temp_other = 6 } }",
+            ),
+        },
+        [],
+        [],
+    ),
     # A state scope is one line, not the lines inside it.
     "state scope": (
         _CAT_WAR,
@@ -3879,7 +4056,7 @@ _TARGET_NAMING_CASES = {
         "targets = { VOJ }",
         set(),
     ),
-    "wrong named target": ("TRADE_SER_invite", "targets = { VOJ }", {_CASE, _COSMETIC}),
+    "wrong named target": ("TRADE_SER_invite", "targets = { VOJ }", {_COSMETIC}),
     "unregistered tag": ("TRADE_INV_invite", "targets = { INV }", {_CASE, _COSMETIC}),
     "ambiguous name and targeting": ("SER_invite", "targets = { VOJ }", {_COSMETIC}),
     "literal counterpart in a regular decision": (
@@ -3887,17 +4064,55 @@ _TARGET_NAMING_CASES = {
         "available = { VOJ = { exists = yes } }",
         set(),
     ),
-    "quoted counterpart is not proof": (
+    "registered tag needs no literal scope for casing": (
         "TRADE_VOJ_invest",
         'complete_effect = { log = "VOJ = { exists = yes }" }',
-        {_CASE},
+        set(),
     ),
     "two uppercase counterparts are ambiguous": (
         "TRADE_SER_VOJ_invite",
         "targets = { VOJ }",
-        {_CASE, _COSMETIC},
+        {_COSMETIC},
     ),
 }
+
+
+@pytest.mark.parametrize(
+    ("name", "warns"),
+    [
+        ("export_SER_VOJ_TV", False),
+        ("review_PQA_QFORGE", False),
+        ("convene_QXZ_JZF", False),
+        ("review_QxZ_QZX_CP", False),
+        ("support_NEXUS", False),
+        ("review_QXZExtra", True),
+        ("review_Unknown", True),
+        ("review_QZX", True),
+    ],
+)
+def test_decision_id_case_abbreviations(tmp_path, name, warns):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/country_tags/00_countries.txt": 'SER = "countries/Serbia.txt"\n'
+            'VOJ = "countries/Vojvodina.txt"\n',
+            "common/factions/templates/test.txt": "faction_template_test = { name = NEXUS_alliance }\n",
+            "common/country_tag_aliases/tag_aliases.txt": "PQA = { fallback = SER }\n",
+            "localisation/english/MD_formable_nations_l_english.yml": 'l_english:\n form_QFORGE_category: "Forge Union"\n',
+            "localisation/english/MD_politics_view_parties_l_english.yml": (
+                'l_english:\n SER.conservatism: "£sprite (QXZ) - Example Party"\n'
+                ' SER.conservatism_desc: "(Test) - Example Party (Native: Example, QxZ)\\n\\nProse."\n'
+                ' VOJ.liberalism: "£sprite (QZX-CP) - Example Alliance"\n'
+            ),
+            "localisation/english/test.yml": 'l_english:\n NEXUS_alliance: "Joint Zenith Forum (JZF)"\n',
+            _DECISIONS_FILE: "synthetic_category = {\n" + _nested(name, "") + "}\n",
+            "common/decisions/categories/cats.txt": f"{name}_category = {{\n}}\n",
+        },
+    )
+    validator.validate_id_case()
+    assert [issue.category for issue in validator._issues] == (
+        [_CASE, _CASE] if warns else []
+    )
 
 
 @pytest.mark.parametrize(
