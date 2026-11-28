@@ -69,7 +69,7 @@ Each starting spirit's tooltip says how to improve or remove it.
 
 - name: The Brazilian Jeitinho
   type: mixed
-  desc: More factory output, but higher costs for corruption reform and the police and lower tax income. It improves in steps as corruption falls and education funding rises. The Launch Microentrepreneur Registration decision replaces it once education funding is high enough and corruption is low enough.
+  desc: More factory output, but corruption reform costs 50% more and each prosecution costs extra Political Power, plus lower tax income. It improves in steps as Brazil passes integrity reforms (the Transparency Portal, Ficha Limpa, the Access to Information Law, the Clean Company Act, and each Operation Car Wash expansion) and raises education funding. The Launch Microentrepreneur Registration decision replaces it after four reforms, once education funding is high enough and corruption is low enough.
 - name: Oncoming Debt Crisis
   type: negative
   desc: Ends when debt falls below 20% of GDP. Reinstating IMF Debts swaps it for IMF Debts. Seek Foreign Assistance swaps it for Foreign Debt Assistance if the United States accepts, or for the Worsening Debt Crisis if it refuses.
@@ -81,7 +81,7 @@ Each starting spirit's tooltip says how to improve or remove it.
   desc: Indigenous unrest over pay and poverty, eased by the Angry Natives focus.
 - name: A Neglected Rail Network
   type: negative
-  desc: Freight moves by truck on a patchwork of old lines. The RFFSA Legacy focus improves it, then Valec Takes the Lead or Auction the Rail Concessions improves it again. The Northeastern Railways or Ferrogrão focus removes it.
+  desc: Freight moves by truck on a patchwork of old lines. Railways, infrastructure, and supply hubs build slower, railways and infrastructure cost more, and productivity grows slower. The RFFSA Legacy focus improves it, then Valec Takes the Lead or Auction the Rail Concessions improves it again. The Northeastern Railways or Ferrogrão focus removes it.
   :::
 
 ## Factories
@@ -92,11 +92,11 @@ Brazil starts with 60 factories: 44 civilian industries, 13 military industries,
 
 Brazil starts with $48 billion in the treasury, $1,053 billion in debt (about half of GDP), and $124.8 billion in international investments. GDP is about $2.1 trillion, or $11.9 thousand per person.
 
-Many economy focuses add to one spirit, State of the Brazilian Economy, instead of stacking separate spirits. Three spirits changed with it:
+Many economy focuses add to one spirit, State of the Brazilian Economy, instead of granting separate spirits. Three former spirits now raise it:
 
-- **Efficient Public Sector.** The Effective Public Sector focus, open only under José Serra, now lowers bureaucracy costs by 10% and interest rates by 15%. It no longer speeds construction.
-- **Liberal Economy.** Push for Economic Liberalization raises factory efficiency growth and cuts Foreign Investment costs by 10%.
-- **Revitalize the Economy.** It raises productivity growth and research speed, so it no longer duplicates Liberal Economy.
+- **Effective Public Sector.** The focus, open only under José Serra, lowers bureaucracy costs by 10% and interest rates by 15%. It no longer speeds construction.
+- **Push for Economic Liberalization.** It raises factory efficiency growth and cuts Foreign Investment costs by 10%.
+- **Revitalize the Economy.** It raises productivity growth and research speed.
 
 Brazil can sell Embraer aircraft to a friendly country through a Public Policy decision, for money and opinion. It allows one deal a year. Selling Embraer's commercial arm to Boeing raises the income from each sale.
 
@@ -106,9 +106,16 @@ Brazil can sell Embraer aircraft to a friendly country through a Public Policy d
 - **National Development.** One decision category holds Brazil's mines, ethanol, and great public works. Brazil starts with the first two excavation techs, and new mines appear as later ones are researched: Araxá and Catalão niobium, Trombetas and Juruti bauxite, Caetité and Santa Quitéria uranium, Autazes potash, and the Lithium Valley mines and refinery. The Energy and Mining Ministry focus adds the Carajás, Bahia chromite, and Serra Verde rare earth decisions. Major Development Projects adds the São Francisco transposition, the Tocantins basin, and the army, dockyard, and Amazon works.
 - **Tailings dams.** Decommissioning the upstream dams in Minas Gerais costs steel output for two years but prevents the Mariana and Brumadinho collapses.
 - **Ethanol.** After the sugarcane focus, Brazil can convert its fleet to flex-fuel, push ethanol exports, and run the fleet on ethanol during an oil shock.
-- **The Amazon.** Conserved and wild acreage affect Stability, Political Power, research, and Non-Aligned support. Repeatable decisions fund rangers and reforestation or open the forest to logging and mining.
-- **Favelas and organized crime.** São Paulo, Rio de Janeiro, Bahia, Pernambuco, and Pará start with favelas that cost building slots and productivity growth. Favela Housing clears them, and Rio's pacification units improve them. Dated events cover the 2006 PCC attacks, the 2008 militia inquiry, the 2010 Alemão occupation, and the 2017 prison massacres.
-- **Operation Car Wash.** The Mensalão inquiry or the 2014 raids open the investigation. Lula's arrest, release, and annulment decide whether the Workers' Party runs him or Fernando Haddad, and a three-way election follows.
+- **The Amazon.** Conserved and wild acreage affect Stability, Political Power, research, and Non-Aligned support. Repeatable decisions fund rangers and reforestation or open the forest to logging and mining. Opening the forest costs more than protecting it, and each conservation decision makes foreign investment in Brazil cheaper and faster, up to 10%. From August 2008, with enough forest conserved, Brazil can ask Norway and Germany to fund the Amazon Fund.
+- **Favelas and organized crime.** São Paulo, Rio de Janeiro, Bahia, Pernambuco, and Pará start with favelas that cost building slots and productivity growth. The Favelas category lets Brazil clean up any of these states it owns and controls, even if it regained the state after defeating the cartels.
+  - **Cartel floor.** The gangs set a floor under the cartels. Cartel strength can't fall below 5 for each full favela and 2 for each upgraded one, and influence can't fall below 2 and 1. While Brazil owns an uncleared favela, both stay at 5 or more, so Brazil can't defeat the cartels. The favela decisions show the current floor.
+  - **Clearing order.** Each favela must be pacified first, then rebuilt with housing, one project at a time. Clearing all five takes until about 2008 at the earliest.
+  - **Narco concession.** If Brazil concedes to the narcos, every remaining favela becomes gang-ruled. Each gang-ruled favela adds 5 cartel strength and 3 influence to the narco state, which raises its bonuses and its drug money. The army can retake gang-ruled favelas one at a time through a Brazil-only decision. It costs 100 Political Power, about 1.5% of GDP, and stability, and takes a year.
+  - **Dated events.** While the cartels survive, events cover the 2006 PCC attacks, the 2008 militia inquiry, the first pacification unit in Santa Marta in December 2008, the 2010 Alemão occupation, and the 2017 prison massacres.
+- **Corruption.** Each scandal gives Brazil a choice: prosecute, which lowers corruption at a Jeitinho-scaled Political Power cost; strike a leniency deal that recovers money; take plea bargains that build evidence or expand Operation Car Wash; or cover it up for Political Power now, at the risk of a bigger scandal later. The first BNDES project funded while a borrower is highly corrupt has a 30% chance of a scandal. A refusal does not use that chance. Petrobras's first oil focuses bring the Contractors' Club, where looking away or funding the party starts the Petrolão scheme.
+- **Operation Car Wash.** It opens only if Brazil took part in a scheme: through the Mensalão inquiry, or the March 2014 raids once a Petrolão scheme or plea-bargain evidence exists. A clean Brazil skips the investigation. Car Wash does not reopen once its three investigation focuses are done or skipped, and after that plea bargains lower corruption directly. Lula's arrest, release, and annulment decide whether the Workers' Party runs him or Fernando Haddad, and a three-way election follows.
+- **Lula's choices.** As president, Lula decides on Palocci's primary surplus, the MST land occupations, the FTAA, the Growth Acceleration Program, the 2008 crisis response, and his succession. Each choice moves the Workers' Party balance between radicals and reformists.
+- **National industry.** The National Development decisions let Brazil found Terrabrás after self-funding the Goiás rare earths, refound ENGESA, fund Cobra Computadores, reactivate Telebrás from 2010, extend the Manaus Free Trade Zone incentives, and, on the socialist path, renationalize Vale. Dated events cover the 2000 Banespa sale and the 2006 Varig crisis.
 - **Railways and chips.** The rail focuses rebuild the network through RFFSA, Valec, or concessions, from Norte-Sul to a Rio to São Paulo high-speed line. The CEITEC and PADIS focuses build microchip plants.
 - **Cross-border projects.** Brazil can pay for roads, bridges, railways, and dams with its neighbors. Each is a decision that sends the partner an offer. If the partner accepts, the project opens months later with infrastructure on both sides, plus influence, opinion, trade, or resource exports. Each state a project improves needs room for another infrastructure level, and its controller needs the railway tech for that level. A state with no room when the project opens gets nothing.
   - Interoceanic Highway to Peru, from mid-2005.

@@ -82,6 +82,9 @@ _STALE_STATE = (
     " it is not player-facing"
 )
 _ONE_SHOT = " (the same country cannot repeat it; verify another one can take it)"
+_TARGETS = "\t\ttargets = { GER }\n"
+_CANCEL_ON_HIDE = "\t\tdays_remove = 30\n\t\tcancel_if_not_visible=yes\n"
+_TARGET_AT_WAR = "FROM = { has_war = yes }"
 _SET_TAKEN = "FROM = { set_country_flag = md_taken }"
 _NOT_TAKEN = "FROM = { NOT = { has_country_flag = md_taken } }"
 _EFFECT_BLOCKS = ("complete_effect", "remove_effect", "timeout_effect", "cancel_effect")
@@ -1348,7 +1351,58 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             [(_STALE_STATE % ("tag_only", "flag md_taken"), "X.txt", 0)],
         ),
     },
+    "validate_root_only_visible_on_targeted": {
+        "keep the root cancellation condition": (
+            [
+                _nested(
+                    "project",
+                    _TARGETS + _CANCEL_ON_HIDE + _block("visible", "has_war = yes"),
+                )
+            ],
+            [],
+        ),
+    },
+    "validate_from_checks_in_visible": {
+        "keep the target cancellation condition": (
+            [
+                _nested(
+                    "project",
+                    _block("target_trigger", "always = yes")
+                    + _CANCEL_ON_HIDE
+                    + _block("visible", _TARGET_AT_WAR),
+                )
+            ],
+            [],
+        ),
+    },
     "validate_targets_no_trigger": {
+        "only visibility cancels an active project": (
+            [
+                _nested(
+                    "project",
+                    _TARGETS + _CANCEL_ON_HIDE + _block("visible", _TARGET_AT_WAR),
+                ),
+                _nested(
+                    "still_check_available",
+                    _TARGETS
+                    + _CANCEL_ON_HIDE
+                    + _block("visible", _TARGET_AT_WAR)
+                    + _block("available", _NOT_TAKEN),
+                ),
+            ],
+            [("still_check_available", "available only")],
+        ),
+        "ordinary visibility is a target filter": (
+            [
+                _nested(
+                    "ordinary",
+                    _TARGETS
+                    + '\t\tname = "cancel_if_not_visible = yes"\n'
+                    + _block("visible", _TARGET_AT_WAR),
+                )
+            ],
+            [("ordinary",)],
+        ),
         "FROM filter in available": (
             [
                 _nested(

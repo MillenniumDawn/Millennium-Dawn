@@ -4,16 +4,19 @@ BRA_operation_car_wash_switch = {
 		swap_ideas = {
 			remove_idea = BRA_idea_car_wash1 add_idea = BRA_idea_car_wash2
 		}
+		add_to_variable = { BRA_integrity_reforms = 1 tooltip = BRA_integrity_reforms_tt }
 	}
 	else_if = { limit = { has_idea = BRA_idea_car_wash2 }
 		swap_ideas = {
 			remove_idea = BRA_idea_car_wash2 add_idea = BRA_idea_car_wash3
 		}
+		add_to_variable = { BRA_integrity_reforms = 1 tooltip = BRA_integrity_reforms_tt }
 	}
 	else_if = { limit = { has_idea = BRA_idea_car_wash3 }
 		swap_ideas = {
 			remove_idea = BRA_idea_car_wash3 add_idea = BRA_idea_car_wash4
 		}
+		add_to_variable = { BRA_integrity_reforms = 1 tooltip = BRA_integrity_reforms_tt }
 	}
 }
 
@@ -91,6 +94,7 @@ BRA_start_bioceanic_corridor = {
 
 # THIS = the borrower, ROOT = Brazil. Offers one BNDES-funded project through the international investment system
 BRA_stage_bndes_project = {
+	save_event_target_as = BRA_bndes_borrower
 	if = {
 		limit = { original_tag = CUB }
 		capital_scope = {
@@ -149,12 +153,12 @@ BRA_update_brazil_energy_idea = {
 }
 
 # Effect: BRA_update_jeitinho_tier
-# Purpose: Moves the Jeitinho spirit up one tier as corruption falls and education funding rises; monthly
+# Purpose: Moves the Jeitinho spirit up one tier as integrity reforms accumulate and education funding rises; monthly
 BRA_update_jeitinho_tier = {
 	if = {
 		limit = {
 			has_idea = BRA_idea_brazilian_knack_2
-			check_variable = { corruption_level < 5 }
+			check_variable = { var = BRA_integrity_reforms value = 4 compare = greater_than_or_equals }
 			check_variable = { education_law > 3 }
 		}
 		swap_ideas = {
@@ -165,7 +169,7 @@ BRA_update_jeitinho_tier = {
 	else_if = {
 		limit = {
 			has_idea = BRA_idea_brazilian_knack
-			check_variable = { corruption_level < 6 }
+			check_variable = { var = BRA_integrity_reforms value = 2 compare = greater_than_or_equals }
 		}
 		swap_ideas = {
 			remove_idea = BRA_idea_brazilian_knack
@@ -174,12 +178,94 @@ BRA_update_jeitinho_tier = {
 	}
 }
 
-# --- Worker's Party Alignment --- #
-BRA_worker_party_alignment_effect = {
-	custom_effect_tooltip = BRA_worker_party_alignment_effect_tt
-	set_variable = { BRA_brazilian_party_alignment = { value = BRA_brazilian_party_alignment add = temp_change clamp = { min = 0 max = 100 } } }
+BRA_uncover_corruption = {
+	# At the lowest level decrease_corruption pays Political Power instead, so there is nothing to uncover
+	if = {
+		limit = { NOT = { has_idea = corruption_level_01 } }
+		if = {
+			limit = { has_idea = BRA_idea_brazilian_knack }
+			add_political_power = -75
+			add_stability = -0.02
+		}
+		else_if = {
+			limit = { has_idea = BRA_idea_brazilian_knack_2 }
+			add_political_power = -50
+		}
+		else_if = {
+			limit = { has_idea = BRA_idea_brazilian_knack_3 }
+			add_political_power = -30
+		}
+		else_if = {
+			limit = { has_idea = BRA_idea_jeitinho_formalization }
+			add_political_power = -15
+		}
+	}
+	decrease_corruption = yes
 }
 
+BRA_corruption_leniency_deal = {
+	set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.002 } }
+	modify_treasury_effect = yes
+	set_temp_variable = { temp_opinion = 5 }
+	change_industrial_conglomerates_opinion = yes
+}
+
+BRA_corruption_plea_bargain = {
+	add_political_power = -25
+	if = {
+		limit = { has_idea = BRA_idea_car_wash4 }
+		decrease_corruption = yes
+	}
+	else_if = {
+		limit = { BRA_car_wash_is_open = yes }
+		BRA_operation_car_wash_switch = yes
+	}
+	else_if = {
+		limit = { BRA_car_wash_focuses_done = no }
+		hidden_effect = { set_country_flag = BRA_car_wash_evidence }
+		custom_effect_tooltip = BRA_car_wash_evidence_tt
+		BRA_queue_car_wash_raids = yes
+	}
+	# Car Wash has run or been skipped, so the testimony goes straight to the courts
+	else = {
+		decrease_corruption = yes
+	}
+}
+
+BRA_corruption_cover_up = {
+	increase_corruption = yes
+	add_political_power = 25
+	hidden_effect = { set_country_flag = BRA_petrolao_scheme }
+	if = {
+		limit = {
+			BRA_car_wash_is_open = no
+			BRA_car_wash_focuses_done = no
+		}
+		custom_effect_tooltip = BRA_petrolao_scheme_tt
+	}
+	BRA_queue_car_wash_raids = yes
+}
+
+BRA_queue_car_wash_raids = {
+	if = {
+		limit = {
+			date > 2014.3.17
+			BRA_car_wash_is_open = no
+			BRA_car_wash_focuses_done = no
+		}
+		hidden_effect = { country_event = { id = brazil.163 days = 90 } }
+	}
+}
+
+BRA_queue_contractors_club = {
+	if = {
+		limit = { NOT = { has_country_flag = BRA_contractors_club_queued } }
+		hidden_effect = {
+			set_country_flag = BRA_contractors_club_queued
+			country_event = { id = brazil.162 days = 60 }
+		}
+	}
+}
 
 # --- Amazon System --- #
 # Effect: BRA_conserv_acreage_effect
@@ -234,6 +320,13 @@ BRA_acres_conserved_change_effect = {
 	set_variable = { BRA_acres_conserved_change = { value = BRA_acres_conserved_change add = temp_change max = 0 } }
 
 	BRA_calculate_amazon_system = yes
+}
+
+BRA_amazon_investment_discount_effect = {
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = BRA_amazon_country_modifier }
+	add_to_variable = { BRA_amazon_investment_discount = -0.005 tooltip = receiving_investment_cost_modifier_tt }
+	effect_tooltip = { add_to_variable = { BRA_amazon_investment_discount = -0.005 tooltip = receiving_investment_duration_modifier_tt } }
+	clamp_variable = { var = BRA_amazon_investment_discount min = -0.1 max = 0 }
 }
 
 # Effect: BRA_calculate_amazon_system
@@ -312,4 +405,111 @@ BRA_monthly_amazon_acreage_change = {
 	add_to_variable = { BRA_acres_conserved = acres_converted }
 
 	BRA_calculate_amazon_system = yes
+}
+
+# Favelas keep the cartels alive. Strength and influence stay at 5 or more while one remains, which holds off cartel_event.52
+BRA_favela_cartel_floor_effect = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = narco_state_bonuses } }
+		BRA_favela_narco_takeover_effect = yes
+	}
+	else_if = {
+		limit = { has_cartels_penalties = yes }
+		set_temp_variable = { favela_full_count = 0 }
+		set_temp_variable = { favela_improving_count = 0 }
+		every_owned_state = {
+			limit = { BRA_state_has_favelas = yes }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = BRA_favela_improving_modifier } }
+				add_to_temp_variable = { favela_improving_count = 1 }
+			}
+			else = {
+				add_to_temp_variable = { favela_full_count = 1 }
+			}
+		}
+		set_variable = { BRA_favela_strength_floor = 0 }
+		set_variable = { BRA_favela_influence_floor = 0 }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { favela_full_count > 0 }
+					check_variable = { favela_improving_count > 0 }
+				}
+			}
+			set_temp_variable = {
+				favela_strength_floor = {
+					value = favela_full_count
+					multiply = 5
+					add = { value = favela_improving_count multiply = 2 }
+					max = 5
+				}
+			}
+			set_temp_variable = {
+				favela_influence_floor = {
+					value = favela_full_count
+					multiply = 2
+					add = favela_improving_count
+					max = 5
+				}
+			}
+			set_variable = { BRA_favela_strength_floor = favela_strength_floor }
+			set_variable = { BRA_favela_influence_floor = favela_influence_floor }
+			set_temp_variable = { cart_strength_change = { value = favela_strength_floor subtract = strength_of_cartels max = 0 } }
+			set_temp_variable = { cart_influence_change = { value = favela_influence_floor subtract = cartel_political_influence max = 0 } }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { cart_strength_change > 0 }
+						check_variable = { cart_influence_change > 0 }
+					}
+				}
+				modify_cartel_variables_effect = yes
+			}
+		}
+	}
+}
+
+# Conceding to the narcos hands every remaining favela to the gangs, including favela states won back later
+BRA_favela_narco_takeover_effect = {
+	set_temp_variable = { gang_favela_change = 0 }
+	every_owned_state = {
+		limit = {
+			OR = {
+				has_dynamic_modifier = { modifier = BRA_favela_modifier }
+				has_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
+			}
+		}
+		if = {
+			limit = { has_dynamic_modifier = { modifier = BRA_favela_modifier } }
+			remove_dynamic_modifier = { modifier = BRA_favela_modifier }
+		}
+		if = {
+			limit = { has_dynamic_modifier = { modifier = BRA_favela_improving_modifier } }
+			remove_dynamic_modifier = { modifier = BRA_favela_improving_modifier }
+		}
+		add_dynamic_modifier = { modifier = BRA_favela_gang_ruled_modifier }
+		add_to_temp_variable = { gang_favela_change = 1 }
+	}
+	if = {
+		limit = { check_variable = { gang_favela_change > 0 } }
+		BRA_favela_narco_feed_effect = yes
+		if = {
+			limit = { NOT = { has_country_flag = BRA_favelas_gang_ruled } }
+			set_country_flag = BRA_favelas_gang_ruled
+			country_event = brazil.192
+		}
+	}
+}
+
+# Effect: BRA_favela_narco_feed_effect
+# Purpose: Moves a narco state's cartel strength and influence by 5 and 3 for each gang-ruled favela gained or retaken
+# Parameters:
+# - gang_favela_change: gang-ruled favelas gained, negative for those retaken
+BRA_favela_narco_feed_effect = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = narco_state_bonuses } }
+		set_variable = { strength_of_cartels = { value = gang_favela_change multiply = 5 add = strength_of_cartels max = 0 } }
+		set_variable = { cartel_political_influence = { value = gang_favela_change multiply = 3 add = cartel_political_influence max = 0 } }
+		calculate_cartel_bonuses = yes
+	}
 }

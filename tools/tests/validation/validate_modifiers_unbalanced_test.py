@@ -419,6 +419,8 @@ _EXCESSIVE_CASES = {
     "expected-style key without definition": ("expected_welfare_modifier", "-0.4", 1),
     "listed malus key penalty": ("consumer_goods_factor", "0.4", 0),
     "listed malus key bonus": ("consumer_goods_factor", "-0.4", 1),
+    "market purchase penalty": ("international_market_purchase_modifier", "0.5", 0),
+    "market purchase bonus": ("international_market_purchase_modifier", "-0.5", 1),
     "fuel suffix penalty": ("army_fuel_consumption_factor", "0.4", 0),
     "fuel suffix bonus": ("army_fuel_consumption_factor", "-0.4", 1),
     "number-typed key": ("interest_rate_multiplier_modifier", "5", 0),

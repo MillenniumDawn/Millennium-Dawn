@@ -131,11 +131,27 @@ def test_dated_choices_recover_lost_carriers_without_bypassing_delay(
 ):
     script = _script()
     script.goto(year, 1, 1)
-    scheduler = _parse_race_script(
+    block = _parse_race_script(
         (ROOT / "common/scripted_effects/00_yearly_effects.txt").read_text(
             encoding="utf-8"
         )
-    )[f"trigger_year_{year}_events"][0]
+    )[f"trigger_year_{year}_events"]
+    # The dispatch is the STALKER if that sets its year's *_dispatched flag
+    scheduler = next(
+        statement
+        for statement in block
+        if statement[0] == "if"
+        and any(
+            key == "limit" and ("STALKER_scenario_enabled", "=", "yes") in body
+            for key, _, body in statement[2]
+        )
+        and any(
+            key == "set_global_flag"
+            and isinstance(body, str)
+            and body.endswith("_dispatched")
+            for key, _, body in statement[2]
+        )
+    )
     script.execute([scheduler], 1)
     script.countries[1]["exists"] = False
     script.countries[2]["exists"] = False

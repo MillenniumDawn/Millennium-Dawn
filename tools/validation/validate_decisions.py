@@ -1596,7 +1596,12 @@ class DecisionFactory:
         self.remove_effect = extract_value_multi_line(dec, "remove_effect")
         self.timeout_effect = extract_value_multi_line(dec, "timeout_effect")
         self.cancel_trigger = extract_value_multi_line(dec, "cancel_trigger")
-        self.cancel_if_not_visible = "cancel_if_not_visible = yes" in dec
+        self.cancel_if_not_visible = "cancel_if_not_visible" in dec and (
+            _top_level_field_value(blank_quoted_strings(dec), "cancel_if_not_visible")
+            == "yes"
+        )
+        # Moving a visibility check used for cancellation can strand an active decision.
+        self.movable_visible = "" if self.cancel_if_not_visible else self.visible
         self.activation = extract_value_multi_line(dec, "activation")
         self.target_root_trigger = extract_value_multi_line(dec, "target_root_trigger")
         self.target_trigger = extract_value_multi_line(dec, "target_trigger")
@@ -2516,7 +2521,8 @@ class Validator(BaseValidator):
         is perfectly valid — the game simply uses ``visible``/``available`` to filter
         per target. The performance concern arises only when those blocks contain
         FROM checks (evaluated every tick per target). Moving those FROM checks
-        into ``target_trigger`` makes them daily instead.
+        into ``target_trigger`` makes them daily instead. A visible check used
+        for cancellation must stay in place.
         """
         self._log_section(
             "Checking decisions with FROM checks in visible/available but no target_trigger (performance)..."
@@ -2530,14 +2536,15 @@ class Validator(BaseValidator):
                 continue
             if d.target_trigger:
                 continue
-            # Only flag if there's at least one FROM = { ... } block in visible or available
-            has_from_filter = False
-            if d.visible and _FROM_BLOCK_RE.search(d.visible):
-                has_from_filter = True
-            if d.available and _FROM_BLOCK_RE.search(d.available):
-                has_from_filter = True
-            if has_from_filter:
-                results.append(f"{d.token:<55}{d.source_basename}")
+            if _FROM_BLOCK_RE.search(d.movable_visible) or _FROM_BLOCK_RE.search(
+                d.available
+            ):
+                advice = (
+                    " - available only; keep visible for cancellation"
+                    if d.cancel_if_not_visible
+                    else ""
+                )
+                results.append(f"{d.token:<55}{d.source_basename}{advice}")
 
         self._report(
             results,
@@ -2574,7 +2581,7 @@ class Validator(BaseValidator):
                 continue
             if d.target_root_trigger:
                 continue
-            if not d.visible:
+            if not d.movable_visible:
                 continue
             if d.allowed and "always = no" in d.allowed:
                 continue
@@ -2758,9 +2765,8 @@ class Validator(BaseValidator):
         visible is evaluated every tick with FROM bound to each surviving
         target; target_trigger runs the same predicate once per (ROOT, FROM)
         pair per day. Moving a FROM check from visible into an existing
-        target_trigger is safe with no player-facing change: a failing
-        visible hides the entry and renders no tooltip, exactly like a
-        failing target_trigger.
+        target_trigger is safe unless visible also controls cancellation: a
+        failing visible otherwise just hides the entry and renders no tooltip.
 
         Deliberately out of scope: FROM checks in ``available`` are NOT
         flagged here and must stay put. ``available`` is what renders the
@@ -2787,10 +2793,7 @@ class Validator(BaseValidator):
                 continue
             if d.state_target or d.map_only:
                 continue
-            if not d.visible:
-                continue
-
-            visible_from_bodies = _extract_from_blocks(d.visible)
+            visible_from_bodies = _extract_from_blocks(d.movable_visible)
             if not visible_from_bodies:
                 continue
 
