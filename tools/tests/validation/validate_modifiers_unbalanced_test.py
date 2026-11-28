@@ -694,6 +694,38 @@ def test_modifier_cap_rows(tmp_path, files, specs, expected):
     assert_findings([f"{i.category}: {i.message}" for i in validator._issues], expected)
 
 
+@pytest.mark.parametrize(
+    "path,effect,variable,value,expected",
+    [
+        ("events/test.txt", "add_to_variable", "test_var", "-0.750", []),
+        ("events/other.txt", "add_to_variable", "test_var", "-0.75", [_WORKER]),
+        ("events/test.txt", "set_variable", "test_var", "-0.75", [_WORKER]),
+        ("events/test.txt", "add_to_variable", "other_var", "-0.75", [_WORKER]),
+        ("events/test.txt", "add_to_variable", "test_var", "-0.7500001", [_WORKER]),
+    ],
+)
+def test_variable_cap_exception_matches_only_documented_write(
+    tmp_path, monkeypatch, path, effect, variable, value, expected
+):
+    _write(
+        tmp_path,
+        _DM,
+        _BINDING
+        + _BINDING.replace("test_dm", "other_dm").replace("test_var", "other_var"),
+    )
+    _write(tmp_path, path, f"{effect} = {{ {variable} = {value} }}\n")
+    monkeypatch.setitem(
+        vm._CAP_EXCEPTIONS,
+        "worker_requirement_over_cap_exceptions",
+        frozenset({"events/test.txt::add_to_variable::test_var::-0.75"}),
+    )
+
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.validate_modifier_caps()
+
+    assert _categories(validator) == expected
+
+
 @pytest.mark.parametrize("spec", ["political_power_gain", "x=abc", "x=-1"])
 def test_cap_search_row_rejects_bad_specs(spec):
     with pytest.raises(argparse.ArgumentTypeError):

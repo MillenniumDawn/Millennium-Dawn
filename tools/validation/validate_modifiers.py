@@ -1394,12 +1394,22 @@ class Validator(BaseValidator):
                 change = -value if effect == "subtract_from_variable" else value
                 if not _past_cap(row, key, change):
                     continue
+                exceptions = row.get("exceptions", "")
+                source = rel.replace(os.sep, "/")
+                exception_key = f"{source}::{effect}::{var}::{value}"
+                if exception_key in _CAP_EXCEPTIONS.get(exceptions, ()):
+                    continue
                 verb = "sets {} to" if effect == "set_variable" else "changes {} by"
                 message = (
                     f"{effect} {var} = {value:g} {verb.format(key)} "
                     f"{change * 100:+g}% from one source, past the "
                     f"{_cap_text(row, key, change)} cap; verify the balance"
                 )
+                if exceptions:
+                    message += (
+                        f". If intentional, add '{exception_key}' with a reason to "
+                        f"validation_config.json {exceptions}"
+                    )
                 hits.append((row["category"], message, rel, line))
         return hits
 

@@ -9,6 +9,7 @@ localised) while naming the tech field rather than the source, so it has its own
 finding.
 """
 
+import pytest
 from shared.suite import write_focus_file as _write_focus_file
 from shared.suite import write_under as _write
 from validate_bonus_names import Validator, _scan_file
@@ -392,6 +393,58 @@ def test_owner_token_check_matches_decision_token(tmp_path):
     assert _categories(_run_check(tmp_path, name_not_owner_id=True)) == [
         "bonus-name-not-owner-id"
     ]
+
+
+@pytest.mark.parametrize(
+    ("owner", "effect", "name", "localised", "expected"),
+    [
+        ("TAG_decision", "add_equipment_bonus", "TAG_branch_bonus", True, []),
+        (
+            "TAG_other_decision",
+            "add_equipment_bonus",
+            "TAG_branch_bonus",
+            True,
+            ["bonus-name-not-owner-id"],
+        ),
+        (
+            "TAG_decision",
+            "add_tech_bonus",
+            "TAG_branch_bonus",
+            True,
+            ["bonus-name-not-owner-id"],
+        ),
+        (
+            "TAG_decision",
+            "add_equipment_bonus",
+            "TAG_other_bonus",
+            True,
+            ["bonus-name-not-owner-id"],
+        ),
+        (
+            "TAG_decision",
+            "add_equipment_bonus",
+            "TAG_branch_bonus",
+            False,
+            ["bonus-name-missing-loc"],
+        ),
+    ],
+    ids=["match", "other-owner", "other-effect", "other-name", "missing-loc"],
+)
+def test_name_not_owner_id_exception(
+    tmp_path, monkeypatch, owner, effect, name, localised, expected
+):
+    monkeypatch.setattr(
+        "validate_bonus_names._NAME_NOT_OWNER_ID_EXCEPTIONS",
+        {"decision::TAG_decision::add_equipment_bonus::TAG_branch_bonus"},
+    )
+    _write(
+        tmp_path,
+        "common/decisions/test.txt",
+        f"TAG_category = {{ {owner} = {{ complete_effect = {{"
+        f" {effect} = {{ name = {name} }} }} }} }}",
+    )
+    _write_loc(tmp_path, [name] if localised else [])
+    assert _categories(_run_check(tmp_path, name_not_owner_id=True)) == expected
 
 
 def test_owner_token_check_accepts_event_id_or_title_key(tmp_path):
