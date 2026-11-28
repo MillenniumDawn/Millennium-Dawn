@@ -1032,11 +1032,24 @@ country_event = {
 		}
 
 		set_temp_variable = { influence_defense_modifier = 1 }
-		add_to_temp_variable = { influence_defense_modifier = modifier@foreign_influence_defense_modifier }
+		subtract_from_temp_variable = { influence_defense_modifier = modifier@foreign_influence_defense_modifier }
 		FROM = {
 			add_to_temp_variable = { influence_defense_modifier = modifier@foreign_influence_modifier }
 			add_to_temp_variable = { influence_defense_modifier = modifier@influence_coup_modifier }
+
+			# Infiltrated services back the coup, at the same 0.15 per token the coup operation gives its revolters
+			if = { limit = { has_operation_token = { tag = ROOT token = token_army } }
+				add_to_temp_variable = { influence_defense_modifier = 0.15 }
+			}
+			if = { limit = { has_operation_token = { tag = ROOT token = token_navy } }
+				add_to_temp_variable = { influence_defense_modifier = 0.15 }
+			}
+			if = { limit = { has_operation_token = { tag = ROOT token = token_airforce } }
+				add_to_temp_variable = { influence_defense_modifier = 0.15 }
+			}
 		}
+		# Stacked defense can pass 100%, and a negative weight would break the outcome roll
+		clamp_temp_variable = { var = influence_defense_modifier min = 0 }
 		multiply_variable = { success_factor_biggest = influence_defense_modifier }
 
 		### Chance of civil war ###
