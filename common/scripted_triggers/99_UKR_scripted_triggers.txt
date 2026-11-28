@@ -1008,9 +1008,114 @@ varyag_transit_possible = {
 	CHI = { NOT = { has_war_with = TUR } }
 }
 
+UKR_navy_khadzhybey_eligible = {
+	OR = {
+		check_variable = { UKR_navy_rebuilt_projects > 4 }
+		has_country_flag = UKR_navy_ukrayina_in_service_flag
+		has_country_flag = UKR_varyag_commissioned
+	}
+}
+
+UKR_navy_khadzhybey_can_produce = {
+	UKR_navy_mykolaiv_site = yes
+	1086 = { dockyard > 1 }
+}
+
+UKR_navy_khadzhybey_can_expand = {
+	UKR_navy_mykolaiv_site = yes
+	NOT = { has_country_flag = UKR_navy_khadzhybey_expanding_flag }
+	1086 = {
+		dockyard > 0
+		dockyard < 2
+	}
+	check_variable = { var = treasury value = 0.60 compare = greater_than_or_equals }
+}
+
+UKR_navy_missile_boat_lan_possible = {
+	UKR_navy_mykolaiv_site = yes
+	1086 = { dockyard > 0 }
+}
+
+UKR_navy_missile_boat_vespa_possible = {
+	UKR_navy_missile_boat_lan_possible = yes
+	UKR_navy_kyiv_site = yes
+	698 = { arms_factory > 0 }
+}
+
+UKR_navy_kyiv_site = {
+	owns_state = 698
+	controls_state = 698
+	controls_province = 525 #Kyiv
+}
+
+UKR_navy_mykolaiv_site = {
+	owns_state = 1086
+	controls_state = 1086
+	controls_province = 11683 #Mykolaiv
+}
+
+UKR_navy_sevastopol_site = {
+	owns_state = 669
+	controls_state = 669
+	controls_province = 3686 #Sevastopol
+}
+
+UKR_navy_feodosiya_site = {
+	owns_state = 669
+	controls_state = 669
+	controls_province = 9677 #Feodosiya
+}
+
+UKR_navy_odesa_site = {
+	owns_state = 695
+	controls_state = 695
+	controls_province = 11670 #Odesa
+}
+
+UKR_navy_kherson_site = {
+	owns_state = 1085
+	controls_state = 1085
+	controls_province = 3755 #Kherson
+}
+
+UKR_navy_lviv_site = {
+	owns_state = 700
+	controls_state = 700
+	controls_province = 11479 #Lviv
+}
+
+UKR_navy_has_shipyard = {
+	OR = {
+		AND = {
+			UKR_navy_mykolaiv_site = yes
+			1086 = { dockyard > 0 }
+		}
+		AND = {
+			UKR_navy_sevastopol_site = yes
+			669 = { dockyard > 0 }
+		}
+		AND = {
+			UKR_navy_odesa_site = yes
+			695 = { dockyard > 0 }
+		}
+		AND = {
+			UKR_navy_kherson_site = yes
+			1085 = { dockyard > 0 }
+		}
+	}
+}
+
+UKR_navy_has_black_sea_port = {
+	OR = {
+		UKR_navy_odesa_site = yes
+		UKR_navy_kherson_site = yes
+		UKR_navy_mykolaiv_site = yes
+	}
+}
+
 varyag_ukrainian_shipyard_available = {
 	UKR = {
-		controls_state = 1086
+		UKR_navy_mykolaiv_site = yes
 		NOT = { has_war_with = TUR }
 	}
 }
@@ -1019,12 +1124,14 @@ varyag_refit_shipyard_available = {
 	OR = {
 		AND = {
 			original_tag = UKR
-			controls_state = 1086
+			UKR_navy_mykolaiv_site = yes
 			1086 = { dockyard > 0 }
 		}
 		AND = {
 			original_tag = TUR
+			owns_state = 155
 			controls_state = 155
+			controls_province = 11811
 			155 = { dockyard > 0 }
 		}
 	}
@@ -1079,6 +1186,7 @@ UKR_varyag_air_group_available = {
 }
 
 UKR_varyag_can_order_rafale = {
+	varyag_refit_shipyard_available = yes
 	has_country_flag = UKR_varyag_catapult_refit
 	varyag_french_supply_available = yes
 	custom_trigger_tooltip = {
@@ -1088,6 +1196,7 @@ UKR_varyag_can_order_rafale = {
 }
 
 UKR_varyag_can_order_mig29k = {
+	varyag_refit_shipyard_available = yes
 	NOT = { has_country_flag = UKR_varyag_catapult_refit }
 	varyag_russian_supply_available = yes
 	custom_trigger_tooltip = {
@@ -1105,6 +1214,7 @@ varyag_hornet_program_available = {
 }
 
 varyag_can_order_hornets = {
+	varyag_refit_shipyard_available = yes
 	has_country_flag = UKR_varyag_catapult_refit
 	varyag_us_supply_available = yes
 	custom_trigger_tooltip = {
@@ -1114,6 +1224,7 @@ varyag_can_order_hornets = {
 }
 
 UKR_varyag_trials_available = {
+	UKR_navy_mykolaiv_site = yes
 	original_tag = UKR
 	has_country_flag = UKR_varyag_commissioned
 	NOT = { has_country_flag = UKR_varyag_deck_trials_completed }
@@ -3874,6 +3985,7 @@ UKR_varyag_restore_yak38_shown = {
 }
 
 UKR_varyag_restore_yak38_ready = {
+	UKR_navy_sevastopol_site = yes
 	NOT = { has_country_flag = UKR_storage_yak38_program_in_progress_flag }
 }
 
@@ -3886,6 +3998,7 @@ UKR_storage_yak38_monuments_shown = {
 }
 
 UKR_storage_yak38_monuments_ready = {
+	UKR_navy_sevastopol_site = yes
 	custom_trigger_tooltip = {
 		tooltip = UKR_storage_yak38_program_idle_tt
 		NOT = { has_country_flag = UKR_storage_yak38_program_in_progress_flag }
@@ -3902,6 +4015,7 @@ UKR_storage_yak38_scrap_shown = {
 }
 
 UKR_storage_yak38_scrap_ready = {
+	UKR_navy_sevastopol_site = yes
 	controls_state = 669
 	custom_trigger_tooltip = {
 		tooltip = UKR_storage_yak38_program_idle_tt
@@ -3914,6 +4028,7 @@ UKR_storage_scrap_carrier_aircraft_shown = {
 }
 
 UKR_storage_scrap_carrier_aircraft_ready = {
+	UKR_navy_sevastopol_site = yes
 	NOT = { has_active_mission = UKR_storage_sale_chi_carrier }
 }
 
@@ -3922,6 +4037,7 @@ UKR_storage_exchange_carrier_aircraft_shown = {
 }
 
 UKR_storage_exchange_carrier_aircraft_ready = {
+	UKR_navy_sevastopol_site = yes
 	NOT = { has_active_mission = UKR_storage_sale_chi_carrier }
 	varyag_russian_supply_available = yes
 }
@@ -3936,6 +4052,7 @@ UKR_storage_sell_carrier_aircraft_to_china_shown = {
 }
 
 UKR_storage_sell_carrier_aircraft_to_china_ready = {
+	UKR_navy_sevastopol_site = yes
 	country_exists = CHI
 	NOT = { has_war_with = CHI }
 	custom_trigger_tooltip = {
@@ -3955,6 +4072,7 @@ UKR_storage_prepare_carrier_aircraft_shown = {
 }
 
 UKR_storage_prepare_carrier_aircraft_ready = {
+	UKR_navy_mykolaiv_site = yes
 	UKR_storage_can_prepare_carrier_aircraft = yes
 	NOT = { has_active_mission = UKR_storage_sale_chi_carrier }
 }
